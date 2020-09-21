@@ -1,8 +1,10 @@
 package covidstats
 
+//problem here is, API does not state which values could change to floats : )
 type coronaWorldWideStruct struct {
 	Updated                int64
 	Country                string
+	State                  string
 	CountryInfo            countryInfoStruct
 	Cases                  int64
 	TodayCases             int64
@@ -12,10 +14,10 @@ type coronaWorldWideStruct struct {
 	TodayRecovered         int64
 	Active                 int64
 	Critical               int64
-	CasesPerOneMillion     int64
-	DeathsPerOneMillion    int64
-	Tests                  int64
-	TestsPerOneMillion     int64
+	CasesPerOneMillion     float64
+	DeathsPerOneMillion    float64
+	Tests                  float64
+	TestsPerOneMillion     float64
 	Population             int64
 	Continent              string
 	OneCasePerPeople       int64
@@ -24,29 +26,14 @@ type coronaWorldWideStruct struct {
 	ActivePerOneMillion    float64
 	RecoveredPerOneMillion float64
 	CriticalPerOneMillion  float64
+	AffectedCountries      int64
 }
 
 type countryInfoStruct struct {
-	_id  int64 //does not parse this not important
+	_id  int64 //does not parse, this is not important
 	Iso2 string
 	Iso3 string
 	Lat  int64
 	Long int64
 	Flag string
-}
-
-type coronaStatesStruct struct {
-	State               string
-	Updated             int64
-	Cases               int64
-	TodayCases          int64
-	Deaths              int64
-	TodayDeaths         int64
-	Recovered           int64
-	Active              int64
-	CasesPerOneMillion  int64
-	DeathsPerOneMillion int64
-	Tests               int64
-	TestsPerOneMillion  int64
-	Population          int64
 }
