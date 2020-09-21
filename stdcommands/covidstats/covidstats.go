@@ -15,45 +15,11 @@ import (
 	"github.com/jonas747/yagpdb/commands"
 )
 
-type coronaStruct struct {
-	Updated                int64
-	Country                string
-	CountryInfo            countryInfoStruct
-	Cases                  int64
-	TodayCases             int64
-	Deaths                 int64
-	TodayDeaths            int64
-	Recovered              int64
-	TodayRecovered         int64
-	Active                 int64
-	Critical               int64
-	CasesPerOneMillion     int64
-	DeathsPerOneMillion    int64
-	Tests                  int64
-	TestsPerOneMillion     int64
-	Population             int64
-	Continent              string
-	OneCasePerPeople       int64
-	OneDeathPerPeople      int64
-	OneTestPerPeople       int64
-	ActivePerOneMillion    float64
-	RecoveredPerOneMillion float64
-	CriticalPerOneMillion  float64
-}
-
-type countryInfoStruct struct {
-	_id  int64 //does not parse this not important
-	Iso2 string
-	Iso3 string
-	Lat  int64
-	Long int64
-	Flag string
-}
-
 var (
-	diseaseAPIHost = "https://disease.sh/v3/covid-19/"
-	queryType1     = "countries/"
-	queryType2     = "states/"
+	diseaseAPIHost = "https://disease.sh/v3/covid-19"
+	queryType1     = "countries"
+	queryType2     = "states"
+	footerImage    = "https://upload-icon.s3.us-east-2.amazonaws.com/uploads/icons/png/2129370911599778130-512.png"
 )
 
 var Command = &commands.YAGCommand{
@@ -66,12 +32,21 @@ var Command = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "Location", Type: dcmd.String},
 	},
+	ArgSwitches: []*dcmd.ArgDef{
+		&dcmd.ArgDef{Switch: "states", Name: "State name in USA"},
+	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		var cStat = coronaStruct{}
+		var cWorld = coronaWorldWideStruct{}
+		var cStates = coronaStatesStruct{}
+		var queryType = queryType1
+		var yesterday = "false"
 		where := data.Args[0].Str()
 
-		var yesterday = "false"
-		queryURL := fmt.Sprintf(diseaseAPIHost + "countries/" + where + "?yesterday=" + yesterday + "&strict=true")
+		if data.Switches["states"].Value != nil && data.Switches["states"].Value.(bool) {
+			queryType = queryType2
+		}
+
+		queryURL := fmt.Sprintf(diseaseAPIHost + "/" + queryType + "/" + where + "?yesterday=" + yesterday + "&strict=true")
 		req, err := http.NewRequest("GET", queryURL, nil)
 		if err != nil {
 			return nil, err
@@ -92,29 +67,59 @@ var Command = &commands.YAGCommand{
 		if err != nil {
 			return nil, err
 		}
+		var embed = &discordgo.MessageEmbed{}
+		switch queryType {
+		case "countries":
 
-		queryErr := json.Unmarshal(body, &cStat)
-		if queryErr != nil {
-			return nil, queryErr
-		}
+			queryErr := json.Unmarshal(body, &cWorld)
+			if queryErr != nil {
+				return nil, queryErr
+			}
 
-		embed := &discordgo.MessageEmbed{
-			Title:       fmt.Sprintf("%s (%s)", cStat.Country, cStat.CountryInfo.Iso2),
-			Description: "showing corona statistics for current day",
-			Thumbnail: &discordgo.MessageEmbedThumbnail{
-				URL: fmt.Sprintf("%s", cStat.CountryInfo.Flag)},
-			Color: 0x7b0e4e,
-			Fields: []*discordgo.MessageEmbedField{
-				&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cStat.Cases), Inline: true},
-				&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cStat.TodayCases), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cStat.Deaths), Inline: true},
-				&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cStat.TodayDeaths), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cStat.Recovered), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cStat.Active), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Critical", Value: fmt.Sprintf("%d", cStat.Critical), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%d", cStat.CasesPerOneMillion), Inline: true},
-			},
-			Footer: &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!"},
+			embed = &discordgo.MessageEmbed{
+				Title:       fmt.Sprintf("%s (%s)", cWorld.Country, cWorld.CountryInfo.Iso2),
+				Description: "showing corona statistics for current day:",
+				Thumbnail: &discordgo.MessageEmbedThumbnail{
+					URL: fmt.Sprintf("%s", cWorld.CountryInfo.Flag)},
+				Color: 0x7b0e4e,
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{Name: "Population", Value: fmt.Sprintf("%d", cWorld.Population), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cWorld.Cases), Inline: true},
+					&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cWorld.TodayCases), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cWorld.Deaths), Inline: true},
+					&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cWorld.TodayDeaths), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cWorld.Recovered), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cWorld.Active), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Critical", Value: fmt.Sprintf("%d", cWorld.Critical), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%d", cWorld.CasesPerOneMillion), Inline: true},
+				},
+				Footer: &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
+			}
+		case "states":
+			queryErr := json.Unmarshal(body, &cStates)
+			if queryErr != nil {
+				return nil, queryErr
+			}
+
+			embed = &discordgo.MessageEmbed{
+				Title:       fmt.Sprintf("USA, %s", cStates.State),
+				Description: "showing corona statistics for current day:",
+				Thumbnail: &discordgo.MessageEmbedThumbnail{
+					URL: "https://disease.sh/assets/img/flags/us.png"},
+				Color: 0x7b0e4e,
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{Name: "Population", Value: fmt.Sprintf("%d", cStates.Population), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cStates.Cases), Inline: true},
+					&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cStates.TodayCases), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cStates.Deaths), Inline: true},
+					&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cStates.TodayDeaths), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cStates.Recovered), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cStates.Active), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Tests", Value: fmt.Sprintf("%d", cStates.Tests), Inline: true},
+					&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%d", cStates.CasesPerOneMillion), Inline: true},
+				},
+				Footer: &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
+			}
 		}
 		return embed, nil
 	},
