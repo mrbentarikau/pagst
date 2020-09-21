@@ -18,7 +18,6 @@ cmd/yagpdb/static/video/*
 # The graw agent file
 *.agent
 *.exe
-keybase.txt
 dailyredditquote
 .idea
 .vscode
