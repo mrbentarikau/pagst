@@ -22,7 +22,7 @@ var (
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory:  commands.CategoryFun,
+	CmdCategory:  commands.CategoryTool,
 	Name:         "OpenWeatherMap",
 	Aliases:      []string{"owm", "oweather", "ow"},
 	Description:  "Shows the weather using OpenWeatherMap API. \nLocation is set by city name and optional state code, country code \n eg. <prefix>owm Paris,AR,US",
