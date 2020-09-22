@@ -7,10 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	//"math"
 	"net/http"
-	//"strings"
-	//"time"
+	"sort"
 
 	"github.com/jonas747/dcmd"
 	"github.com/jonas747/discordgo"
@@ -26,15 +24,30 @@ var (
 	typeStates     = "states"
 
 	//These image links could disappear at random times.
-	globeImage  = "http://pngimg.com/uploads/globe/globe_PNG63.png"
-	africaImage = "http://endlessicons.com/wp-content/uploads/2012/12/africa-icon1-614x460.png"
+	globeImage = "http://pngimg.com/uploads/globe/globe_PNG63.png"
+
+	africaImage       = "https://vemaps.com/uploads/img/af-c-05.png"
+	asiaImage         = "https://vemaps.com/uploads/img/as-c-05.png"
+	australiaImage    = "https://vemaps.com/uploads/img/oc-c-05.png"
+	europeImage       = "https://vemaps.com/uploads/img/eu-c-05.png"
+	northAmericaImage = "https://vemaps.com/uploads/img/na-c-05.png"
+	southAmericaImage = "https://vemaps.com/uploads/img/sa-c-05.png"
+
+	continentImages = map[string]string{
+		"North America":     northAmericaImage,
+		"Asia":              asiaImage,
+		"South America":     southAmericaImage,
+		"Europe":            europeImage,
+		"Africa":            africaImage,
+		"Australia/Oceania": australiaImage,
+	}
 )
 
 var Command = &commands.YAGCommand{
 	CmdCategory: commands.CategoryTool,
 	Name:        "CoronaStatistics",
 	Aliases:     []string{"coronastats", "cstats", "cst"},
-	Description: "WIP: Shows COVID-19 statistics sourcing Worldometer statistics. Input is country name or their ISO2/3 shorthand.",
+	Description: "Shows COVID-19 statistics sourcing Worldometer statistics. Location is country name or their ISO2/3 shorthand.\nIf nothing is added, shows World's total.\nListings are sorted by count of total cases not deaths.",
 	RunInDM:     true,
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "Location", Type: dcmd.String},
@@ -73,6 +86,10 @@ var Command = &commands.YAGCommand{
 		} else if data.Switches["2d"].Value != nil && data.Switches["2d"].Value.(bool) {
 			whatDay = "day before yesterday"
 			twoDaysAgo = "true"
+			if queryType == typeStates {
+				yesterday = "true"
+				twoDaysAgo = "false"
+			}
 		}
 
 		if data.Args[0].Str() != "" {
@@ -111,8 +128,13 @@ var Command = &commands.YAGCommand{
 
 		//let's render everything to slice
 		cConts = append(cConts, cStats)
+
+		sort.SliceStable(cConts, func(i, j int) bool {
+			return cConts[i].Cases > cConts[j].Cases
+		})
+
 		i := page - 1
-		if page > len(cConts) && p != nil && p.LastResponse != nil {
+		if page == len(cConts) && p != nil && p.LastResponse != nil {
 			return nil, paginatedmessages.ErrNoResults
 		}
 		var embed = &discordgo.MessageEmbed{}
@@ -149,7 +171,7 @@ var Command = &commands.YAGCommand{
 		case "continents":
 			embed.Title = fmt.Sprintf("%s", cConts[i].Continent)
 			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: africaImage}
+				URL: continentImages[cConts[i].Continent]}
 		case "states":
 			embed.Title = fmt.Sprintf("USA, %s", cConts[i].State)
 			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
