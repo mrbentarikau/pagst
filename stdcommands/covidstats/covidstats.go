@@ -129,6 +129,12 @@ var Command = &commands.YAGCommand{
 		//let's render everything to slice
 		cConts = append(cConts, cStats)
 
+		//this is to prevent some weird panic
+		if len(cConts) == 1 {
+			cConts = append(cConts, cStats)
+		}
+
+		//let's sort by total cases
 		sort.SliceStable(cConts, func(i, j int) bool {
 			return cConts[i].Cases > cConts[j].Cases
 		})
