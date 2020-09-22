@@ -30,10 +30,10 @@ type coronaWorldWideStruct struct {
 }
 
 type countryInfoStruct struct {
-	_id  int64 //does not parse, this is not important
+	ID   int64 `json:"_id"`
 	Iso2 string
 	Iso3 string
-	Lat  int64
-	Long int64
+	Lat  float64
+	Long float64
 	Flag string
 }

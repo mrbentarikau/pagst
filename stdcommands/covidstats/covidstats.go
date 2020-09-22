@@ -1,4 +1,4 @@
-//inspired by disea.sh > https://github.com/disease-sh/api
+//inspired by https://disease.sh > https://github.com/disease-sh/api
 
 package covidstats
 
@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	//"math"
 	"net/http"
 	//"strings"
 	//"time"
 
 	"github.com/jonas747/dcmd"
 	"github.com/jonas747/discordgo"
+	"github.com/jonas747/yagpdb/bot/paginatedmessages"
 	"github.com/jonas747/yagpdb/commands"
 )
 
@@ -25,7 +27,7 @@ var (
 
 	//These image links could disappear at random times.
 	globeImage  = "http://pngimg.com/uploads/globe/globe_PNG63.png"
-	footerImage = "https://upload-icon.s3.us-east-2.amazonaws.com/uploads/icons/png/2129370911599778130-512.png"
+	africaImage = "http://endlessicons.com/wp-content/uploads/2012/12/africa-icon1-614x460.png"
 )
 
 var Command = &commands.YAGCommand{
@@ -44,22 +46,27 @@ var Command = &commands.YAGCommand{
 		&dcmd.ArgDef{Switch: "1d", Name: "Stats from yesterday"},
 		&dcmd.ArgDef{Switch: "2d", Name: "Stats from the day before yesterday (does not apply to states)"},
 	},
-	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+	RunFunc: paginatedmessages.PaginatedCommand(0, func(data *dcmd.Data, p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 
-		var cStats = coronaWorldWideStruct{}
-		var cConts = []coronaWorldWideStruct{}
+		var cStats coronaWorldWideStruct
+		var cConts []coronaWorldWideStruct
 		var queryType = typeCountries
 		var whatDay = "current day"
 		var yesterday = "false"
 		var twoDaysAgo = "false"
 		var where, queryURL string
+		var flag string
 
-		if data.Switches["continents"].Value != nil && data.Switches["continents"].Value.(bool) {
+		//to determine what will happen and what data gets shown
+		if data.Switches["countries"].Value != nil && data.Switches["countries"].Value.(bool) {
+			flag = typeCountries
+		} else if data.Switches["continents"].Value != nil && data.Switches["continents"].Value.(bool) {
 			queryType = typeContinents
 		} else if data.Switches["states"].Value != nil && data.Switches["states"].Value.(bool) {
 			queryType = typeStates
 		}
 
+		//day-back switches
 		if data.Switches["1d"].Value != nil && data.Switches["1d"].Value.(bool) {
 			whatDay = "yesterday"
 			yesterday = "true"
@@ -71,30 +78,17 @@ var Command = &commands.YAGCommand{
 		if data.Args[0].Str() != "" {
 			where = data.Args[0].Str()
 			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, where+"?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
+		} else if (data.Args[0].Str() == "") && (flag == typeCountries) {
+			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
 		} else if (data.Args[0].Str() == "") && (queryType == typeCountries) {
 			queryType = typeWorld
 			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
 		} else {
-			queryURL = fmt.Sprintf("%s%s", diseaseAPIHost, queryType+"/?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
+			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
 		}
 
-		req, err := http.NewRequest("GET", queryURL, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		req.Header.Set("User-Agent", "curlPAGST/7.65.1")
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-
-		if resp.StatusCode != 200 {
-			return "Cannot fetch corona statistics data for the given location: " + where, nil
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
+		//let's get that API data
+		body, err := getData(queryURL, where, queryType)
 		if err != nil {
 			return nil, err
 		}
@@ -109,34 +103,39 @@ var Command = &commands.YAGCommand{
 				return nil, queryErr
 			}
 		} else if mapNo {
-			queryErr := json.Unmarshal(body, &cStats)
+			queryErr := json.Unmarshal([]byte(body), &cStats)
 			if queryErr != nil {
 				return nil, queryErr
 			}
 		}
 
+		//let's render everything to slice
+		cConts = append(cConts, cStats)
+		i := page - 1
+		if page > len(cConts) && p != nil && p.LastResponse != nil {
+			return nil, paginatedmessages.ErrNoResults
+		}
 		var embed = &discordgo.MessageEmbed{}
 		embed = &discordgo.MessageEmbed{
 			Description: fmt.Sprintf("showing corona statistics for " + whatDay + ":"),
 			Color:       0x7b0e4e,
 			Fields: []*discordgo.MessageEmbedField{
-				&discordgo.MessageEmbedField{Name: "Population", Value: fmt.Sprintf("%d", cStats.Population), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cStats.Cases), Inline: true},
-				&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cStats.TodayCases), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cStats.Deaths), Inline: true},
-				&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cStats.TodayDeaths), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cStats.Recovered), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cStats.Active), Inline: true},
+				&discordgo.MessageEmbedField{Name: "Population", Value: fmt.Sprintf("%d", cConts[i].Population), Inline: true},
+				&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cConts[i].Cases), Inline: true},
+				&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cConts[i].TodayCases), Inline: true},
+				&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cConts[i].Deaths), Inline: true},
+				&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cConts[i].TodayDeaths), Inline: true},
+				&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cConts[i].Recovered), Inline: true},
+				&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cConts[i].Active), Inline: true},
 			},
-			Footer: &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
 		}
 		//this here is to because USA states API does not give critical conditions and to continue proper layout
 		if queryType != typeStates {
-			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{Name: "Critical", Value: fmt.Sprintf("%d", cStats.Critical), Inline: true})
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{Name: "Critical", Value: fmt.Sprintf("%d", cConts[i].Critical), Inline: true})
 		}
 		embed.Fields = append(embed.Fields,
-			&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%.0f", cStats.CasesPerOneMillion), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Total Tests", Value: fmt.Sprintf("%.0f", cStats.Tests), Inline: true})
+			&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%.0f", cConts[i].CasesPerOneMillion), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Total Tests", Value: fmt.Sprintf("%.0f", cConts[i].Tests), Inline: true})
 
 		switch queryType {
 		case "all":
@@ -144,35 +143,43 @@ var Command = &commands.YAGCommand{
 			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
 				URL: globeImage}
 		case "countries":
-			embed.Title = fmt.Sprintf("%s (%s)", cStats.Country, cStats.CountryInfo.Iso2)
+			embed.Title = fmt.Sprintf("%s (%s)", cConts[i].Country, cConts[i].CountryInfo.Iso2)
 			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: fmt.Sprintf("%s", cStats.CountryInfo.Flag)}
+				URL: fmt.Sprintf("%s", cConts[i].CountryInfo.Flag)}
 		case "continents":
-			embed = &discordgo.MessageEmbed{
-				Title:       fmt.Sprintf("%s", cConts[0].Continent),
-				Description: fmt.Sprintf("showing corona statistics for " + whatDay + ":"),
-				Thumbnail: &discordgo.MessageEmbedThumbnail{
-					URL: fmt.Sprintf("%s", cStats.CountryInfo.Flag)},
-				Color: 0x7b0e4e,
-				Fields: []*discordgo.MessageEmbedField{
-					&discordgo.MessageEmbedField{Name: "Population", Value: fmt.Sprintf("%d", cConts[0].Population), Inline: true},
-					&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cConts[0].Cases), Inline: true},
-					&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cConts[0].TodayCases), Inline: true},
-					&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cConts[0].Deaths), Inline: true},
-					&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cConts[0].TodayDeaths), Inline: true},
-					&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cConts[0].Recovered), Inline: true},
-					&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cConts[0].Active), Inline: true},
-					&discordgo.MessageEmbedField{Name: "Critical", Value: fmt.Sprintf("%d", cConts[0].Critical), Inline: true},
-					&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%.0f", cConts[0].CasesPerOneMillion), Inline: true},
-					&discordgo.MessageEmbedField{Name: "Total Tests", Value: fmt.Sprintf("%.0f", cConts[0].Tests), Inline: true},
-				},
-				Footer: &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
-			}
+			embed.Title = fmt.Sprintf("%s", cConts[i].Continent)
+			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
+				URL: africaImage}
 		case "states":
-			embed.Title = fmt.Sprintf("USA, %s", cStats.State)
+			embed.Title = fmt.Sprintf("USA, %s", cConts[i].State)
 			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
 				URL: "https://disease.sh/assets/img/flags/us.png"}
 		}
+
 		return embed, nil
-	},
+	}),
+}
+
+func getData(query, loc, qtype string) ([]byte, error) {
+	req, err := http.NewRequest("GET", query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("User-Agent", "curlPAGST/7.65.1")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, commands.NewPublicError("Cannot fetch corona statistics data for the given location:** " + qtype + ": " + loc + "**")
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 }
