@@ -24,7 +24,8 @@ var (
 	typeStates     = "states"
 
 	//These image links could disappear at random times.
-	globeImage = "http://pngimg.com/uploads/globe/globe_PNG63.png"
+	globeImage  = "http://pngimg.com/uploads/globe/globe_PNG63.png"
+	footerImage = "https://upload-icon.s3.us-east-2.amazonaws.com/uploads/icons/png/2129370911599778130-512.png"
 
 	africaImage       = "https://vemaps.com/uploads/img/af-c-05.png"
 	asiaImage         = "https://vemaps.com/uploads/img/as-c-05.png"
@@ -59,7 +60,7 @@ var Command = &commands.YAGCommand{
 		&dcmd.ArgDef{Switch: "1d", Name: "Stats from yesterday"},
 		&dcmd.ArgDef{Switch: "2d", Name: "Stats from the day before yesterday (does not apply to states)"},
 	},
-	RunFunc: paginatedmessages.PaginatedCommand(0, func(data *dcmd.Data, p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 
 		var cStats coronaWorldWideStruct
 		var cConts []coronaWorldWideStruct
@@ -69,14 +70,18 @@ var Command = &commands.YAGCommand{
 		var twoDaysAgo = "false"
 		var where, queryURL string
 		var flag string
+		var pagination = false
 
 		//to determine what will happen and what data gets shown
 		if data.Switches["countries"].Value != nil && data.Switches["countries"].Value.(bool) {
 			flag = typeCountries
+			pagination = true
 		} else if data.Switches["continents"].Value != nil && data.Switches["continents"].Value.(bool) {
 			queryType = typeContinents
+			pagination = true
 		} else if data.Switches["states"].Value != nil && data.Switches["states"].Value.(bool) {
 			queryType = typeStates
+			pagination = true
 		}
 
 		//day-back switches
@@ -94,6 +99,7 @@ var Command = &commands.YAGCommand{
 
 		if data.Args[0].Str() != "" {
 			where = data.Args[0].Str()
+			pagination = false
 			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, where+"?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
 		} else if (data.Args[0].Str() == "") && (flag == typeCountries) {
 			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
@@ -129,63 +135,29 @@ var Command = &commands.YAGCommand{
 		//let's render everything to slice
 		cConts = append(cConts, cStats)
 
-		//this is to prevent some weird panic
-		if len(cConts) == 1 {
-			cConts = append(cConts, cStats)
-		}
-
-		//let's sort by total cases
+		//let's sort by total Covid-19 cases
 		sort.SliceStable(cConts, func(i, j int) bool {
 			return cConts[i].Cases > cConts[j].Cases
 		})
 
-		i := page - 1
-		if page == len(cConts) && p != nil && p.LastResponse != nil {
-			return nil, paginatedmessages.ErrNoResults
-		}
 		var embed = &discordgo.MessageEmbed{}
-		embed = &discordgo.MessageEmbed{
-			Description: fmt.Sprintf("showing corona statistics for " + whatDay + ":"),
-			Color:       0x7b0e4e,
-			Fields: []*discordgo.MessageEmbedField{
-				&discordgo.MessageEmbedField{Name: "Population", Value: fmt.Sprintf("%d", cConts[i].Population), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cConts[i].Cases), Inline: true},
-				&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cConts[i].TodayCases), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cConts[i].Deaths), Inline: true},
-				&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cConts[i].TodayDeaths), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cConts[i].Recovered), Inline: true},
-				&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cConts[i].Active), Inline: true},
-			},
-		}
-		//this here is to because USA states API does not give critical conditions and to continue proper layout
-		if queryType != typeStates {
-			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{Name: "Critical", Value: fmt.Sprintf("%d", cConts[i].Critical), Inline: true})
-		}
-		embed.Fields = append(embed.Fields,
-			&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%.0f", cConts[i].CasesPerOneMillion), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Total Tests", Value: fmt.Sprintf("%.0f", cConts[i].Tests), Inline: true})
+		embed = embedCreator(cConts, queryType, whatDay, 0)
 
-		switch queryType {
-		case "all":
-			embed.Title = fmt.Sprintf("Whole world")
-			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: globeImage}
-		case "countries":
-			embed.Title = fmt.Sprintf("%s (%s)", cConts[i].Country, cConts[i].CountryInfo.Iso2)
-			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: fmt.Sprintf("%s", cConts[i].CountryInfo.Flag)}
-		case "continents":
-			embed.Title = fmt.Sprintf("%s", cConts[i].Continent)
-			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: continentImages[cConts[i].Continent]}
-		case "states":
-			embed.Title = fmt.Sprintf("USA, %s", cConts[i].State)
-			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: "https://disease.sh/assets/img/flags/us.png"}
+		if pagination {
+			_, err := paginatedmessages.CreatePaginatedMessage(
+				data.GS.ID, data.CS.ID, 1, len(cConts)-1, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+					embed = embedCreator(cConts, queryType, whatDay, page-1)
+					return embed, nil
+				})
+			if err != nil {
+				return "Something went wrong", nil
+			}
+		} else {
+			return embed, nil
 		}
 
-		return embed, nil
-	}),
+		return nil, nil
+	},
 }
 
 func getData(query, loc, qtype string) ([]byte, error) {
@@ -210,4 +182,48 @@ func getData(query, loc, qtype string) ([]byte, error) {
 		return nil, err
 	}
 	return body, nil
+}
+
+func embedCreator(cConts []coronaWorldWideStruct, queryType, whatDay string, i int) *discordgo.MessageEmbed {
+
+	embed := &discordgo.MessageEmbed{
+		Description: fmt.Sprintf("showing corona statistics for " + whatDay + ":"),
+		Color:       0x7b0e4e,
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{Name: "Population", Value: fmt.Sprintf("%d", cConts[i].Population), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cConts[i].Cases), Inline: true},
+			&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cConts[i].TodayCases), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cConts[i].Deaths), Inline: true},
+			&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cConts[i].TodayDeaths), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cConts[i].Recovered), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cConts[i].Active), Inline: true},
+		},
+		Footer: &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
+	}
+	//this here is because USA states API does not give critical conditions and to continue proper layout
+	if queryType != typeStates {
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{Name: "Critical", Value: fmt.Sprintf("%d", cConts[i].Critical), Inline: true})
+	}
+	embed.Fields = append(embed.Fields,
+		&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%.0f", cConts[i].CasesPerOneMillion), Inline: true},
+		&discordgo.MessageEmbedField{Name: "Total Tests", Value: fmt.Sprintf("%.0f", cConts[i].Tests), Inline: true})
+	switch queryType {
+	case "all":
+		embed.Title = fmt.Sprintf("Whole world")
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
+			URL: globeImage}
+	case "countries":
+		embed.Title = fmt.Sprintf("%s (%s)", cConts[i].Country, cConts[i].CountryInfo.Iso2)
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
+			URL: fmt.Sprintf("%s", cConts[i].CountryInfo.Flag)}
+	case "continents":
+		embed.Title = fmt.Sprintf("%s", cConts[i].Continent)
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
+			URL: continentImages[cConts[i].Continent]}
+	case "states":
+		embed.Title = fmt.Sprintf("USA, %s", cConts[i].State)
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
+			URL: "https://disease.sh/assets/img/flags/us.png"}
+	}
+	return embed
 }
