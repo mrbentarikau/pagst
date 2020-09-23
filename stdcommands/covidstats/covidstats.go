@@ -23,7 +23,7 @@ var (
 	typeContinents = "continents"
 	typeStates     = "states"
 
-	//These image links could disappear at random times.
+	//These image links could just disappear, not trustworthy 100%.
 	globeImage  = "http://pngimg.com/uploads/globe/globe_PNG63.png"
 	footerImage = "https://upload-icon.s3.us-east-2.amazonaws.com/uploads/icons/png/2129370911599778130-512.png"
 
@@ -64,17 +64,16 @@ var Command = &commands.YAGCommand{
 
 		var cStats coronaWorldWideStruct
 		var cConts []coronaWorldWideStruct
-		var queryType = typeCountries
+		var queryType = typeWorld
 		var whatDay = "current day"
 		var yesterday = "false"
 		var twoDaysAgo = "false"
 		var where, queryURL string
-		var flag string
 		var pagination = false
 
 		//to determine what will happen and what data gets shown
 		if data.Switches["countries"].Value != nil && data.Switches["countries"].Value.(bool) {
-			flag = typeCountries
+			queryType = typeCountries
 			pagination = true
 		} else if data.Switches["continents"].Value != nil && data.Switches["continents"].Value.(bool) {
 			queryType = typeContinents
@@ -97,17 +96,16 @@ var Command = &commands.YAGCommand{
 			}
 		}
 
+		fmt.Println(len(data.Switches))
+		//we make the final queryURL here
+		queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
 		if data.Args[0].Str() != "" {
-			where = data.Args[0].Str()
+			if queryType == typeWorld {
+				queryType = typeCountries
+			}
+			where = data.Args[0].Str() //any time some non-switch text is entered, it's not paginated
 			pagination = false
 			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, where+"?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
-		} else if (data.Args[0].Str() == "") && (flag == typeCountries) {
-			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
-		} else if (data.Args[0].Str() == "") && (queryType == typeCountries) {
-			queryType = typeWorld
-			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
-		} else {
-			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
 		}
 
 		//let's get that API data
