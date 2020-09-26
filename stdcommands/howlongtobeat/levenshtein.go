@@ -1,4 +1,5 @@
 // Simplest forms of Levenshtein Distance Calculation Functions
+// this is case-sensitive
 
 package howlongtobeat
 
@@ -18,7 +19,7 @@ func lowest(a, b, c int) int {
 func levenshtein(str1, str2 []rune) (int, float64) {
 	str1len := len(str1)
 	str2len := len(str2)
-	distance := make([]int, len(str1)+1)
+	distance := make([]int, str1len+1)
 
 	for i := 1; i <= str1len; i++ {
 		distance[i] = i
@@ -37,7 +38,8 @@ func levenshtein(str1, str2 []rune) (int, float64) {
 			lastkey = oldkey
 		}
 	}
-	levdistance := distance[str1len] - 1
+
+	levdistance := distance[str1len]
 	var similarity float64
 	similarity = (float64(str2len) - float64(levdistance)) / float64(str2len)
 	return levdistance, similarity

@@ -27,10 +27,10 @@ func getGameData(name string) (string, error) {
 	data.Add("detail", "0")           // extra information with user_stats ala speedruns, user rating etc...
 
 	u := &url.URL{
-		Scheme:   "https",
+		Scheme:   hltbScheme,
 		Host:     hltbHost,
 		Path:     hltbHostPath,
-		RawQuery: "page=1",
+		RawQuery: hltbRawQuery,
 	}
 
 	urlStr := u.String()
@@ -73,7 +73,7 @@ func parseGameData(gameName string, toReader *strings.Reader) ([]hltb, error) {
 
 	parseData.Find("li").Each(func(_ int, sel *goquery.Selection) {
 		queryParsed.ImageURL = sel.Find("img").AttrOr(`src`, ``)
-		queryParsed.GameURL = fmt.Sprintf("https://%s/%s", hltbHost, sel.Find("a").AttrOr(`href`, ``))
+		queryParsed.GameURL = fmt.Sprintf("%s%s", hltbURL, sel.Find("a").AttrOr(`href`, ``))
 
 		queryParsed.GameTitle = strings.TrimSpace(sel.Find("h3").Text())
 		queryParsed.PureTitle = strings.TrimSpace(sel.Find("a").AttrOr(`title`, ``))

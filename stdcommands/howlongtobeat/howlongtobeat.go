@@ -14,7 +14,7 @@ import (
 
 type hltb struct {
 	GameTitle     string
-	PureTitle     string
+	PureTitle     string //useful for Levenshtein calculation, symbol clutter removed
 	GameURL       string
 	ImageURL      string
 	MainStory     []string
@@ -26,8 +26,11 @@ type hltb struct {
 }
 
 var (
+	hltbScheme   = "https"
 	hltbHost     = "howlongtobeat.com"
+	hltbURL      = fmt.Sprintf("%s://%s/", hltbScheme, hltbHost)
 	hltbHostPath = "search_results.php"
+	hltbRawQuery = "page=1"
 )
 
 //Command var needs a comment for lint : )
@@ -36,17 +39,17 @@ var Command = &commands.YAGCommand{
 	Name:         "HowLongToBeat",
 	Aliases:      []string{"hltb"},
 	RequiredArgs: 1,
-	Description:  "Game information based on howlongtobeat.com, results ordered by term's popularity on site",
+	Description:  "Game information based on howlongtobeat.com, results ordered by term's popularity on site. Without -paginate gives the most popular result in case of broader search term.",
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "Game title", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Switch: "c", Name: "Compact output"},
-		&dcmd.ArgDef{Switch: "paginate", Name: "Results paginated, max 20,\nordered by Levenshtein term-similarity "},
+		&dcmd.ArgDef{Switch: "paginate", Name: "Results paginated, sorted by Levenshtein distance (max 20)"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var compactView, paginatedView bool
-		gameName := strings.TrimSpace(data.Args[0].Str())
+		gameName := data.Args[0].Str()
 
 		if data.Switches["c"].Value != nil && data.Switches["c"].Value.(bool) {
 			compactView = true
@@ -72,8 +75,6 @@ var Command = &commands.YAGCommand{
 			return "No results", nil
 		}
 
-		hltbEmbed := embedCreator(hltbQuery, 0, paginatedView)
-
 		if compactView {
 			compactData := fmt.Sprintf("%s: %s | %s | <%s>",
 				hltbQuery[0].GameTitle,
@@ -82,6 +83,8 @@ var Command = &commands.YAGCommand{
 				hltbQuery[0].GameURL)
 			return compactData, nil
 		}
+
+		hltbEmbed := embedCreator(hltbQuery, 0, paginatedView)
 
 		if paginatedView {
 			_, err := paginatedmessages.CreatePaginatedMessage(
