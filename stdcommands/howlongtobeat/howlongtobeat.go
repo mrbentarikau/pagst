@@ -1,122 +1,134 @@
 package howlongtobeat
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
-	"net/http"
+	"sort"
+	"strings"
 
 	"github.com/jonas747/dcmd"
 	"github.com/jonas747/discordgo"
+	"github.com/jonas747/yagpdb/bot/paginatedmessages"
 	"github.com/jonas747/yagpdb/commands"
 )
 
-type xkcd struct {
-	Month      string
-	Num        int64
-	Link       string
-	Year       string
-	News       string
-	SafeTitle  string
-	Transcript string
-	Alt        string
-	Img        string
-	Title      string
-	Day        string
+type hltb struct {
+	GameTitle     string
+	PureTitle     string
+	GameURL       string
+	ImageURL      string
+	MainStory     []string
+	MainExtra     []string
+	Completionist []string
+	LevDistance   int
+	LevSimilarity float64
+	OnlineGame    bool
 }
 
-var xkcdHost = "https://xkcd.com/"
-var xkcdJSON = "info.0.json"
+var (
+	hltbHost     = "howlongtobeat.com"
+	hltbHostPath = "search_results.php"
+)
 
-//Command is exported to
+//Command var needs a comment for lint : )
 var Command = &commands.YAGCommand{
-	CmdCategory: commands.CategoryFun,
-	Name:			"HowLongToBeat",
-	Aliases:		[]string{"hltb"},
+	CmdCategory:  commands.CategoryFun,
+	Name:         "HowLongToBeat",
+	Aliases:      []string{"hltb"},
 	RequiredArgs: 1,
-	Description: "An xkcd comic, by default returns random comic strip",
+	Description:  "Game information based on howlongtobeat.com, results ordered by term's popularity on site",
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "Comic number", Type: dcmd.Int},
+		&dcmd.ArgDef{Name: "Game title", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Switch: "noembed", Name: "Latest comic"},
+		&dcmd.ArgDef{Switch: "c", Name: "Compact output"},
+		&dcmd.ArgDef{Switch: "paginate", Name: "Results paginated, max 20,\nordered by Levenshtein term-similarity "},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		var compactView, paginatedView bool
+		gameName := strings.TrimSpace(data.Args[0].Str())
 
-		//first query to get latest number
-		latest := false
-		xkcd, err := getComic()
+		if data.Switches["c"].Value != nil && data.Switches["c"].Value.(bool) {
+			compactView = true
+		}
+
+		if data.Switches["paginate"].Value != nil && data.Switches["paginate"].Value.(bool) {
+			compactView = false
+			paginatedView = true
+		}
+
+		getData, err := getGameData(gameName)
 		if err != nil {
-			return "Something happened whilst getting the comic!", err
+			return nil, err
+		}
+		toReader := strings.NewReader(getData)
+
+		hltbQuery, err := parseGameData(gameName, toReader)
+		if err != nil {
+			return nil, err
 		}
 
-		xkcdNum := rand.Int63n(xkcd.Num) + 1
-
-		//latest comic strip flag, already got that data
-		if data.Switches["l"].Value != nil && data.Switches["l"].Value.(bool) {
-			latest = true
+		if hltbQuery[0].GameTitle == "" {
+			return "No results", nil
 		}
 
-		//specific comic strip number
-		if data.Args[0].Value != nil {
-			n := data.Args[0].Int64()
-			if n >= 1 && n <= xkcd.Num {
-				xkcdNum = n
-			} else {
-				return fmt.Sprintf("There's no comic numbered %d, current range is 1-%d", n, xkcd.Num), nil
-			}
+		hltbEmbed := embedCreator(hltbQuery, 0, paginatedView)
+
+		if compactView {
+			compactData := fmt.Sprintf("%s: %s | %s | <%s>",
+				hltbQuery[0].GameTitle,
+				strings.Trim(fmt.Sprint(hltbQuery[0].MainStory), "[]"),
+				strings.Trim(fmt.Sprint(hltbQuery[0].Completionist), "[]"),
+				hltbQuery[0].GameURL)
+			return compactData, nil
 		}
 
-		//if no latest flag is set, fetches a comic by number
-		if !latest {
-			xkcd, err = getComic(xkcdNum)
+		if paginatedView {
+			_, err := paginatedmessages.CreatePaginatedMessage(
+				data.GS.ID, data.CS.ID, 1, len(hltbQuery), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+					i := page - 1
+					sort.SliceStable(hltbQuery, func(i, j int) bool {
+						return hltbQuery[i].LevDistance < hltbQuery[j].LevDistance
+					})
+					paginatedEmbed := embedCreator(hltbQuery, i, paginatedView)
+					return paginatedEmbed, nil
+				})
 			if err != nil {
-				return "Something happened whilst getting the comic!", err
+				return "Something went wrong", nil
 			}
+		} else {
+			return hltbEmbed, nil
 		}
 
-		embed := &discordgo.MessageEmbed{
-			Title:       fmt.Sprintf("#%d: %s", xkcd.Num, xkcd.Title),
-			Description: fmt.Sprintf("[%s](%s%d/)", xkcd.Alt, xkcdHost, xkcd.Num),
-			Color:       int(rand.Int63n(16777215)),
-			Image: &discordgo.MessageEmbedImage{
-				URL: xkcd.Img,
-			},
-		}
-		return embed, nil
+		return nil, nil
 	},
 }
 
-func getComic(number ...int64) (*xkcd, error) {
-	xkcd := xkcd{}
-	queryURL := xkcdHost + xkcdJSON
+func embedCreator(hltbQuery []hltb, i int, paginated bool) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Author: &discordgo.MessageEmbedAuthor{
+			Name: hltbQuery[i].GameTitle,
+			URL:  hltbQuery[i].GameURL,
+		},
 
-	if len(number) >= 1 {
-		queryURL = fmt.Sprintf(xkcdHost+"%d/"+xkcdJSON, number[0])
+		Color: int(rand.Int63n(16777215)),
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{Name: hltbQuery[i].MainStory[0], Value: hltbQuery[i].MainStory[1]},
+		},
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: hltbQuery[i].ImageURL,
+		},
 	}
-
-	req, err := http.NewRequest("GET", queryURL, nil)
-	if err != nil {
-		return nil, err
+	if len(hltbQuery[i].MainExtra) > 0 {
+		embed.Fields = append(embed.Fields,
+			&discordgo.MessageEmbedField{Name: hltbQuery[i].MainExtra[0], Value: hltbQuery[i].MainExtra[1]})
 	}
-
-	req.Header.Set("User-Agent", "curl/7.65.1")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
+	if len(hltbQuery[i].Completionist) > 0 {
+		embed.Fields = append(embed.Fields,
+			&discordgo.MessageEmbedField{Name: hltbQuery[i].Completionist[0], Value: hltbQuery[i].Completionist[1]})
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	if paginated {
+		embed.Description = fmt.Sprintf("Distance: %d\nSimilarity: %.1f%%", hltbQuery[i].LevDistance, hltbQuery[i].LevSimilarity*100)
 	}
-
-	queryErr := json.Unmarshal(body, &xkcd)
-	if queryErr != nil {
-		return nil, queryErr
-	}
-
-	return &xkcd, nil
+	return embed
 }
