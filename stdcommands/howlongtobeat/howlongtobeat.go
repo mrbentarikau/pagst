@@ -39,13 +39,13 @@ var Command = &commands.YAGCommand{
 	Name:         "HowLongToBeat",
 	Aliases:      []string{"hltb"},
 	RequiredArgs: 1,
-	Description:  "Game information based on howlongtobeat.com, results ordered by term's popularity on site. Without -paginate gives the most popular result in case of broader search term.",
+	Description:  "Game information based on query from howlongtobeat.com.\nResults are sorted by popularity, it's their default. Without -p returns the first result.\nSwitch -p gives paginated output using Levenshtein distance sorting max 20 results.",
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "Game title", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Switch: "c", Name: "Compact output"},
-		&dcmd.ArgDef{Switch: "p", Name: "Paginated output, sorted by Levenshtein distance (max 20 pages)"},
+		&dcmd.ArgDef{Switch: "p", Name: "Paginated output"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var compactView, paginatedView bool
