@@ -76,9 +76,10 @@ var Command = &commands.YAGCommand{
 		}
 
 		if compactView {
-			compactData := fmt.Sprintf("%s: %s | %s | <%s>",
+			compactData := fmt.Sprintf("%s: %s | %s | %s | <%s>",
 				hltbQuery[0].GameTitle,
 				strings.Trim(fmt.Sprint(hltbQuery[0].MainStory), "[]"),
+				strings.Trim(fmt.Sprint(hltbQuery[0].MainExtra), "[]"),
 				strings.Trim(fmt.Sprint(hltbQuery[0].Completionist), "[]"),
 				hltbQuery[0].GameURL)
 			return compactData, nil
