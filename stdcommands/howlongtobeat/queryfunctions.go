@@ -13,15 +13,15 @@ import (
 
 func getGameData(searchTitle string) (string, error) {
 	data := url.Values{}
-	data.Set("queryString", searchTitle)
-	data.Add("t", "games")            // search type - for games, second option would be HLTB users
-	data.Add("sorthead", "popular")   // sort by release date,rating,popularity or name...  all parameters can be seen via header data, popular's the best
-	data.Add("sortd", "Normal Order") // sorting, Normal or Reverse
-	data.Add("plat", "")              // platform, empty string is for all
-	data.Add("length_type", "main")   // length range category, main is fine
-	data.Add("length_min", "")        // game length min
-	data.Add("length_max", "")        // game length max
-	data.Add("detail", "0")           // extra information with user_stats ala speedruns, user rating etc...
+	data.Set("queryString", searchTitle) //setting default request header query form data, the site uses
+	data.Add("t", "games")               // search type - for games, second option would be HLTB users
+	data.Add("sorthead", "popular")      // sort by release date,rating,popularity or name...  all parameters can be seen via header data, popular's the best
+	data.Add("sortd", "Normal Order")    // sorting, Normal or Reverse
+	data.Add("plat", "")                 // platform, empty string is for all
+	data.Add("length_type", "main")      // length range category, main is fine
+	data.Add("length_min", "")           // game length min
+	data.Add("length_max", "")           // game length max
+	data.Add("detail", "")               // extra information with user_stats ala speedruns, user rating etc...
 
 	u := &url.URL{
 		Scheme:   hltbScheme,
@@ -69,28 +69,28 @@ func parseGameData(gameName string, toReader *strings.Reader) ([]hltb, error) {
 	}
 
 	parseData.Find("li").Each(func(_ int, sel *goquery.Selection) {
-		queryParsed.ImageURL = sel.Find("img").AttrOr(`src`, ``)
-		queryParsed.GameURL = hltbURL + sel.Find("a").AttrOr(`href`, ``)
+		queryParsed.ImageURL = sel.Find("img").AttrOr("src", "")
+		queryParsed.GameURL = hltbURL + sel.Find("a").AttrOr("href", "")
 
 		queryParsed.GameTitle = strings.TrimSpace(sel.Find("h3").Text())
-		queryParsed.PureTitle = strings.TrimSpace(sel.Find("a").AttrOr(`title`, ``))
+		queryParsed.PureTitle = strings.TrimSpace(sel.Find("a").AttrOr("title", "")) //a tag has game title without &() etc
 		queryParsed.LevDistance, queryParsed.LevSimilarity = levenshtein([]rune(gameName), []rune(queryParsed.PureTitle))
 
-		if sel.Find(".search_list_tidbit_short").Length() > 0 {
+		/*if sel.Find(".search_list_tidbit_short").Length() > 0 { //maybe for future use
 			queryParsed.OnlineGame = true
-		}
+		}*/
 
 		sel.Find(".search_list_tidbit, .search_list_tidbit_short").Each(func(_ int, divSel *goquery.Selection) {
 			gameType := strings.TrimSpace(divSel.Text())
-			if gameType == `Main Story` || gameType == `Single-Player` || gameType == `Solo` {
+			if gameType == "Main Story" || gameType == "Single-Player" || gameType == "Solo" {
 				queryParsed.MainStory = []string{gameType, strings.TrimSpace(divSel.Next().Text())}
 			}
 
-			if gameType == `Main + Extra` || gameType == `Co-Op` {
+			if gameType == "Main + Extra" || gameType == "Co-Op" {
 				queryParsed.MainExtra = []string{gameType, strings.TrimSpace(divSel.Next().Text())}
 			}
 
-			if gameType == `Completionist` || gameType == `Vs.` {
+			if gameType == "Completionist" || gameType == "Vs." {
 				queryParsed.Completionist = []string{gameType, strings.TrimSpace(divSel.Next().Text())}
 			}
 		})
