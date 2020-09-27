@@ -45,7 +45,7 @@ var Command = &commands.YAGCommand{
 	},
 	ArgSwitches: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Switch: "c", Name: "Compact output"},
-		&dcmd.ArgDef{Switch: "paginate", Name: "Results paginated, sorted by Levenshtein distance (max 20)"},
+		&dcmd.ArgDef{Switch: "p", Name: "Paginated output, sorted by Levenshtein distance (max 20 pages)"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var compactView, paginatedView bool
@@ -55,7 +55,7 @@ var Command = &commands.YAGCommand{
 			compactView = true
 		}
 
-		if data.Switches["paginate"].Value != nil && data.Switches["paginate"].Value.(bool) {
+		if data.Switches["p"].Value != nil && data.Switches["p"].Value.(bool) {
 			compactView = false
 			paginatedView = true
 		}
@@ -131,7 +131,7 @@ func embedCreator(hltbQuery []hltb, i int, paginated bool) *discordgo.MessageEmb
 			&discordgo.MessageEmbedField{Name: hltbQuery[i].Completionist[0], Value: hltbQuery[i].Completionist[1]})
 	}
 	if paginated {
-		embed.Description = fmt.Sprintf("Distance: %d\nSimilarity: %.1f%%", hltbQuery[i].LevDistance, hltbQuery[i].LevSimilarity*100)
+		embed.Description = fmt.Sprintf("Lev distance: %d\nTerm similarity: %.1f%%", hltbQuery[i].LevDistance, hltbQuery[i].LevSimilarity*100)
 	}
 	return embed
 }
