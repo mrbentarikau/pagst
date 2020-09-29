@@ -135,7 +135,10 @@ func HandleSelectServer(w http.ResponseWriter, r *http.Request) interface{} {
 
 	posts := discordblog.GetNewestPosts(10)
 	tmpl["Posts"] = posts
-	tmpl["RedditQuotes"] = *(*string)(atomic.LoadPointer(redditQuote))
+	//tmpl["RedditQuotes"] = *(*string)(atomic.LoadPointer(redditQuote))
+	tmpl["RedditQuotes"] = "Not meant to work"
+
+	fmt.Printf("%#v", redditQuote)
 
 	return tmpl
 }
@@ -432,8 +435,9 @@ func pollRedditQuotes() {
 	for {
 		quote, err := ioutil.ReadFile("dailyredditquote")
 		if err != nil {
+
 			logger.WithError(err).Error("failed reading dailyredditquote file")
-			return
+			//return
 		} else {
 			atomic.StorePointer(redditQuote, unsafe.Pointer(&quote))
 		}
@@ -447,16 +451,6 @@ func handleRobotsTXT(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`User-agent: *
 Disallow: /manage/
 `))
-}
-
-func handleKeyBaseTXT(w http.ResponseWriter, r *http.Request) {
-	f, err := ioutil.ReadFile("keybase.txt")
-	if err != nil {
-		logger.WithError(err).Error("failed reading keybase.txt file")
-		return
-	}
-
-	w.Write(f)
 }
 
 func handleAdsTXT(w http.ResponseWriter, r *http.Request) {
