@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"html"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -135,7 +136,7 @@ func HandleSelectServer(w http.ResponseWriter, r *http.Request) interface{} {
 	posts := discordblog.GetNewestPosts(10)
 	tmpl["Posts"] = posts
 	//tmpl["RedditQuotes"] = *(*string)(atomic.LoadPointer(redditQuote))
-	tmpl["RedditQuotes"] = redditQuote
+	tmpl["RedditQuotes"] = html.UnescapeString(redditQuote)
 
 	return tmpl
 }
