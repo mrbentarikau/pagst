@@ -14,7 +14,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"unsafe"
 
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/yagpdb/bot/botrest"
@@ -136,9 +135,7 @@ func HandleSelectServer(w http.ResponseWriter, r *http.Request) interface{} {
 	posts := discordblog.GetNewestPosts(10)
 	tmpl["Posts"] = posts
 	//tmpl["RedditQuotes"] = *(*string)(atomic.LoadPointer(redditQuote))
-	tmpl["RedditQuotes"] = "Not meant to work"
-
-	fmt.Printf("%#v", redditQuote)
+	tmpl["RedditQuotes"] = redditQuote
 
 	return tmpl
 }
@@ -308,7 +305,7 @@ func genFakeNodeStatuses(hosts int, nodes int, shards int) []*HostStatus {
 
 	for hostI := 0; hostI < hosts; hostI++ {
 		host := &HostStatus{
-			Name: "yagpdb-" + strconv.Itoa(hostI),
+			Name: "pagstdb-" + strconv.Itoa(hostI),
 		}
 		for nodeI := 0; nodeI < nodes; nodeI++ {
 
@@ -428,19 +425,13 @@ func pollCCsRan() {
 	}
 }
 
-var redditQuote = new(unsafe.Pointer)
+var redditQuote string
 
 func pollRedditQuotes() {
 	t := time.NewTicker(time.Hour)
 	for {
-		quote, err := ioutil.ReadFile("dailyredditquote")
-		if err != nil {
 
-			logger.WithError(err).Error("failed reading dailyredditquote file")
-			//return
-		} else {
-			atomic.StorePointer(redditQuote, unsafe.Pointer(&quote))
-		}
+		redditQuote = getRedditQuote()
 
 		<-t.C
 	}

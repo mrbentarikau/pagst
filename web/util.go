@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,12 +20,53 @@ import (
 	"goji.io/pattern"
 )
 
+type redditQuoteStruct struct {
+	Data struct {
+		Children []struct {
+			Data struct {
+				Selfttext string `json:"selftext"`
+			}
+		}
+	}
+}
+
 var ErrTokenExpired = errors.New("OAUTH2 Token expired")
 
 var panelLogKeyCore = cplogs.RegisterActionFormat(&cplogs.ActionFormat{
 	Key:          "save_core_config",
 	FormatString: "Updated core config",
 })
+
+func getRedditQuote() string {
+	var redditQuoteQuery []redditQuoteStruct
+	var RedditHost = "https://api.reddit.com/"
+	var RedditJSON = "r/caubert/random.json"
+
+	queryURL := RedditHost + RedditJSON
+	req, err := http.NewRequest("GET", queryURL, nil)
+	if err != nil {
+		return fmt.Sprint("Error: ", err)
+	}
+
+	req.Header.Set("User-Agent", "PAGST/20.42.6702")
+
+	resp, _ := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Sprint("Error: ", err)
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Sprint("Error: ", err)
+	}
+
+	queryErr := json.Unmarshal(body, &redditQuoteQuery)
+	if queryErr != nil {
+		return fmt.Sprint("Error: ", queryErr)
+	}
+
+	return redditQuoteQuery[0].Data.Children[0].Data.Selfttext
+}
 
 func SetContextTemplateData(ctx context.Context, data map[string]interface{}) context.Context {
 	// Check for existing data
