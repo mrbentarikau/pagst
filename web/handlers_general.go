@@ -429,7 +429,7 @@ func pollCCsRan() {
 var redditQuote string
 
 func pollRedditQuotes() {
-	t := time.NewTicker(time.Hour)
+	t := time.NewTicker(time.Hour * 24)
 	for {
 
 		redditQuote = getRedditQuote()
