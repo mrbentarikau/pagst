@@ -1,6 +1,8 @@
 @namespace svg url(http://www.w3.org/2000/svg);
 /* colours #1a1a1a, #1f1f1f, #2f2f2f #a1a1a1, ##abb4be, #c1c1c1, #89aa00, #aa8900, #ec7261 */
 
+html,body{background-color:#1a1a1a!important}
+div>div>div>div>div>div>div>div>[class*=tocWrapper]{background-color: #1f1f1f !important;}
 div,a,code,table, tr,td,input,textarea  {background-color: transparent !important;}
 div[class*="pagesTree"],div[class*="menu"]{background-color:#1f1f1f!important}
 [class*="pageTitle"],li, p>span,  input,div, textarea {color:#c1c1c1 !important}
