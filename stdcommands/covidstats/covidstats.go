@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/jonas747/dcmd"
 	"github.com/jonas747/discordgo"
@@ -196,7 +197,8 @@ func embedCreator(cConts []coronaWorldWideStruct, queryType, whatDay string, i i
 			&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cConts[i].Recovered), Inline: true},
 			&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cConts[i].Active), Inline: true},
 		},
-		Footer: &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
+		Footer:    &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
+		Timestamp: time.Now().Format(time.RFC3339),
 	}
 	//this here is because USA states API does not give critical conditions and to continue proper layout
 	if queryType != typeStates {
