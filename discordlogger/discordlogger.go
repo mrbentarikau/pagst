@@ -64,7 +64,7 @@ func EventHandler(evt *eventsystem.EventData) (retry bool, err error) {
 
 			logger.WithError(err).Error("failed fetching guild data")
 		}
-
+		count = count - 1
 		msg = fmt.Sprintf(":x: Left guild **%s** :(", guildData.Name)
 	case eventsystem.EventNewGuild:
 		msg = fmt.Sprintf(":white_check_mark: Joined guild **%s** :D", evt.GuildCreate().Guild.Name)
