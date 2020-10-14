@@ -4,7 +4,7 @@ PAGSTDB
 ### People Against Generally Shitty Things Discrod Bot
 
 ## Installation
-You have to know how to fill the environment file and setup the bot via Discord.
+You have to know how to fill the environment file and setup the bot via Discord - intents need to be enabled!
 
 the rest is > https://www.youtube.com/watch?v=P6e2AY8Rw3M
 
