@@ -58,6 +58,7 @@ var Command = &commands.YAGCommand{
 		&dcmd.ArgDef{Switch: "countries", Name: "Countries of the World"},
 		&dcmd.ArgDef{Switch: "continents", Name: "The Continents of the World"},
 		&dcmd.ArgDef{Switch: "states", Name: "A State name in USA"},
+		&dcmd.ArgDef{Switch: "page", Name: "Go to page number, works for paginated output", Type: dcmd.Int},
 		&dcmd.ArgDef{Switch: "1d", Name: "Stats from yesterday"},
 		&dcmd.ArgDef{Switch: "2d", Name: "Stats from the day before yesterday (does not apply to states)"},
 	},
@@ -70,18 +71,19 @@ var Command = &commands.YAGCommand{
 		var yesterday = "false"
 		var twoDaysAgo = "false"
 		var where, queryURL string
-		var pagination = false
+		var pagination = true
+		var pageInit = 1
 
 		//to determine what will happen and what data gets shown
 		if data.Switches["countries"].Value != nil && data.Switches["countries"].Value.(bool) {
 			queryType = typeCountries
-			pagination = true
+			//pagination = true
 		} else if data.Switches["continents"].Value != nil && data.Switches["continents"].Value.(bool) {
 			queryType = typeContinents
-			pagination = true
+			//pagination = true
 		} else if data.Switches["states"].Value != nil && data.Switches["states"].Value.(bool) {
 			queryType = typeStates
-			pagination = true
+			//pagination = true
 		}
 
 		//day-back switches
@@ -97,7 +99,6 @@ var Command = &commands.YAGCommand{
 			}
 		}
 
-		fmt.Println(len(data.Switches))
 		//we make the final queryURL here
 		queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, "?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
 		if data.Args[0].Str() != "" {
@@ -105,7 +106,7 @@ var Command = &commands.YAGCommand{
 				queryType = typeCountries
 			}
 			where = data.Args[0].Str() //any time some non-switch text is entered, it's not paginated
-			pagination = false
+			//pagination = false
 			queryURL = fmt.Sprintf("%s%s/%s", diseaseAPIHost, queryType, where+"?yesterday="+yesterday+"&twoDaysAgo="+twoDaysAgo+"&strict=true")
 		}
 
@@ -134,6 +135,16 @@ var Command = &commands.YAGCommand{
 		//let's render everything to slice
 		cConts = append(cConts, cStats)
 
+		//giving page number option for paginated modes
+		p := data.Switch("page")
+		if p.Value != nil {
+			pageInit = int(p.Value.(int64))
+		}
+
+		if pageInit > len(cConts)-1 {
+			pageInit = 1
+		}
+
 		//let's sort by total Covid-19 cases
 		sort.SliceStable(cConts, func(i, j int) bool {
 			return cConts[i].Cases > cConts[j].Cases
@@ -142,9 +153,14 @@ var Command = &commands.YAGCommand{
 		var embed = &discordgo.MessageEmbed{}
 		embed = embedCreator(cConts, queryType, whatDay, 0)
 
+		//no pagination for whole world stats
+		if queryType == typeWorld || data.Args[0].Str() != "" {
+			pagination = false
+		}
+
 		if pagination {
 			_, err := paginatedmessages.CreatePaginatedMessage(
-				data.GS.ID, data.CS.ID, 1, len(cConts)-1, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				data.GS.ID, data.CS.ID, pageInit, len(cConts)-1, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					embed = embedCreator(cConts, queryType, whatDay, page-1)
 					return embed, nil
 				})
