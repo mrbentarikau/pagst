@@ -28,7 +28,7 @@
         {{range .Posts}}
         <secton class="card">
             <header class="card-header">
-                <h2 class="card-title float-left"><img class="avatar mr-2" src="{{.Message.Author.AvatarURL "256"}}"></img>{{.Message.Author.Username}}</h2>
+                <h2 class="card-title float-left"><img class="avatar mr-2" src='{{.Message.Author.AvatarURL "256"}}'></img>{{.Message.Author.Username}}</h2>
                 <span class="float-right">{{humanizeTimeSinceDays .ParsedTimestamp}} ago ({{.ParsedTimestamp.Format "02 Jan 06 15:04"}})</span>
             </header>
             <div class="card-body">
@@ -63,8 +63,8 @@
             </header>
             <div class="card-body">
                 <p>PAGSTDB* is not meant as a stable variant of YAGPDB. If you want to explore more fringe stuff, use it, alas it goes up/down randomly.</p>
-                <p>If you stumble into any issues and need help, RTFM and join YAG's support server.</p>
-                <p><sub>*If you build your Discord server relying on PAGST.xyz service and it goes down by any means, databases or permanent changes included - don't come complaining and try self-hosting yourself!</sub></p>
+                <p>If you stumble into any issues and need help, RTFM.</p>
+                <p><sub>*If you build your Discord server relying on PAGST.xyz service and it goes down by any means, deleted databases or permanent changes included - don't come complaining and try self-hosting yourself; or actually instead of buying shitty Nitros, give some coin to Jonas!</sub></p>
             </div>
         </section>
         {{if .patreonActive}}
@@ -89,7 +89,7 @@
                 <p>YAGPDB is open source! The project is hosted on GitHub here: <a href="https://github.com/jonas747/yagpdb">jonas747/yagpdb</a>.</br>
                 and PAGSTPDB is here: <a href="https://github.com/mrbentarikau/pagst">mrbentarikau/pagst</a>.</p>
                 <p>Looking for the YAGPDB support's <a href="https://discord.gg/4udtcA5">Discord server</a>?</br>
-                PAGST does not have support (although it's on freenode) - it's hard to get PAGST membership, as it is hard to generalize everything shitty.</p>
+                PAGST does not have support (although it's on <a href="https://freenode.net">freenode</a>) - it's hard to get PAGST membership, as it is hard to generalize everything shitty.</p>
             </div>
         </section>
     </div>
