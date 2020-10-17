@@ -15,7 +15,7 @@ import (
 var _ backgroundworkers.BackgroundWorkerPlugin = (*Plugin)(nil)
 
 func (p *Plugin) RunBackgroundWorker() {
-	ticker := time.NewTicker(time.Minute * 60)
+	ticker := time.NewTicker(time.Minute * 30)
 	for {
 		select {
 		case <-ticker.C:
