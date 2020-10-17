@@ -11,12 +11,11 @@
                 <h2 class="card-title">Bot added to <b>{{.JoinedGuild.Name}}!</b></h2>
             </header>
             <div class="card-body">
-                <p>You manage this bot through a web control panel, if you need any help or want to contact the owner you can join the support server (There is a link above)</p>
-                <p>I'm working on adding proper documentation and guides but at this moment the documentation is very lacking, and it may seem a bit complicated. As as I said earlier, join the support server if you have any questions, although please do try a little on your own first, as I and the support team's time is limited.</p>
+                <p>Welcome to <i>Cessation of Existence...</i></p>
                 {{if .User}}
                 <a class="btn btn-primary" href="/manage/{{.JoinedGuild.ID}}/home">Click here to start managing it</a><br/>
                 {{else}}
-                <a class="btn btn-primary" href="/login?goto={{urlquery "/manage/" .JoinedGuild.ID "/home" }}">Click here to login and start managing it</a>
+                <a class="btn btn-primary" href='/login?goto={{urlquery "/manage/" .JoinedGuild.ID "/home" }}'>Click here to login and start managing it</a>
                 {{end}}
                 <br/>
                 <p>For future reference, you can log in and access your server in the top right menu. If the server did not show up as added in the menu above now, try reloading the page, and if it still does not show up as added then join the support server. (Link above)</p>
@@ -86,10 +85,10 @@
                 <h2 class="card-title">Check out...</h2>
             </header>
             <div class="card-body">
-                <p>YAGPDB is open source! The project is hosted on GitHub here: <a href="https://github.com/jonas747/yagpdb">jonas747/yagpdb</a>.</br>
-                and PAGSTPDB is here: <a href="https://github.com/mrbentarikau/pagst">mrbentarikau/pagst</a>.</p>
-                <p>Looking for the YAGPDB support's <a href="https://discord.gg/4udtcA5">Discord server</a>?</br>
-                PAGST does not have support (although it's on <a href="https://freenode.net">freenode</a>) - it's hard to get PAGST membership, as it is hard to generalize everything shitty.</p>
+                <p>YAGPDB is open source! The project is hosted on GitHub here: <a href="https://github.com/jonas747/yagpdb" target="_blank">jonas747/yagpdb</a>.</br>
+                and PAGSTPDB is here: <a href="https://github.com/mrbentarikau/pagst" target="_blank">mrbentarikau/pagst</a>.</p>
+                <p>Looking for the YAGPDB support's <a href="https://discord.gg/4udtcA5" target="_blank">Discord server</a>?</br>
+                PAGST does not have support (although it's on <a href="https://freenode.net" target="_blank">freenode</a>) - it's hard to get PAGST membership, as it is hard to generalize everything shitty.</p>
             </div>
         </section>
     </div>
