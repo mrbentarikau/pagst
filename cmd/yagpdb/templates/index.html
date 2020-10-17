@@ -50,10 +50,12 @@
     </button>
     <div class="collapse navbar-collapse poppins" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
+        {{ if not (ge .JoinedServers 23) }}
         <li class="nav-item active">
-		          <a class="nav-link" href="https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827775&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}">Add to Server</a>
+		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827775&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
 			         
 	      </li>
+        {{ end }}
         <li class="nav-item active">
           <a class="nav-link" href="https://lbry.tv/@caubert:c47/pagst-yagpdb-install-on-archlinux:4">Bot Install Tutorial</a>
         </li>
