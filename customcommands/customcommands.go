@@ -88,6 +88,17 @@ var (
 		CommandTriggerInterval:   "Interval",
 		CommandTriggerReaction:   "Reaction",
 	}
+
+	embedTriggerStrings = map[CommandTriggerType]string{
+		CommandTriggerNone:       "none",
+		CommandTriggerCommand:    "comm",
+		CommandTriggerStartsWith: "star",
+		CommandTriggerContains:   "cont",
+		CommandTriggerRegex:      "regx",
+		CommandTriggerExact:      "exac",
+		CommandTriggerInterval:   "intv",
+		CommandTriggerReaction:   "reac",
+	}
 )
 
 const (
@@ -98,6 +109,10 @@ const (
 
 func (t CommandTriggerType) String() string {
 	return triggerStrings[t]
+}
+
+func (t CommandTriggerType) EmbedString() string {
+	return embedTriggerStrings[t]
 }
 
 type CustomCommand struct {

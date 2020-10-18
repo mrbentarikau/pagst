@@ -3,6 +3,7 @@ package customcommands
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"regexp"
 	"runtime/debug"
@@ -23,6 +24,7 @@ import (
 	"github.com/jonas747/dstate/v2"
 	"github.com/jonas747/yagpdb/bot"
 	"github.com/jonas747/yagpdb/bot/eventsystem"
+	"github.com/jonas747/yagpdb/bot/paginatedmessages"
 	"github.com/jonas747/yagpdb/commands"
 	"github.com/jonas747/yagpdb/common"
 	"github.com/jonas747/yagpdb/common/keylock"
@@ -98,6 +100,9 @@ var cmdListCommands = &commands.YAGCommand{
 		&dcmd.ArgDef{Name: "ID", Type: dcmd.Int},
 		&dcmd.ArgDef{Name: "Trigger", Type: dcmd.String},
 	},
+	ArgSwitches: []*dcmd.ArgDef{
+		&dcmd.ArgDef{Switch: "raw", Name: "Raw, legacy output"},
+	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		ccs, err := models.CustomCommands(qm.Where("guild_id = ?", data.GS.ID), qm.OrderBy("local_id")).AllG(data.Context())
 		if err != nil {
@@ -117,15 +122,32 @@ var cmdListCommands = &commands.YAGCommand{
 
 		foundCCS, provided := FindCommands(ccs, data)
 		if len(foundCCS) < 1 {
+			var title string
+			maxLength := 25
 			list := StringCommands(ccs, groupMap)
 			if len(list) == 0 {
 				return "This server has no custom commands, sry.", nil
 			}
+
+			title = "No id or trigger provided...\nHere is a list of all server commands:"
 			if provided {
-				return "No command by that name or id found, here is a list of them all:\n" + list, nil
-			} else {
-				return "No id or trigger provided, here is a list of all server commands:\n" + list, nil
+				title = "No command by that name or id found...\nHere is a list of them all:"
 			}
+
+			if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+				return title + list, nil
+			}
+			_, err := paginatedmessages.CreatePaginatedMessage(
+				data.GS.ID, data.CS.ID, 1, int(math.Ceil(float64(len(ccs))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+					i := page - 1
+					paginatedEmbed := embedCreator(ccs, i, maxLength, title, groupMap)
+					return paginatedEmbed, nil
+				})
+			if err != nil {
+				return "Something went wrong", nil
+			}
+
+			return nil, nil
 		}
 
 		if len(foundCCS) > 1 {
@@ -140,6 +162,32 @@ var cmdListCommands = &commands.YAGCommand{
 			return fmt.Sprintf("#%d - %s - Group: `%s`\n```\n%s\n```", cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64], strings.Join(cc.Responses, "```\n```")), nil
 		}
 	},
+}
+
+func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap map[int64]string) *discordgo.MessageEmbed {
+	description := fmt.Sprintf("%s\n```%3s|%9s|%29s\n", title, "ccID", "Group", "Trigger")
+	description += "--------------------------------------------\n"
+	for k, v := range ccs[i*ml:] {
+		var group, textTrigger string
+		group = gMap[v.GroupID.Int64]
+		if group == "Ungrouped" {
+			group = "uG"
+		} else if len(group) > 8 {
+			group = group[:8] + "_"
+		}
+
+		if textTrigger = v.TextTrigger; len(textTrigger) > 23 {
+			textTrigger = textTrigger[:23] + "_"
+		}
+		if k <= ml-1 {
+			description += fmt.Sprintf("#%3d|%9s|%-3s:%24s\n", v.LocalID, group, CommandTriggerType(v.TriggerType).EmbedString(), textTrigger)
+		}
+	}
+	description += "```"
+	embed := &discordgo.MessageEmbed{
+		Description: description,
+	}
+	return embed
 }
 
 func FindCommands(ccs []*models.CustomCommand, data *dcmd.Data) (foundCCS []*models.CustomCommand, provided bool) {
@@ -167,6 +215,11 @@ func FindCommands(ccs []*models.CustomCommand, data *dcmd.Data) (foundCCS []*mod
 	}
 
 	return
+}
+
+func embedPaginateCommands(ccs []*models.CustomCommand, gMap map[int64]string) *discordgo.MessageEmbed {
+	var embed *discordgo.MessageEmbed
+	return embed
 }
 
 func StringCommands(ccs []*models.CustomCommand, gMap map[int64]string) string {
