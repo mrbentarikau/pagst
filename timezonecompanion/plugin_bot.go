@@ -115,6 +115,7 @@ func (p *Plugin) AddCommands() {
 			if manyZones != "" {
 				zone = manyZones
 			}
+
 			loc, err := time.LoadLocation(zone)
 			if err != nil {
 				return "Unknown timezone", nil
