@@ -46,7 +46,7 @@
                     {{$g := .ActiveGuild}}
                     {{$dot := .}}
                     <form class="form-horizontal" method="post"
-                        action="/manage/{{$guild}}/customcommands/commands/{{.CC.LocalID}}/update" data-async-form>
+                        action="/manage/{{$guild}}/customcommands/commands/{{.CC.LocalID}}/update" data-async-form id="pagstForm">
                         <button type="submit" class="hidden"
                             formaction="/manage/{{$guild}}/customcommands/commands/{{.CC.LocalID}}/update"
                             data-async-form-alertsonly></button>
@@ -353,6 +353,8 @@
                         </div>
 
                         <div class="row mt-4">
+                            <script type="text/javascript" src="/static/js/shortcuts.js"></script>
+                            <script>shortcut.add("shift+alt+s",function(){document.getElementById('pagstForm').submit();});</script>
                             <div class="col">
                                 <button type="submit" class="btn btn-success btn-block"
                                     formaction="/manage/{{$guild}}/customcommands/commands/{{.CC.LocalID}}/update"
