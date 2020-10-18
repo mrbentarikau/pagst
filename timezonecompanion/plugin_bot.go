@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 	"time"
 
@@ -74,13 +75,14 @@ func (p *Plugin) AddCommands() {
 					if err != nil {
 						return nil, err
 					}
-					return "Deleted", nil
+					return "Registered time zone deleted", nil
 				} else {
 					return "You don't have a registered time zone", nil
 				}
 			}
-
-			zones := FindZone(parsed.Args[0].Str())
+			var out, manyZones, zone string
+			userInput := parsed.Args[0].Str()
+			zones := FindZone(userInput)
 			if len(zones) < 1 {
 				return fmt.Sprintf("Unknown timezone, enter a country or timezone (not abbreviation like CET). there's a timezone picker here: <http://kevalbhatt.github.io/timezone-picker> you can use, enter the `Area/City` result\n\n%s", userTZ), nil
 			}
@@ -95,23 +97,30 @@ func (p *Plugin) AddCommands() {
 					return nil, err
 				}
 
-				out := "More than 1 result, reuse the command with a one of the following:\n"
+				out = "More than 1 result, reuse the command for fine tuning with a one of the following:\n"
+				levDistance := 1000
 				for _, v := range zones {
 					if s := StrZone(v); s != "" {
+						re := regexp.MustCompile(`.*` + userInput + `.*:`)
+						if levD := levenshtein([]rune(userInput), []rune(re.FindString(s))); levD <= levDistance {
+							levDistance = levD
+							manyZones = v
+						}
 						out += s + "\n"
 					}
 				}
-				out += "\n" + userTZ
-
-				return out, nil
 			}
-			loc, err := time.LoadLocation(zones[0])
+
+			if manyZones == "" {
+				zone = zones[0]
+			} else {
+				zone = manyZones
+			}
+			loc, err := time.LoadLocation(zone)
 			if err != nil {
 				return "Unknown timezone", nil
 			}
-
 			name, _ := time.Now().In(loc).Zone()
-			zone := zones[0]
 
 			m := &models.UserTimezone{
 				UserID:       parsed.Msg.Author.ID,
@@ -122,8 +131,13 @@ func (p *Plugin) AddCommands() {
 			if err != nil {
 				return nil, err
 			}
+			if manyZones != "" {
+				out += "\n" + fmt.Sprintf("Set your timezone to closest match `%s`: %s\n", zone, name)
+				return out, nil
 
+			}
 			return fmt.Sprintf("Set your timezone to `%s`: %s\n", zone, name), nil
+
 		},
 	}, &commands.YAGCommand{
 		CmdCategory:         commands.CategoryTool,
