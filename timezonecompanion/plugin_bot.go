@@ -111,17 +111,16 @@ func (p *Plugin) AddCommands() {
 				}
 			}
 
-			if manyZones == "" {
-				zone = zones[0]
-			} else {
+			zone = zones[0]
+			if manyZones != "" {
 				zone = manyZones
 			}
 			loc, err := time.LoadLocation(zone)
 			if err != nil {
 				return "Unknown timezone", nil
 			}
-			name, _ := time.Now().In(loc).Zone()
 
+			name, _ := time.Now().In(loc).Zone()
 			m := &models.UserTimezone{
 				UserID:       parsed.Msg.Author.ID,
 				TimezoneName: zone,
