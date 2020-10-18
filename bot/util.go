@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -242,26 +243,31 @@ func NodeID() string {
 
 // RefreshStatus updates the provided sessions status according to the current status set
 func RefreshStatus(session *discordgo.Session) {
+
 	var streamingURL string
 	var status string
 	err1 := common.RedisPool.Do(radix.Cmd(&streamingURL, "GET", "status_streaming"))
 	err2 := common.RedisPool.Do(radix.Cmd(&status, "GET", "status_name"))
 	if err1 != nil {
-		logger.WithError(err1).Error("failed retrieiving bot streaming status")
+		logger.WithError(err1).Error("failed retrieving bot streaming status")
 	}
 	if err2 != nil {
-		logger.WithError(err2).Error("failed retrieiving bot status")
+		logger.WithError(err2).Error("failed retrieving bot status")
 	}
 
 	if streamingURL != "" {
 		session.UpdateStreamingStatus(0, status, streamingURL)
 	} else {
-		session.UpdateStatus(0, status)
+		if math.Mod(float64(time.Now().Hour()), 2) == 0 {
+			session.UpdateStatus(0, status)
+		} else {
+			session.UpdateListeningStatus(status)
+		}
 	}
 
 }
 
-// IsMemberAbove returns wether ms1 is above ms2 in terms of roles (e.g the highest role of ms1 is higher than the highest role of ms2)
+// IsMemberAbove returns weather ms1 is above ms2 in terms of roles (e.g the highest role of ms1 is higher than the highest role of ms2)
 // assumes gs is locked, otherwise race conditions will occur
 func IsMemberAbove(gs *dstate.GuildState, ms1 *dstate.MemberState, ms2 *dstate.MemberState) bool {
 	if ms1.ID == gs.Guild.OwnerID {
