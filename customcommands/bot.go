@@ -172,12 +172,12 @@ func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap m
 		group = gMap[v.GroupID.Int64]
 		if group == "Ungrouped" {
 			group = "uG"
-		} else if len(group) > 8 {
-			group = group[:8] + "_"
+		} else if len([]rune(group)) > 8 {
+			group = string([]rune(group)[:8]) + "_"
 		}
 
-		if textTrigger = v.TextTrigger; len(textTrigger) > 23 {
-			textTrigger = textTrigger[:23] + "_"
+		if textTrigger = v.TextTrigger; len([]rune(textTrigger)) > 23 {
+			textTrigger = string([]rune(textTrigger)[:23]) + "_"
 		}
 		if k <= ml-1 {
 			description += fmt.Sprintf("#%3d|%9s|%-3s:%24s\n", v.LocalID, group, CommandTriggerType(v.TriggerType).EmbedString(), textTrigger)
@@ -215,11 +215,6 @@ func FindCommands(ccs []*models.CustomCommand, data *dcmd.Data) (foundCCS []*mod
 	}
 
 	return
-}
-
-func embedPaginateCommands(ccs []*models.CustomCommand, gMap map[int64]string) *discordgo.MessageEmbed {
-	var embed *discordgo.MessageEmbed
-	return embed
 }
 
 func StringCommands(ccs []*models.CustomCommand, gMap map[int64]string) string {
