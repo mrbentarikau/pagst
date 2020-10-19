@@ -113,7 +113,9 @@
                         </div>
                     </form>
                     {{end}}
-                    <form method="post" action="/manage/{{.ActiveGuild.ID}}/customcommands/commands/new">
+                    <form method="post" action="/manage/{{.ActiveGuild.ID}}/customcommands/commands/new" id="pagstNewCommand">
+                        <script type="text/javascript" src="/static/js/shortcuts.js"></script>
+                            <script>shortcut.add("shift+alt+c",function(){document.getElementById('pagstNewCommand').submit();});</script>
                         <input type="text" name="GroupID" hidden
                             value="{{if .CurrentCommandGroup}}{{.CurrentCommandGroup.ID}}{{end}}">
                         <button type="submit" class="btn btn-success">Create
