@@ -78,7 +78,7 @@ var Command = &commands.YAGCommand{
 			//fmt.Sprintf("%s %.0f%s%.0f %s%d%s%d %s", "Min..Max:", weather.Main.Temp_Min, "..", weather.Main.Temp_Max, "°C (", int(float64(weather.Main.Temp_Min)*1.8+32), "..", int(float64(weather.Main.Temp_Max)*1.8+32), "°F)"),
 			fmt.Sprintf("%s %s %.1f %s %s", "Wind:", windDir[windDirection], weather.Wind.Speed, "m/s", windDirection),
 			fmt.Sprintf("%s %d%s %d %s", "Humidity:", weather.Main.Humidity, "% // Pressure:", weather.Main.Pressure, "hPa"),
-			fmt.Sprintf("%s %s %s %s", "Sunrise:", time.Unix(weather.Sys.Sunrise, 0), "\nSunset: ", time.Unix(weather.Sys.Sunset, 0)),
+			fmt.Sprintf("%s %s %s %s", "Sunrise:", time.Unix(weather.Sys.Sunrise, 0).Format(time.UnixDate), "\nSunset: ", time.Unix(weather.Sys.Sunset, 0).Format(time.UnixDate)),
 		}
 
 		//Weather condition data referenced > https://openweathermap.org/weather-conditions
