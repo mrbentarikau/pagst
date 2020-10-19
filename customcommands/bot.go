@@ -165,25 +165,25 @@ var cmdListCommands = &commands.YAGCommand{
 }
 
 func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap map[int64]string) *discordgo.MessageEmbed {
-	description := fmt.Sprintf("%s\n```%3s|%9s|%29s\n", title, "ccID", "Group", "Trigger")
+	description := fmt.Sprintf("%s\n```%5s|%10s|%27s\n", title, "ccID", "Group", "Trigger")
 	description += "--------------------------------------------\n"
 	for k, v := range ccs[i*ml:] {
 		var group, textTrigger string
 		group = gMap[v.GroupID.Int64]
 		if group == "Ungrouped" {
 			group = "uG"
-		} else if len([]rune(group)) > 8 {
-			group = string([]rune(group)[:8]) + "_"
+		} else if len([]rune(group)) > 9 {
+			group = string([]rune(group)[:9]) + "_"
 		}
 
-		if textTrigger = v.TextTrigger; len([]rune(textTrigger)) > 23 {
-			textTrigger = string([]rune(textTrigger)[:23]) + "_"
+		if textTrigger = v.TextTrigger; len([]rune(textTrigger)) > 21 {
+			textTrigger = string([]rune(textTrigger)[:21]) + "_"
 		}
 		if k <= ml-1 {
-			description += fmt.Sprintf("#%3d|%9s|%-3s:%24s\n", v.LocalID, group, CommandTriggerType(v.TriggerType).EmbedString(), textTrigger)
+			description += fmt.Sprintf("#%4d|%10s|%-3s:%22s\n", v.LocalID, group, CommandTriggerType(v.TriggerType).EmbedString(), textTrigger)
 		}
 	}
-	description += "```"
+	description += "\nNumber of custom commands:" + fmt.Sprintf("%d", len(ccs)) + "```"
 	embed := &discordgo.MessageEmbed{
 		Description: description,
 	}
