@@ -14,6 +14,6 @@ Installation really depends how you like to deploy code.
 This branch is not meant for docker or some other huge scalability method.
 
 ## Various
-What's there to say. caubert forked it. Real code is in Jonas747's git > https://github.com/mrbentarikau/pagst - I call it master.
+What's there to say. caubert forked it. Real code is in Jonas747's git > https://github.com/jonas747/yagpdb - I call it master.
 
 Go away now : )
