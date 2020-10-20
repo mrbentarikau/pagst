@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 // PublishRatelimit publishes a new global ratelimit hit on discord

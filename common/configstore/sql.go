@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 	"golang.org/x/net/context"
 )
 

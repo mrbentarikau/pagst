@@ -10,7 +10,7 @@ import (
 
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dutil"
-	"github.com/jonas747/yagpdb/common/templates"
+	"github.com/mrbentarikau/pagst/common/templates"
 )
 
 func prettyTime(t time.Time) string {

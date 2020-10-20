@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/jonas747/dstate/v2"
-	"github.com/jonas747/yagpdb/bot"
-	"github.com/jonas747/yagpdb/commands"
+	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/commands"
 )
 
 var _ bot.BotInitHandler = (*Plugin)(nil)

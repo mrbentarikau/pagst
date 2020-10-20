@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/common/patreon"
-	"github.com/jonas747/yagpdb/premium"
-	"github.com/jonas747/yagpdb/premium/models"
-	"github.com/jonas747/yagpdb/web"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/patreon"
+	"github.com/mrbentarikau/pagst/premium"
+	"github.com/mrbentarikau/pagst/premium/models"
+	"github.com/mrbentarikau/pagst/web"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
 

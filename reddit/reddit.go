@@ -9,10 +9,10 @@ import (
 	"sync"
 
 	"github.com/jonas747/go-reddit"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/common/mqueue"
-	"github.com/jonas747/yagpdb/premium"
-	"github.com/jonas747/yagpdb/reddit/models"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/mqueue"
+	"github.com/mrbentarikau/pagst/premium"
+	"github.com/mrbentarikau/pagst/reddit/models"
 )
 
 const (

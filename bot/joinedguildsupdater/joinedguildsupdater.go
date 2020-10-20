@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/yagpdb/bot/eventsystem"
-	"github.com/jonas747/yagpdb/bot/models"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/bot/eventsystem"
+	"github.com/mrbentarikau/pagst/bot/models"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/volatiletech/sqlboiler/boil"
 )
 

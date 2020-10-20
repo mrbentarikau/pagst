@@ -1,4 +1,4 @@
-module github.com/jonas747/yagpdb
+module github.com/mrbentarikau/pagst
 
 go 1.13
 

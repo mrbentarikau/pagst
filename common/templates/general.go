@@ -15,8 +15,8 @@ import (
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dutil"
 
-	//"github.com/jonas747/yagpdb/commands"
-	"github.com/jonas747/yagpdb/common"
+	//"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 // dictionary creates a map[string]interface{} from the given parameters by

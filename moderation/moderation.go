@@ -3,9 +3,9 @@ package moderation
 import (
 	"emperror.dev/errors"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/common/configstore"
-	"github.com/jonas747/yagpdb/common/featureflags"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/configstore"
+	"github.com/mrbentarikau/pagst/common/featureflags"
 	"golang.org/x/net/context"
 )
 

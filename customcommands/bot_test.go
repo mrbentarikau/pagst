@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/customcommands/models"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/customcommands/models"
 )
 
 func TestCheckMatch(t *testing.T) {

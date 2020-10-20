@@ -14,9 +14,9 @@ import (
 
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
-	"github.com/jonas747/yagpdb/bot"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/common/scheduledevents2"
+	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 )
 
 var ErrTooManyCalls = errors.New("Too many calls to this function")

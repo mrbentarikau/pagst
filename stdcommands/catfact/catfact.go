@@ -4,7 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/jonas747/dcmd"
-	"github.com/jonas747/yagpdb/commands"
+	"github.com/mrbentarikau/pagst/commands"
 )
 
 var Command = &commands.YAGCommand{

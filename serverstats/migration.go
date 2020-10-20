@@ -2,8 +2,8 @@ package serverstats
 
 import (
 	"emperror.dev/errors"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/premium"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/premium"
 	"time"
 )
 

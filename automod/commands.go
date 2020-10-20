@@ -6,14 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonas747/yagpdb/bot/paginatedmessages"
-	"github.com/jonas747/yagpdb/common/featureflags"
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
+	"github.com/mrbentarikau/pagst/common/featureflags"
 
 	"github.com/jonas747/dcmd"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/yagpdb/automod/models"
-	"github.com/jonas747/yagpdb/commands"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/automod/models"
+	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )

@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 var MessageDeleteQueue = &messageDeleteQueue{

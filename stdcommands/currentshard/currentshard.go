@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/jonas747/dcmd"
-	"github.com/jonas747/yagpdb/bot"
-	"github.com/jonas747/yagpdb/commands"
+	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/commands"
 )
 
 var Command = &commands.YAGCommand{

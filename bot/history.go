@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	"github.com/jonas747/dstate/v2"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 // GetMessages Gets messages from state if possible, if not then it retrieves from the discord api

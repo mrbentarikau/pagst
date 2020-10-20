@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jonas747/yagpdb/bot/models"
-	"github.com/jonas747/yagpdb/common/featureflags"
+	"github.com/mrbentarikau/pagst/bot/models"
+	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -16,7 +16,7 @@ import (
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dshardorchestrator/v2"
 	"github.com/jonas747/dstate/v2"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 const (

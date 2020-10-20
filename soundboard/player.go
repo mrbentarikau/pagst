@@ -8,8 +8,8 @@ import (
 	"emperror.dev/errors"
 	"github.com/jonas747/dca"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/yagpdb/bot"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 type PlayRequest struct {

@@ -9,8 +9,8 @@ import (
 
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/safebrowsing"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/safebrowsing"
 	"github.com/mediocregopher/radix/v3"
 )
 

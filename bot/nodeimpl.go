@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jonas747/yagpdb/bot/eventsystem"
+	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mediocregopher/radix/v3"
 
 	"github.com/jonas747/dshardorchestrator/v2"
 	"github.com/jonas747/dshardorchestrator/v2/node"
 	"github.com/jonas747/dstate/v2"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 func init() {

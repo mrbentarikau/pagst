@@ -7,7 +7,7 @@ import (
 
 	"emperror.dev/errors"
 	greddit "github.com/jonas747/go-reddit"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/sirupsen/logrus"
 )

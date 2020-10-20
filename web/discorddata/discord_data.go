@@ -8,8 +8,8 @@ import (
 	"emperror.dev/errors"
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dutil"
-	"github.com/jonas747/yagpdb/bot/botrest"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/bot/botrest"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/karlseguin/ccache"
 	"golang.org/x/oauth2"
 )

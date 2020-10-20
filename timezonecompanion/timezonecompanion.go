@@ -6,8 +6,8 @@ package timezonecompanion
 import (
 	"github.com/jonas747/when"
 	"github.com/jonas747/when/rules"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/timezonecompanion/trules"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/timezonecompanion/trules"
 )
 
 type Plugin struct {

@@ -1,7 +1,7 @@
 package eventsystem
 
 import (
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 	"testing"
 
 	"github.com/jonas747/discordgo"

@@ -2,8 +2,8 @@ package util
 
 import (
 	"github.com/jonas747/dcmd"
-	"github.com/jonas747/yagpdb/bot"
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 func RequireBotAdmin(inner dcmd.RunFunc) dcmd.RunFunc {

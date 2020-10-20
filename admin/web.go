@@ -11,11 +11,11 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/jonas747/dshardorchestrator/v2/orchestrator/rest"
-	"github.com/jonas747/yagpdb/bot/botrest"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/common/config"
-	"github.com/jonas747/yagpdb/common/internalapi"
-	"github.com/jonas747/yagpdb/web"
+	"github.com/mrbentarikau/pagst/bot/botrest"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/config"
+	"github.com/mrbentarikau/pagst/common/internalapi"
+	"github.com/mrbentarikau/pagst/web"
 	"goji.io"
 	"goji.io/pat"
 )

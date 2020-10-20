@@ -3,7 +3,7 @@ package cplogs
 import (
 	"time"
 
-	"github.com/jonas747/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/sirupsen/logrus"
 )
 

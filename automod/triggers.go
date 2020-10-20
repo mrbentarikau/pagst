@@ -9,10 +9,10 @@ import (
 
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
-	"github.com/jonas747/yagpdb/automod/models"
-	"github.com/jonas747/yagpdb/automod_legacy"
-	"github.com/jonas747/yagpdb/common"
-	"github.com/jonas747/yagpdb/safebrowsing"
+	"github.com/mrbentarikau/pagst/automod/models"
+	"github.com/mrbentarikau/pagst/automod_legacy"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/safebrowsing"
 )
 
 var forwardSlashReplacer = strings.NewReplacer("\\", "")
