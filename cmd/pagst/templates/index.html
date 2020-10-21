@@ -50,7 +50,7 @@
     </button>
     <div class="collapse navbar-collapse poppins" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
-        {{ if not (ge .JoinedServers 23) }}
+        {{ if not (ge .JoinedServers 42) }}
         <li class="nav-item active">
 		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827775&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
 			         
@@ -84,7 +84,7 @@
                 <br/>PAGSTDB</h1>
                 <div style="background-color: rgba(26,26,26,0.7);border:1px solid #a1a1a1;border-radius:5px;margin-top:25px">
                   <p style="margin-top:7px;margin-bottom: 7px;margin-right: 5px;line-height:1.25em;font-size: 2.2em!important" class="intro_headline">People Against Generally Shitty Things<span style="font-size: .9em;">&trade;</span> Discord Bot</p>
-                  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> Joined Servers: {{.JoinedServers}}</span>
+                  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> {{ printf "%.2f%%" (mult (fdiv .JoinedServers 42) 100) }} space filled by {{.JoinedServers}} joined servers</span>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> Commands ran today: {{.Commands}}</span>
 		  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">>> CCs executed today: {{.CCs}}</span>
               </div>
