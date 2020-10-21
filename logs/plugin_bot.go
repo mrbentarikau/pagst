@@ -122,7 +122,7 @@ var cmdWhois = &commands.YAGCommand{
 		var memberStatus string
 		state := [4]string{"Playing", "Streaming", "Listening", "Watching"}
 		if !member.PresenceSet || member.PresenceGame == nil {
-			memberStatus = fmt.Sprintf("Has no active status, is invisible/offline or is not in the bot's cache.")
+			memberStatus = fmt.Sprintf("Has no activity status, is invisible/offline or is not in the bot's cache.")
 		} else {
 			if member.PresenceGame.Type == 4 {
 				memberStatus = fmt.Sprintf("%s: %s", member.PresenceGame.Name, member.PresenceGame.State)
@@ -131,8 +131,21 @@ var cmdWhois = &commands.YAGCommand{
 			}
 		}
 
+		var onlineStatus string
+		switch member.PresenceStatus {
+		case 1:
+			onlineStatus = "Online"
+		case 2:
+			onlineStatus = "Idle"
+		case 3:
+			onlineStatus = "DND"
+		default:
+			onlineStatus = "Offline/Invisible"
+
+		}
+
 		embed := &discordgo.MessageEmbed{
-			Title: fmt.Sprintf("%s#%04d%s", member.Username, member.Discriminator, nick),
+			Title: fmt.Sprintf("%s#%04d%s (%s)", member.Username, member.Discriminator, nick, onlineStatus),
 			Fields: []*discordgo.MessageEmbedField{
 				&discordgo.MessageEmbedField{
 					Name:   "ID",
@@ -164,7 +177,7 @@ var cmdWhois = &commands.YAGCommand{
 					Inline: true,
 				},
 				&discordgo.MessageEmbedField{
-					Name:   "Status",
+					Name:   "Activity Status",
 					Value:  memberStatus,
 					Inline: true,
 				},
