@@ -302,6 +302,10 @@ func handleNextRunScheduledEVent(evt *schEventsModels.ScheduledEvent, data inter
 		return false, errors.WrapIf(err, "find_command")
 	}
 
+	if !time.Now().After(cmd.NextRun.Time) {
+		return false, nil // old scheduled event that wasn't removed, /shrug
+	}
+
 	gs := bot.State.Guild(true, evt.GuildID)
 	if gs == nil {
 		if onGuild, err := common.BotIsOnGuild(evt.GuildID); !onGuild && err == nil {
@@ -330,7 +334,7 @@ func handleNextRunScheduledEVent(evt *schEventsModels.ScheduledEvent, data inter
 
 	// schedule next runs
 	cmd.LastRun = cmd.NextRun
-	err = UpdateCommandNextRunTime(cmd, true)
+	err = UpdateCommandNextRunTime(cmd, true, false)
 	if err != nil {
 		logger.WithError(err).Error("failed updating custom command next run time")
 	}
