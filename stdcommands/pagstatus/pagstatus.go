@@ -1,4 +1,4 @@
-package yagstatus
+package pagstatus
 
 import (
 	"fmt"
@@ -17,9 +17,9 @@ import (
 var Command = &commands.YAGCommand{
 	Cooldown:    5,
 	CmdCategory: commands.CategoryDebug,
-	Name:        "Yagstatus",
+	Name:        "Pagstatus",
 	Aliases:     []string{"status"},
-	Description: "Shows yagpdb status, version, uptime, memory stats, and so on",
+	Description: "Shows PAGSTDB status, version, uptime, memory stats, etc...",
 	RunInDM:     true,
 	RunFunc:     cmdFuncYagStatus,
 }

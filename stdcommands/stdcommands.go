@@ -31,6 +31,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/memstats"
 	"github.com/mrbentarikau/pagst/stdcommands/mentionrole"
 	"github.com/mrbentarikau/pagst/stdcommands/openweathermap"
+	"github.com/mrbentarikau/pagst/stdcommands/pagstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/ping"
 	"github.com/mrbentarikau/pagst/stdcommands/poll"
 	"github.com/mrbentarikau/pagst/stdcommands/roll"
@@ -51,7 +52,6 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/weather"
 	"github.com/mrbentarikau/pagst/stdcommands/wouldyourather"
 	"github.com/mrbentarikau/pagst/stdcommands/xkcd"
-	"github.com/mrbentarikau/pagst/stdcommands/yagstatus"
 )
 
 var (
@@ -114,7 +114,7 @@ func (p *Plugin) AddCommands() {
 		topevents.Command,
 		currentshard.Command,
 		memberfetcher.Command,
-		yagstatus.Command,
+		pagstatus.Command,
 		setstatus.Command,
 		createinvite.Command,
 		findserver.Command,
