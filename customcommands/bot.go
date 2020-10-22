@@ -34,6 +34,7 @@ import (
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/customcommands/models"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -58,7 +59,7 @@ var _ bot.BotInitHandler = (*Plugin)(nil)
 var _ commands.CommandProvider = (*Plugin)(nil)
 
 func (p *Plugin) AddCommands() {
-	commands.AddRootCommands(p, cmdListCommands)
+	commands.AddRootCommands(p, cmdListCommands, cmdFixCommands)
 }
 
 func (p *Plugin) BotInit() {
@@ -302,7 +303,7 @@ func handleNextRunScheduledEVent(evt *schEventsModels.ScheduledEvent, data inter
 		return false, errors.WrapIf(err, "find_command")
 	}
 
-	if !time.Now().After(cmd.NextRun.Time) {
+	if time.Now().Sub(cmd.NextRun.Time) > 2*time.Second {
 		return false, nil // old scheduled event that wasn't removed, /shrug
 	}
 
@@ -868,4 +869,27 @@ func BotCachedGetCommandsWithMessageTriggers(gs *dstate.GuildState, ctx context.
 	}
 
 	return v.([]*models.CustomCommand), nil
+}
+
+var cmdFixCommands = &commands.YAGCommand{
+	CmdCategory:          commands.CategoryTool,
+	Name:                 "fixscheduledccs",
+	Description:          "???",
+	HideFromCommandsPage: true,
+	HideFromHelp:         true,
+	RunFunc: util.RequireBotAdmin(func(data *dcmd.Data) (interface{}, error) {
+		ccs, err := models.CustomCommands(qm.Where("trigger_type = 5"), qm.Where("now() - INTERVAL '1 hour' > next_run")).AllG(context.Background())
+		if err != nil {
+			return nil, err
+		}
+
+		for _, v := range ccs {
+			err = UpdateCommandNextRunTime(v, false, false)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return fmt.Sprintf("Doneso! fixed %d commands!", len(ccs)), nil
+	}),
 }
