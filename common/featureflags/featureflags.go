@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
-	"github.com/mediocregopher/radix/v3"
 )
 
 // PluginWithFeatureFlags is a interface for plugins that provide their own feature-flags
@@ -143,7 +143,7 @@ func BatchInitCache(guilds []int64) error {
 	}
 
 	wg.Wait()
-	logger.Info("Preloading flag cache done, dur: %s", time.Since(started))
+	logger.Infof("Preloading flag cache done, dur: %s", time.Since(started))
 	return nil
 }
 
