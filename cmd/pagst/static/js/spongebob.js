@@ -527,9 +527,9 @@ function formSubmissionEvents() {
 
 		if (!target.attr("formaction")) return;
 
-		if (target.hasClass("btn-danger") || target.attr("data-open-confirm") || target.hasClass("delete-button")) {
+		if (target.hasClass("btn-danger") || target.hasClass("pagst-duplicate")|| target.attr("data-open-confirm") || target.hasClass("delete-button")) {
 			var title = target.attr("title");
-			if (title !== undefined) {
+			if (title !== undefined && !target.hasClass("pagst-duplicate")) {
 				if (!confirm("Deleting " + title + ". Are you sure you want to do this?")) {
 					event.preventDefault(true);
 					event.stopPropagation();

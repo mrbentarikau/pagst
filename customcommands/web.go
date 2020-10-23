@@ -37,9 +37,10 @@ type GroupForm struct {
 }
 
 var (
-	panelLogKeyNewCommand     = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_new_command", FormatString: "Created a new custom command: %d"})
-	panelLogKeyUpdatedCommand = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_updated_command", FormatString: "Updated custom command: %d"})
-	panelLogKeyRemovedCommand = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_removed_command", FormatString: "Removed custom command: %d"})
+	panelLogKeyNewCommand        = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_new_command", FormatString: "Created a new custom command: %d"})
+	panelLogKeyUpdatedCommand    = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_updated_command", FormatString: "Updated custom command: %d"})
+	panelLogKeyDuplicatedCommand = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_duplicated_command", FormatString: "Duplicated custom command: %d"})
+	panelLogKeyRemovedCommand    = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_removed_command", FormatString: "Removed custom command: %d"})
 
 	panelLogKeyNewGroup     = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_new_group", FormatString: "Created a new custom command group: %s"})
 	panelLogKeyUpdatedGroup = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_updated_group", FormatString: "Updated custom command group: %s"})
@@ -90,6 +91,7 @@ func (p *Plugin) InitWeb() {
 	subMux.Handle(pat.Post("/commands/new"), newCommandHandler)
 	subMux.Handle(pat.Post("/commands/:cmd/update"), web.ControllerPostHandler(handleUpdateCommand, getCmdHandler, CustomCommand{}))
 	subMux.Handle(pat.Post("/commands/:cmd/delete"), web.ControllerPostHandler(handleDeleteCommand, getHandler, nil))
+	subMux.Handle(pat.Post("/commands/:cmd/duplicate"), web.ControllerPostHandler(handleDuplicateCommand, getHandler, nil))
 
 	subMux.Handle(pat.Post("/creategroup"), web.ControllerPostHandler(handleNewGroup, getHandler, GroupForm{}))
 	subMux.Handle(pat.Post("/groups/:group/update"), web.ControllerPostHandler(handleUpdateGroup, getGroupHandler, GroupForm{}))
@@ -110,7 +112,6 @@ func handleCommands(w http.ResponseWriter, r *http.Request) (web.TemplateData, e
 	}
 
 	templateData["HLJSBuiltins"] = langBuiltins.String()
-
 	return serveGroupSelected(r, templateData, groupID, activeGuild.ID)
 }
 
@@ -339,6 +340,101 @@ func handleDeleteCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 	featureflags.MarkGuildDirty(activeGuild.ID)
 	common.LogIgnoreError(pubsub.Publish("custom_commands_clear_cache", activeGuild.ID, nil), "failed creating pubsub cache eviction event", web.CtxLogger(ctx).Data)
 	return templateData, err
+}
+
+func handleDuplicateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
+	ctx := r.Context()
+	activeGuild, templateData := web.GetBaseCPContextData(ctx)
+
+	cmdID, err := strconv.ParseInt(pat.Param(r, "cmd"), 10, 64)
+	if err != nil {
+		return templateData, err
+	}
+
+	cmd, err := models.CustomCommands(qm.Where("guild_id = ? AND local_id = ?", activeGuild.ID, cmdID)).OneG(ctx)
+	if err != nil {
+		return templateData, err
+	}
+
+	groupID := cmd.GroupID.Int64
+	if groupID != 0 {
+		// make sure we aren't trying to pull any tricks with the group id
+		c, err := models.CustomCommandGroups(qm.Where("guild_id = ? AND id = ?", activeGuild.ID, groupID)).CountG(ctx)
+		if err != nil {
+			return templateData, err
+		}
+
+		if c < 1 {
+			return templateData.AddAlerts(web.ErrorAlert("Unknown group")), nil
+		}
+		templateData["CurrentGroupID"] = groupID
+	}
+
+	c, err := models.CustomCommands(qm.Where("guild_id = ?", activeGuild.ID)).CountG(ctx)
+	if err != nil {
+		return templateData, err
+	}
+
+	if int(c) >= MaxCommandsForContext(ctx) {
+		return templateData, web.NewPublicError(fmt.Sprintf("Max %d custom commands allowed (or %d for premium servers)", MaxCommands, MaxCommandsPremium))
+	}
+
+	localID, err := common.GenLocalIncrID(activeGuild.ID, "custom_command")
+	if err != nil {
+		return templateData, errors.WrapIf(err, "error generating local id")
+	}
+
+	dbModel := &models.CustomCommand{
+		GuildID: activeGuild.ID,
+		LocalID: localID,
+		GroupID: cmd.GroupID,
+
+		Disabled:   true,
+		ShowErrors: true,
+
+		Channels:              cmd.Channels,
+		ChannelsWhitelistMode: cmd.ChannelsWhitelistMode,
+		Roles:                 cmd.Roles,
+		RolesWhitelistMode:    cmd.RolesWhitelistMode,
+
+		ReactionTriggerMode: cmd.ReactionTriggerMode,
+
+		TimeTriggerExcludingDays:  []int64{},
+		TimeTriggerExcludingHours: []int64{},
+
+		Responses:                cmd.Responses,
+		TextTriggerCaseSensitive: cmd.TextTriggerCaseSensitive,
+		TextTrigger:              "duplicate_" + cmd.TextTrigger,
+		TriggerType:              cmd.TriggerType,
+	}
+
+	err = dbModel.InsertG(ctx, boil.Blacklist("last_run", "next_run", "last_error", "last_error_time", "run_count"))
+	if err != nil {
+		return templateData, nil
+	}
+
+	// create, update or remove the next run time and scheduled event
+	if dbModel.TriggerType == int(CommandTriggerInterval) {
+		// need the last run time
+		fullModel, err := models.CustomCommands(qm.Where("guild_id = ? AND local_id = ?", activeGuild.ID, dbModel.LocalID)).OneG(ctx)
+		if err != nil {
+			web.CtxLogger(ctx).WithError(err).Error("failed retrieving full model")
+		} else {
+			err = UpdateCommandNextRunTime(fullModel, true, true)
+		}
+	} else {
+		err = DelNextRunEvent(activeGuild.ID, dbModel.LocalID)
+	}
+
+	if err != nil {
+		web.CtxLogger(ctx).WithError(err).WithField("guild", dbModel.GuildID).Error("failed updating next custom command run time")
+	}
+	featureflags.MarkGuildDirty(activeGuild.ID)
+
+	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyDuplicatedCommand, &cplogs.Param{Type: cplogs.ParamTypeInt, Value: dbModel.LocalID}))
+
+	common.LogIgnoreError(pubsub.Publish("custom_commands_clear_cache", activeGuild.ID, nil), "failed creating pubsub cache eviction event", web.CtxLogger(ctx).Data)
+	return templateData, nil
 }
 
 // allow for max 5 triggers with intervals of less than 10 minutes
