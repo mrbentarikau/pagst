@@ -495,6 +495,8 @@ func baseContextFuncs(c *Context) {
 	c.ContextFuncs["mentionRoleID"] = c.tmplMentionRoleID
 
 	// Role functions
+	c.ContextFuncs["setRoles"] = c.tmplSetRoles
+
 	c.ContextFuncs["hasRoleName"] = c.tmplHasRoleName
 	c.ContextFuncs["hasRoleID"] = c.tmplHasRoleID
 
