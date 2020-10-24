@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/common/backgroundworkers"
-	"github.com/mrbentarikau/pagst/common/scheduledevents2/models"
+	"github.com/jonas747/yagpdb/common"
+	"github.com/jonas747/yagpdb/common/backgroundworkers"
+	"github.com/jonas747/yagpdb/common/scheduledevents2/models"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
@@ -109,23 +109,25 @@ func cleanupRecent() error {
 		return err
 	}
 
-	sqlArgs := make([]interface{}, len(recent))
-	for i, v := range recent {
-		sqlArgs[i] = v
-	}
-	result, err := models.ScheduledEvents(qm.WhereIn("id in ?", sqlArgs...)).DeleteAll(context.Background(), common.PQ)
-	if err != nil {
-		return err
-	}
+	if len(recent) > 0 {
+		sqlArgs := make([]interface{}, len(recent))
+		for i, v := range recent {
+			sqlArgs[i] = v
+		}
+		result, err := models.ScheduledEvents(qm.WhereIn("id in ?", sqlArgs...)).DeleteAll(context.Background(), common.PQ)
+		if err != nil {
+			return err
+		}
 
-	logger.Infof("Deleted %d recently done events", result)
+		logger.Infof("Deleted %d recently done events", result)
 
-	args := make([]string, len(recent)+1)
-	for i, v := range recent {
-		args[i+1] = strconv.FormatInt(v, 10)
+		args := make([]string, len(recent)+1)
+		for i, v := range recent {
+			args[i+1] = strconv.FormatInt(v, 10)
+		}
+		// copy(args[1:], recent)
+		args[0] = "recently_done_scheduled_events"
+		return common.RedisPool.Do(radix.Cmd(nil, "SREM", args...))
 	}
-	// copy(args[1:], recent)
-	args[0] = "recently_done_scheduled_events"
-
-	return common.RedisPool.Do(radix.Cmd(nil, "SREM", args...))
+	return nil
 }
