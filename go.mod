@@ -45,6 +45,7 @@ require (
 	github.com/jonas747/template v1.1.2
 	github.com/jonas747/when v0.0.2
 	github.com/jonas747/yageconomy v0.0.0-20190912200808-750548ca6527
+	github.com/jonas747/yagpdb v1.20.7
 	github.com/justinian/dice v0.0.0-20170728002755-6a18b51d929c // indirect
 	github.com/karlseguin/ccache v2.0.3+incompatible
 	github.com/karlseguin/rcache v1.0.1
