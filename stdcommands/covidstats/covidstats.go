@@ -15,6 +15,9 @@ import (
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
+
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 var (
@@ -200,29 +203,29 @@ func getData(query, loc, qtype string) ([]byte, error) {
 }
 
 func embedCreator(cConts []coronaWorldWideStruct, queryType, whatDay string, i int) *discordgo.MessageEmbed {
-
+	p := message.NewPrinter(language.English)
 	embed := &discordgo.MessageEmbed{
 		Description: fmt.Sprintf("Showing corona statistics for " + whatDay + ":"),
 		Color:       0x7b0e4e,
 		Fields: []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{Name: "Population", Value: fmt.Sprintf("%d", cConts[i].Population), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Total Cases", Value: fmt.Sprintf("%d", cConts[i].Cases), Inline: true},
-			&discordgo.MessageEmbedField{Name: "New Cases", Value: fmt.Sprintf("%d", cConts[i].TodayCases), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Total Deaths", Value: fmt.Sprintf("%d", cConts[i].Deaths), Inline: true},
-			&discordgo.MessageEmbedField{Name: "New Deaths", Value: fmt.Sprintf("%d", cConts[i].TodayDeaths), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Recovered", Value: fmt.Sprintf("%d", cConts[i].Recovered), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Active", Value: fmt.Sprintf("%d", cConts[i].Active), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Population", Value: p.Sprintf("%d", cConts[i].Population), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Total Cases", Value: p.Sprintf("%d", cConts[i].Cases), Inline: true},
+			&discordgo.MessageEmbedField{Name: "New Cases", Value: p.Sprintf("%d", cConts[i].TodayCases), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Total Deaths", Value: p.Sprintf("%d", cConts[i].Deaths), Inline: true},
+			&discordgo.MessageEmbedField{Name: "New Deaths", Value: p.Sprintf("%d", cConts[i].TodayDeaths), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Recovered", Value: p.Sprintf("%d", cConts[i].Recovered), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Active", Value: p.Sprintf("%d", cConts[i].Active), Inline: true},
 		},
 		Footer:    &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 	//this here is because USA states API does not give critical conditions and to continue proper layout
 	if queryType != typeStates {
-		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{Name: "Critical", Value: fmt.Sprintf("%d", cConts[i].Critical), Inline: true})
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{Name: "Critical", Value: p.Sprintf("%d", cConts[i].Critical), Inline: true})
 	}
 	embed.Fields = append(embed.Fields,
-		&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: fmt.Sprintf("%.0f", cConts[i].CasesPerOneMillion), Inline: true},
-		&discordgo.MessageEmbedField{Name: "Total Tests", Value: fmt.Sprintf("%.0f", cConts[i].Tests), Inline: true})
+		&discordgo.MessageEmbedField{Name: "Cases/1M pop", Value: p.Sprintf("%.0f", cConts[i].CasesPerOneMillion), Inline: true},
+		&discordgo.MessageEmbedField{Name: "Total Tests", Value: p.Sprintf("%.0f", cConts[i].Tests), Inline: true})
 	switch queryType {
 	case "all":
 		embed.Title = fmt.Sprintf("Whole world")
