@@ -14,6 +14,9 @@ Installation really depends how you like to deploy code.
 This branch is not meant for docker or some other huge scalability method.
 
 ## Various
-What's there to say. caubert forked it. Real code is in Jonas747's git > https://github.com/jonas747/yagpdb - I call it master.
+What's there to say.
+caubert forked it and changed the license type.
+Real code is in Jonas747's git > https://github.com/jonas747/yagpdb - I still call it master.
+Bot install tutorial > https://lbry.tv/@caubert:c47/pagst-yagpdb-install-on-archlinux:4
 
 Go away now : )
