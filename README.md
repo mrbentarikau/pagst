@@ -8,10 +8,10 @@ You have to know how to fill the environment file and setup the bot via Discord 
 
 the rest is:
 
-Bot install tutorial > [LBRY](https://lbry.tv/@caubert:c47/pagst-yagpdb-install-on-archlinux:4)
-or > [Youtube](https://www.youtube.com/watch?v=YDPZFxYf_zI)
+Bot install tutorial > [LBRY for Arch](https://lbry.tv/@caubert:c47/pagst-yagpdb-install-on-archlinux:4)
+or > [LBRY for FreeBSD](https://lbry.tv/@caubert:c47/pagstbsd-self-hosting-yagpdb-on-freebsd:b)
 
-Installation really depends how you like to deploy code.
+Installation really depends on how you like to deploy code.
 This branch is not meant for docker or some other huge scalability method.
 
 ## Various
