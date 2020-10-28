@@ -2,11 +2,13 @@ package wouldyourather
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 
 	"emperror.dev/errors"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/jonas747/dcmd"
+	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 )
@@ -23,8 +25,16 @@ var Command = &commands.YAGCommand{
 			return nil, err
 		}
 
-		content := fmt.Sprintf("**Would you rather** (*<http://either.io>*)\n🇦 %s\n **OR**\n🇧 %s", q1, q2)
-		msg, err := common.BotSession.ChannelMessageSend(data.Msg.ChannelID, content)
+		content := &discordgo.MessageEmbed{
+			Author: &discordgo.MessageEmbedAuthor{
+				Name:    "Would you rather?",
+				URL:     "http://either.io",
+				IconURL: "https://pagst.xyz/static/icons/favicon-16x16.png",
+			},
+			Color:       int(rand.Int63n(16777215)),
+			Description: fmt.Sprintf("**EITHER...**\n🇦 %s\n\n **OR...**\n🇧 %s", q1, q2),
+		}
+		msg, err := common.BotSession.ChannelMessageSendEmbed(data.Msg.ChannelID, content)
 		if err != nil {
 			return nil, err
 		}
