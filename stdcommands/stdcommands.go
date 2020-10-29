@@ -22,6 +22,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/editrole"
 	"github.com/mrbentarikau/pagst/stdcommands/findserver"
 	"github.com/mrbentarikau/pagst/stdcommands/globalrl"
+	"github.com/mrbentarikau/pagst/stdcommands/guildunavailable"
 	"github.com/mrbentarikau/pagst/stdcommands/howlongtobeat"
 	"github.com/mrbentarikau/pagst/stdcommands/info"
 	"github.com/mrbentarikau/pagst/stdcommands/invite"
@@ -115,6 +116,7 @@ func (p *Plugin) AddCommands() {
 		currentshard.Command,
 		memberfetcher.Command,
 		pagstatus.Command,
+		guildunavailable.Command,
 		setstatus.Command,
 		createinvite.Command,
 		findserver.Command,
