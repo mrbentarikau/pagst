@@ -86,7 +86,7 @@
                   <p style="margin-top:7px;margin-bottom: 7px;margin-right: 5px;line-height:1.25em;font-size: 2.2em!important" class="intro_headline">People Against Generally Shitty Things Discord Bot</p>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> Internalization {{ printf "%.2f%%" (mult (fdiv .JoinedServers 42) 100) }} by {{.JoinedServers}} joined servers</span>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> Commands ran today: {{.Commands}}</span>
-		  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">>> CCs executed today: {{.CCs}}</span>
+		  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">>> CCs executed today: {{humanizeThousands .CCs}}</span>
               </div>
             </div>
           </div>
