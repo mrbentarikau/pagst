@@ -1,6 +1,6 @@
 {
-    "name": "YAGPDB",
-    "short_name": "YAGPDB",
+    "name": "PAGSTDB",
+    "short_name": "PAGSTDB",
     "icons": [
         {
             "src": "/static/icons/android-chrome-192x192.png?v=6",
