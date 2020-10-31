@@ -43,7 +43,7 @@ type ipAPIJSON struct {
 var Command = &commands.YAGCommand{
 	CmdCategory:  commands.CategoryTool,
 	Name:         "GetIPLocation",
-	Aliases:      []string{"getiploc", "iploc"},
+	Aliases:      []string{"geoloc", "getiploc", "iploc"},
 	Description:  "Queries IP Geolocation API on given IP-address or domain",
 	RunInDM:      true,
 	RequiredArgs: 1,
