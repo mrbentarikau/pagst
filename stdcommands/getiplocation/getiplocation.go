@@ -81,7 +81,7 @@ var Command = &commands.YAGCommand{
 		embed := &discordgo.MessageEmbed{
 			Title:       fmt.Sprintf("Query: %s", ipJSON.Query),
 			URL:         fmt.Sprintf("https://%s/%s", ipAPIHost, ipJSON.Query),
-			Description: fmt.Sprintf("**lat/long:**\n%.2f / %.2f\n\n**Country:**\n%s (%s)\n\n**City/Region:**\n%s, %s\n\n**ISP/ORG:**\n%s, %s\n\n**TimeZone:**\n%s", ipJSON.Lat, ipJSON.Lon, ipJSON.Country, ipJSON.CountryCode, ipJSON.City, ipJSON.RegionName, ipJSON.Isp, ipJSON.Org, ipJSON.Timezone),
+			Description: fmt.Sprintf("**lat/long:**\n%.2f / %.2f\n\n**Country:**\n%s (%s)\n\n**City/Region:**\n%s, %s\n\n**ISP/ORG:**\n%s; %s\n\n**TimeZone:**\n%s", ipJSON.Lat, ipJSON.Lon, ipJSON.Country, ipJSON.CountryCode, ipJSON.City, ipJSON.RegionName, ipJSON.Isp, ipJSON.Org, ipJSON.Timezone),
 			Color:       int(rand.Int63n(16777215)),
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
 				URL: "https://ip-api.com/docs/static/logo.png",
