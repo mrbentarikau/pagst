@@ -21,6 +21,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/dogfact"
 	"github.com/mrbentarikau/pagst/stdcommands/editrole"
 	"github.com/mrbentarikau/pagst/stdcommands/findserver"
+	"github.com/mrbentarikau/pagst/stdcommands/getiplocation"
 	"github.com/mrbentarikau/pagst/stdcommands/globalrl"
 	"github.com/mrbentarikau/pagst/stdcommands/guildunavailable"
 	"github.com/mrbentarikau/pagst/stdcommands/howlongtobeat"
@@ -103,6 +104,7 @@ func (p *Plugin) AddCommands() {
 		xkcd.Command,
 		howlongtobeat.Command,
 		covidstats.Command,
+		getiplocation.Command,
 
 		// Maintenance
 		stateinfo.Command,
