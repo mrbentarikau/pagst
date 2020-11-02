@@ -109,25 +109,27 @@ func cleanupRecent() error {
 		return err
 	}
 
-	if len(recent) > 0 {
-		sqlArgs := make([]interface{}, len(recent))
-		for i, v := range recent {
-			sqlArgs[i] = v
-		}
-		result, err := models.ScheduledEvents(qm.WhereIn("id in ?", sqlArgs...)).DeleteAll(context.Background(), common.PQ)
-		if err != nil {
-			return err
-		}
-
-		logger.Infof("Deleted %d recently done events", result)
-
-		args := make([]string, len(recent)+1)
-		for i, v := range recent {
-			args[i+1] = strconv.FormatInt(v, 10)
-		}
-		// copy(args[1:], recent)
-		args[0] = "recently_done_scheduled_events"
-		return common.RedisPool.Do(radix.Cmd(nil, "SREM", args...))
+	if len(recent) < 1 {
+		return nil
 	}
-	return nil
+
+	sqlArgs := make([]interface{}, len(recent))
+	for i, v := range recent {
+		sqlArgs[i] = v
+	}
+	result, err := models.ScheduledEvents(qm.WhereIn("id in ?", sqlArgs...)).DeleteAll(context.Background(), common.PQ)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("Deleted %d recently done events", result)
+
+	args := make([]string, len(recent)+1)
+	for i, v := range recent {
+		args[i+1] = strconv.FormatInt(v, 10)
+	}
+	// copy(args[1:], recent)
+	args[0] = "recently_done_scheduled_events"
+
+	return common.RedisPool.Do(radix.Cmd(nil, "SREM", args...))
 }
