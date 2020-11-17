@@ -19,6 +19,7 @@ require (
 	github.com/ericlagergren/decimal v0.0.0-20191206042408-88212e6cfca9 // indirect
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/fatih/structs v1.1.0
+	github.com/friendsofgo/errors v0.9.2
 	github.com/getsentry/raven-go v0.2.0 // indirect
 	github.com/getsentry/sentry-go v0.7.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
