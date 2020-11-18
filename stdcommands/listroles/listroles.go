@@ -44,14 +44,18 @@ var Command = &commands.YAGCommand{
 
 		counter := 0
 		if member != nil {
-			for _, roleID := range member.Roles {
-				for _, r := range data.GS.Guild.Roles {
-					if roleID == r.ID {
-						counter++
-						me := r.Permissions&discordgo.PermissionAdministrator != 0 || r.Permissions&discordgo.PermissionMentionEveryone != 0
-						out += fmt.Sprintf("`%-25s: %-19d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
+			if len(member.Roles) > 0 {
+				for _, roleID := range member.Roles {
+					for _, r := range data.GS.Guild.Roles {
+						if roleID == r.ID {
+							counter++
+							me := r.Permissions&discordgo.PermissionAdministrator != 0 || r.Permissions&discordgo.PermissionMentionEveryone != 0
+							out += fmt.Sprintf("`%-25s: %-19d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
+						}
 					}
 				}
+			} else {
+				return "User has no roles", nil
 			}
 		} else {
 			for _, r := range data.GS.Guild.Roles {
