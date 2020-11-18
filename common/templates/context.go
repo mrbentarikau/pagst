@@ -15,10 +15,10 @@ import (
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
 	"github.com/jonas747/template"
-	"github.com/mrbentarikau/pagst/bot"
+	"github.com/jonas747/yagpdb/bot"
 
-	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/common/scheduledevents2"
+	"github.com/jonas747/yagpdb/common"
+	"github.com/jonas747/yagpdb/common/scheduledevents2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -643,7 +643,7 @@ func (s Slice) Append(item interface{}) (interface{}, error) {
 }
 
 func (s Slice) Del(index int) (string, error) {
-	if index >= len(s) {
+	if index >= len(s) || index < 0 {
 		return "", errors.New("Index out of bounds")
 	}
 
