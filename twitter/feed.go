@@ -196,7 +196,7 @@ OUTER:
 		parseMentions := []discordgo.AllowedMentionType{}
 		if len(v.MentionRole) > 0 {
 			parseMentions = []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles}
-			content = fmt.Sprintf("Hey <@&%d> a new tweet!", v.MentionRole[0])
+			content = fmt.Sprintf("Hey <@&%d>, a new tweet!", v.MentionRole[0])
 		}
 
 		mqueue.QueueMessage(&mqueue.QueuedElement{
