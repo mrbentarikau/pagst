@@ -43,21 +43,25 @@ var Command = &commands.YAGCommand{
 		sort.Sort(dutil.Roles(data.GS.Guild.Roles))
 
 		counter := 0
-		for _, r := range data.GS.Guild.Roles {
-			if noMana && r.Managed {
-				continue
-			} else if member != nil {
-				for _, roleID := range member.Roles {
+		if member != nil {
+			for _, roleID := range member.Roles {
+				for _, r := range data.GS.Guild.Roles {
 					if roleID == r.ID {
 						counter++
 						me := r.Permissions&discordgo.PermissionAdministrator != 0 || r.Permissions&discordgo.PermissionMentionEveryone != 0
 						out += fmt.Sprintf("`%-25s: %-19d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
 					}
 				}
-			} else {
-				counter++
-				me := r.Permissions&discordgo.PermissionAdministrator != 0 || r.Permissions&discordgo.PermissionMentionEveryone != 0
-				out += fmt.Sprintf("`%-25s: %-19d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
+			}
+		} else {
+			for _, r := range data.GS.Guild.Roles {
+				if noMana && r.Managed {
+					continue
+				} else {
+					counter++
+					me := r.Permissions&discordgo.PermissionAdministrator != 0 || r.Permissions&discordgo.PermissionMentionEveryone != 0
+					out += fmt.Sprintf("`%-25s: %-19d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
+				}
 			}
 		}
 		outFinal = fmt.Sprintf("Total role count: %d\n", counter)
