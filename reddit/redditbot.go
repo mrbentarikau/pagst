@@ -202,19 +202,31 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 
 		webhookUsername := "r/" + post.Subreddit + " • PAGSTDB"
 
+		var content string
+		parseMentions := []discordgo.AllowedMentionType{}
+		if len(item.MentionRole) > 0 {
+			parseMentions = []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles}
+			content = fmt.Sprintf("Hey <@&%d>, a new Reddit post!\n", item.MentionRole[0])
+		}
+
 		qm := &mqueue.QueuedElement{
-			Guild:           item.GuildID,
-			Channel:         item.ChannelID,
+			Guild:   item.GuildID,
+			Channel: item.ChannelID,
+
+			MessageStr:      content,
 			Source:          "reddit",
 			SourceID:        idStr,
 			UseWebhook:      true,
 			WebhookUsername: webhookUsername,
+			AllowedMentions: discordgo.AllowedMentions{
+				Parse: parseMentions,
+			},
 		}
 
 		if item.UseEmbeds {
 			qm.MessageEmbed = embed
 		} else {
-			qm.MessageStr = message
+			qm.MessageStr += message
 		}
 
 		mqueue.QueueMessage(qm)

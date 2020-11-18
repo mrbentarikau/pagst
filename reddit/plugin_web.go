@@ -28,21 +28,23 @@ const (
 )
 
 type CreateForm struct {
-	Subreddit  string `schema:"subreddit" valid:",1,100"`
-	Slow       bool   `schema:"slow"`
-	Channel    int64  `schema:"channel" valid:"channel,false`
-	ID         int64  `schema:"id"`
-	UseEmbeds  bool   `schema:"use_embeds"`
-	NSFWMode   int    `schema:"nsfw_filter"`
-	MinUpvotes int    `schema:"min_upvotes"`
+	Subreddit   string  `schema:"subreddit" valid:",1,100"`
+	Slow        bool    `schema:"slow"`
+	Channel     int64   `schema:"channel" valid:"channel,false"`
+	ID          int64   `schema:"id"`
+	UseEmbeds   bool    `schema:"use_embeds"`
+	NSFWMode    int     `schema:"nsfw_filter"`
+	MinUpvotes  int     `schema:"min_upvotes"`
+	MentionRole []int64 `schema:"mention_role" valid:"role,true"`
 }
 
 type UpdateForm struct {
-	Channel    int64 `schema:"channel" valid:"channel,false`
-	ID         int64 `schema:"id"`
-	UseEmbeds  bool  `schema:"use_embeds"`
-	NSFWMode   int   `schema:"nsfw_filter"`
-	MinUpvotes int   `schema:"min_upvotes"`
+	Channel     int64   `schema:"channel" valid:"channel,false"`
+	ID          int64   `schema:"id"`
+	UseEmbeds   bool    `schema:"use_embeds"`
+	NSFWMode    int     `schema:"nsfw_filter"`
+	MinUpvotes  int     `schema:"min_upvotes"`
+	MentionRole []int64 `schema:"mention_role" valid:"role,true"`
 }
 
 var (
@@ -86,7 +88,7 @@ func baseData(inner http.Handler) http.Handler {
 		templateData["VisibleURL"] = "/manage/" + discordgo.StrID(activeGuild.ID) + "/reddit/"
 
 		feeds, err := models.RedditFeeds(models.RedditFeedWhere.GuildID.EQ(activeGuild.ID)).AllG(ctx)
-		if web.CheckErr(templateData, err, "Failed retrieving config, message support in the yagpdb server", web.CtxLogger(ctx).Error) {
+		if web.CheckErr(templateData, err, "Failed retrieving config", web.CtxLogger(ctx).Error) {
 			web.LogIgnoreErr(web.Templates.ExecuteTemplate(w, "cp_reddit", templateData))
 		} else {
 			sort.Slice(feeds, func(i, j int) bool {
@@ -130,23 +132,24 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 	}
 
 	watchItem := &models.RedditFeed{
-		GuildID:    activeGuild.ID,
-		ChannelID:  newElem.Channel,
-		Subreddit:  strings.ToLower(strings.TrimSpace(newElem.Subreddit)),
-		UseEmbeds:  newElem.UseEmbeds,
-		FilterNSFW: newElem.NSFWMode,
+		GuildID:     activeGuild.ID,
+		ChannelID:   newElem.Channel,
+		Subreddit:   strings.ToLower(strings.TrimSpace(newElem.Subreddit)),
+		UseEmbeds:   newElem.UseEmbeds,
+		FilterNSFW:  newElem.NSFWMode,
+		MentionRole: newElem.MentionRole,
 	}
 
 	if newElem.Slow {
 		watchItem.Slow = true
 		watchItem.MinUpvotes = newElem.MinUpvotes
+		watchItem.MentionRole = newElem.MentionRole
 	}
 
 	err := watchItem.InsertG(ctx, boil.Infer())
 	if web.CheckErr(templateData, err, "Failed saving item :'(", web.CtxLogger(ctx).Error) {
 		return templateData
 	}
-
 	currentConfig = append(currentConfig, watchItem)
 	sort.Slice(currentConfig, func(i, j int) bool {
 		return currentConfig[i].Subreddit < currentConfig[j].Subreddit
@@ -185,12 +188,14 @@ func HandleModify(w http.ResponseWriter, r *http.Request) interface{} {
 	item.ChannelID = updated.Channel
 	item.UseEmbeds = updated.UseEmbeds
 	item.FilterNSFW = updated.NSFWMode
+	item.MentionRole = updated.MentionRole
 	item.Disabled = false
 	if item.Slow {
 		item.MinUpvotes = updated.MinUpvotes
+		item.MentionRole = updated.MentionRole
 	}
 
-	_, err := item.UpdateG(ctx, boil.Whitelist("channel_id", "use_embeds", "filter_nsfw", "min_upvotes", "disabled"))
+	_, err := item.UpdateG(ctx, boil.Whitelist("channel_id", "use_embeds", "filter_nsfw", "min_upvotes", "disabled", "mention_role"))
 	if web.CheckErr(templateData, err, "Failed saving item :'(", web.CtxLogger(ctx).Error) {
 		return templateData
 	}

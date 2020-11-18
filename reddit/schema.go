@@ -21,4 +21,6 @@ CREATE INDEX IF NOT EXISTS redidt_feeds_subreddit_idx ON reddit_feeds(subreddit)
 
 `, `
 ALTER TABLE reddit_feeds ADD COLUMN IF NOT EXISTS disabled BOOLEAN NOT NULL DEFAULT FALSE;
+`, `
+ALTER TABLE reddit_feeds ADD COLUMN IF NOT EXISTS mention_role BIGINT[];
 `}
