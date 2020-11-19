@@ -41,6 +41,7 @@ type Form struct {
 	DiscordChannel     int64 `valid:"channel,false"`
 	ID                 uint
 	MentionEveryone    bool
+	MentionRole        int64 `valid:"role,true"`
 }
 
 func (p *Plugin) InitWeb() {
@@ -110,7 +111,7 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 		return templateData.AddAlerts(web.ErrorAlert("Neither channelid or username specified.")), errors.New("ChannelID and username not specified")
 	}
 
-	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, data.YoutubeChannelID, data.YoutubeChannelUser, data.MentionEveryone)
+	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, data.YoutubeChannelID, data.YoutubeChannelUser, data.MentionEveryone, data.MentionRole)
 	if err != nil {
 		if err == ErrNoChannel {
 			return templateData.AddAlerts(web.ErrorAlert("No channel by that id/username found")), errors.New("Channel not found")
@@ -162,6 +163,7 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 
 	sub.MentionEveryone = data.MentionEveryone
 	sub.ChannelID = discordgo.StrID(data.DiscordChannel)
+	sub.MentionRole = discordgo.StrID(data.MentionRole)
 
 	err = common.GORM.Save(sub).Error
 	if err == nil {
