@@ -165,6 +165,8 @@ type contextFrame struct {
 
 	isNestedTemplate bool
 	parsedTemplate   *template.Template
+	execMode         bool
+	execReturn       []interface{}
 	SendResponseInDM bool
 }
 
@@ -545,6 +547,8 @@ func baseContextFuncs(c *Context) {
 	c.ContextFuncs["editNickname"] = c.tmplEditNickname
 
 	c.ContextFuncs["sort"] = c.tmplSort
+	c.ContextFuncs["execTemplate"] = c.tmplExecTemplate
+	c.ContextFuncs["addReturn"] = c.tmplAddReturn
 }
 
 type limitedWriter struct {
