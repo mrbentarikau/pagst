@@ -97,7 +97,7 @@ func dbQuery(guildID int64) ([]*ExportCC, error) {
 		if err != nil {
 			return []*ExportCC{}, err
 		}
-		fmt.Printf("KRAAKA:%T", responses)
+
 		result = append(result, &ExportCC{
 			GuildID:     guildID,
 			CCID:        ccID,
