@@ -235,14 +235,23 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm, exec bool, name st
 
 	c.CurrentFrame.execMode = exec
 	// pass some data
+
 	if len(data) > 1 {
-		c.Data["TemplateArgs"], _ = Dictionary(data...)
+		dict, _ := Dictionary(data...)
+		c.Data["TemplateArgs"] = dict
+		if !c.checkSafeDictNoRecursion(dict, 0) {
+			return nil, errors.New("trying to pass the entire current context data in as templateargs, this is not needed, just use nil and access all other data normally")
+		}
 	} else if len(data) == 1 {
+		if cast, ok := data[0].(map[string]interface{}); ok && reflect.DeepEqual(cast, c.Data) {
+			return nil, errors.New("trying to pass the entire current context data in as templateargs, this is not needed, just use nil and access all other data normally")
+		}
 		c.Data["TemplateArgs"] = data[0]
 	}
 
 	// and finally execute the child template
 	c.CurrentFrame.parsedTemplate = t
+	// KRAAKA error happens here
 	resp, err := c.executeParsed()
 	if err != nil {
 		return "", err
@@ -278,6 +287,58 @@ func (c *Context) tmplAddReturn(data ...interface{}) (interface{}, error) {
 
 	c.CurrentFrame.execReturn = append(c.CurrentFrame.execReturn, data...)
 	return "", nil
+}
+
+func (c *Context) checkSafeStringDictNoRecursion(d SDict, n int) bool {
+	if n > 1000 {
+		return false
+	}
+
+	for _, v := range d {
+		if cast, ok := v.(Dict); ok {
+			if !c.checkSafeDictNoRecursion(cast, n+1) {
+				return false
+			}
+		}
+
+		if cast, ok := v.(SDict); ok {
+			if !c.checkSafeStringDictNoRecursion(cast, n+1) {
+				return false
+			}
+		}
+
+		if reflect.DeepEqual(v, c.Data) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (c *Context) checkSafeDictNoRecursion(d Dict, n int) bool {
+	if n > 1000 {
+		return false
+	}
+
+	for _, v := range d {
+		if cast, ok := v.(Dict); ok {
+			if !c.checkSafeDictNoRecursion(cast, n+1) {
+				return false
+			}
+		}
+
+		if cast, ok := v.(SDict); ok {
+			if !c.checkSafeStringDictNoRecursion(cast, n+1) {
+				return false
+			}
+		}
+
+		if reflect.DeepEqual(v, c.Data) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) func(channel interface{}, msg interface{}) interface{} {
