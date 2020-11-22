@@ -20,6 +20,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/define"
 	"github.com/mrbentarikau/pagst/stdcommands/dogfact"
 	"github.com/mrbentarikau/pagst/stdcommands/editrole"
+	"github.com/mrbentarikau/pagst/stdcommands/exportcustomcommands"
 	"github.com/mrbentarikau/pagst/stdcommands/findserver"
 	"github.com/mrbentarikau/pagst/stdcommands/getiplocation"
 	"github.com/mrbentarikau/pagst/stdcommands/globalrl"
@@ -127,6 +128,7 @@ func (p *Plugin) AddCommands() {
 		sleep.Command,
 		toggledbg.Command,
 		globalrl.Command,
+		exportcustomcommands.Command,
 	)
 
 }
