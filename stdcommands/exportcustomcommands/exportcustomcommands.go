@@ -61,7 +61,7 @@ var Command = &commands.YAGCommand{
 			return nil, err
 		}
 
-		return fmt.Sprintf("No such ID as joined guild"), err
+		return fmt.Sprintf("No CCs found."), err
 	},
 }
 
