@@ -10,7 +10,6 @@ import (
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 type ExportCC struct {
@@ -28,12 +27,13 @@ var Command = &commands.YAGCommand{
 	HideFromCommandsPage: true,
 	Name:                 "exportcustomscommands",
 	Aliases:              []string{"exportccs", "eccs"},
+	RequireDiscordPerms:  []int64{discordgo.PermissionAdministrator},
 	Description:          "Exports your all your custom commands data's reasonable fields as JSON,\nuser has to be serverAdmin.\nServerID argument is for the owner of the bot...",
 	HideFromHelp:         true,
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "ServerID", Type: dcmd.Int},
 	},
-	RunFunc: util.RequireBotAdmin(func(data *dcmd.Data) (interface{}, error) {
+	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		guildIDToMatch := data.Msg.GuildID
 		if data.Args[0].Value != nil {
 			if common.IsOwner(data.Msg.Author.ID) {
@@ -62,7 +62,7 @@ var Command = &commands.YAGCommand{
 		}
 
 		return fmt.Sprintf("No such ID as joined guild"), err
-	}),
+	},
 }
 
 func dbQuery(guildID int64) ([]*ExportCC, error) {
