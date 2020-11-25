@@ -10499,7 +10499,7 @@ html[xmlns] .clearfix {
 
 /* Arrows */
 .arrow {
-	background: transparent url(../img/arrows.png) no-repeat 0 0;
+/*	background: transparent url(../img/arrows.png) no-repeat 0 0;*/
 	width: 47px;
 	height: 120px;
 	display: inline-block;
@@ -10507,7 +10507,7 @@ html[xmlns] .clearfix {
 }
 
 .arrow.arrow-light {
-	background-image: url(../img/arrows-dark.png);
+/*	background-image: url(../img/arrows-dark.png);*/
 }
 
 .arrow.vtl {
