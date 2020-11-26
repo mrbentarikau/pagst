@@ -119,7 +119,7 @@ func SnowflakeToTime(i int64) time.Time {
 
 func SetStatus(streaming, status string) {
 	if status == "" {
-		r, _ := regexp.Compile("v\\d+\\.\\d+\\.\\d+")
+		r, _ := regexp.Compile(`v\d+\.\d+\.\d+`)
 		status = r.FindString(common.VERSION) + " :)"
 	}
 
