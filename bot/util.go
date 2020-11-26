@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -118,7 +119,8 @@ func SnowflakeToTime(i int64) time.Time {
 
 func SetStatus(streaming, status string) {
 	if status == "" {
-		status = "v" + common.VERSION + " :)"
+		r, _ := regexp.Compile("v\\d+\\.\\d+\\.\\d+")
+		status = r.FindString(common.VERSION) + " :)"
 	}
 
 	err1 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_streaming", streaming))
