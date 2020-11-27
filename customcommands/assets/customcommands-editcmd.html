@@ -251,10 +251,25 @@
                         <div class="row mb-2">
                             <div class="col-lg-12">
                                 <div class="form-group">
+                                    <div style="margin: 0 3px 7px 0px">Editor theme:
+                                        <select onchange="selectTheme()" id=themeSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;">
+                                            <option selected>darcula</option>
+                                            <option>ayu-dark</option>
+                                            <option>bespin</option>
+                                            <option>gruvbox-dark</option>
+                                            <option>mbo</option>
+                                            <option>monokai</option>
+                                            <option>panda-syntax</option>
+                                            <option>vibrant-ink</option>
+                                            <option>yonce</option>
+                                        </select>
+                                    </div>
                                     <label for="responses">Response (<span
-                                            class="cc-length-counter">x</span>/20000)</label>
+                                            class="cc-length-counter">x</span>/20000)
+                                    </label>
+
                                     <!-- Use .btn-add for simplicity and let the page loader adjust. -->
-                              
+                                    
                                     {{range .CC.Responses}}
                                     <div class="entry input-group input-group-sm">
                                             <textarea class="pagst-textarea form-control response-text-area tab-textbox" name="responses"
@@ -424,9 +439,15 @@
 <script src="/static/codemirror/mode/go/go.js"></script>
 
 <link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
+
+<link rel="stylesheet" href="/static/codemirror/theme/ayu-dark.css">
 <link rel="stylesheet" href="/static/codemirror/theme/bespin.css">
+<link rel="stylesheet" href="/static/codemirror/theme/darcula.css">
+<link rel="stylesheet" href="/static/codemirror/theme/gruvbox-dark.css">
 <link rel="stylesheet" href="/static/codemirror/theme/mbo.css">
 <link rel="stylesheet" href="/static/codemirror/theme/monokai.css">
+<link rel="stylesheet" href="/static/codemirror/theme/panda-syntax.css">
+<link rel="stylesheet" href="/static/codemirror/theme/vibrant-ink.css">
 <link rel="stylesheet" href="/static/codemirror/theme/yonce.css">
 
 <script type="text/javascript">
@@ -500,17 +521,23 @@
         triggerTypeChanged();
     })
     
+    var textAreaTheme = "darcula"
+    var input = document.getElementById("themeSelect");
+
+    function selectTheme() {
+        textAreaTheme = input.options[input.selectedIndex].textContent;
+    }
+   
     function textAreaWrapper(textAreaWrapperValue){    
-    editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
+    var editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
         mode: "go", 
         //tabSize: 4,
-        theme: "bespin",
+        theme: textAreaTheme,
         lineNumbers:true,
         lineWrapping:true,
         viewportMargin: Infinity,
     });
     editor.setSize("97%", null);
-    var x = editor.getValue().length;
     editor.on("focus",function() {onCCChanged(document.querySelector('.CodeMirror'),editor)});
     editor.on("change",function() {editor.save(),onCCChanged(document.querySelector('.CodeMirror'),editor)});
     editor.on("blur",function() {editor.save(),editor.toTextArea()});
