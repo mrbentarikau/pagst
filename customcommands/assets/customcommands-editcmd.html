@@ -272,10 +272,10 @@
                                     
                                     {{range .CC.Responses}}
                                     <div class="entry input-group input-group-sm">
-                                            <textarea class="pagst-textarea form-control response-text-area tab-textbox" name="responses"
+                                            <textarea class="pagst-textarea form-control response-text-area tab-textbox withScrollbar" name="responses"
                                                 placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)">{{.}}</textarea>
                                             <span class="input-group-append">
-                                                <button class="btn btn-success btn-add btn-circle" onclick="editor.toTextArea()" type="button">
+                                                <button class="btn btn-success btn-add btn-circle" onclick="textAreaWrapper(this),editor.toTextArea()" type="button">
                                                     <i class="fas fa-plus"></i>
                                                 </button>
                                             </span>
@@ -285,7 +285,7 @@
                                     <div class="entry input-group  input-group-sm">
 
                                         <textarea class="pagst-textarea form-control response-text-area tab-textbox" name="responses"
-                                            placeholder="Command body here2" rows="5"></textarea>
+                                            placeholder="Command body here" rows="5"></textarea>
                                         <span class="input-group-append">
                                             <button class="btn btn-success btn-add btn-circle" type="button">
                                                 <i class="fas fa-plus"></i>
@@ -527,9 +527,9 @@
     function selectTheme() {
         textAreaTheme = input.options[input.selectedIndex].textContent;
     }
-   
+    
     function textAreaWrapper(textAreaWrapperValue){    
-    var editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
+    editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
         mode: "go", 
         //tabSize: 4,
         theme: textAreaTheme,
