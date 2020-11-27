@@ -252,32 +252,32 @@
                             <div class="col-lg-12">
                                 <div class="form-group">
                                     <label for="responses">Response (<span
-                                            class="cc-length-counter">x</span>/10000)</label>
+                                            class="cc-length-counter">x</span>/20000)</label>
                                     <!-- Use .btn-add for simplicity and let the page loader adjust. -->
+                              
                                     {{range .CC.Responses}}
-                                    <div class="entry input-group  input-group-sm">
-
-                                        <textarea class="form-control response-text-area tab-textbox" name="responses"
-
-                                            placeholder="Command body here" rows="5" oninput="onCCChanged(this)">{{.}}</textarea>
-
-                                        <span class="input-group-append">
-                                            <button class="btn btn-success btn-add btn-circle" type="button">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </span>
+                                    <div class="entry input-group input-group-sm">
+                                            <textarea class="pagst-textarea form-control response-text-area tab-textbox" name="responses"
+                                                placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)">{{.}}</textarea>
+                                            <span class="input-group-append">
+                                                <button class="btn btn-success btn-add btn-circle" onclick="editor.toTextArea()" type="button">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </span>
                                     </div>
+                                    
                                     {{else}}
                                     <div class="entry input-group  input-group-sm">
 
-                                        <textarea class="form-control response-text-area tab-textbox" name="responses"
-                                            placeholder="Command body here" rows="5" oninput="onCCChanged(this)"></textarea>
+                                        <textarea class="pagst-textarea form-control response-text-area tab-textbox" name="responses"
+                                            placeholder="Command body here2" rows="5"></textarea>
                                         <span class="input-group-append">
                                             <button class="btn btn-success btn-add btn-circle" type="button">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </span>
                                     </div>
+                                    
                                     {{end}}
                                     <a class="mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm"
                                         href="#cc-help-modal">Info</a>
@@ -385,8 +385,8 @@
                     </p>
                     <p class="help-block">Execute bot commands using
                         <code>{{`{{exec "command" "arg1" "arg2"}}`}}</code>, Example:
-                        <code>{{"{{exec \"role\" \"yagpdb\"}}"}}</code> will be the same as the user typing
-                        <code>(mention or prefix) role yagpdb</code></p>
+                        <code>{{"{{exec \"role\" \"pagstdb\"}}"}}</code> will be the same as the user typing
+                        <code>(mention or prefix) role pagstdb</code></p>
                     <p class="help-block">Arguments are available in a string array: <code>.CmdArgs</code><br>
                         Access
                         single arguments by index using <code>{{"{{index .CmdArgs 0}}"}}</code><br>Get the number of
@@ -398,11 +398,11 @@
                         See the <a href="https://docs.yagpdb.xyz/templates" target="_blank">templating</a> and <a
                             href="https://docs.yagpdb.xyz/commands/custom-commands" target="_blank">custom
                             command</a>
-                        docs for more info and join the support server if you have further questions. Custom
+                        docs for more info and join the YAGPDB's support server if you have further questions. Custom
                         commands
-                        for yagpdb are rather complicated for the time being.</p>
+                        for yagpdb/pagstdb are rather complicated for the time being.</p>
                     <p class="help-block">
-                        YAGPDB will pick one message at random from all configured responses.
+                        PAGSTDB will pick one message at random from all configured responses.
                     </p>
                 </div>
             </div>
@@ -420,6 +420,15 @@
 <script src="/static/vendor/tln/tln.min.js"></script>
 <link rel="stylesheet" href="/static/vendor/tln/tln.min.css">
 
+<script src="/static/codemirror/lib/codemirror.js"></script>
+<script src="/static/codemirror/mode/go/go.js"></script>
+
+<link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="/static/codemirror/theme/bespin.css">
+<link rel="stylesheet" href="/static/codemirror/theme/mbo.css">
+<link rel="stylesheet" href="/static/codemirror/theme/monokai.css">
+<link rel="stylesheet" href="/static/codemirror/theme/yonce.css">
+
 <script type="text/javascript">
     function isTextTrigger(t) {
         return t === "cmd" ||
@@ -431,7 +440,7 @@
 
     function triggerTypeChanged() {
         var dropdown = $("#trigger-type-dropdown")
-        console.log("wewwooewewooo", dropdown.val());
+        console.log("PAGST is awesome!", dropdown.val());
         if (dropdown.val() === "interval_hours" || dropdown.val() === "interval_minutes") {
             // Interval triggers
 
@@ -490,22 +499,35 @@
     $(function () {
         triggerTypeChanged();
     })
+    
+    function textAreaWrapper(textAreaWrapperValue){    
+    editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
+        mode: "go", 
+        //tabSize: 4,
+        theme: "bespin",
+        lineNumbers:true,
+        lineWrapping:true,
+        viewportMargin: Infinity,
+    });
+    editor.setSize("97%", null);
+    var x = editor.getValue().length;
+    editor.on("focus",function() {onCCChanged(document.querySelector('.CodeMirror'),editor)});
+    editor.on("change",function() {editor.save(),onCCChanged(document.querySelector('.CodeMirror'),editor)});
+    editor.on("blur",function() {editor.save(),editor.toTextArea()});
+    }
 
-
-
-
-    function onCCChanged(textArea) {
-        var textAreas = textArea.parentElement.parentElement.querySelectorAll("textarea")
-
+    function onCCChanged(textArea,editor) {
+        var textAreas = textArea.parentElement.parentElement.querySelectorAll('textarea.pagst-textarea')
         var combinedLength = 0;
+                
         textAreas.forEach(function (elem) {
             combinedLength += elem.value.length;
         })
-
+        
         var display = textArea.parentElement.parentElement.querySelector(".cc-length-counter")
         display.textContent = combinedLength
 
-        if (combinedLength > 10000) {
+        if (combinedLength > 20000) {
             display.classList.add("text-danger");
         } else {
             display.classList.remove("text-danger");
