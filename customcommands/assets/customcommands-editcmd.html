@@ -542,13 +542,13 @@
     
     function textAreaWrapper(textAreaWrapperValue){    
     editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
-        mode: "xml", 
+        mode: "go", 
         //tabSize: 4,
+        autoCloseBrackets: bracketsEnabled,
         theme: textAreaTheme,
         lineNumbers:true,
         lineWrapping:true,
-        viewportMargin: Infinity,
-        autoCloseBrackets: bracketsEnabled,
+        viewportMargin: Infinity
     });
     editor.setSize("97%", null);
     editor.on("focus",function() {onCCChanged(document.querySelector('.CodeMirror'),editor)});
