@@ -16,7 +16,7 @@ This branch is not meant for docker or some other huge scalability method.
 
 ## Various
 What's there to say.
-caubert forked it and changed the license type.
-Real code is in Jonas747's git > [GitHub](https://github.com/jonas747/yagpdb) - I still call it master.
+Before license change and branching out caubert forked it and 
+original code is in Jonas747's git > [GitHub](https://github.com/jonas747/yagpdb) - I still call it master.
 
 Go away now : )
