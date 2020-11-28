@@ -263,6 +263,7 @@
                                             <option>vibrant-ink</option>
                                             <option>yonce</option>
                                         </select>
+                                        <span style="margin-left:5px">Auto-close Brackets: <select onchange="selectBrackets()" id=bracketsSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;">><option selected>disabled</option><option>enabled</option></select></span>
                                     </div>
                                     <label for="responses">Response (<span
                                             class="cc-length-counter">x</span>/20000)
@@ -436,9 +437,10 @@
 <link rel="stylesheet" href="/static/vendor/tln/tln.min.css">
 
 <script src="/static/codemirror/lib/codemirror.js"></script>
-<script src="/static/codemirror/mode/go/go.js"></script>
-
 <link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
+
+<script src="/static/codemirror/addon/edit/closebrackets.js"></script>
+<script src="/static/codemirror/mode/go/go.js"></script>
 
 <link rel="stylesheet" href="/static/codemirror/theme/ayu-dark.css">
 <link rel="stylesheet" href="/static/codemirror/theme/bespin.css">
@@ -522,20 +524,31 @@
     })
     
     var textAreaTheme = "darcula"
+    var bracketsEnabled = false
     var input = document.getElementById("themeSelect");
+    var bracketsInput = document.getElementById("bracketsSelect");
 
     function selectTheme() {
         textAreaTheme = input.options[input.selectedIndex].textContent;
     }
+
+    function selectBrackets() {
+        if (bracketsInput.options[bracketsInput.selectedIndex].textContent == "enabled") {
+            bracketsEnabled = true;
+            return
+        } 
+        bracketsEnabled = false;
+    }
     
     function textAreaWrapper(textAreaWrapperValue){    
     editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
-        mode: "go", 
+        mode: "xml", 
         //tabSize: 4,
         theme: textAreaTheme,
         lineNumbers:true,
         lineWrapping:true,
         viewportMargin: Infinity,
+        autoCloseBrackets: bracketsEnabled,
     });
     editor.setSize("97%", null);
     editor.on("focus",function() {onCCChanged(document.querySelector('.CodeMirror'),editor)});
