@@ -160,7 +160,7 @@ $(function(){
         if (data.incidents) {
             data.incidents.forEach(function(incident) {
                 var info = "Discord's " + incident.status + " an incident: " + incident.name + ". Functionality may be limited."
-                var codeBlock = 'Navigation <i class="fas fa-exclamation-circle" title="' + info +'"></i>';
+                var codeBlock = 'Navigation <i style="color:#aa8900!important" class="fas fa-exclamation-circle" title="' + info +'"></i>';
                 document.getElementById("sidebar-title-warning").innerHTML = codeBlock;
             })
         }
