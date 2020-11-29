@@ -236,7 +236,7 @@ var CountryCodes = map[string]string{
 	"Ukraine":                              "UA",
 	"United Arab Emirates":                 "AE",
 	"United Kingdom":                       "UK",
-	"Great Brittain":                       "GB",
+	"Great Britain":                        "GB",
 	"United States":                        "US",
 	"United States Minor Outlying Islands": "UM",
 	"Uruguay":                              "UY",
