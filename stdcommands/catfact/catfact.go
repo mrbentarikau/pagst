@@ -25,7 +25,7 @@ var Command = &commands.YAGCommand{
 		var err error
 		request := rand.Intn(2)
 		if request > 0 {
-			cf, err = catFactFromApi()
+			cf, err = catFactFromAPI()
 			if err == nil {
 				return cf, nil
 			}
@@ -35,7 +35,7 @@ var Command = &commands.YAGCommand{
 	},
 }
 
-func catFactFromApi() (string, error) {
+func catFactFromAPI() (string, error) {
 	var cf catfacts
 	query := "https://catfact.ninja/fact"
 	req, err := http.NewRequest("GET", query, nil)
