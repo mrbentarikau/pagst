@@ -10,10 +10,6 @@ import (
 	"github.com/mrbentarikau/pagst/commands"
 )
 
-type catfacts struct {
-	Fact string `json:"fact"`
-}
-
 var Command = &commands.YAGCommand{
 	CmdCategory: commands.CategoryFun,
 	Name:        "CatFact",
@@ -36,7 +32,10 @@ var Command = &commands.YAGCommand{
 }
 
 func catFactFromAPI() (string, error) {
-	var cf catfacts
+	var cf struct {
+		Fact string `json:"fact"`
+	}
+
 	query := "https://catfact.ninja/fact"
 	req, err := http.NewRequest("GET", query, nil)
 	if err != nil {
