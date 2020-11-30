@@ -746,6 +746,12 @@ html{scrollbar-width:auto!important;scrollbar-color#aa8900 #1A1A1A!important}
 html::-webkit-scrollbar {width: 7px !important; height: 5px !important}
 html::-webkit-scrollbar-thumb {background: #89aa00 !important;}
 html::-webkit-scrollbar-thumb:hover {background:#aa8900 !important;}
+body::-webkit-scrollbar {width: 7px !important; height: 5px !important}
+body::-webkit-scrollbar-thumb {background: #89aa00 !important;}
+body::-webkit-scrollbar-thumb:hover {background:#aa8900 !important;}
+textarea::-webkit-scrollbar {width: 7px !important; height: 5px !important}
+textarea::-webkit-scrollbar-thumb {background: #89aa00 !important;}
+textarea::-webkit-scrollbar-thumb:hover {background:#aa8900 !important;}
 
 /*ADMIN panel*/
 form>div>button[class*="btn btn-secondary dropdown-toggle"]{background-color:#aa8900!important; border-color:#aa8900!important;color:#1a1a1a!important}
