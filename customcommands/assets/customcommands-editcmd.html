@@ -275,9 +275,9 @@
                                     {{range .CC.Responses}}
                                     <div class="entry input-group input-group-sm">
                                             <textarea class="pagst-textarea form-control response-text-area tab-textbox withScrollbar" name="responses"
-                                                placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)">{{.}}</textarea>
+                                                placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)" oninput="onCCChanged(this)">{{.}}</textarea>
                                             <span class="input-group-append">
-                                                <button class="btn btn-success btn-add btn-circle" onclick="textAreaWrapper(this),editor.toTextArea()" type="button">
+                                                <button class="btn btn-success btn-add btn-circle" onclick="textAreaWrapper(this),editorToTextArea()" type="button">
                                                     <i class="fas fa-plus"></i>
                                                 </button>
                                             </span>
@@ -541,6 +541,15 @@
         bracketsEnabled = false;
     }
     
+    function editorToTextArea(){
+        if (typeof editor !== 'undefined' && editor){
+            editor.toTextArea();
+            return
+        }
+        console.log("no CodeMirror, yet");
+        return
+    }
+
     function textAreaWrapper(textAreaWrapperValue){    
     if (textAreaTheme == "no CodeMirror") {
         return
