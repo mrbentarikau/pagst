@@ -265,7 +265,7 @@
                                             <option>vibrant-ink</option>
                                             <option>yonce</option>
                                         </select>
-                                        <span style="margin-left:5px">Auto-close brackets:<i style="position: relative; top: -0.5em; font-size: 75%;"class="fas fa-question-circle" title="If CodeMirror enabled"></i> &nbsp;<select onchange="selectBrackets()" id=bracketsSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;">><option selected>disabled</option><option>enabled</option></select></span><span style="margin-left:5px"><i>(alt+shift+s is quicksave)</i></span>
+                                        <span style="margin-left:5px">Auto-close brackets:<i style="position: relative; top: -0.5em; font-size: 75%;"class="fas fa-question-circle" title="If CodeMirror enabled"></i> &nbsp;<select onchange="selectBrackets()" id=bracketsSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;"><option selected>disabled</option><option>enabled</option></select></span><span style="margin-left:5px"><i>(alt+shift+s is quicksave)</i></span>
                                     </div>
                                     <label for="responses">Response (<span class="cc-length-counter">x</span>/20000)</label>
 
@@ -370,9 +370,9 @@
 
                         <div class="row mt-4">
                             <script type="text/javascript" src="/static/js/shortcuts.js"></script>
-                            <script>shortcut.add("shift+alt+s",function(){document.getElementById('pagstForm').submit();});</script>
+                            <script>shortcut.add("shift+alt+s",function(){document.getElementById('pagstSubmitSave').click();});</script>
                             <div class="col">
-                                <button type="submit" class="btn btn-success btn-block"
+                                <button type="submit" id="pagstSubmitSave" class="btn btn-success btn-block"
                                     formaction="/manage/{{$guild}}/customcommands/commands/{{.CC.LocalID}}/update"
                                     data-async-form-alertsonly>Save</button>
                             </div>
@@ -531,6 +531,7 @@
 
     function selectTheme() {
         textAreaTheme = input.options[input.selectedIndex].textContent;
+        location.hash = "#" + textAreaTheme;
     }
 
     function selectBrackets() {
@@ -548,6 +549,13 @@
         }
         console.log("no CodeMirror, yet");
         return
+    }
+    var choice = (location.hash && location.hash.slice(1)) ||
+               (document.location.search &&
+                decodeURIComponent(document.location.search.slice(1)));
+    if (choice) {
+        input.value = choice;
+        textAreaTheme = choice;
     }
 
     function textAreaWrapper(textAreaWrapperValue){    
