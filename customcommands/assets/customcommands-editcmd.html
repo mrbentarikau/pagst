@@ -273,8 +273,11 @@
                                     
                                     {{range .CC.Responses}}
                                     <div class="entry input-group input-group-sm">
-                                            <textarea class="pagst-textarea form-control response-text-area tab-textbox withScrollbar" name="responses"
-                                                placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)" oninput="onCCChanged(this)">{{.}}</textarea>
+                                            <div class="form-control response-text-area tab-textbox withScrollbar">
+                                                <textarea class="pagst-textarea form-control response-text-area tab-textbox withScrollbar" name="responses"
+                                                    placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)" oninput="onCCChanged(this)">{{.}}
+                                                </textarea>
+                                            </div>
                                             <span class="input-group-append">
                                                 <button class="btn btn-success btn-add btn-circle" onclick="textAreaWrapper(this),editorToTextArea()" type="button">
                                                     <i class="fas fa-plus"></i>
@@ -282,7 +285,7 @@
                                             </span>
                                     </div>
                                     
-                                    {{else}}
+                                    {{else}}{{/* quite redundant */}}
                                     <div class="entry input-group  input-group-sm">
 
                                         <textarea class="pagst-textarea form-control response-text-area tab-textbox" name="responses"
@@ -571,21 +574,21 @@
         lineWrapping:true,
         viewportMargin: Infinity
     });
-    editor.setSize("97%", null);
+    editor.setSize("100%",null);
     editor.on("focus",function() {onCCChanged(document.querySelector('.CodeMirror'),editor)});
     editor.on("change",function() {editor.save(),onCCChanged(document.querySelector('.CodeMirror'),editor)});
     editor.on("blur",function() {editor.save(),editor.toTextArea()});
     }
 
     function onCCChanged(textArea,editor) {
-        var textAreas = textArea.parentElement.parentElement.querySelectorAll('textarea.pagst-textarea')
+        var textAreas = textArea.parentElement.parentElement.parentElement.querySelectorAll('textarea.pagst-textarea');
         var combinedLength = 0;
                 
         textAreas.forEach(function (elem) {
             combinedLength += elem.value.length;
         })
         
-        var display = textArea.parentElement.parentElement.querySelector(".cc-length-counter")
+        var display = textArea.parentElement.parentElement.parentElement.querySelector(".cc-length-counter")
         display.textContent = combinedLength
 
         if (combinedLength > 20000) {
