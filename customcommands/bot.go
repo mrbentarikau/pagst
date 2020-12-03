@@ -458,6 +458,10 @@ func ExecuteCustomCommandFromReaction(cc *models.CustomCommand, ms *dstate.Membe
 	tmplCtx.Data["Message"] = message
 	tmplCtx.Data["ReactionAdded"] = added
 
+	if fakeMsg.Author.Bot {
+		return nil
+	}
+
 	return ExecuteCustomCommand(cc, tmplCtx)
 }
 
