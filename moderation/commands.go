@@ -303,6 +303,10 @@ var ModerationCommands = []*commands.YAGCommand{
 
 			target := parsed.Args[0].Int64()
 
+			if target == parsed.Msg.Author.ID {
+				return "You can't report yourself, silly.", nil
+			}
+
 			logLink := CreateLogs(parsed.GS.ID, parsed.CS.ID, parsed.Msg.Author)
 
 			channelID := config.IntReportChannel()
