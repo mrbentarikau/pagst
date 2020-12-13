@@ -123,6 +123,7 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 	<li>Ban command: %s</li>
 	<li>Mute/Unmute commands: %s</li>
 	<li>Warning commands: %s</li>
+	<li>Lockdown commands: %s</li>
 </ul>`
 
 	if config.ReportEnabled || config.CleanEnabled || config.GiveRoleCmdEnabled || config.ActionChannel != "" ||
