@@ -53,7 +53,7 @@
         {{ if not (ge .JoinedServers 93) }}
         <li class="nav-item active">
 		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827775&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
-			         
+
 	      </li>
         {{ end }}
         <li class="nav-item active">
@@ -87,7 +87,7 @@
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">Internalization {{ printf "%.2f%%" (mult (fdiv .JoinedServers 93) 100) }} by {{.JoinedServers}} joined intransigent servers</span>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> Commands ran today: {{.Commands}}</span>
 		              <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> CCs executed today: {{humanizeThousands .CCs}}</span>
-                  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">>> AMV2 launches today: {{humanizeThousands .AMV2s}}</span>
+                  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">>> AMv2 launches today: {{humanizeThousands .AMV2s}}</span>
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@
   <div class="about">
     <section class="container content-section text-center">
       <a id="about"></a>
-      
+
       <div class="row justify-content-md-center">
         <img class="img-responsive about aboutlogo" src="/static/img/logo_y.png" alt="logo of pagstdb" style="height:10%"/>
         <div class="col col-lg-8 abouttext" style="padding-bottom: 3%; text-align: left">
