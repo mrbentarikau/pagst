@@ -25,7 +25,7 @@ var Command = &commands.YAGCommand{
 func cmdFuncCurrentTime(data *dcmd.Data) (interface{}, error) {
 	const format = "Mon Jan 02 15:04:05 (UTC -07:00)"
 
-	now := time.Now()
+	now := time.Now().UTC()
 	if data.Args[0].Value != nil {
 		tzName := data.Args[0].Str()
 		names, err := timezone.GetTimezones(strings.ToUpper(data.Args[0].Str()))

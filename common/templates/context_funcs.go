@@ -251,7 +251,6 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm, exec bool, name st
 
 	// and finally execute the child template
 	c.CurrentFrame.parsedTemplate = t
-	// KRAAKA error happens here
 	resp, err := c.executeParsed()
 	if err != nil {
 		return "", err

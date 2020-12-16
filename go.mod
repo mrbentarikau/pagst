@@ -1,6 +1,6 @@
 module github.com/mrbentarikau/pagst
 
-go 1.13
+go 1.15
 
 require (
 	emperror.dev/errors v0.4.3
@@ -9,18 +9,16 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.4.1 // indirect
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.5.0
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/alfredxing/calc v0.0.0-20180827002445-77daf576f976
 	github.com/bwmarrin/snowflake v0.3.0
-	github.com/certifi/gocertifi v0.0.0-20190905060710-a5e0173ced67 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20200206145737-bbfc9a55622e // indirect
 	github.com/dghubble/oauth1 v0.6.0
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dpatrie/urbandictionary v0.0.0-20151214192647-3b38cbf4cb81
 	github.com/ericlagergren/decimal v0.0.0-20191206042408-88212e6cfca9 // indirect
-	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/fatih/structs v1.1.0
 	github.com/friendsofgo/errors v0.9.2
-	github.com/getsentry/raven-go v0.2.0 // indirect
 	github.com/getsentry/sentry-go v0.7.0
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
@@ -47,6 +45,7 @@ require (
 	github.com/jonas747/when v0.0.3-0.20201118193825-7feeddcd993f
 	github.com/justinian/dice v0.0.0-20170728002755-6a18b51d929c // indirect
 	github.com/karlseguin/ccache v2.0.3+incompatible
+	github.com/karlseguin/expect v1.0.7 // indirect
 	github.com/karlseguin/rcache v1.0.1
 	github.com/lib/pq v1.2.1-0.20191011153232-f91d3411e481
 	github.com/lunixbochs/vtclean v1.0.0
@@ -59,9 +58,7 @@ require (
 	github.com/prometheus/client_golang v1.5.1
 	github.com/russross/blackfriday v1.5.2
 	github.com/shirou/gopsutil v2.18.12+incompatible
-	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/shurcooL/github_flavored_markdown v0.0.0-20181002035957-2122de532470
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/tidwall/btree v0.0.0-20170113224114-9876f1454cf0 // indirect
@@ -74,7 +71,6 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/volatiletech/null v8.0.0+incompatible
 	github.com/volatiletech/sqlboiler v3.7.1+incompatible
-	github.com/wsxiaoys/terminal v0.0.0-20160513160801-0940f3fc43a0 // indirect
 	goji.io v2.0.2+incompatible
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 	golang.org/x/image v0.0.0-20190902063713-cb417be4ba39
@@ -85,6 +81,5 @@ require (
 	google.golang.org/api v0.3.1
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/grpc v1.21.0 // indirect
-	gopkg.in/karlseguin/expect.v1 v1.0.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )

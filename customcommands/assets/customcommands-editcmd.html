@@ -275,7 +275,7 @@
                                     <div class="entry input-group input-group-sm">
                                             <div class="form-control response-text-area tab-textbox withScrollbar">
                                                 <textarea class="pagst-textarea form-control response-text-area tab-textbox withScrollbar" name="responses"
-                                                    placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)" oninput="onCCChanged(this)">{{.}}
+                                                    placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)" oninput="onCCChanged(this)">{{- . -}}
                                                 </textarea>
                                             </div>
                                             <span class="input-group-append">

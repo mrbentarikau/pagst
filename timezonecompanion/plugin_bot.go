@@ -42,7 +42,7 @@ func (p *Plugin) AddCommands() {
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 
-			localTZ := time.Now().Location()
+			localTZ := time.Now().UTC().Location()
 			userZone, userOffset := time.Now().In(localTZ).Zone()
 			getUserTZ := GetUserTimezone(parsed.Msg.Author.ID)
 			tzState := "server's"

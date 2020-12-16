@@ -133,7 +133,7 @@ func HandleSelectServer(w http.ResponseWriter, r *http.Request) interface{} {
 		}
 	}
 
-	posts := discordblog.GetNewestPosts(10)
+	posts := discordblog.GetNewestPosts(30)
 	tmpl["Posts"] = posts
 	//tmpl["RedditQuotes"] = *(*string)(atomic.LoadPointer(redditQuote))
 	tmpl["RedditQuotes"] = html.UnescapeString(redditQuote)
@@ -153,6 +153,7 @@ func HandleLandingPage(w http.ResponseWriter, r *http.Request) (TemplateData, er
 	// Command stats
 	tmpl["Commands"] = atomic.LoadInt64(commandsRanToday)
 	tmpl["CCs"] = atomic.LoadInt64(customCommandsRanToday)
+	tmpl["AMV2s"] = atomic.LoadInt64(autoModeratorV2sRanToday)
 
 	return tmpl, nil
 }
@@ -420,6 +421,26 @@ func pollCCsRan() {
 			logger.WithError(err).Error("failed counting commands ran today")
 		} else {
 			atomic.StoreInt64(customCommandsRanToday, result.Int64)
+		}
+
+		<-t.C
+	}
+}
+
+var autoModeratorV2sRanToday = new(int64)
+
+func pollAMV2sRan() {
+	t := time.NewTicker(time.Minute)
+	for {
+
+		within := time.Now().Add(-24 * time.Hour)
+		var result null.Int64
+		const q = "SELECT SUM(count) FROM analytics WHERE created_at > $1 AND plugin='automod_v2'"
+		err := common.PQ.QueryRow(q, within).Scan(&result)
+		if err != nil {
+			logger.WithError(err).Error("failed counting AMV2s ran today")
+		} else {
+			atomic.StoreInt64(autoModeratorV2sRanToday, result.Int64)
 		}
 
 		<-t.C
