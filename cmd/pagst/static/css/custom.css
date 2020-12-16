@@ -740,7 +740,8 @@ div[id="unsaved-changes-popup-container"]{display:none!important}
 
 
 /* Scrollbars */
-html{scrollbar-width:auto!important;scrollbar-color#aa8900 #1A1A1A!important}	
+html{scrollbar-width:thin!important;scrollbar-color:#89aa00 #1A1A1A!important}
+html:hover{scrollbar-width:thin!important;scrollbar-color:#aa8900 #1A1A1A!important}
 [class*=withScrollbar]:hover{scrollbar-width: thin!important;scrollbar-color:#aa8900 #1a1a1a!important}
 [class*=withScrollbar]{scrollbar-width: thin!important;scrollbar-color:#89aa00 #1a1a1a!important}
 html::-webkit-scrollbar {width: 7px !important; height: 5px !important}
