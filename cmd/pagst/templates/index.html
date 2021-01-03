@@ -35,6 +35,11 @@
 ::-webkit-scrollbar {width: 7px !important; height: 5px !important}
 ::-webkit-scrollbar-thumb {background: #a1a1a1 !important;}
 ::-webkit-scrollbar-thumb:hover { background:#aa8900 !important;}
+a.pagst:hover{ 
+  background-color: #1a1a1a!important;
+  text-decoration: none!important;
+  color:#aa8900!important 
+}
 </style>
 </head>
 
@@ -50,10 +55,10 @@
     </button>
     <div class="collapse navbar-collapse poppins" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
-        {{ if not (ge .JoinedServers 93) }}
+        {{ if not (ge .JoinedServers 83) }}
         <li class="nav-item active">
 		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827775&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
-
+			         
 	      </li>
         {{ end }}
         <li class="nav-item active">
@@ -84,7 +89,7 @@
                 <br/>PAGSTDB</h1>
                 <div style="background-color: rgba(26,26,26,0.7);border:1px solid #a1a1a1;border-radius:5px;margin-top:25px">
                   <p style="margin-top:7px;margin-bottom: 7px;margin-right: 5px;line-height:1.25em;font-size: 2.2em!important" class="intro_headline">People Against Generally Shitty Things Discord Bot</p>
-                  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">Internalization {{ printf "%.2f%%" (mult (fdiv .JoinedServers 93) 100) }} by {{.JoinedServers}} joined intransigent servers</span>
+                  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">Internalization {{ printf "%.2f%%" (mult (fdiv .JoinedServers 83) 100) }} by {{.JoinedServers}} joined intransigent servers</span>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> Commands ran today: {{.Commands}}</span>
 		              <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> CCs executed today: {{humanizeThousands .CCs}}</span>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">>> AMv2 launches today: {{humanizeThousands .AMV2s}}</span>
@@ -101,7 +106,7 @@
   <div class="about">
     <section class="container content-section text-center">
       <a id="about"></a>
-
+      
       <div class="row justify-content-md-center">
         <img class="img-responsive about aboutlogo" src="/static/img/logo_y.png" alt="logo of pagstdb" style="height:10%"/>
         <div class="col col-lg-8 abouttext" style="padding-bottom: 3%; text-align: left">
@@ -117,7 +122,7 @@
             started out because MEE6 (which was currently in use in Jonas' server) was lacking a lot of stuff,
             so Jonas747 decided to make his own, far superior bot, and here it is.</p>
             <p class="about">
-          <b><a name="pagstAudio" href="#pagstAudio" id="audiolink">Who is caubert?</a></b> A user who falls under Dan Simmons' descriptor - The Void Which Binds.</p><audio id="pagstAudio" src="../static/audio/pagst.mp3" type="audio/mp3">
+          <b><a class="pagst" name="pagstAudio" href="#pagstAudio" id="audiolink">Who is caubert?</a></b> A user who falls under Dan Simmons' descriptor - The Void Which Binds.</p><audio id="pagstAudio" src="../static/audio/pagst.mp3" type="audio/mp3">
 Your browser does not support the audio element.
 </audio>
         </div>
@@ -140,9 +145,9 @@ Your browser does not support the audio element.
         <div class="col col-lg-12">
           <p>
             <b>YAGPDB</b> created by
-            <a class="link" href="https://github.com/jonas747" rel="noopener" target="_blank">Jonas747</a> |
-            <b>PAGSTDB</b> fork <a class="link" href="https://github.com/mrbentarikau/" rel="noopener" target="_blank">caubert</a> |
-            <b>PAGST</b> is referenced from <a class="link" href="https://www.paradigmadventure.com/" rel="noopener" target="_blan"k>PARADIGM</a>
+            <a class="pagst" href="https://github.com/jonas747" rel="noopener" target="_blank">Jonas747</a> |
+            <b>PAGSTDB</b> fork <a class="pagst" href="https://github.com/mrbentarikau/" rel="noopener" target="_blank">caubert</a> |
+            <b>PAGST</b> is referenced from <a class="pagst" href="https://www.paradigmadventure.com/" rel="noopener" target="_blank">PARADIGM</a>
           </p>
         </div>
       </div>
