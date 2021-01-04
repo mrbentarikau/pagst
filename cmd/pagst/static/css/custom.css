@@ -757,3 +757,8 @@ textarea::-webkit-scrollbar-thumb:hover {background:#aa8900 !important;}
 /*ADMIN panel*/
 form>div>button[class*="btn btn-secondary dropdown-toggle"]{background-color:#aa8900!important; border-color:#aa8900!important;color:#1a1a1a!important}
 
+a.pagst:hover{ 
+  background-color: transparent!important;
+  text-decoration: none!important;
+  color:#aa8900!important 
+}
