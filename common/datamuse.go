@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func wordSynonymsFromAPI(wrd string, synSwitch bool) string {
+func wordFromAPI(wrd string, synSwitch bool) string {
 	type wordFromAPI struct {
 		Word string `json:"word"`
 	}

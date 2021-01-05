@@ -78,7 +78,7 @@ func RandomAdjective() string {
 	adjective := Adjectives[rand.Intn(len(Adjectives))]
 
 	if rand.Intn(2) > 0 {
-		adjective = wordSynonymsFromAPI(adjective, false)
+		adjective = wordFromAPI(adjective, false)
 	}
 
 	return adjective
@@ -88,7 +88,7 @@ func RandomNoun() string {
 	noun := Nouns[rand.Intn(len(Nouns))]
 
 	if rand.Intn(2) > 0 {
-		noun = wordSynonymsFromAPI(noun, true)
+		noun = wordFromAPI(noun, true)
 	}
 
 	return noun
