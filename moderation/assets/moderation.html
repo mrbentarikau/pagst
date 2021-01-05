@@ -129,6 +129,14 @@ the punishment{{end}}
         </div>
         <hr />
 
+        <div class="form-group">
+            <label>Channel to send error messages of the moderation DMs</label>
+            <select class="form-control" name="ErrorChannel" data-requireperms-embed>
+                {{textChannelOptions .ActiveGuild.Channels .ModConfig.ErrorChannel true "None"}}
+            </select>
+        </div>
+        <hr />
+
         {{checkbox "ReportEnabled" "report-enabled" "Enable report command?" .ModConfig.ReportEnabled}}
         <p><code>(mention or prefix) report @user some reason</code><br />
             Everyone can use this.<br />
