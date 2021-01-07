@@ -53,6 +53,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/undelete"
 	"github.com/mrbentarikau/pagst/stdcommands/viewperms"
 	"github.com/mrbentarikau/pagst/stdcommands/weather"
+	"github.com/mrbentarikau/pagst/stdcommands/wolframalpha"
 	"github.com/mrbentarikau/pagst/stdcommands/wouldyourather"
 	"github.com/mrbentarikau/pagst/stdcommands/xkcd"
 )
@@ -106,6 +107,7 @@ func (p *Plugin) AddCommands() {
 		howlongtobeat.Command,
 		covidstats.Command,
 		getiplocation.Command,
+		wolframalpha.Command,
 
 		// Maintenance
 		stateinfo.Command,
