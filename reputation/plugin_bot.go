@@ -32,7 +32,9 @@ func (p *Plugin) BotInit() {
 	eventsystem.AddHandlerAsyncLastLegacy(p, handleMessageCreate, eventsystem.EventMessageCreate)
 }
 
-var thanksRegex = regexp.MustCompile(`(?i)( |\n|^)(thanks?\pP*|danks|ty|thx|\+rep|\+ ?\<\@[0-9]*\>)( |\n|$)`)
+//var thanksRegex = regexp.MustCompile(`(?i)( |\n|^)(thanks?\pP*|danks|ty|thx|\+rep|\+ ?\<\@[0-9]*\>)( |\n|$)`)
+var thanksRegex = regexp.MustCompile(`(?i)(?:\A|.+)(?:\+(?:\s+|rep)?|t(?:y(?:sm|vm)?|h(?:a?nks?|n?x)(?:\s+(?:yo)?u)?(?:\s+(?:so|very)\s+much|\s+?a?\s*lot)?)|danke?s?)+.*<@!?\d{17,19}>(?:.+|\z)`)
+
 //var thanksRegex = regexp.MustCompile(`(?i)(?:\A|\b|\s+)(?:\+(?:\s+|rep)?|t(?:y(?:sm|vm)?|h(?:a?nks?|n?x)(?:\s+you)?(?:\s+(?:so|very)\s+much|\s+?a?\s*lot)?)|danke?s?)\s+<@!?\d{17,19}>(?:\s+|\b|\z)`)
 
 func handleMessageCreate(evt *eventsystem.EventData) {
@@ -99,7 +101,7 @@ var cmds = []*commands.YAGCommand{
 		Description:  "Takes away rep from someone",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "User", Type: dcmd.User},
+			&dcmd.ArgDef{Name: "User", Type: dcmd.UserID},
 			&dcmd.ArgDef{Name: "Num", Type: dcmd.Int, Default: 1},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
@@ -114,7 +116,7 @@ var cmds = []*commands.YAGCommand{
 		Description:  "Gives rep to someone",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "User", Type: dcmd.User},
+			&dcmd.ArgDef{Name: "User", Type: dcmd.UserID},
 			&dcmd.ArgDef{Name: "Num", Type: dcmd.Int, Default: 1},
 		},
 		RunFunc: CmdGiveRep,
@@ -286,12 +288,12 @@ var cmds = []*commands.YAGCommand{
 		Name:        "Rep",
 		Description: "Shows yours or the specified users current rep and rank",
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "User", Type: dcmd.User},
+			&dcmd.ArgDef{Name: "User", Type: dcmd.UserID},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
-			target := parsed.Msg.Author
+			target := parsed.Msg.Author.ID
 			if parsed.Args[0].Value != nil {
-				target = parsed.Args[0].Value.(*discordgo.User)
+				target = parsed.Args[0].Int64()
 			}
 
 			conf, err := GetConfig(parsed.Context(), parsed.GS.ID)
@@ -299,7 +301,7 @@ var cmds = []*commands.YAGCommand{
 				return "An error occured finding the server config", err
 			}
 
-			score, rank, err := GetUserStats(parsed.GS.ID, target.ID)
+			score, rank, err := GetUserStats(parsed.GS.ID, target)
 
 			if err != nil {
 				if err == ErrUserNotFound {
@@ -314,7 +316,7 @@ var cmds = []*commands.YAGCommand{
 				rankStr = strconv.FormatInt(int64(rank), 10)
 			}
 
-			return fmt.Sprintf("**%s**: **%d** %s (#**%s**)", target.Username, score, conf.PointsName, rankStr), nil
+			return fmt.Sprintf("**%s**: **%d** %s (#**%s**)", parsed.GS.MemberCopy(true, target).Username, score, conf.PointsName, rankStr), nil
 		},
 	},
 	&commands.YAGCommand{
@@ -364,7 +366,7 @@ var cmds = []*commands.YAGCommand{
 }
 
 func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {
-	target := parsed.Args[0].Value.(*discordgo.User)
+	target := parsed.Args[0].Int64()
 
 	conf, err := GetConfig(parsed.Context(), parsed.GS.ID)
 	if err != nil {
@@ -373,12 +375,12 @@ func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {
 
 	pointsName := conf.PointsName
 
-	if target.ID == parsed.Msg.Author.ID {
+	if target == parsed.Msg.Author.ID {
 		return fmt.Sprintf("You can't modify your own %s... **Silly**", pointsName), nil
 	}
 
 	sender := parsed.MS
-	receiver, err := bot.GetMember(parsed.GS.ID, target.ID)
+	receiver, err := bot.GetMember(parsed.GS.ID, target)
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +396,7 @@ func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {
 		return nil, err
 	}
 
-	newScore, newRank, err := GetUserStats(parsed.GS.ID, target.ID)
+	newScore, newRank, err := GetUserStats(parsed.GS.ID, target)
 	if err != nil {
 		newScore = -1
 		newRank = -1
@@ -411,6 +413,6 @@ func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {
 		targetStr = "from"
 	}
 
-	msg := fmt.Sprintf("%s `%d` %s %s **%s** (current: `#%d` - `%d`)", actionStr, amount, pointsName, targetStr, target.Username, newRank, newScore)
+	msg := fmt.Sprintf("%s `%d` %s %s **%s** (current: `#%d` - `%d`)", actionStr, amount, pointsName, targetStr, parsed.GS.MemberCopy(true, target).Username, newRank, newScore)
 	return msg, nil
 }
