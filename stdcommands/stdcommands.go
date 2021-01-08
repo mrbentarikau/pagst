@@ -8,6 +8,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/advice"
 	"github.com/mrbentarikau/pagst/stdcommands/allocstat"
 	"github.com/mrbentarikau/pagst/stdcommands/banserver"
+	"github.com/mrbentarikau/pagst/stdcommands/bashquotes"
 	"github.com/mrbentarikau/pagst/stdcommands/calc"
 	"github.com/mrbentarikau/pagst/stdcommands/catfact"
 	"github.com/mrbentarikau/pagst/stdcommands/ccreqs"
@@ -108,6 +109,7 @@ func (p *Plugin) AddCommands() {
 		covidstats.Command,
 		getiplocation.Command,
 		wolframalpha.Command,
+		bashquotes.Command,
 
 		// Maintenance
 		stateinfo.Command,
