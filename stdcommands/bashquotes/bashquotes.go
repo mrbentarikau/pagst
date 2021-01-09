@@ -16,7 +16,7 @@ var Command = &commands.YAGCommand{
 	CmdCategory: commands.CategoryFun,
 	Name:        "BashQuote",
 	Aliases:     []string{"bash", "bquote", "bq"},
-	Description: `Returns a quote from Bash Quotes Database > 
+	Description: `Returns a quote (NSFW probability high) from Bash Quotes Database > 
 				http://bash.org`,
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "Quote number", Type: dcmd.Int},
