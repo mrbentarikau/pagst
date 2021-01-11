@@ -7,22 +7,22 @@ import (
 	"github.com/jonas747/dcmd"
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
-	"github.com/mrbentarikau/pagst/analytics"
-	"github.com/mrbentarikau/pagst/bot"
-	"github.com/mrbentarikau/pagst/bot/eventsystem"
-	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/common/pubsub"
-	"github.com/mrbentarikau/pagst/common/scheduledevents2"
-	schEvtsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
-	"github.com/mrbentarikau/pagst/rolecommands/models"
+	"github.com/jonas747/yagpdb/analytics"
+	"github.com/jonas747/yagpdb/bot"
+	"github.com/jonas747/yagpdb/bot/eventsystem"
+	"github.com/jonas747/yagpdb/commands"
+	"github.com/jonas747/yagpdb/common"
+	"github.com/jonas747/yagpdb/common/pubsub"
+	"github.com/jonas747/yagpdb/common/scheduledevents2"
+	schEvtsModels "github.com/jonas747/yagpdb/common/scheduledevents2/models"
+	"github.com/jonas747/yagpdb/rolecommands/models"
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
 
 func (p *Plugin) AddCommands() {
 	const msgIDDocs = "To get the id of a message you have to turn on developer mode in Discord's appearances settings then right click the message and copy id."
-
+	const reqPerms = "**Requires Manage Server permission or above**\n\n"
 	categoryRoleMenu := &dcmd.Category{
 		Name:        "Rolemenu",
 		Description: "Rolemenu commands",
@@ -46,7 +46,7 @@ func (p *Plugin) AddCommands() {
 		CmdCategory:         categoryRoleMenu,
 		Aliases:             []string{"c"},
 		Description:         "Set up a role menu.",
-		LongDescription:     "Specify a message with -m to use an existing message instead of having the bot make one\n\n" + msgIDDocs,
+		LongDescription:     reqPerms + "Specify a message with -m to use an existing message instead of having the bot make one\n\n" + msgIDDocs,
 		RequireDiscordPerms: []int64{discordgo.PermissionManageServer},
 		RequiredArgs:        1,
 		Arguments: []*dcmd.ArgDef{
@@ -65,7 +65,7 @@ func (p *Plugin) AddCommands() {
 		Name:                "Remove",
 		CmdCategory:         categoryRoleMenu,
 		Description:         "Removes a rolemenu from a message.",
-		LongDescription:     "The message won't be deleted and the bot will not do anything with reactions on that message\n\n" + msgIDDocs,
+		LongDescription:     reqPerms + "The message won't be deleted and the bot will not do anything with reactions on that message\n\n" + msgIDDocs,
 		RequireDiscordPerms: []int64{discordgo.PermissionManageServer},
 		RequiredArgs:        1,
 		Arguments: []*dcmd.ArgDef{
@@ -78,7 +78,7 @@ func (p *Plugin) AddCommands() {
 		Name:                "Update",
 		CmdCategory:         categoryRoleMenu,
 		Aliases:             []string{"u"},
-		Description:         "Updates a rolemenu, toggling the provided flags and adding missing options, aswell as updating the order.",
+		Description:         reqPerms + "Updates a rolemenu, toggling the provided flags and adding missing options, aswell as updating the order.",
 		LongDescription:     "\n\n" + msgIDDocs,
 		RequireDiscordPerms: []int64{discordgo.PermissionManageServer},
 		RequiredArgs:        1,
@@ -96,7 +96,7 @@ func (p *Plugin) AddCommands() {
 		Name:                "ResetReactions",
 		CmdCategory:         categoryRoleMenu,
 		Aliases:             []string{"reset"},
-		Description:         "Removes all reactions on the specified menu message and re-adds them.",
+		Description:         reqPerms + "Removes all reactions on the specified menu message and re-adds them.",
 		LongDescription:     "Can be used to fix the order after updating it.\n\n" + msgIDDocs,
 		RequireDiscordPerms: []int64{discordgo.PermissionManageServer},
 		RequiredArgs:        1,
@@ -110,7 +110,7 @@ func (p *Plugin) AddCommands() {
 		Name:                "EditOption",
 		CmdCategory:         categoryRoleMenu,
 		Aliases:             []string{"edit"},
-		Description:         "Allows you to reassign the emoji of an option, tip: use ResetReactions afterwards.",
+		Description:         reqPerms + "Allows you to reassign the emoji of an option, tip: use ResetReactions afterwards.",
 		LongDescription:     "\n\n" + msgIDDocs,
 		RequireDiscordPerms: []int64{discordgo.PermissionManageServer},
 		RequiredArgs:        1,
@@ -124,7 +124,7 @@ func (p *Plugin) AddCommands() {
 		Name:                "Complete",
 		CmdCategory:         categoryRoleMenu,
 		Aliases:             []string{"finish"},
-		Description:         "Marks the menu as done.",
+		Description:         reqPerms + "Marks the menu as done.",
 		LongDescription:     "\n\n" + msgIDDocs,
 		RequireDiscordPerms: []int64{discordgo.PermissionManageServer},
 		RequiredArgs:        1,
