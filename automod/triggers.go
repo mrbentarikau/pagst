@@ -1089,7 +1089,7 @@ func (nwl *NicknameWordlistTrigger) CheckNickname(ms *dstate.MemberState, data i
 }
 
 /////////////////////////////////////////////////////////////
-
+/*
 var _ UserStatusListener = (*UserStatusRegexTrigger)(nil)
 
 type UserStatusRegexTrigger struct {
@@ -1220,7 +1220,7 @@ func (nwl *UserStatusWordlistTrigger) CheckUserStatus(ms *dstate.MemberState, da
 
 	return false, nil
 }
-
+*/
 /////////////////////////////////////////////////////////////
 
 var _ UsernameListener = (*UsernameRegexTrigger)(nil)

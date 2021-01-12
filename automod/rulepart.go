@@ -45,10 +45,10 @@ var RulePartMap = map[int]RulePart{
 	30: &MemberJoinTrigger{},
 	31: &MessageAttachmentTrigger{},
 	32: &MessageAttachmentTrigger{RequiresAttachment: true},
-	33: &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
+	/*33: &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
 	34: &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: true}},
 	35: &UserStatusWordlistTrigger{Blacklist: false},
-	36: &UserStatusWordlistTrigger{Blacklist: true},
+	36: &UserStatusWordlistTrigger{Blacklist: true},*/
 
 	// Conditions 2xx
 	200: &MemberRolesCondition{Blacklist: true},
@@ -234,11 +234,11 @@ type NicknameListener interface {
 }
 
 // UserStatusListener is a trigger that gets triggered on a specific userStatus
-type UserStatusListener interface {
+/*type UserStatusListener interface {
 	RulePart
 
 	CheckUserStatus(ms *dstate.MemberState, data interface{}) (isAffected bool, err error)
-}
+}*/
 
 // UsernameListener is a trigger that gets triggered on a nickname change
 type UsernameListener interface {
