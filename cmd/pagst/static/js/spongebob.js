@@ -483,7 +483,7 @@ function formSubmissionEvents() {
 		}
 
 		// console.log("aaaaa", evt, evt.preventDefault);
-		if (!confirm("Are you sure you want to do this?")) {
+		if (!confirm("Are you sure you want to do this? \n\nHitting cancel requires page refresh!")) {
 			evt.preventDefault(true);
 			evt.stopPropagation();
 		}
