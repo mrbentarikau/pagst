@@ -127,8 +127,6 @@ the punishment{{end}}
                 {{textChannelOptions .ActiveGuild.Channels .ModConfig.ActionChannel true "None"}}
             </select>
         </div>
-        <hr />
-
         <div class="form-group">
             <label>Channel to send error messages of the moderation DMs</label>
             <select class="form-control" name="ErrorChannel" data-requireperms-embed>
@@ -169,6 +167,12 @@ the punishment{{end}}
                 {{textChannelOptions .ActiveGuild.Channels .ModConfig.ReportChannel true "None"}}
             </select>
         </div>
+        <div class="form-group">
+            <label>Channel to send errors from custom commands</label>
+            <select class="form-control" name="CCErrorChannel" data-requireperms-send>
+                {{textChannelOptions .ActiveGuild.Channels .ModConfig.CCErrorChannel true "None"}}
+            </select>
+        </div>        
         <hr />
         {{checkbox "CleanEnabled" "clean-enabled" "Enable clean command?" .ModConfig.CleanEnabled}}
         <p>

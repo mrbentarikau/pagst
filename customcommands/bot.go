@@ -34,6 +34,7 @@ import (
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/customcommands/models"
+	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
@@ -686,6 +687,15 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	if lockHandle == -1 {
 		f.Warn("Exceeded max lock attempts for cc")
 		if cmd.ShowErrors {
+			config, configErr := moderation.GetConfig(cmd.GuildID)
+			if configErr != nil {
+				return errors.WithMessage(configErr, "GetConfig")
+			}
+
+			if config.CCErrorChannel != "" {
+				_, _, _ = bot.SendMessage(cmd.GuildID, config.IntCCErrorChannel(), fmt.Sprintf("Gave up trying to execute custom command #%d after 1 minute because there is already one or more instances of it being executed.", cmd.LocalID))
+				return nil
+			}
 			common.BotSession.ChannelMessageSend(tmplCtx.CurrentFrame.CS.ID, fmt.Sprintf("Gave up trying to execute custom command #%d after 1 minute because there is already one or more instances of it being executed.", cmd.LocalID))
 		}
 		updatePostCommandRan(cmd, errors.New("Gave up trying to execute, already an existing instance executing"))
@@ -712,9 +722,18 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	if err != nil {
 		logger.WithField("guild", tmplCtx.GS.ID).WithError(err).Error("Error executing custom command")
 		if cmd.ShowErrors {
-			out += "\nAn error caused the execution of the custom command template to stop:\n"
-			out += "`" + err.Error() + "`"
+			config, configErr := moderation.GetConfig(cmd.GuildID)
+			if configErr != nil {
+				return errors.WithMessage(configErr, "GetConfig")
+			}
+
+			if config.CCErrorChannel != "" {
+				_, _, _ = bot.SendMessage(cmd.GuildID, config.IntCCErrorChannel(), fmt.Sprintf("Failed executing custom command...\nError: `%v`", err.Error()))
+				return nil
+			}
 		}
+		out += "\nAn error caused the execution of the custom command template to stop:\n"
+		out += "`" + err.Error() + "`"
 	}
 
 	_, err = tmplCtx.SendResponse(out)
@@ -734,10 +753,20 @@ func onExecPanic(cmd *models.CustomCommand, err error, tmplCtx *templates.Contex
 	l.Error("Error executing custom command")
 
 	if cmd.ShowErrors {
+		channelID := tmplCtx.CurrentFrame.CS.ID
 		out := "\nAn error caused the execution of the custom command template to stop:\n"
 		out += "`" + err.Error() + "`"
 
-		common.BotSession.ChannelMessageSend(tmplCtx.CurrentFrame.CS.ID, out)
+		config, configErr := moderation.GetConfig(cmd.GuildID)
+		if configErr != nil {
+			out += fmt.Sprintf("\nGetConfig error:%v", configErr)
+		}
+
+		if config.CCErrorChannel != "" {
+			channelID = config.IntCCErrorChannel()
+		}
+
+		common.BotSession.ChannelMessageSend(channelID, out)
 	}
 
 	updatePostCommandRan(cmd, err)

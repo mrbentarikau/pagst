@@ -60,13 +60,14 @@ type Config struct {
 	DefaultLockdownDuration sql.NullInt64 `gorm:"default:0"`
 
 	// Misc
-	CleanEnabled  bool
-	ReportEnabled bool
-	ActionChannel string `valid:"channel,true"`
-	ReportChannel string `valid:"channel,true"`
-	ErrorChannel  string `valid:"channel,true"`
-	LogUnbans     bool
-	LogBans       bool
+	CleanEnabled   bool
+	ReportEnabled  bool
+	ActionChannel  string `valid:"channel,true"`
+	ReportChannel  string `valid:"channel,true"`
+	ErrorChannel   string `valid:"channel,true"`
+	CCErrorChannel string `valid:"channel,true"`
+	LogUnbans      bool
+	LogBans        bool
 
 	GiveRoleCmdEnabled bool
 	GiveRoleCmdModlog  bool
@@ -90,6 +91,11 @@ func (c *Config) IntReportChannel() (r int64) {
 
 func (c *Config) IntErrorChannel() (r int64) {
 	r, _ = strconv.ParseInt(c.ErrorChannel, 10, 64)
+	return
+}
+
+func (c *Config) IntCCErrorChannel() (r int64) {
+	r, _ = strconv.ParseInt(c.CCErrorChannel, 10, 64)
 	return
 }
 
