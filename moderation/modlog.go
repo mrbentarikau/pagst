@@ -79,7 +79,7 @@ func CreateModlogEmbed(config *Config, author *discordgo.User, action ModlogActi
 			IconURL: discordgo.EndpointUserAvatar(author.ID, author.Avatar),
 		},
 		Color: action.Color,
-		Description: fmt.Sprintf("**%s%s %s**%s *(ID %d)*\n📄**Reason:** %s",
+		Description: fmt.Sprintf("**%s%s** %s%s *(ID %d)*\n📄**Reason:** %s",
 			action.Emoji, action.Prefix, name, discriminator, id, reason),
 	}
 	if discriminator != "" {
