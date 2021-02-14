@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	SessionCookieName = "yagpdb-session-3"
+	SessionCookieName = "pagstdb-session-3"
 	OauthConf         *oauth2.Config
 )
 
