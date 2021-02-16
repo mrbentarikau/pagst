@@ -16,6 +16,7 @@ import (
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
 	"github.com/mrbentarikau/pagst/analytics"
+	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/templates"
@@ -54,6 +55,11 @@ func (p *Plugin) AddCommands() {
 
 			if parsed.GS.Channel(true, conf.TicketsChannelCategory) == nil {
 				return "No category for ticket channels set", nil
+			}
+
+			if !bot.BotProbablyHasPermissionGS(parsed.GS, parsed.CS.ID, InTicketPerms) {
+				return fmt.Sprintf("The bot is missing one of the following permissions: %s", common.HumanizePermissions(InTicketPerms)), nil
+				// return "", nil
 			}
 
 			inCurrentTickets, err := models.Tickets(
@@ -720,7 +726,9 @@ OUTER2:
 	}
 
 	// inherit settings from category
-	overwrites = applyChannelParentSettings(gs, conf.TicketsChannelCategory, overwrites)
+	// TODO: disabled because of a issue with discord recently pushed change that disallows bots from creating channels with permissions they don't have
+	// TODO: automatically filter those out
+	// overwrites = applyChannelParentSettings(gs, conf.TicketsChannelCategory, overwrites)
 
 	// generate the ID for this ticket
 	id, err := common.GenLocalIncrID(gs.ID, "ticket")
