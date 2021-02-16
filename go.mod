@@ -82,4 +82,4 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )
 
-replace github.com/jonas747/template => /home/caubert/go/src/github.com/jonas747/template
+//replace github.com/jonas747/template => /home/caubert/go/src/github.com/jonas747/template
