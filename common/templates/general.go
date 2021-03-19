@@ -1207,16 +1207,16 @@ func tmplNewDate(year, monthInt, day, hour, min, sec int, location ...string) (t
 	return time.Date(year, month, day, hour, min, sec, 0, loc), nil
 }
 
-func tmplHumanizeDurationHours(in time.Duration) string {
-	return common.HumanizeDuration(common.DurationPrecisionHours, in)
+func tmplHumanizeDurationHours(in interface{}) string {
+	return common.HumanizeDuration(common.DurationPrecisionHours, ToDuration(in))
 }
 
-func tmplHumanizeDurationMinutes(in time.Duration) string {
-	return common.HumanizeDuration(common.DurationPrecisionMinutes, in)
+func tmplHumanizeDurationMinutes(in interface{}) string {
+	return common.HumanizeDuration(common.DurationPrecisionMinutes, ToDuration(in))
 }
 
-func tmplHumanizeDurationSeconds(in time.Duration) string {
-	return common.HumanizeDuration(common.DurationPrecisionSeconds, in)
+func tmplHumanizeDurationSeconds(in interface{}) string {
+	return common.HumanizeDuration(common.DurationPrecisionSeconds, ToDuration(in))
 }
 
 func tmplHumanizeTimeSinceDays(in time.Time) string {
