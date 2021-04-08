@@ -3,6 +3,7 @@ package twitter
 import (
 	"context"
 	"fmt"
+	"html"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -254,7 +255,7 @@ func createTweetEmbed(tweet *twitter.Tweet) *discordgo.MessageEmbed {
 			IconURL: tweet.User.ProfileImageURLHttps,
 			URL:     "https://twitter.com/" + tweet.User.ScreenName + "/status/" + tweet.IDStr,
 		},
-		Description: text,
+		Description: html.UnescapeString(text),
 		Timestamp:   timeStr,
 		Color:       0x38A1F3,
 	}
