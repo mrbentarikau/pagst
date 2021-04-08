@@ -64,7 +64,7 @@ func (p *Plugin) InitWeb() {
 	subMux := goji.SubMux()
 	web.CPMux.Handle(pat.New("/customcommands"), subMux)
 	web.CPMux.Handle(pat.New("/customcommands/*"), subMux)
-
+	web.CPMux.Use(web.NotFound())
 	subMux.Use(func(inner http.Handler) http.Handler {
 		h := func(w http.ResponseWriter, r *http.Request) {
 			_, templateData := web.GetBaseCPContextData(r.Context())
@@ -96,6 +96,7 @@ func (p *Plugin) InitWeb() {
 	subMux.Handle(pat.Post("/creategroup"), web.ControllerPostHandler(handleNewGroup, getHandler, GroupForm{}))
 	subMux.Handle(pat.Post("/groups/:group/update"), web.ControllerPostHandler(handleUpdateGroup, getGroupHandler, GroupForm{}))
 	subMux.Handle(pat.Post("/groups/:group/delete"), web.ControllerPostHandler(handleDeleteGroup, getHandler, nil))
+	subMux.Use(web.NotFound())
 }
 
 func handleCommands(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
@@ -272,8 +273,8 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 
 	// check low interval limits
 	if dbModel.TriggerType == int(CommandTriggerInterval) && dbModel.TimeTriggerInterval <= 10 {
-		if dbModel.TimeTriggerInterval < 5 {
-			dbModel.TimeTriggerInterval = 5
+		if dbModel.TimeTriggerInterval < 1 {
+			dbModel.TimeTriggerInterval = 1
 		}
 
 		ok, err := checkIntervalLimits(ctx, activeGuild.ID, dbModel.LocalID, templateData)

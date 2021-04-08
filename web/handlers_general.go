@@ -135,9 +135,13 @@ func HandleSelectServer(w http.ResponseWriter, r *http.Request) interface{} {
 
 	posts := discordblog.GetNewestPosts(30)
 	tmpl["Posts"] = posts
-	//tmpl["RedditQuotes"] = *(*string)(atomic.LoadPointer(redditQuote))
 	tmpl["RedditQuotes"] = html.UnescapeString(redditQuote)
 
+	return tmpl
+}
+
+func HandleError404(w http.ResponseWriter, r *http.Request) interface{} {
+	_, tmpl := GetCreateTemplateData(r.Context())
 	return tmpl
 }
 

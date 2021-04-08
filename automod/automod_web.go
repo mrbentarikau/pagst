@@ -60,7 +60,7 @@ func (p *Plugin) InitWeb() {
 
 	web.CPMux.Handle(pat.New("/automod"), muxer)
 	web.CPMux.Handle(pat.New("/automod/*"), muxer)
-
+	web.CPMux.Use(web.NotFound())
 	getIndexHandler := web.ControllerHandler(p.handleGetAutomodIndex, "automod_index")
 
 	muxer.Handle(pat.Get("/"), getIndexHandler)
@@ -78,7 +78,7 @@ func (p *Plugin) InitWeb() {
 	rulesetMuxer := goji.SubMux()
 	muxer.Handle(pat.New("/ruleset/:rulesetID"), rulesetMuxer)
 	muxer.Handle(pat.New("/ruleset/:rulesetID/*"), rulesetMuxer)
-
+	muxer.Use(web.NotFound())
 	rulesetMuxer.Use(p.currentRulesetMW(getIndexHandler))
 
 	getRulesetHandler := web.ControllerHandler(p.handleGetAutomodRuleset, "automod_index")
@@ -91,6 +91,7 @@ func (p *Plugin) InitWeb() {
 	rulesetMuxer.Handle(pat.Post("/new_rule"), web.ControllerPostHandler(p.handlePostAutomodCreateRule, getRulesetHandler, CreateRuleData{}))
 	rulesetMuxer.Handle(pat.Post("/rule/:ruleID/delete"), web.ControllerPostHandler(p.handlePostAutomodDeleteRule, getRulesetHandler, nil))
 	rulesetMuxer.Handle(pat.Post("/rule/:ruleID/update"), web.ControllerPostHandler(p.handlePostAutomodUpdateRule, getRulesetHandler, UpdateRuleData{}))
+	rulesetMuxer.Use(web.NotFound())
 }
 
 func (p *Plugin) handleGetAutomodIndex(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {

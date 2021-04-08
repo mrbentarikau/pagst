@@ -31,6 +31,7 @@ func (p *Plugin) InitWeb() {
 
 	mux.Use(web.RequireSessionMiddleware)
 	mux.Use(web.RequireBotOwnerMW)
+	mux.Use(web.NotFound())
 
 	panelHandler := web.ControllerHandler(p.handleGetPanel, "bot_admin_panel")
 
