@@ -24,7 +24,7 @@ const (
 	NormalStateMaxMessageAge = time.Hour
 
 	PremiumStateMaxMessags    = 10000
-	PremiumStateMaxMessageAge = time.Hour * 12
+	PremiumStateMaxMessageAge = time.Hour * 24 // caubert's change from 12
 )
 
 func (p *Plugin) MessageLimits(gs *dstate.GuildState) (maxMessages int, maxMessageAge time.Duration) {

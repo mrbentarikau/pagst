@@ -11,7 +11,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/backgroundworkers"
 	"github.com/mrbentarikau/pagst/premium/models"
 	"github.com/mediocregopher/radix/v3"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 var _ backgroundworkers.BackgroundWorkerPlugin = (*Plugin)(nil)
