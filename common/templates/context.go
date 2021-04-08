@@ -221,7 +221,10 @@ func (c *Context) setupBaseData() {
 		c.Data["User"] = c.MS.DGoUser()
 		c.Data["user"] = c.Data["User"]
 	}
-
+	botUser := common.BotUser
+	botMember, _ := bot.GetMember(c.GS.ID, botUser.ID)
+	c.Data["BotUser"] = botUser
+	c.Data["BotMember"] = botMember.DGoCopy()
 	c.Data["TimeSecond"] = time.Second
 	c.Data["TimeMinute"] = time.Minute
 	c.Data["TimeHour"] = time.Hour
@@ -746,13 +749,9 @@ func (s Slice) Del(index int) (string, error) {
 }
 
 func (s Slice) Set(index int, item interface{}) (string, error) {
-	if index >= len(s) {
+	if index >= len(s) || index < 0 {
 		return "", errors.New("Index out of bounds")
 	}
-
-	/*if reflect.DeepEqual(s, item) {
-		return "", errors.New("Recursion detected")
-	}*/
 
 	s[index] = item
 	if err := detectCyclicValue(reflect.ValueOf(s)); err != nil {
