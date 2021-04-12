@@ -3,7 +3,7 @@ jobs: # basic units of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
-      - image: circleci/golang:1.14 #
+      - image: circleci/golang:1.16 #
 
     # directory where steps are run. Path must conform to the Go Workspace requirements
     working_directory: /go/src/github.com/mrbentarikau/pagst
@@ -19,10 +19,10 @@ jobs: # basic units of work in a run
             - v1-pkg-cache
      
       - run: 
-          name: main pagst binary build
+          name: main yagpdb binary build
           command: |
             VERSION=$(git describe --tags)
-            cd cmd/pagst
+            cd cmd/yagpdb
             go install -i -ldflags "-X github.com/mrbentarikau/pagst/common.VERSION=${VERSION}"
             cd -
       - run: cd cmd/shardorchestrator && go install -i && cd -
@@ -38,10 +38,10 @@ jobs: # basic units of work in a run
       - run:
           name: Prepare arifacts
           command: |
-            mkdir -p cmd/pagst/templates/plugins
-            cp */assets/* cmd/pagst/templates/plugins/
+            mkdir -p cmd/yagpdb/templates/plugins
+            cp */assets/* cmd/yagpdb/templates/plugins/
 
-            tar -cvf misc_artifacts.tar cmd/pagst/templates/ cmd/pagst/static/
+            tar -cvf misc_artifacts.tar cmd/yagpdb/templates/ cmd/yagpdb/static/
             
       - store_artifacts:
           path: misc_artifacts.tar
