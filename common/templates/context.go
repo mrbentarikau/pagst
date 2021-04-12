@@ -53,6 +53,8 @@ var (
 		"sqrt": tmplSqrt,
 		"pow":  tmplPow,
 		"log":  tmplLog,
+		"max":  tmplMax,
+		"min":  tmplMin,
 
 		// bitwise functions
 		"bitwiseAnd":   tmplBitwiseAnd,
