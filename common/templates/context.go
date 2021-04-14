@@ -162,7 +162,7 @@ type contextFrame struct {
 	DelResponse bool
 
 	DelResponseDelay         int
-	EmebdsToSend             []*discordgo.MessageEmbed
+	EmbedsToSend             []*discordgo.MessageEmbed
 	AddResponseReactionNames []string
 
 	isNestedTemplate bool
@@ -410,7 +410,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 		}
 	}
 
-	for _, v := range c.CurrentFrame.EmebdsToSend {
+	for _, v := range c.CurrentFrame.EmbedsToSend {
 		common.BotSession.ChannelMessageSendEmbed(channelID, v)
 	}
 
