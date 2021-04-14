@@ -22,6 +22,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/models"
 	"github.com/mrbentarikau/pagst/common/patreon"
+	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/web/discordblog"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
@@ -549,6 +550,8 @@ func HandlePostCoreSettings(w http.ResponseWriter, r *http.Request) (TemplateDat
 	if err != nil {
 		return templateData, err
 	}
+
+	pubsub.Publish("evict_core_config_cache", g.ID, nil)
 
 	templateData["CoreConfig"] = m
 
