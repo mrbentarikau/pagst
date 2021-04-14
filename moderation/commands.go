@@ -469,6 +469,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			&dcmd.ArgDef{Switch: "nopin", Name: "Ignore pinned messages"},
 			&dcmd.ArgDef{Switch: "bot", Name: "Only remove messages made by bots"},
 			&dcmd.ArgDef{Switch: "a", Name: "Only remove messages with attachments"},
+			&dcmd.ArgDef{Switch: "m", Name: "Only remove messages without attachments"},
 			&dcmd.ArgDef{Switch: "to", Name: "Stop at this msg ID", Type: dcmd.Int},
 		},
 		ArgumentCombos: [][]int{[]int{0}, []int{0, 1}, []int{1, 0}},
@@ -557,6 +558,13 @@ var ModerationCommands = []*commands.YAGCommand{
 				filtered = true
 			}
 
+			// Check if we should only delete messages without attachments
+			var messagesOnly bool
+			if parsed.Switches["m"].Value != nil && parsed.Switches["m"].Value.(bool) {
+				messagesOnly = true
+				filtered = true
+			}
+
 			limitFetch := num
 			if userFilter != 0 || filtered {
 				limitFetch = num * 50 // Maybe just change to full fetch?
@@ -569,7 +577,10 @@ var ModerationCommands = []*commands.YAGCommand{
 			// Wait a second so the client dosen't gltich out
 			time.Sleep(time.Second)
 
-			numDeleted, err := AdvancedDeleteMessages(parsed.Msg.ChannelID, userFilter, re, toID, ma, minAge, pe, onlyBots, attachments, num, limitFetch)
+			numDeleted, err := AdvancedDeleteMessages(parsed.Msg.ChannelID, userFilter, re, toID, ma, minAge, pe, onlyBots, attachments, messagesOnly, num, limitFetch)
+			if numDeleted == 0 {
+				numDeleted++
+			}
 
 			return dcmd.NewTemporaryResponse(time.Second*5, fmt.Sprintf("Deleted %d message(s)! :')", numDeleted), true), err
 		},
@@ -990,7 +1001,7 @@ var ModerationCommands = []*commands.YAGCommand{
 	},
 }
 
-func AdvancedDeleteMessages(channelID int64, filterUser int64, regex string, toID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable bool, onlyBotsFilterEnable bool, attachmentFilterEnable bool, deleteNum, fetchNum int) (int, error) {
+func AdvancedDeleteMessages(channelID int64, filterUser int64, regex string, toID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable bool, onlyBotsFilterEnable bool, attachmentFilterEnable bool, messageFilterEnable bool, deleteNum, fetchNum int) (int, error) {
 	var compiledRegex *regexp.Regexp
 	if regex != "" {
 		// Start by compiling the regex
@@ -1067,6 +1078,11 @@ func AdvancedDeleteMessages(channelID int64, filterUser int64, regex string, toI
 
 		// If attachments only filter enabled, add only messages with attachments
 		if attachmentFilterEnable && len(msgs[i].Attachments) == 0 {
+			continue
+		}
+
+		// If attachments only filter enabled, add only messages without attachments
+		if messageFilterEnable && len(msgs[i].Attachments) != 0 {
 			continue
 		}
 
