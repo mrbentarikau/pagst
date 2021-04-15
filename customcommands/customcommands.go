@@ -120,8 +120,8 @@ type CustomCommand struct {
 	TriggerTypeForm string             `json:"-" schema:"type"`
 	Trigger         string             `json:"trigger" schema:"trigger" valid:",0,1000"`
 	// TODO: Retire the legacy Response field.
-	Response      string   `json:"response,omitempty" schema:"response" valid:"template,10000"`
-	Responses     []string `json:"responses" schema:"responses" valid:"template,10000"`
+	Response      string   `json:"response,omitempty" schema:"response" valid:"template,20000"`
+	Responses     []string `json:"responses" schema:"responses" valid:"template,20000"`
 	CaseSensitive bool     `json:"case_sensitive" schema:"case_sensitive"`
 	ID            int64    `json:"id"`
 
@@ -172,13 +172,13 @@ func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
 		combinedSize += utf8.RuneCountInString(v)
 	}
 
-	if combinedSize > 10000 {
-		tmpl.AddAlerts(web.ErrorAlert("Max combined command size can be 10k"))
+	if combinedSize > 20000 {
+		tmpl.AddAlerts(web.ErrorAlert("Max combined command size can be 20k"))
 		return false
 	}
 
-	if cc.TriggerTypeForm == "interval_minutes" && cc.TimeTriggerInterval < 5 {
-		tmpl.AddAlerts(web.ErrorAlert("Minimum interval is now 5 minutes (was recently from 1)"))
+	if cc.TriggerTypeForm == "interval_minutes" && cc.TimeTriggerInterval < 1 {
+		tmpl.AddAlerts(web.ErrorAlert("Minimum interval is 1 minute..."))
 		return false
 	}
 
