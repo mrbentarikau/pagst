@@ -32,21 +32,40 @@ func (c *Context) tmplSendDM(s ...interface{}) string {
 	memberID := c.MS.ID
 	c.GS.RUnlock()
 
-	info := fmt.Sprintf("Custom Command DM from the server: %s", gName)
-
-	// Send embed
-	if embed, ok := s[0].(*discordgo.MessageEmbed); ok {
-		embed.Footer = &discordgo.MessageEmbedFooter{
-			Text: info,
-		}
-
-		bot.SendDMEmbed(memberID, embed)
-		return ""
+	info := fmt.Sprintf("Custom Command DM From the server **%s**", gName)
+	msgSend := &discordgo.MessageSend{
+		AllowedMentions: discordgo.AllowedMentions{
+			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
+		},
 	}
 
-	msg := fmt.Sprint(s...)
-	msg = fmt.Sprintf("%s\n%s", info, msg)
-	bot.SendDM(memberID, msg)
+	switch t := s[0].(type) {
+	case *discordgo.MessageEmbed:
+		t.Footer = &discordgo.MessageEmbedFooter{
+			Text: info,
+		}
+		msgSend.Embed = t
+	case *discordgo.MessageSend:
+		msgSend = t
+		if msgSend.Embed != nil {
+			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
+				Text: info,
+			}
+			break
+		}
+		if (strings.TrimSpace(msgSend.Content) == "") && (msgSend.File == nil) {
+			return ""
+		}
+		msgSend.Content = info + "\n" + msgSend.Content
+	default:
+		msgSend.Content = fmt.Sprintf("%s\n%s", info, fmt.Sprint(s...))
+	}
+
+	channel, err := common.BotSession.UserChannelCreate(memberID)
+	if err != nil {
+		return ""
+	}
+	_, _ = common.BotSession.ChannelMessageSendComplex(channel.ID, msgSend)
 	return ""
 }
 
@@ -355,6 +374,8 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		if cid == 0 {
 			return ""
 		}
+		isDM := cid != c.ChannelArgNoDM(channel)
+		info := fmt.Sprintf("Custom Command DM From the server: %s", c.GS.Guild.Name)
 
 		var m *discordgo.Message
 		msgSend := &discordgo.MessageSend{
@@ -367,15 +388,28 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		switch typedMsg := msg.(type) {
 
 		case *discordgo.MessageEmbed:
+			if isDM {
+				typedMsg.Footer = &discordgo.MessageEmbedFooter{Text: info}
+			}
 			msgSend.Embed = typedMsg
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
 			msgSend.AllowedMentions = discordgo.AllowedMentions{
 				Parse: parseMentions,
 			}
+			if isDM {
+				if typedMsg.Embed != nil {
+					typedMsg.Embed.Footer = &discordgo.MessageEmbedFooter{Text: info}
+				} else {
+					msgSend.Content = info + "\n" + fmt.Sprint(msgSend.Content)
+				}
+			}
 		default:
-			msgSend.Content = fmt.Sprint(msg)
-
+			if isDM {
+				msgSend.Content = info + "\n" + fmt.Sprint(msg)
+			} else {
+				msgSend.Content = fmt.Sprint(msg)
+			}
 		}
 
 		m, err = common.BotSession.ChannelMessageSendComplex(cid, msgSend)

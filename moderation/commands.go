@@ -278,6 +278,52 @@ var ModerationCommands = []*commands.YAGCommand{
 	&commands.YAGCommand{
 		CustomEnabled: true,
 		CmdCategory:   commands.CategoryModeration,
+		Name:          "Unban",
+		Aliases:       []string{"unbanid"},
+		Description:   "Unbans a user. Reason requirement is same as ban command setting.",
+		RequiredArgs:  1,
+		Arguments: []*dcmd.ArgDef{
+			&dcmd.ArgDef{Name: "User", Type: dcmd.UserID},
+			&dcmd.ArgDef{Name: "Reason", Type: dcmd.String},
+		},
+
+		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			config, _, err := MBaseCmd(parsed, 0) //No need to check member role hierarchy as banned members should not be in server
+			if err != nil {
+				return nil, err
+			}
+
+			reason := SafeArgString(parsed, 1)
+			reason, err = MBaseCmdSecond(parsed, reason, config.BanReasonOptional, discordgo.PermissionBanMembers, config.BanCmdRoles, config.BanEnabled)
+			if err != nil {
+				return nil, err
+			}
+			targetID := parsed.Args[0].Int64()
+			target := &discordgo.User{
+				Username:      "unknown",
+				Discriminator: "????",
+				ID:            targetID,
+			}
+			targetMem, _ := bot.GetMember(parsed.GS.ID, targetID)
+			if targetMem != nil {
+				return "User is not banned!", nil
+			}
+
+			isNotBanned, err := UnbanUser(config, parsed.GS.ID, parsed.Msg.Author, reason, target)
+
+			if err != nil {
+				return nil, err
+			}
+			if isNotBanned {
+				return "User is not banned!", nil
+			}
+
+			return GenericCmdResp(MAUnbanned, target, 0, true, true), nil
+		},
+	},
+	&commands.YAGCommand{
+		CustomEnabled: true,
+		CmdCategory:   commands.CategoryModeration,
 		Name:          "Kick",
 		Description:   "Kicks a member",
 		RequiredArgs:  1,
@@ -453,7 +499,7 @@ var ModerationCommands = []*commands.YAGCommand{
 		CustomEnabled:   true,
 		CmdCategory:     commands.CategoryModeration,
 		Name:            "Clean",
-		Description:     "Delete the last number of messages from chat, optionally filtering by user, max age and regex or ignoring pinned messages.",
+		Description:     "Delete the last number of messages from chat, optionally filtering by user, max age and regex or ignoring pinned messages.\n⚠️ **Warning:** Using `clean <userId> <amount>` does not work. This is because the user ID is interpreted as the amount. As it is over the limit of 100, it is treated as invalid. You can use `clean <amount> <userId>` instead or mention the user.",
 		LongDescription: "Specify a regex with \"-r regex_here\" and max age with \"-ma 1h10m\"\nNote: Will only look in the last 1k messages",
 		Aliases:         []string{"clear", "cl"},
 		RequiredArgs:    1,
@@ -474,6 +520,16 @@ var ModerationCommands = []*commands.YAGCommand{
 		},
 		ArgumentCombos: [][]int{[]int{0}, []int{0, 1}, []int{1, 0}},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			botMember, err := bot.GetMember(parsed.Msg.GuildID, common.BotUser.ID)
+			if err != nil {
+				return "Failed fetching bot member to check permissions", nil
+			}
+
+			canClear, err := bot.AdminOrPermMS(parsed.CS.ID, botMember, discordgo.PermissionManageMessages)
+			if err != nil || !canClear {
+				return "I need the `Manage Messages` permission to be able to clear messages", nil
+			}
+
 			config, _, err := MBaseCmd(parsed, 0)
 			if err != nil {
 				return nil, err
@@ -553,6 +609,7 @@ var ModerationCommands = []*commands.YAGCommand{
 
 			// Check if we should only delete messages with attachments
 			var attachments bool
+
 			if parsed.Switches["a"].Value != nil && parsed.Switches["a"].Value.(bool) {
 				attachments = true
 				filtered = true
@@ -661,6 +718,54 @@ var ModerationCommands = []*commands.YAGCommand{
 			return GenericCmdResp(MAWarned, target, 0, false, true), nil
 		},
 	},
+
+	&commands.YAGCommand{
+		CustomEnabled: true,
+		CmdCategory:   commands.CategoryModeration,
+		Name:          "Unban",
+		Aliases:       []string{"unbanid"},
+		Description:   "Unbans a user. Reason requirement is same as ban command setting.",
+		RequiredArgs:  1,
+		Arguments: []*dcmd.ArgDef{
+			&dcmd.ArgDef{Name: "User", Type: dcmd.UserID},
+			&dcmd.ArgDef{Name: "Reason", Type: dcmd.String},
+		},
+
+		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			config, _, err := MBaseCmd(parsed, 0) //No need to check member role hierarchy as banned members should not be in server
+			if err != nil {
+				return nil, err
+			}
+
+			reason := SafeArgString(parsed, 1)
+			reason, err = MBaseCmdSecond(parsed, reason, config.BanReasonOptional, discordgo.PermissionBanMembers, config.BanCmdRoles, config.BanEnabled)
+			if err != nil {
+				return nil, err
+			}
+			targetID := parsed.Args[0].Int64()
+			target := &discordgo.User{
+				Username:      "unknown",
+				Discriminator: "????",
+				ID:            targetID,
+			}
+			targetMem, _ := bot.GetMember(parsed.GS.ID, targetID)
+			if targetMem != nil {
+				return "User is not banned!", nil
+			}
+
+			isNotBanned, err := UnbanUser(config, parsed.GS.ID, parsed.Msg.Author, reason, target)
+
+			if err != nil {
+				return nil, err
+			}
+			if isNotBanned {
+				return "User is not banned!", nil
+			}
+
+			return GenericCmdResp(MAUnbanned, target, 0, true, true), nil
+		},
+	},
+
 	&commands.YAGCommand{
 		CustomEnabled: true,
 		CmdCategory:   commands.CategoryModeration,

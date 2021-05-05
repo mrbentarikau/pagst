@@ -80,7 +80,7 @@ var cmds = []*commands.YAGCommand{
 
 			out := "Your reminders:\n"
 			out += stringReminders(currentReminders, false)
-			out += "\nRemove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above"
+			out += "\nRemove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above.\nTo clear all reminders, use `delreminder` with the `-a` switch."
 			return out, nil
 		},
 	},
@@ -112,14 +112,38 @@ var cmds = []*commands.YAGCommand{
 		CmdCategory:  commands.CategoryTool,
 		Name:         "DelReminder",
 		Aliases:      []string{"rmreminder"},
-		Description:  "Deletes a reminder.",
+		Description:  "Deletes a reminder. You can delete reminders from other users provided you are running this command in the same guild the reminder was created in and have the Manage Channel permission in the channel the reminder was created in.",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
 			{Name: "ID", Type: dcmd.Int},
 		},
+		ArgSwitches: []*dcmd.ArgDef{
+			{Switch: "a", Name: "all"},
+		},
+
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 
 			var reminder Reminder
+
+			clearAll := parsed.Switch("a").Value != nil && parsed.Switch("a").Value.(bool)
+			if clearAll {
+				db := common.GORM.Where("user_id = ?", parsed.Msg.Author.ID).Delete(&reminder)
+				err := db.Error
+				if err != nil {
+					return "Error clearing reminders", err
+				}
+
+				count := db.RowsAffected
+				if count == 0 {
+					return "No reminders to clear", nil
+				}
+				return fmt.Sprintf("Cleared %d reminders", count), nil
+			}
+
+			if len(parsed.Args) == 0 || parsed.Args[0].Value == nil {
+				return "No reminder ID provided", nil
+			}
+
 			err := common.GORM.Where(parsed.Args[0].Int()).First(&reminder).Error
 			if err != nil {
 				if err == gorm.ErrRecordNotFound {
@@ -128,12 +152,11 @@ var cmds = []*commands.YAGCommand{
 				return "Error retrieving reminder", err
 			}
 
-			if reminder.GuildID != parsed.GS.ID {
-				return "That reminder is not from this server", nil
-			}
-
 			// Check perms
 			if reminder.UserID != discordgo.StrID(parsed.Msg.Author.ID) {
+				if reminder.GuildID != parsed.GS.ID {
+					return "You can only delete reminders that are not your own in the guild the reminder was originally created", nil
+				}
 				ok, err := bot.AdminOrPermMS(reminder.ChannelIDInt(), parsed.MS, discordgo.PermissionManageChannels)
 				if err != nil {
 					return nil, err

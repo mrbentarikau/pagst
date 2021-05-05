@@ -14,9 +14,9 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/logs/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/volatiletech/null"
-	"github.com/volatiletech/sqlboiler/boil"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/net/context"
 )
 
@@ -288,3 +288,8 @@ func DeleteNicknames(ctx context.Context, guildID, userID int64, nickname string
 		qm.Where("guild_id = ? AND user_id = ? AND (id <> ? OR nickname = '')", guildID, userID, dbEntryID),
 	).DeleteAll(context.Background(), common.PQ)
 }
+
+const (
+	AccessModeMembers  = 0
+	AccessModeEveryone = 1
+)

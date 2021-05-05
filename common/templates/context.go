@@ -138,9 +138,10 @@ type Context struct {
 	Msg     *discordgo.Message
 	BotUser *discordgo.User
 
-	ContextFuncs map[string]interface{}
-	Data         map[string]interface{}
-	Counters     map[string]int
+	DisabledContextFuncs []string
+	ContextFuncs         map[string]interface{}
+	Data                 map[string]interface{}
+	Counters             map[string]int
 
 	FixedOutput  string
 	secondsSlept int
@@ -150,6 +151,8 @@ type Context struct {
 	RegexCache map[string]*regexp.Regexp
 
 	CurrentFrame *contextFrame
+
+	contextFuncsAdded bool
 }
 
 type contextFrame struct {
@@ -192,8 +195,6 @@ func NewContext(gs *dstate.GuildState, cs *dstate.ChannelState, ms *dstate.Membe
 		ctx.IsPremium, _ = GuildPremiumFunc(gs.ID)
 	}
 
-	ctx.setupContextFuncs()
-
 	return ctx
 }
 
@@ -201,6 +202,8 @@ func (c *Context) setupContextFuncs() {
 	for _, f := range contextSetupFuncs {
 		f(c)
 	}
+
+	c.contextFuncsAdded = true
 }
 
 func (c *Context) setupBaseData() {
@@ -236,6 +239,10 @@ func (c *Context) setupBaseData() {
 }
 
 func (c *Context) Parse(source string) (*template.Template, error) {
+	if !c.contextFuncsAdded {
+		c.setupContextFuncs()
+	}
+
 	tmpl := template.New(c.Name)
 	tmpl.Funcs(StandardFuncMap)
 	tmpl.Funcs(c.ContextFuncs)
@@ -409,14 +416,23 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 			channelID = privChannel.ID
 		}
 	}
+	isDM := c.CurrentFrame.CS.Type == discordgo.ChannelTypeDM
+	info := fmt.Sprintf("Custom Command DM From the server: %s", c.GS.Guild.Name)
 
 	for _, v := range c.CurrentFrame.EmbedsToSend {
+		if isDM {
+			v.Footer.Text = info
+		}
 		common.BotSession.ChannelMessageSendEmbed(channelID, v)
 	}
 
 	if strings.TrimSpace(content) == "" || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
 		// no point in sending the response if it gets deleted immedietely
 		return nil, nil
+	}
+
+	if isDM {
+		content = info + content
 	}
 
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
@@ -494,6 +510,12 @@ func (c *Context) LogEntry() *logrus.Entry {
 	return f
 }
 
+func (c *Context) addContextFunc(name string, f interface{}) {
+	if !common.ContainsStringSlice(c.DisabledContextFuncs, name) {
+		c.ContextFuncs[name] = f
+	}
+}
+
 func baseContextFuncs(c *Context) {
 	// message functions
 	c.ContextFuncs["sendDM"] = c.tmplSendDM
@@ -509,10 +531,10 @@ func baseContextFuncs(c *Context) {
 	c.ContextFuncs["unpinMessage"] = c.tmplUnpinMessage
 
 	// Mentions
-	c.ContextFuncs["mentionEveryone"] = c.tmplMentionEveryone
-	c.ContextFuncs["mentionHere"] = c.tmplMentionHere
-	c.ContextFuncs["mentionRoleName"] = c.tmplMentionRoleName
-	c.ContextFuncs["mentionRoleID"] = c.tmplMentionRoleID
+	c.addContextFunc("mentionEveryone", c.tmplMentionEveryone)
+	c.addContextFunc("mentionHere", c.tmplMentionHere)
+	c.addContextFunc("mentionRoleName", c.tmplMentionRoleName)
+	c.addContextFunc("mentionRoleID", c.tmplMentionRoleID)
 
 	// Role functions
 	c.ContextFuncs["setRoles"] = c.tmplSetRoles
@@ -567,6 +589,7 @@ func baseContextFuncs(c *Context) {
 	c.ContextFuncs["sort"] = c.tmplSort
 	c.ContextFuncs["execTemplate"] = c.tmplExecTemplate
 	c.ContextFuncs["addReturn"] = c.tmplAddReturn
+
 }
 
 type limitedWriter struct {

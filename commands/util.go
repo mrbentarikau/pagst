@@ -373,17 +373,17 @@ func (ra *RoleArg) Parse(def *dcmd.ArgDef, part string, data *dcmd.Data) (interf
 	default:
 		idName = ""
 	}
+
 	roles := data.GS.Guild.Roles
-	var role *discordgo.Role
+	var role discordgo.Role
 	for _, v := range roles {
 		if v.ID == id {
-			role = v
-			return role, nil
+			role = *v
+			return &role, nil
 		} else if v.Name == idName {
-			role = v
-			return role, nil
+			role = *v
+			return &role, nil
 		}
-
 	}
 
 	return nil, dcmd.NewSimpleUserError("Invalid role mention or id")
