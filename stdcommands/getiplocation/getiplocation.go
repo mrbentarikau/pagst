@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 )
@@ -48,7 +48,7 @@ var Command = &commands.YAGCommand{
 	RunInDM:      true,
 	RequiredArgs: 1,
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "IP-address or domain", Type: dcmd.String},
+		{Name: "IP-address-domain", Type: dcmd.String},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {

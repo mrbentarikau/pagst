@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"emperror.dev/errors"
@@ -206,6 +207,8 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 		Responses: cc.Responses,
 
 		ShowErrors: cc.ShowErrors,
+
+		DateUpdated: null.TimeFrom(time.Now()),
 	}
 
 	if cc.TimeTriggerExcludingDays == nil {

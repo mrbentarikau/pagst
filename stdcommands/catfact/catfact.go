@@ -6,15 +6,17 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/mrbentarikau/pagst/commands"
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory: commands.CategoryFun,
-	Name:        "CatFact",
-	Aliases:     []string{"cf", "cat", "catfacts"},
-	Description: "Cat Facts from local database or catfact.ninja API",
+	CmdCategory:         commands.CategoryFun,
+	Name:                "CatFact",
+	Aliases:             []string{"cf", "cat", "catfacts"},
+	Description:         "Cat Facts from local database or catfact.ninja API",
+	DefaultEnabled:      true,
+	SlashCommandEnabled: true,
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var cf string

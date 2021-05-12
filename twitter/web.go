@@ -90,7 +90,8 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 	ctx := r.Context()
 	activeGuild, templateData := web.GetBaseCPContextData(ctx)
 
-	if premium.ContextPremiumTier(ctx) != premium.PremiumTierPremium {
+	//if premium.PremiumTierPremium != 1 || premium.ContextPremiumTier(ctx) != premium.PremiumTierPremium {
+	if premium.PremiumTierPremium != 1 && premium.PremiumTierPremium != 2 {
 		return templateData.AddAlerts(web.ErrorAlert("Twitter feeds are paid premium only")), nil
 	}
 

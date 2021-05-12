@@ -4,7 +4,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/sirupsen/logrus"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
 )

@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
@@ -28,10 +28,10 @@ var Command = &commands.YAGCommand{
 					This free access gives for up to **2 000** non-commercial API calls per month.`,
 	RequiredArgs: 1,
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "Expression", Type: dcmd.String},
+		{Name: "Expression", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Switch: "appID", Name: "Add your Wolfram|Alpha appID"},
+		{Name: "appID", Help: "Add your Wolfram|Alpha appID"},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
@@ -39,12 +39,12 @@ var Command = &commands.YAGCommand{
 
 		if data.Switches["appID"].Value != nil && data.Switches["appID"].Value.(bool) {
 
-			if isAdmin, _ := data.GS.MemberPermissions(false, 0, data.Msg.Author.ID); isAdmin&discordgo.PermissionAdministrator != 0 {
+			if isAdmin, _ := data.GuildData.GS.MemberPermissions(false, 0, data.Author.ID); isAdmin&discordgo.PermissionAdministrator != 0 {
 				appID := data.Args[0].Str()
 				if len(appID) < 8 || len(appID) > 25 {
 					return "appID is too short or too long", nil
 				}
-				err := common.RedisPool.Do(radix.Cmd(nil, "SET", "wolfram_appID:"+strconv.FormatInt(data.GS.ID, 10), appID))
+				err := common.RedisPool.Do(radix.Cmd(nil, "SET", "wolfram_appID:"+strconv.FormatInt(data.GuildData.GS.ID, 10), appID))
 				if err != nil {
 					return "", err
 				}
@@ -55,7 +55,7 @@ var Command = &commands.YAGCommand{
 		}
 
 		var appID string
-		err := common.RedisPool.Do(radix.Cmd(&appID, "GET", "wolfram_appID:"+strconv.FormatInt(data.GS.ID, 10)))
+		err := common.RedisPool.Do(radix.Cmd(&appID, "GET", "wolfram_appID:"+strconv.FormatInt(data.GuildData.GS.ID, 10)))
 		if err != nil {
 			return "No Wolfram|Alpha appID", nil
 		}

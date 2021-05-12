@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/reddit/models"
@@ -62,13 +62,14 @@ func (p *Plugin) AddCommands() {
 				ratelimiter: NewRatelimiter(),
 			}
 
-			err1 := handlerSlow.handlePost(resp[0], data.GS.ID)
-			err2 := handlerFast.handlePost(resp[0], data.GS.ID)
+			err1 := handlerSlow.handlePost(resp[0], data.GuildData.GS.ID)
+			err2 := handlerFast.handlePost(resp[0], data.GuildData.GS.ID)
 
 			return fmt.Sprintf("SlowErr: `%v`, fastErr: `%v`", err1, err2), nil
 		}),
 	})
 }
+
 
 func (p *Plugin) Status() (string, string) {
 	numFeeds, err := models.RedditFeeds(models.RedditFeedWhere.Disabled.EQ(false)).CountG(context.Background())

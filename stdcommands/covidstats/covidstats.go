@@ -11,7 +11,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
@@ -49,21 +49,23 @@ var (
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory: commands.CategoryTool,
-	Name:        "CoronaStatistics",
-	Aliases:     []string{"coronastats", "cstats", "cst"},
-	Description: "Shows COVID-19 statistics sourcing Worldometer statistics. Location is country name or their ISO2/3 shorthand.\nIf nothing is added, shows World's total.\nListings are sorted by count of total cases not deaths.",
-	RunInDM:     true,
+	CmdCategory:         commands.CategoryTool,
+	Name:                "CoronaStatistics",
+	Aliases:             []string{"coronastats", "cstats", "cst"},
+	Description:         "Shows COVID-19 statistics sourcing Worldometer statistics. Location is country name or their ISO2/3 shorthand.\nIf nothing is added, shows World's total.\nListings are sorted by count of total cases not deaths.",
+	RunInDM:             true,
+	DefaultEnabled:      true,
+	SlashCommandEnabled: true,
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "Location", Type: dcmd.String},
+		{Name: "Location", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Switch: "countries", Name: "Countries of the World"},
-		&dcmd.ArgDef{Switch: "continents", Name: "The Continents of the World"},
-		&dcmd.ArgDef{Switch: "states", Name: "A State name in USA"},
-		&dcmd.ArgDef{Switch: "page", Name: "Go to page number, works for paginated output", Type: dcmd.Int},
-		&dcmd.ArgDef{Switch: "1d", Name: "Stats from yesterday"},
-		&dcmd.ArgDef{Switch: "2d", Name: "Stats from the day before yesterday (does not apply to states)"},
+		{Name: "countries", Help: "Countries of the World"},
+		{Name: "continents", Help: "The Continents of the World"},
+		{Name: "states", Help: "A State name in USA"},
+		{Name: "page", Help: "Go to page number, works for paginated output", Type: dcmd.Int},
+		{Name: "1d", Help: "Stats from yesterday"},
+		{Name: "2d", Help: "Stats from the day before yesterday (does not apply to states)"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 
@@ -163,7 +165,7 @@ var Command = &commands.YAGCommand{
 
 		if pagination {
 			_, err := paginatedmessages.CreatePaginatedMessage(
-				data.GS.ID, data.CS.ID, pageInit, len(cConts)-1, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				data.GuildData.GS.ID, data.ChannelID, pageInit, len(cConts)-1, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					embed = embedCreator(cConts, queryType, whatDay, page-1)
 					return embed, nil
 				})

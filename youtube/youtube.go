@@ -185,7 +185,7 @@ type LinkEntry struct {
 
 const (
 	GuildMaxFeeds        = 50
-	GuildMaxFeedsPremium = 250
+	GuildMaxFeedsPremium = 100
 )
 
 func MaxFeedsForContext(ctx context.Context) int {

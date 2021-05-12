@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/mrbentarikau/pagst/commands"
 )
 
@@ -19,7 +19,7 @@ var Command = &commands.YAGCommand{
 	Description: `Returns a quote (NSFW probability high) from Bash Quotes Database > 
 				http://bash.org`,
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "Quote number", Type: dcmd.Int},
+		{Name: "Quote-number", Type: dcmd.Int},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {

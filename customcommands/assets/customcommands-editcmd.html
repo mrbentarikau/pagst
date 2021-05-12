@@ -61,6 +61,7 @@
                             {{if eq (call .GetCCIntervalType .CC) 1}}hour(s){{else}}minute(s){{end}}{{end}}
                         </h2>
                         <input type="text" class="hidden form-control" name="id" value="{{.CC.LocalID}}">
+                        Last saved: {{if ne .CC.DateUpdated.Time.Year 1}}{{.CC.DateUpdated.Time.UTC}}{{else}}N/A{{end}}<br/><br/>
                         <div class="row">
                             <!-- Trigger -->
                             <div class="col-sm-4">

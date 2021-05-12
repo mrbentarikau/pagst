@@ -11,7 +11,7 @@ import (
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/common/config"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
 	"github.com/mrbentarikau/pagst/bot"
@@ -51,10 +51,12 @@ var cmdLogs = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		&dcmd.ArgDef{Name: "Count", Default: 100, Type: &dcmd.IntArg{Min: 2, Max: 250}},
 	},
+	SlashCommandEnabled: true,
+	DefaultEnabled:      false,
 	RunFunc: func(cmd *dcmd.Data) (interface{}, error) {
 		num := cmd.Args[0].Int()
 
-		l, err := CreateChannelLog(cmd.Context(), nil, cmd.GS.ID, cmd.CS.ID, cmd.Msg.Author.Username, cmd.Msg.Author.ID, num)
+		l, err := CreateChannelLog(cmd.Context(), nil, cmd.GuildData.GS.ID, cmd.ChannelID, cmd.Author.Username, cmd.Author.ID, num)
 		if err != nil {
 			if err == ErrChannelBlacklisted {
 				return "This channel is blacklisted from creating message logs, this can be changed in the control panel.", nil
@@ -63,7 +65,7 @@ var cmdLogs = &commands.YAGCommand{
 			return "", err
 		}
 
-		return CreateLink(cmd.GS.ID, l.ID), err
+		return CreateLink(cmd.GuildData.GS.ID, l.ID), err
 	},
 }
 
@@ -76,8 +78,10 @@ var cmdWhois = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "User", Type: &commands.MemberArg{}},
 	},
+	SlashCommandEnabled: true,
+	DefaultEnabled:      false,
 	RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
-		config, err := GetConfig(common.PQ, parsed.Context(), parsed.GS.ID)
+		config, err := GetConfig(common.PQ, parsed.Context(), parsed.GuildData.GS.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -86,8 +90,8 @@ var cmdWhois = &commands.YAGCommand{
 		if parsed.Args[0].Value != nil {
 			member = parsed.Args[0].Value.(*dstate.MemberState)
 		} else {
-			member = parsed.MS
-			if sm := parsed.GS.MemberCopy(true, member.ID); sm != nil {
+			member = parsed.GuildData.MS
+			if sm := parsed.GuildData.GS.MemberCopy(true, member.ID); sm != nil {
 				// Prefer state member over the one provided in the message, since it may have presence data
 				member = sm
 			}
@@ -120,14 +124,20 @@ var cmdWhois = &commands.YAGCommand{
 		}
 
 		var memberStatus string
-		state := [4]string{"Playing", "Streaming", "Listening", "Watching"}
+
+		state := [6]string{"Playing", "Streaming", "Listening", "Watching", "Custom", "Competing"}
 		if !member.PresenceSet || member.PresenceGame == nil {
 			memberStatus = fmt.Sprintf("Has no activity status, is invisible/offline or is not in the bot's cache.")
 		} else {
 			if member.PresenceGame.Type == 4 {
 				memberStatus = fmt.Sprintf("%s: %s", member.PresenceGame.Name, member.PresenceGame.State)
 			} else {
-				memberStatus = fmt.Sprintf("%s: %s", state[member.PresenceGame.Type], member.PresenceGame.Name)
+				presenceName := "Unknown"
+				if member.PresenceGame.Type >= 0 && len(state) > int(member.PresenceGame.Type) {
+					presenceName = state[member.PresenceGame.Type]
+				}
+
+				memberStatus = fmt.Sprintf("%s: %s", presenceName, member.PresenceGame.Name)
 			}
 		}
 
@@ -217,7 +227,7 @@ var cmdWhois = &commands.YAGCommand{
 
 		if config.NicknameLoggingEnabled.Bool {
 
-			nicknames, err := GetNicknames(parsed.Context(), member.ID, parsed.GS.ID, 5, 0)
+			nicknames, err := GetNicknames(parsed.Context(), member.ID, parsed.GuildData.GS.ID, 5, 0)
 			if err != nil {
 				return err, err
 			}
@@ -254,12 +264,12 @@ var cmdUsernames = &commands.YAGCommand{
 	Aliases:     []string{"unames", "un"},
 	RunInDM:     true,
 	Arguments: []*dcmd.ArgDef{
-		{Name: "User", Type: dcmd.UserID},
+		{Name: "User", Type: dcmd.User},
 	},
 	RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 		gID := int64(0)
-		if parsed.GS != nil {
-			config, err := GetConfig(common.PQ, parsed.Context(), parsed.GS.ID)
+		if parsed.GuildData != nil {
+			config, err := GetConfig(common.PQ, parsed.Context(), parsed.GuildData.GS.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -268,17 +278,17 @@ var cmdUsernames = &commands.YAGCommand{
 				return "Username logging is disabled on this server", nil
 			}
 
-			gID = parsed.GS.ID
+			gID = parsed.GuildData.GS.ID
 		}
 
-		_, err := paginatedmessages.CreatePaginatedMessage(gID, parsed.Msg.ChannelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
-			target := parsed.Msg.Author.ID
+		_, err := paginatedmessages.CreatePaginatedMessage(gID, parsed.ChannelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+			target := parsed.Author
 			if parsed.Args[0].Value != nil {
-				target = parsed.Args[0].Int64()
+				target = parsed.Args[0].Value.(*discordgo.User)
 			}
 
 			offset := (page - 1) * 15
-			usernames, err := GetUsernames(context.Background(), target, 15, offset)
+			usernames, err := GetUsernames(context.Background(), target.ID, 15, offset)
 			if err != nil {
 				return nil, err
 			}
@@ -286,8 +296,8 @@ var cmdUsernames = &commands.YAGCommand{
 			if len(usernames) < 1 && page > 1 {
 				return nil, paginatedmessages.ErrNoResults
 			}
-			ms := parsed.GS.MemberCopy(true, target)
-			out := fmt.Sprintf("Past username of **%s#%d** ```\n", ms.Username, ms.Discriminator)
+
+			out := fmt.Sprintf("Past username of **%s#%s** ```\n", target.Username, target.Discriminator)
 			for _, v := range usernames {
 				out += fmt.Sprintf("%20s: %s\n", v.CreatedAt.Time.UTC().Format(time.RFC822), v.Username.String)
 			}
@@ -299,7 +309,7 @@ var cmdUsernames = &commands.YAGCommand{
 
 			embed := &discordgo.MessageEmbed{
 				Color:       0x277ee3,
-				Title:       fmt.Sprintf("Usernames of %s#%d", ms.Username, ms.Discriminator),
+				Title:       "Usernames of " + target.Username + "#" + target.Discriminator,
 				Description: out,
 			}
 
@@ -317,28 +327,28 @@ var cmdNicknames = &commands.YAGCommand{
 	Aliases:     []string{"nn"},
 	RunInDM:     false,
 	Arguments: []*dcmd.ArgDef{
-		{Name: "User", Type: dcmd.UserID},
+		{Name: "User", Type: dcmd.User},
 	},
 	RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
-		config, err := GetConfig(common.PQ, parsed.Context(), parsed.GS.ID)
+		config, err := GetConfig(common.PQ, parsed.Context(), parsed.GuildData.GS.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		target := parsed.Msg.Author.ID
+		target := parsed.Author
 		if parsed.Args[0].Value != nil {
-			target = parsed.Args[0].Int64()
+			target = parsed.Args[0].Value.(*discordgo.User)
 		}
 
 		if !config.NicknameLoggingEnabled.Bool {
 			return "Nickname logging is disabled on this server", nil
 		}
 
-		_, err = paginatedmessages.CreatePaginatedMessage(parsed.GS.ID, parsed.CS.ID, 1, 0, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+		_, err = paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.ChannelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 
 			offset := (page - 1) * 15
 
-			nicknames, err := GetNicknames(context.Background(), target, parsed.GS.ID, 15, offset)
+			nicknames, err := GetNicknames(context.Background(), target.ID, parsed.GuildData.GS.ID, 15, offset)
 			if err != nil {
 				return nil, err
 			}
@@ -346,8 +356,8 @@ var cmdNicknames = &commands.YAGCommand{
 			if page > 1 && len(nicknames) < 1 {
 				return nil, paginatedmessages.ErrNoResults
 			}
-			ms := parsed.GS.MemberCopy(true, target)
-			out := fmt.Sprintf("Past nicknames of **%s#%d** ```\n", ms.Username, ms.Discriminator)
+
+			out := fmt.Sprintf("Past nicknames of **%s#%s** ```\n", target.Username, target.Discriminator)
 			for _, v := range nicknames {
 				out += fmt.Sprintf("%20s: %s\n", v.CreatedAt.Time.UTC().Format(time.RFC822), v.Nickname.String)
 			}
@@ -359,7 +369,7 @@ var cmdNicknames = &commands.YAGCommand{
 
 			embed := &discordgo.MessageEmbed{
 				Color:       0x277ee3,
-				Title:       fmt.Sprintf("Nicknames of %s#%d", ms.Username, ms.Discriminator),
+				Title:       "Nicknames of " + target.Username + "#" + target.Discriminator,
 				Description: out,
 			}
 
@@ -384,7 +394,7 @@ var cmdClearNames = &commands.YAGCommand{
 		}
 
 		for _, v := range queries {
-			_, err := common.PQ.Exec(v, parsed.Msg.Author.ID)
+			_, err := common.PQ.Exec(v, parsed.Author.ID)
 			if err != nil {
 				return "An error occured, join the support server for help", err
 			}

@@ -3,7 +3,6 @@ package web
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -17,7 +16,7 @@ import (
 )
 
 var (
-	SessionCookieName = "pagstdb-session-3"
+	SessionCookieName = "yagpdb-session-3"
 	OauthConf         *oauth2.Config
 )
 
@@ -160,7 +159,6 @@ func discordAuthTokenFromYag(yagToken string) (t *oauth2.Token, err error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(b64)
 
 	err = json.Unmarshal([]byte(b64), &t)
 	if err != nil {

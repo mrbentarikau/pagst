@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	confTotalShards             = config.RegisterOption("yagpdb.sharding.total_shards", "Total number shards", 10)
-	confActiveShards            = config.RegisterOption("yagpdb.sharding.active_shards", "Shards active on this hoste, ex: '1-10,25'", 10)
+	confTotalShards             = config.RegisterOption("yagpdb.sharding.total_shards", "Total number shards", 0)
+	confActiveShards            = config.RegisterOption("yagpdb.sharding.active_shards", "Shards active on this hoste, ex: '1-10,25'", "")
 	confLargeBotShardingEnabled = config.RegisterOption("yagpdb.large_bot_sharding", "Set to enable large bot sharding (for 200k+ guilds)", false)
 	confBucketsPerNode          = config.RegisterOption("yagpdb.shard.buckets_per_node", "Number of buckets per node", 8)
 	confMaxShardsPerNode        = config.RegisterOption("yagpdb.shard.shards_per_node", "Max shards per node", 32)

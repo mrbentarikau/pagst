@@ -5,7 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/dpatrie/urbandictionary"
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
@@ -21,13 +21,14 @@ var Command = &commands.YAGCommand{
 		{Name: "Topic", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Switch: "p", Name: "Paginated output"},
+		{Name: "raw", Help: "Paginated output"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var paginatedView bool
+		paginatedView = true
 
-		if data.Switches["p"].Value != nil && data.Switches["p"].Value.(bool) {
-			paginatedView = true
+		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+			paginatedView = false
 		}
 
 		qResp, err := urbandictionary.Query(data.Args[0].Str())
@@ -41,7 +42,7 @@ var Command = &commands.YAGCommand{
 
 		if paginatedView {
 			_, err := paginatedmessages.CreatePaginatedMessage(
-				data.GS.ID, data.CS.ID, 1, len(qResp.Results), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				data.GuildData.GS.ID, data.ChannelID, 1, len(qResp.Results), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					i := page - 1
 
 					paginatedEmbed := embedCreator(qResp.Results, i)

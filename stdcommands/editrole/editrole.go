@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
@@ -26,37 +26,37 @@ var Command = &commands.YAGCommand{
 		{Name: "Role", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Switch: "name", Help: "Role name - String", Type: dcmd.String, Default: ""},
-		&dcmd.ArgDef{Switch: "color", Help: "Role color - Either hex code or name", Type: dcmd.String, Default: ""},
-		&dcmd.ArgDef{Switch: "mention", Help: "Role Mentionable - 1 for true 0 for false", Type: &dcmd.IntArg{Min: 0, Max: 1}},
-		&dcmd.ArgDef{Switch: "hoist", Help: "Role Hoisted - 1 for true 0 for false", Type: &dcmd.IntArg{Min: 0, Max: 1}},
-		&dcmd.ArgDef{Switch: "perms", Help: "Role Permissions - 0 to 2147483647", Type: &dcmd.IntArg{Min: 0, Max: 2147483647}},
+		{Name: "name", Help: "Role name - String", Type: dcmd.String, Default: ""},
+		{Name: "color", Help: "Role color - Either hex code or name", Type: dcmd.String, Default: ""},
+		{Name: "mention", Help: "Role Mentionable - 1 for true 0 for false", Type: &dcmd.IntArg{Min: 0, Max: 1}},
+		{Name: "hoist", Help: "Role Hoisted - 1 for true 0 for false", Type: &dcmd.IntArg{Min: 0, Max: 1}},
+		{Name: "perms", Help: "Role Permissions - 0 to 2147483647", Type: &dcmd.IntArg{Min: 0, Max: 2147483647}},
 	},
 	RunFunc:            cmdFuncEditRole,
 	GuildScopeCooldown: 30,
 }
 
 func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
-	cID := data.CS.ID
-	if ok, err := bot.AdminOrPermMS(cID, data.MS, discordgo.PermissionManageRoles); err != nil {
+	cID := data.ChannelID
+	if ok, err := bot.AdminOrPermMS(cID, data.GuildData.MS, discordgo.PermissionManageRoles); err != nil {
 		return "Failed checking perms", err
 	} else if !ok {
 		return "You need manage roles perms to use this command", nil
 	}
 
 	roleS := data.Args[0].Str()
-	role := moderation.FindRole(data.GS, roleS)
+	role := moderation.FindRole(data.GuildData.GS, roleS)
 
 	if role == nil {
 		return "No role with the Name or ID`" + roleS + "` found", nil
 	}
 
-	data.GS.RLock()
-	if !bot.IsMemberAboveRole(data.GS, data.MS, role) {
-		data.GS.RUnlock()
+	data.GuildData.GS.RLock()
+	if !bot.IsMemberAboveRole(data.GuildData.GS, data.GuildData.MS, role) {
+		data.GuildData.GS.RUnlock()
 		return "Can't edit roles above you", nil
 	}
-	data.GS.RUnlock()
+	data.GuildData.GS.RUnlock()
 
 	change := false
 
@@ -67,7 +67,7 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 	}
 	color := role.Color
 	if c := data.Switch("color").Str(); c != "" {
-		if data.Source == dcmd.DMSource {
+		if data.Source == dcmd.TriggerSourceDM {
 			return nil, errors.New("Cannot use role color edit in custom commands to prevent api abuse")
 		}
 		parsedColor, ok := ParseColor(c)
@@ -94,7 +94,7 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 	}
 
 	if change {
-		_, err := common.BotSession.GuildRoleEdit(data.GS.ID, role.ID, name, color, hoisted, perms, mentionable)
+		_, err := common.BotSession.GuildRoleEdit(data.GuildData.GS.ID, role.ID, name, color, hoisted, perms, mentionable)
 		if err != nil {
 			return nil, err
 		}

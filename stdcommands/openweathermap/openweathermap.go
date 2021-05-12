@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common/config"
 )
@@ -22,14 +22,16 @@ var (
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory:  commands.CategoryTool,
-	Name:         "OpenWeatherMap",
-	Aliases:      []string{"owm", "oweather", "ow"},
-	Description:  "Shows the weather using OpenWeatherMap API. \nLocation is set by city name and optional state code, country code \n eg. <prefix>owm Paris,AR,US",
-	RunInDM:      true,
-	RequiredArgs: 1,
+	CmdCategory:         commands.CategoryTool,
+	Name:                "OpenWeatherMap",
+	Aliases:             []string{"owm", "oweather", "ow"},
+	Description:         "Shows the weather using OpenWeatherMap API. \nLocation is set by city name and optional state code, country code \n eg. <prefix>owm Paris,AR,US",
+	RunInDM:             true,
+	RequiredArgs:        1,
+	SlashCommandEnabled: true,
+	DefaultEnabled:      true,
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "Location", Type: dcmd.String},
+		{Name: "Location", Type: dcmd.String},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var queryData []string

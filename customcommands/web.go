@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/volatiletech/null"
@@ -223,7 +224,8 @@ func handleNewCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData,
 		TimeTriggerExcludingDays:  []int64{},
 		TimeTriggerExcludingHours: []int64{},
 
-		Responses: []string{"Edit this to change the output of the custom command {{.CCID}}!"},
+		Responses:   []string{"Edit this to change the output of the custom command {{.CCID}}!"},
+		DateUpdated: null.TimeFrom(time.Now()),
 	}
 
 	if groupID != 0 {

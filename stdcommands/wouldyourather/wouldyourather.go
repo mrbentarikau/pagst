@@ -7,7 +7,7 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
@@ -34,13 +34,13 @@ var Command = &commands.YAGCommand{
 			Color:       int(rand.Int63n(16777215)),
 			Description: fmt.Sprintf("**EITHER...**\n🇦 %s\n\n **OR...**\n🇧 %s", q1, q2),
 		}
-		msg, err := common.BotSession.ChannelMessageSendEmbed(data.Msg.ChannelID, content)
+		msg, err := common.BotSession.ChannelMessageSendEmbed(data.ChannelID, content)
 		if err != nil {
 			return nil, err
 		}
 
-		common.BotSession.MessageReactionAdd(data.Msg.ChannelID, msg.ID, "🇦")
-		err = common.BotSession.MessageReactionAdd(data.Msg.ChannelID, msg.ID, "🇧")
+		common.BotSession.MessageReactionAdd(data.ChannelID, msg.ID, "🇦")
+		err = common.BotSession.MessageReactionAdd(data.ChannelID, msg.ID, "🇧")
 		if err != nil {
 			return nil, err
 		}

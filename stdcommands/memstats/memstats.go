@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"runtime"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
@@ -34,7 +34,7 @@ var Command = &commands.YAGCommand{
 			},
 		}
 
-		_, err := common.BotSession.ChannelMessageSendComplex(data.Msg.ChannelID, send)
+		_, err := common.BotSession.ChannelMessageSendComplex(data.ChannelID, send)
 
 		return nil, err
 	}),

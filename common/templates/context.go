@@ -519,6 +519,7 @@ func (c *Context) addContextFunc(name string, f interface{}) {
 func baseContextFuncs(c *Context) {
 	// message functions
 	c.ContextFuncs["sendDM"] = c.tmplSendDM
+	c.ContextFuncs["sendTargetDM"] = c.tmplSendTargetDM
 	c.ContextFuncs["sendMessage"] = c.tmplSendMessage(true, false)
 	c.ContextFuncs["sendTemplate"] = c.tmplSendTemplate
 	c.ContextFuncs["sendTemplateDM"] = c.tmplSendTemplateDM

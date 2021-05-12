@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
 	"github.com/jonas747/dutil"
@@ -21,7 +21,7 @@ var Command = &commands.YAGCommand{
 	},
 
 	ArgSwitches: []*dcmd.ArgDef{
-		{Switch: "nomanaged", Name: "Don't list managed/bot roles"},
+		{Name: "nomanaged", Help: "Don't list managed/bot roles"},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
@@ -37,16 +37,16 @@ var Command = &commands.YAGCommand{
 			noMana = true
 		}
 
-		data.GS.Lock()
-		defer data.GS.Unlock()
+		data.GuildData.GS.Lock()
+		defer data.GuildData.GS.Unlock()
 
-		sort.Sort(dutil.Roles(data.GS.Guild.Roles))
+		sort.Sort(dutil.Roles(data.GuildData.GS.Guild.Roles))
 
 		counter := 0
 		if member != nil {
 			if len(member.Roles) > 0 {
 				for _, roleID := range member.Roles {
-					for _, r := range data.GS.Guild.Roles {
+					for _, r := range data.GuildData.GS.Guild.Roles {
 						if roleID == r.ID {
 							counter++
 							me := r.Permissions&discordgo.PermissionAdministrator != 0 || r.Permissions&discordgo.PermissionMentionEveryone != 0
@@ -58,7 +58,7 @@ var Command = &commands.YAGCommand{
 				return "User has no roles", nil
 			}
 		} else {
-			for _, r := range data.GS.Guild.Roles {
+			for _, r := range data.GuildData.GS.Guild.Roles {
 				if noMana && r.Managed {
 					continue
 				} else {

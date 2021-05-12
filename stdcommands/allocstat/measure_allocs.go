@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
@@ -18,7 +18,7 @@ var Command = &commands.YAGCommand{
 	Description:          "Memory statistics.",
 	HideFromHelp:         true,
 	RunFunc: util.RequireBotAdmin(func(data *dcmd.Data) (interface{}, error) {
-		common.BotSession.ChannelTyping(data.CS.ID)
+		common.BotSession.ChannelTyping(data.ChannelID)
 		var memstatsStarted runtime.MemStats
 		runtime.ReadMemStats(&memstatsStarted)
 

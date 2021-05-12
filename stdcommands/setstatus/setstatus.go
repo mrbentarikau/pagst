@@ -1,7 +1,7 @@
 package setstatus
 
 import (
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
@@ -18,7 +18,7 @@ var Command = &commands.YAGCommand{
 		{Name: "status", Type: dcmd.String, Default: ""},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		{Switch: "url", Name: "streaming url", Type: dcmd.String, Default: ""},
+		{Name: "url", Type: dcmd.String, Default: ""},
 	},
 	RunFunc: util.RequireBotAdmin(func(data *dcmd.Data) (interface{}, error) {
 		streamingURL := data.Switch("url").Str()

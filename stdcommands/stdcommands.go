@@ -5,6 +5,7 @@ import (
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/stdcommands/addspecialserver"
 	"github.com/mrbentarikau/pagst/stdcommands/advice"
 	"github.com/mrbentarikau/pagst/stdcommands/allocstat"
 	"github.com/mrbentarikau/pagst/stdcommands/banserver"
@@ -38,6 +39,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/pagstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/ping"
 	"github.com/mrbentarikau/pagst/stdcommands/poll"
+	"github.com/mrbentarikau/pagst/stdcommands/removespecialserver"
 	"github.com/mrbentarikau/pagst/stdcommands/roll"
 	"github.com/mrbentarikau/pagst/stdcommands/setstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/simpleembed"
@@ -133,6 +135,8 @@ func (p *Plugin) AddCommands() {
 		toggledbg.Command,
 		globalrl.Command,
 		exportcustomcommands.Command,
+		addspecialserver.Command,
+		removespecialserver.Command,
 	)
 
 }

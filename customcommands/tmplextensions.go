@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v2"
 	"github.com/mrbentarikau/pagst/bot"
@@ -107,7 +107,7 @@ func tmplExpectArgs(ctx *templates.Context) interface{} {
 		split := dcmd.SplitArgs(stripped)
 
 		// create the dcmd data context used in the arg parsing
-		dcmdData, err := commands.CommandSystem.FillData(common.BotSession, msg)
+		dcmdData, err := commands.CommandSystem.FillDataLegacyMessage(common.BotSession, msg)
 		if err != nil {
 			return result, errors.WithMessage(err, "tmplExpectArgs")
 		}
@@ -513,9 +513,9 @@ func tmplDBIncr(ctx *templates.Context) interface{} {
 
 		keyStr := limitString(templates.ToString(key), 256)
 
-		const q = `INSERT INTO templates_user_database (created_at, updated_at, guild_id, user_id, key, value_raw, value_num) 
+		const q = `INSERT INTO templates_user_database (created_at, updated_at, guild_id, user_id, key, value_raw, value_num)
 VALUES (now(), now(), $1, $2, $3, $4, $5)
-ON CONFLICT (guild_id, user_id, key) 
+ON CONFLICT (guild_id, user_id, key)
 DO UPDATE SET
 	value_num =
 		-- Don't increment expired entry
@@ -533,6 +533,8 @@ DO UPDATE SET
 		CASE WHEN (templates_user_database.expires_at IS NULL OR templates_user_database.expires_at > now()) THEN templates_user_database.expires_at
 		ELSE NULL
 		END
+
+
 RETURNING value_num`
 
 		result := common.PQ.QueryRow(q, ctx.GS.ID, userID, keyStr, valueSerialized, vNum)

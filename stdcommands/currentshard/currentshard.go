@@ -3,7 +3,7 @@ package currentshard
 import (
 	"fmt"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/botrest"
 	"github.com/mrbentarikau/pagst/commands"
@@ -16,10 +16,10 @@ var Command = &commands.YAGCommand{
 	Aliases:     []string{"cshard"},
 	Description: "Shows the current shard this server is on (or the one specified",
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "serverid", Type: dcmd.Int, Default: int64(0)},
+		&dcmd.ArgDef{Name: "serverid", Type: dcmd.BigInt, Default: int64(0)},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		gID := data.GS.ID
+		gID := data.GuildData.GS.ID
 
 		if data.Args[0].Int64() != 0 {
 			gID = data.Args[0].Int64()

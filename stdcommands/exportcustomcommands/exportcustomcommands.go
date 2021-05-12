@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
@@ -28,15 +28,15 @@ var Command = &commands.YAGCommand{
 	Name:                 "exportcustomscommands",
 	Aliases:              []string{"exportccs", "eccs"},
 	RequireDiscordPerms:  []int64{discordgo.PermissionAdministrator},
-	Description:          "Exports your all your custom commands data's reasonable fields as JSON,\nuser has to be serverAdmin.\nServerID argument is for the owner of the bot...",
+	Description:          "Exports all your custom commands data's reasonable fields as JSON,\nuser has to be serverAdmin.\nServerID argument is for the owner of the bot...",
 	HideFromHelp:         true,
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "ServerID", Type: dcmd.Int},
+		{Name: "ServerID", Type: dcmd.Int},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		guildIDToMatch := data.Msg.GuildID
+		guildIDToMatch := data.GuildData.GS.ID
 		if data.Args[0].Value != nil {
-			if common.IsOwner(data.Msg.Author.ID) {
+			if common.IsOwner(data.Author.ID) {
 				guildIDToMatch = data.Args[0].Int64()
 			} else {
 				return "Only for owner of the bot", nil
@@ -53,11 +53,11 @@ var Command = &commands.YAGCommand{
 				Content: "Custom Commands Export",
 				File: &discordgo.File{
 					ContentType: "application/json",
-					Name:        fmt.Sprintf("custom_commands_%d.json", data.Msg.GuildID),
+					Name:        fmt.Sprintf("custom_commands_%d.json", data.GuildData.GS.ID),
 					Reader:      bytes.NewReader(buf),
 				},
 			}
-			_, err = common.BotSession.ChannelMessageSendComplex(data.Msg.ChannelID, send)
+			_, err = common.BotSession.ChannelMessageSendComplex(data.ChannelID, send)
 			return nil, err
 		}
 

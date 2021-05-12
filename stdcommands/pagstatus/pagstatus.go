@@ -5,11 +5,12 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jonas747/dcmd"
+	"github.com/jonas747/dcmd/v2"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 )
@@ -51,7 +52,11 @@ func cmdFuncYagStatus(data *dcmd.Data) (interface{}, error) {
 	}
 
 	uptime := time.Since(bot.Started)
-
+	hostUptimeSeconds, _ := host.Uptime()
+	hostUptimeDays := hostUptimeSeconds / (60 * 60 * 24)
+	hostUptimeHours := (hostUptimeSeconds - (hostUptimeDays * 60 * 60 * 24)) / (60 * 60)
+	hostUptimeMinutes := ((hostUptimeSeconds - (hostUptimeDays * 60 * 60 * 24)) - (hostUptimeHours * 60 * 60)) / 60
+	hostUptime := fmt.Sprintf("%d days, %d hours, %d minutes", hostUptimeDays, hostUptimeHours, hostUptimeMinutes)
 	allocated := float64(memStats.Alloc) / 1000000
 
 	numGoroutines := runtime.NumGoroutine()
@@ -67,7 +72,7 @@ func cmdFuncYagStatus(data *dcmd.Data) (interface{}, error) {
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{Name: "Servers", Value: fmt.Sprint(servers), Inline: true},
 			&discordgo.MessageEmbedField{Name: "Go Version", Value: runtime.Version(), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Uptime", Value: common.HumanizeDuration(common.DurationPrecisionSeconds, uptime), Inline: true},
+			&discordgo.MessageEmbedField{Name: "Uptime", Value: fmt.Sprintf("Bot: %s\nHost: %s", common.HumanizeDuration(common.DurationPrecisionSeconds, uptime), hostUptime), Inline: true},
 			&discordgo.MessageEmbedField{Name: "Goroutines", Value: fmt.Sprint(numGoroutines), Inline: true},
 			&discordgo.MessageEmbedField{Name: "GC Pause Fraction", Value: fmt.Sprintf("%.3f%%", memStats.GCCPUFraction*100), Inline: true},
 			&discordgo.MessageEmbedField{Name: "Process Mem (alloc, sys, freed)", Value: fmt.Sprintf("%.1fMB, %.1fMB, %.1fMB", float64(memStats.Alloc)/1000000, float64(memStats.Sys)/1000000, (float64(memStats.TotalAlloc)/1000000)-allocated), Inline: true},
