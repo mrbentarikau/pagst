@@ -26,6 +26,7 @@ import (
 	"github.com/mrbentarikau/pagst/logs"
 	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/notifications"
+	"github.com/mrbentarikau/pagst/stdcommands/owlbot"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/premium/patreonpremiumsource"
 	"github.com/mrbentarikau/pagst/reddit"
@@ -56,6 +57,7 @@ func main() {
 
 	// Setup plugins
 	analytics.RegisterPlugin()
+	owlbot.RegisterPlugin()
 	safebrowsing.RegisterPlugin()
 	discordlogger.Register()
 	commands.RegisterPlugin()
