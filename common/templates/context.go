@@ -152,6 +152,8 @@ type Context struct {
 
 	CurrentFrame *contextFrame
 
+	IsExecedByLeaveMessage bool
+
 	contextFuncsAdded bool
 }
 
@@ -301,20 +303,26 @@ func (c *Context) Execute(source string) (string, error) {
 	return c.executeParsed()
 }
 
-func (c *Context) executeParsed() (r string, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			//err = errors.New("paniced!")
-			actual, ok := r.(error)
-			if !ok {
-				actual = nil
-			}
-
-			logger.WithField("guild", c.GS.ID).WithError(actual).Error("Panicked executing template: " + c.Name)
-			err = errors.New("bot unexpectedly panicked")
+/*func (c *Context) executeParsed() (r string, err error) {
+defer func() {
+	if r := recover(); r != nil {
+		//err = errors.New("paniced!")
+		actual, ok := r.(error)
+		if !ok {
+			actual = nil
 		}
-	}()
 
+		logger.WithField("guild", c.GS.ID).WithError(actual).Error("Panicked executing template: " + c.Name)
+		err = errors.New("bot unexpectedly panicked")
+	}
+}()
+
+if c.CurrentFrame.SendResponseInDM && c.IsExecedByLeaveMessage {
+	return "", errors.New("Can not send DM on leave message")
+}
+*/
+
+func (c *Context) executeParsed() (string, error) {
 	parsed := c.CurrentFrame.parsedTemplate
 	if c.IsPremium {
 		parsed = parsed.MaxOps(MaxOpsPremium)
@@ -326,7 +334,7 @@ func (c *Context) executeParsed() (r string, err error) {
 	w := LimitWriter(&buf, 25000)
 
 	// started := time.Now()
-	err = parsed.Execute(w, c.Data)
+	err := parsed.Execute(w, c.Data)
 
 	// dur := time.Since(started)
 	if c.FixedOutput != "" {

@@ -87,7 +87,7 @@ func punish(config *Config, p Punishment, guildID int64, channel *dstate.Channel
 		if p == PunishmentKick {
 			msg = config.KickMessage
 		}
-		sendPunishDM(config, msg, action, gs, channel, message, author, member, duration, reason)
+		sendPunishDM(config, msg, action, gs, channel, message, author, member, duration, reason, -1)
 	}
 
 	logLink := ""
@@ -148,15 +148,15 @@ func punish(config *Config, p Punishment, guildID int64, channel *dstate.Channel
 	return err
 }
 
-var ActionMap = map[string]string{
+/*var ActionMap = map[string]string{
 	"Muted":   "Mute DM",
 	"Unmuted": "Unmute DM",
 	"Kicked":  "Kick DM",
 	"Banned":  "Ban DM",
 	"Warned":  "Warn DM",
-}
+}*/
 
-func sendPunishDM(config *Config, dmMsg string, action ModlogAction, gs *dstate.GuildState, channel *dstate.ChannelState, message *discordgo.Message, author *discordgo.User, member *dstate.MemberState, duration time.Duration, reason string) {
+func sendPunishDM(config *Config, dmMsg string, action ModlogAction, gs *dstate.GuildState, channel *dstate.ChannelState, message *discordgo.Message, author *discordgo.User, member *dstate.MemberState, duration time.Duration, reason string, warningID int) {
 	if dmMsg == "" {
 		dmMsg = DefaultDMMessage
 	}
@@ -175,6 +175,10 @@ func sendPunishDM(config *Config, dmMsg string, action ModlogAction, gs *dstate.
 	ctx.Data["ModAction"] = action
 	ctx.Data["Message"] = message
 
+	if warningID != -1 {
+		ctx.Data["WarningID"] = warningID
+	}
+
 	if duration < 1 {
 		ctx.Data["HumanDuration"] = "permanently"
 	}
@@ -184,9 +188,15 @@ func sendPunishDM(config *Config, dmMsg string, action ModlogAction, gs *dstate.
 		logger.WithError(err).WithField("guild", gs.ID).Warn("Failed executing pusnishment DM")
 		executed = "Failed executing template."
 
-		if config.ErrorChannel != "" {
-			_, _, _ = bot.SendMessage(gs.ID, config.IntErrorChannel(), fmt.Sprintf("Failed executing punishment DM (Action: `%s`).\nError: `%v`", ActionMap[action.Prefix], err))
+		if strings.TrimSpace(executed) != "" {
+			err = bot.SendDM(member.ID, "**"+bot.GuildName(gs.ID)+":** "+executed)
+			if err != nil {
+				logger.WithError(err).Error("failed sending punish DM")
+			}
 		}
+		/*if config.ErrorChannel != "" {
+			_, _, _ = bot.SendMessage(gs.ID, config.IntErrorChannel(), fmt.Sprintf("Failed executing punishment DM (Action: `%s`).\nError: `%v`", ActionMap[action.Prefix], err))
+		}*/
 	}
 
 	if strings.TrimSpace(executed) != "" {
@@ -332,7 +342,6 @@ func UnbanUser(config *Config, guildID int64, author *discordgo.User, reason str
 }
 
 func isNotFound(err error) (bool, error) {
-
 	if err != nil {
 		if cast, ok := err.(*discordgo.RESTError); ok && cast.Response != nil {
 			if cast.Response.StatusCode == 404 {
@@ -610,7 +619,7 @@ func MuteUnmuteUser(config *Config, mute bool, guildID int64, channel *dstate.Ch
 
 	gs := bot.State.Guild(true, guildID)
 	if gs != nil {
-		sendPunishDM(config, dmMsg, action, gs, channel, message, author, member, time.Duration(duration)*time.Minute, reason)
+		sendPunishDM(config, dmMsg, action, gs, channel, message, author, member, time.Duration(duration)*time.Minute, reason, -1)
 	}
 
 	// Create the modlog entry
@@ -731,7 +740,7 @@ func WarnUser(config *Config, guildID int64, channel *dstate.ChannelState, msg *
 	gs := bot.State.Guild(true, guildID)
 	ms, _ := bot.GetMember(guildID, target.ID)
 	if gs != nil && ms != nil {
-		sendPunishDM(config, config.WarnMessage, MAWarned, gs, channel, msg, author, ms, -1, message)
+		sendPunishDM(config, config.WarnMessage, MAWarned, gs, channel, msg, author, ms, -1, message, int(warning.ID))
 	}
 
 	// go bot.SendDM(target.ID, fmt.Sprintf("**%s**: You have been warned for: %s", bot.GuildName(guildID), message))

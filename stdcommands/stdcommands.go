@@ -32,7 +32,6 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/invite"
 	"github.com/mrbentarikau/pagst/stdcommands/leaveserver"
 	"github.com/mrbentarikau/pagst/stdcommands/listroles"
-	"github.com/mrbentarikau/pagst/stdcommands/memberfetcher"
 	"github.com/mrbentarikau/pagst/stdcommands/memstats"
 	"github.com/mrbentarikau/pagst/stdcommands/mentionrole"
 	"github.com/mrbentarikau/pagst/stdcommands/openweathermap"
@@ -123,7 +122,6 @@ func (p *Plugin) AddCommands() {
 		topcommands.Command,
 		topevents.Command,
 		currentshard.Command,
-		memberfetcher.Command,
 		pagstatus.Command,
 		guildunavailable.Command,
 		setstatus.Command,

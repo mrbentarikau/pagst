@@ -57,7 +57,8 @@ func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend
 }
 
 func (c *Context) tmplSendDM(s ...interface{}) string {
-	if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) || c.MS == nil {
+	//if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) || c.MS == nil {
+	if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) || c.IncreaseCheckGenericAPICall() || c.MS == nil || c.IsExecedByLeaveMessage {
 		return ""
 	}
 
@@ -247,6 +248,10 @@ func (c *Context) ChannelArgNoDM(v interface{}) int64 {
 }
 
 func (c *Context) tmplSendTemplateDM(name string, data ...interface{}) (interface{}, error) {
+	if c.IsExecedByLeaveMessage {
+		return "", errors.New("Can't use sendDM on leave msg")
+	}
+
 	return c.sendNestedTemplate(nil, true, false, name, data...)
 }
 
@@ -443,8 +448,14 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		if cid == 0 {
 			return ""
 		}
+
 		isDM := cid != c.ChannelArgNoDM(channel)
-		info := fmt.Sprintf("Custom Command DM From the server: %s", c.GS.Guild.Name)
+		c.GS.RLock()
+		gName := c.GS.Guild.Name
+		info := fmt.Sprintf("Custom Command DM from the server **%s**", gName)
+		embedInfo := fmt.Sprintf("Custom Command DM from the server %s", gName)
+		icon := discordgo.EndpointGuildIcon(c.GS.Guild.ID, c.GS.Guild.Icon)
+		c.GS.RUnlock()
 
 		var m *discordgo.Message
 		msgSend := &discordgo.MessageSend{
@@ -458,26 +469,32 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 
 		case *discordgo.MessageEmbed:
 			if isDM {
-				typedMsg.Footer = &discordgo.MessageEmbedFooter{Text: info}
+				typedMsg.Footer = &discordgo.MessageEmbedFooter{
+					Text:    embedInfo,
+					IconURL: icon,
+				}
 			}
 			msgSend.Embed = typedMsg
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
-			msgSend.AllowedMentions = discordgo.AllowedMentions{
-				Parse: parseMentions,
-			}
+
+			msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
+
 			if isDM {
 				if typedMsg.Embed != nil {
-					typedMsg.Embed.Footer = &discordgo.MessageEmbedFooter{Text: info}
+					typedMsg.Embed.Footer = &discordgo.MessageEmbedFooter{
+						Text:    embedInfo,
+						IconURL: icon,
+					}
 				} else {
-					msgSend.Content = info + "\n" + fmt.Sprint(msgSend.Content)
+					typedMsg.Content = info + "\n" + typedMsg.Content
 				}
 			}
 		default:
 			if isDM {
-				msgSend.Content = info + "\n" + fmt.Sprint(msg)
+				msgSend.Content = info + "\n" + ToString(msg)
 			} else {
-				msgSend.Content = fmt.Sprint(msg)
+				msgSend.Content = ToString(msg)
 			}
 		}
 

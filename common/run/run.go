@@ -84,9 +84,11 @@ func Init() {
 	common.AddLogHook(common.ContextHook{})
 
 	common.SetLogFormatter(&log.TextFormatter{
-		DisableTimestamp: !common.Testing,
-		ForceColors:      common.Testing,
-		SortingFunc:      logrusSortingFunc,
+		//DisableTimestamp: !common.Testing,
+		FullTimestamp:   true,
+		TimestampFormat: "06-01-02 15:04:05",
+		ForceColors:     common.Testing,
+		SortingFunc:     logrusSortingFunc,
 	})
 
 	if flagSysLog {

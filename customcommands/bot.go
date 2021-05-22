@@ -91,7 +91,8 @@ type DelayedRunCCData struct {
 	Message *discordgo.Message
 	Member  *dstate.MemberState
 
-	UserKey interface{} `json:"user_key"`
+	UserKey                interface{} `json:"user_key"`
+	IsExecedByLeaveMessage bool        `json:"is_execed_by_leave_message"`
 }
 
 var cmdListCommands = &commands.YAGCommand{
@@ -334,6 +335,8 @@ func handleDelayedRunCC(evt *schEventsModels.ScheduledEvent, data interface{}) (
 		tmplCtx.Msg = dataCast.Message
 		tmplCtx.Data["Message"] = dataCast.Message
 	}
+
+	tmplCtx.IsExecedByLeaveMessage = dataCast.IsExecedByLeaveMessage
 
 	// decode userdata
 	if len(dataCast.UserData) > 0 {
