@@ -33,7 +33,6 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/leaveserver"
 	"github.com/mrbentarikau/pagst/stdcommands/listroles"
 	"github.com/mrbentarikau/pagst/stdcommands/memstats"
-	"github.com/mrbentarikau/pagst/stdcommands/mentionrole"
 	"github.com/mrbentarikau/pagst/stdcommands/openweathermap"
 	"github.com/mrbentarikau/pagst/stdcommands/pagstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/ping"
@@ -96,7 +95,6 @@ func (p *Plugin) AddCommands() {
 		customembed.Command,
 		simpleembed.Command,
 		currenttime.Command,
-		mentionrole.Command,
 		editrole.Command,
 		listroles.Command,
 		memstats.Command,
@@ -141,7 +139,6 @@ func (p *Plugin) AddCommands() {
 
 func (p *Plugin) BotInit() {
 	eventsystem.AddHandlerAsyncLastLegacy(p, ping.HandleMessageCreate, eventsystem.EventMessageCreate)
-	mentionrole.AddScheduledEventListener()
 }
 
 func RegisterPlugin() {
