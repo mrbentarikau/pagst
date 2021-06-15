@@ -5,23 +5,24 @@ import (
 	"math/rand"
 
 	"github.com/dpatrie/urbandictionary"
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 var Command = &commands.YAGCommand{
 	CmdCategory:  commands.CategoryFun,
 	Name:         "Define",
-	Aliases:      []string{"df", "udict", "urban", "urbd"},
+	Aliases:      []string{"df"},
 	Description:  "Look up an urban dictionary definition",
 	RequiredArgs: 1,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Topic", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		{Name: "raw", Help: "Paginated output"},
+		{Name: "raw", Help: "Raw output"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var paginatedView bool
@@ -68,7 +69,7 @@ var Command = &commands.YAGCommand{
 func embedCreator(udResult []urbandictionary.Result, i int) *discordgo.MessageEmbed {
 	definition := udResult[i].Definition
 	if len(definition) > 2000 {
-		definition = definition[0:2000] + "...\n\n(definition too long)"
+		definition = common.CutStringShort(definition, 2000) + "\n\n(definition too long)"
 	}
 	example := "None given"
 	if len(udResult[i].Example) > 0 {

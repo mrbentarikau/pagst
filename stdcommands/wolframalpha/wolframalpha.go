@@ -8,8 +8,9 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
+	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mediocregopher/radix/v3"
@@ -31,7 +32,7 @@ var Command = &commands.YAGCommand{
 		{Name: "Expression", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		{Name: "appID", Help: "Add your Wolfram|Alpha appID"},
+		{Name: "appID", Help: "Add your Wolfram|Alpha appID case sensitive"},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
@@ -39,7 +40,10 @@ var Command = &commands.YAGCommand{
 
 		if data.Switches["appID"].Value != nil && data.Switches["appID"].Value.(bool) {
 
-			if isAdmin, _ := data.GuildData.GS.MemberPermissions(false, 0, data.Author.ID); isAdmin&discordgo.PermissionAdministrator != 0 {
+			targetID := data.Author.ID
+			target, _ := bot.GetMember(data.GuildData.GS.ID, targetID)
+
+			if isAdmin, _ := data.GuildData.GS.GetMemberPermissions(data.GuildData.CS.ID, data.Author.ID, target.Member.Roles); isAdmin&discordgo.PermissionAdministrator != 0 {
 				appID := data.Args[0].Str()
 				if len(appID) < 8 || len(appID) > 25 {
 					return "appID is too short or too long", nil

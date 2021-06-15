@@ -11,9 +11,9 @@ import (
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/common/config"
 
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v2"
+	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
@@ -49,7 +49,7 @@ var cmdLogs = &commands.YAGCommand{
 	Description:     "Creates a log of the last messages in the current channel.",
 	LongDescription: "This includes deleted messages within an hour (or 12 hours for premium servers)",
 	Arguments: []*dcmd.ArgDef{
-		&dcmd.ArgDef{Name: "Count", Default: 100, Type: &dcmd.IntArg{Min: 2, Max: 250}},
+		{Name: "Count", Default: 100, Type: &dcmd.IntArg{Min: 2, Max: 250}},
 	},
 	SlashCommandEnabled: true,
 	DefaultEnabled:      false,
@@ -91,123 +91,120 @@ var cmdWhois = &commands.YAGCommand{
 			member = parsed.Args[0].Value.(*dstate.MemberState)
 		} else {
 			member = parsed.GuildData.MS
-			if sm := parsed.GuildData.GS.MemberCopy(true, member.ID); sm != nil {
+			if sm := bot.State.GetMember(parsed.GuildData.GS.ID, member.User.ID); sm != nil {
 				// Prefer state member over the one provided in the message, since it may have presence data
 				member = sm
 			}
 		}
+		var nick, joinedAtStr, joinedAtDurStr string
 
-		nick := ""
-		if member.Nick != "" {
-			nick = " (" + member.Nick + ")"
-		}
-
-		joinedAtStr := ""
-		joinedAtDurStr := ""
-		if !member.MemberSet {
+		if member.Member == nil {
 			joinedAtStr = "Couldn't find out"
 			joinedAtDurStr = "Couldn't find out"
 		} else {
-			joinedAtStr = member.JoinedAt.UTC().Format(time.RFC822)
-			dur := time.Since(member.JoinedAt)
+			parsedJoinedAt, _ := member.Member.JoinedAt.Parse()
+			joinedAtStr = parsedJoinedAt.UTC().Format(time.RFC822)
+			dur := time.Since(parsedJoinedAt)
 			joinedAtDurStr = common.HumanizeDuration(common.DurationPrecisionHours, dur)
+
+			if member.Member.Nick != "" {
+				nick = " (" + member.Member.Nick + ")"
+			}
 		}
 
 		if joinedAtDurStr == "" {
 			joinedAtDurStr = "Less than an hour ago"
 		}
 
-		t := bot.SnowflakeToTime(member.ID)
+		t := bot.SnowflakeToTime(member.User.ID)
 		createdDurStr := common.HumanizeDuration(common.DurationPrecisionHours, time.Since(t))
 		if createdDurStr == "" {
 			createdDurStr = "Less than an hour ago"
 		}
 
 		var memberStatus string
-
-		/*		state := [6]string{"Playing", "Streaming", "Listening", "Watching", "Custom", "Competing"}
-				if !member.PresenceSet || member.PresenceGame == nil {
-					memberStatus = fmt.Sprintf("Has no activity status, is invisible/offline or is not in the bot's cache.") */
-
 		state := [6]string{"Playing", "Streaming", "Listening", "Watching", "Custom", "Competing"}
-		if !member.PresenceSet || member.PresenceGame == nil {
+		if member.Presence == nil || member.Presence.Game == nil {
 			memberStatus = "Has no active status, is invisible/offline or is not in the bot's cache."
 		} else {
-			if member.PresenceGame.Type == 4 {
-				memberStatus = fmt.Sprintf("%s: %s", member.PresenceGame.Name, member.PresenceGame.State)
+			if member.Presence.Game.Type == 4 {
+				memberStatus = fmt.Sprintf("%s: %s", member.Presence.Game.Name, member.Presence.Game.State)
 			} else {
 				presenceName := "Unknown"
-				if member.PresenceGame.Type >= 0 && len(state) > int(member.PresenceGame.Type) {
-					presenceName = state[member.PresenceGame.Type]
+				if member.Presence.Game.Type >= 0 && len(state) > int(member.Presence.Game.Type) {
+					presenceName = state[member.Presence.Game.Type]
 				}
 
-				memberStatus = fmt.Sprintf("%s: %s", presenceName, member.PresenceGame.Name)
+				memberStatus = fmt.Sprintf("%s: %s", presenceName, member.Presence.Game.Name)
 			}
 		}
 
-		var onlineStatus string
-		switch member.PresenceStatus {
-		case 1:
-			onlineStatus = "Online"
-			// "hack" to show bot idle, also discordo newupdateStatusData in gateway.go must be set to "idle"
-			botUser := *common.BotUser
-			if member.ID == botUser.ID {
+		onlineStatus := "Offline/Invisible"
+		if member.Presence != nil {
+			switch member.Presence.Status {
+			case 0:
+				onlineStatus = "Not Here"
+			case 1:
+				onlineStatus = "Online"
+			case 2:
 				onlineStatus = "Idle"
+			case 3:
+				onlineStatus = "DND"
+			case 4:
+				onlineStatus = "Invisible"
+			case 5:
+				onlineStatus = "Offline"
+			default:
+				onlineStatus = "Offline/Invisible"
 			}
-		case 2:
-			onlineStatus = "Idle"
-		case 3:
-			onlineStatus = "DND"
-		default:
-			onlineStatus = "Offline/Invisible"
-
 		}
 
 		embed := &discordgo.MessageEmbed{
-			Title: fmt.Sprintf("%s#%04d%s (%s)", member.Username, member.Discriminator, nick, onlineStatus),
+			Title: fmt.Sprintf("%s#%s%s (%s)", member.User.Username, member.User.Discriminator, nick, onlineStatus),
 			Fields: []*discordgo.MessageEmbedField{
-				&discordgo.MessageEmbedField{
+				{
 					Name:   "ID",
-					Value:  discordgo.StrID(member.ID),
+					Value:  discordgo.StrID(member.User.ID),
 					Inline: true,
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:   "Avatar",
-					Value:  "[Link](" + discordgo.EndpointUserAvatar(member.ID, member.StrAvatar()) + ")",
+					Value:  "[Link](" + discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar) + ")",
 					Inline: true,
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:   "Account Created",
 					Value:  t.UTC().Format(time.RFC822),
 					Inline: true,
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:   "Account Age",
 					Value:  createdDurStr,
 					Inline: true,
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:   "Joined Server At",
 					Value:  joinedAtStr,
 					Inline: true,
-				}, &discordgo.MessageEmbedField{
+				},
+				{
 					Name:   "Join Server Age",
 					Value:  joinedAtDurStr,
 					Inline: true,
 				},
-				&discordgo.MessageEmbedField{
-					Name:   "Activity Status",
+				{
+					Name:   "Status",
 					Value:  memberStatus,
 					Inline: true,
 				},
 			},
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
-				URL: discordgo.EndpointUserAvatar(member.ID, member.StrAvatar()),
+				URL: discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar),
 			},
 		}
 
 		if config.UsernameLoggingEnabled.Bool {
-			usernames, err := GetUsernames(parsed.Context(), member.ID, 5, 0)
+			usernames, err := GetUsernames(parsed.Context(), member.User.ID, 5, 0)
 			if err != nil {
 				return err, err
 			}
@@ -231,7 +228,7 @@ var cmdWhois = &commands.YAGCommand{
 
 		if config.NicknameLoggingEnabled.Bool {
 
-			nicknames, err := GetNicknames(parsed.Context(), member.ID, parsed.GuildData.GS.ID, 5, 0)
+			nicknames, err := GetNicknames(parsed.Context(), member.User.ID, parsed.GuildData.GS.ID, 5, 0)
 			if err != nil {
 				return err, err
 			}
@@ -439,21 +436,18 @@ func HandlePresenceUpdate(evt *eventsystem.EventData) {
 	pu := evt.PresenceUpdate()
 	gs := evt.GS
 
-	gs.RLock()
-	defer gs.RUnlock()
-
-	ms := gs.Member(false, pu.User.ID)
-	if ms == nil || !ms.PresenceSet || !ms.MemberSet {
+	ms := bot.State.GetMember(gs.ID, pu.User.ID)
+	if ms == nil || ms.Presence == nil || ms.Member == nil {
 		queueEvt(pu)
 		return
 	}
 
-	if pu.User.Username != "" && pu.User.Username != ms.Username {
+	if pu.User.Username != "" && pu.User.Username != ms.User.Username {
 		queueEvt(pu)
 		return
 	}
 
-	if pu.Nick != ms.Nick {
+	if pu.Nick != ms.Member.Nick {
 		queueEvt(pu)
 		return
 	}
@@ -898,15 +892,15 @@ func EvtProcesserGCs() {
 	}
 }
 
-const CacheKeyConfig bot.GSCacheKey = "logs_config"
+var configCache = common.CacheSet.RegisterSlot("logs_config", nil, int64(0))
 
 func GetConfigCached(exec boil.ContextExecutor, gID int64) (*models.GuildLoggingConfig, error) {
-	gs := bot.State.Guild(true, gID)
+	gs := bot.State.GetGuild(gID)
 	if gs == nil {
 		return GetConfig(exec, context.Background(), gID)
 	}
 
-	v, err := gs.UserCacheFetch(CacheKeyConfig, func() (interface{}, error) {
+	v, err := configCache.GetCustomFetch(gs.ID, func(key interface{}) (interface{}, error) {
 		conf, err := GetConfig(exec, context.Background(), gID)
 		return conf, err
 	})

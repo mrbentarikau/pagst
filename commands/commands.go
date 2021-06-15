@@ -6,7 +6,7 @@ package commands
 import (
 	"context"
 
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands/models"

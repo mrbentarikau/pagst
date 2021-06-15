@@ -42,6 +42,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/setstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/simpleembed"
 	"github.com/mrbentarikau/pagst/stdcommands/sleep"
+	"github.com/mrbentarikau/pagst/stdcommands/statedbg"
 	"github.com/mrbentarikau/pagst/stdcommands/stateinfo"
 	"github.com/mrbentarikau/pagst/stdcommands/throw"
 	"github.com/mrbentarikau/pagst/stdcommands/toggledbg"
@@ -134,6 +135,8 @@ func (p *Plugin) AddCommands() {
 		addspecialserver.Command,
 		removespecialserver.Command,
 	)
+
+	statedbg.Commands()
 
 }
 

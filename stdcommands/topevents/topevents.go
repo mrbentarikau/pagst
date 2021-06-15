@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"

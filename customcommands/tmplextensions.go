@@ -5,14 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v2"
+	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
@@ -34,7 +32,6 @@ func init() {
 		ctx.ContextFuncs["execCC"] = tmplRunCC(ctx)
 		ctx.ContextFuncs["scheduleUniqueCC"] = tmplScheduleUniqueCC(ctx)
 		ctx.ContextFuncs["cancelScheduledUniqueCC"] = tmplCancelUniqueCC(ctx)
-		ctx.ContextFuncs["editCCTriggerType"] = tmplEditCCTriggerType(ctx)
 
 		ctx.ContextFuncs["dbSet"] = tmplDBSet(ctx)
 		ctx.ContextFuncs["dbSetExpire"] = tmplDBSetExpire(ctx)
@@ -45,7 +42,6 @@ func init() {
 		ctx.ContextFuncs["dbDel"] = tmplDBDel(ctx)
 		ctx.ContextFuncs["dbDelById"] = tmplDBDelById(ctx)
 		ctx.ContextFuncs["dbDelByID"] = tmplDBDelById(ctx)
-		ctx.ContextFuncs["dbDelMultiple"] = tmplDBDelMultiple(ctx)
 		ctx.ContextFuncs["dbTopEntries"] = tmplDBTopEntries(ctx, false)
 		ctx.ContextFuncs["dbBottomEntries"] = tmplDBTopEntries(ctx, true)
 		ctx.ContextFuncs["dbCount"] = tmplDBCount(ctx)
@@ -151,7 +147,7 @@ func (pa *ParsedArgs) Get(index int) interface{} {
 		}
 
 		c := i.(*dstate.ChannelState)
-		return templates.CtxChannelFromCSLocked(c)
+		return templates.CtxChannelFromCS(c)
 	case *commands.MemberArg:
 		i := pa.parsed[index].Value
 		if i == nil {
@@ -159,7 +155,7 @@ func (pa *ParsedArgs) Get(index int) interface{} {
 		}
 
 		m := i.(*dstate.MemberState)
-		return m.DGoCopy()
+		return m.DgoMember()
 	case *commands.RoleArg:
 		i := pa.parsed[index].Value
 		if i == nil {
@@ -194,7 +190,7 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			return "", errors.New("Unknown channel")
 		}
 
-		cs := ctx.GS.Channel(true, channelID)
+		cs := ctx.GS.GetChannel(channelID)
 		if cs == nil {
 			return "", errors.New("Channel not in state")
 		}
@@ -218,7 +214,6 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			}
 			newCtx.Data["ExecData"] = data
 			newCtx.Data["StackDepth"] = currentStackDepth + 1
-			newCtx.IsExecedByLeaveMessage = ctx.IsExecedByLeaveMessage
 
 			go ExecuteCustomCommand(cmd, newCtx)
 			return "", nil
@@ -230,8 +225,6 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 
 			Member:  ctx.MS,
 			Message: ctx.Msg,
-
-			IsExecedByLeaveMessage: ctx.IsExecedByLeaveMessage,
 		}
 
 		// embed data using msgpack to include type information
@@ -274,7 +267,7 @@ func tmplScheduleUniqueCC(ctx *templates.Context) interface{} {
 			return "", errors.New("Unknown channel")
 		}
 
-		cs := ctx.GS.Channel(true, channelID)
+		cs := ctx.GS.GetChannel(channelID)
 		if cs == nil {
 			return "", errors.New("Channel not in state")
 		}
@@ -293,8 +286,6 @@ func tmplScheduleUniqueCC(ctx *templates.Context) interface{} {
 			Member:  ctx.MS,
 			Message: ctx.Msg,
 			UserKey: stringedKey,
-
-			IsExecedByLeaveMessage: ctx.IsExecedByLeaveMessage,
 		}
 
 		// embed data using msgpack to include type information
@@ -343,107 +334,6 @@ func tmplCancelUniqueCC(ctx *templates.Context) interface{} {
 
 		return "", nil
 	}
-}
-
-//tmplEditCCTriggerType changes custom commands trigger type
-func tmplEditCCTriggerType(ctx *templates.Context) interface{} {
-	return func(ccID int, ccType string) (string, error) {
-		if ctx.IncreaseCheckCallCounterPremium("editCCTriggerType", 1, 5) {
-			return "", templates.ErrTooManyCalls
-		}
-
-		cmd, err := models.FindCustomCommandG(context.Background(), ctx.GS.ID, int64(ccID))
-		if err != nil {
-			return "", errors.New("Couldn't find custom command")
-		}
-
-		update := true
-		switch strings.ToLower(ccType) {
-		case "none":
-			if cmd.TriggerType == 10 {
-				update = false
-			} else {
-				cmd.TriggerType = 10
-			}
-		case "command":
-			if cmd.TriggerType == 0 {
-				update = false
-			} else {
-				cmd.TriggerType = 0
-			}
-		case "prefix", "starts":
-			if cmd.TriggerType == 1 {
-				update = false
-			} else {
-				cmd.TriggerType = 1
-			}
-		case "contains":
-			if cmd.TriggerType == 2 {
-				update = false
-			} else {
-				cmd.TriggerType = 2
-			}
-		case "regex":
-			if cmd.TriggerType == 3 {
-				update = false
-			} else {
-				cmd.TriggerType = 3
-			}
-		case "exact":
-			if cmd.TriggerType == 4 {
-				update = false
-			} else {
-				cmd.TriggerType = 4
-			}
-		case "reaction":
-			if cmd.TriggerType == 6 {
-				update = false
-			} else {
-				cmd.TriggerType = 6
-			}
-		case "interval_m":
-			//Interval is counted as minutes in Postgres and this section takes care of calling too many interval triggers under 10 minutes.
-			num, err := models.CustomCommands(qm.Where("guild_id = ? AND local_id != ? AND trigger_type = 5 AND time_trigger_interval < 10", ctx.GS.ID, int64(ccID))).CountG(context.Background())
-			if err != nil {
-				return "", err
-			}
-			if num > 4 {
-				return "", errors.New("You can have max 5 triggers on less than 10 minute intervals")
-			}
-			cmd.TriggerType = 5
-		case "interval_h":
-			//special case to convert to hourly interval
-			cmd.TriggerType = 5
-			cmd.TimeTriggerInterval *= 60
-		default:
-			update = false
-		}
-
-		if update {
-			_, err = cmd.UpdateG(context.Background(), boil.Whitelist("trigger_type", "time_trigger_interval"))
-			if err != nil {
-				return "", err
-			}
-			types := map[int]string{
-				10: "None",
-				0:  "Command",
-				1:  "Starts With",
-				2:  "Contains",
-				3:  "Regex",
-				4:  "Exact Match",
-				5:  "Interval",
-				6:  "Reaction",
-			}
-			return fmt.Sprintf("Doneso. Changed **CC#%d** trigger to type: **%s**.", ccID, types[cmd.TriggerType]), nil
-		}
-		return fmt.Sprintf("Did not change trigger type: **%s** mismatch or is the same.", ccType), nil
-	}
-}
-
-type Query struct {
-	UserID  null.Int64  `json:"user_id"`
-	Pattern null.String `json:"pattern"`
-	Reverse bool        `json:"reverse"`
 }
 
 func tmplDBSet(ctx *templates.Context) interface{} {
@@ -539,7 +429,6 @@ DO UPDATE SET
 		ELSE NULL
 		END
 
-
 RETURNING value_num`
 
 		result := common.PQ.QueryRow(q, ctx.GS.ID, userID, keyStr, valueSerialized, vNum)
@@ -609,7 +498,7 @@ func tmplDBDel(ctx *templates.Context) interface{} {
 			return "", templates.ErrTooManyCalls
 		}
 
-		ctx.GS.UserCacheDel(CacheKeyDBLimits)
+		cachedDBLimits.Delete(ctx.GS.ID)
 
 		keyStr := limitString(templates.ToString(key), 256)
 		_, err := models.TemplatesUserDatabases(qm.Where("guild_id = ? AND user_id = ? AND key = ?", ctx.GS.ID, userID, keyStr)).DeleteAll(context.Background(), common.PQ)
@@ -624,64 +513,11 @@ func tmplDBDelById(ctx *templates.Context) interface{} {
 			return "", templates.ErrTooManyCalls
 		}
 
-		ctx.GS.UserCacheDel(CacheKeyDBLimits)
+		cachedDBLimits.Delete(ctx.GS.ID)
 
 		_, err := models.TemplatesUserDatabases(qm.Where("guild_id = ? AND user_id = ? AND id = ?", ctx.GS.ID, userID, id)).DeleteAll(context.Background(), common.PQ)
 
 		return "", err
-	}
-}
-
-func tmplDBDelMultiple(ctx *templates.Context) interface{} {
-	return func(query interface{}, iAmount interface{}, iSkip interface{}) (interface{}, error) {
-		if ctx.IncreaseCheckCallCounterPremium("db_interactions", 10, 50) {
-			return "", templates.ErrTooManyCalls
-		}
-
-		if ctx.IncreaseCheckCallCounterPremium("db_multiple", 2, 10) {
-			return "", templates.ErrTooManyCalls
-		}
-
-		ctx.GS.UserCacheDel(CacheKeyDBLimits)
-
-		dict, err := templates.StringKeyDictionary(query)
-		if err != nil {
-			return "", err
-		}
-		var q Query
-		encoded, err := json.Marshal(dict)
-		if err != nil {
-			return "", err
-		}
-		err = json.Unmarshal(encoded, &q)
-		if err != nil {
-			return "", err
-		}
-
-		amount := int(templates.ToInt64(iAmount))
-		if amount > 100 {
-			amount = 100
-		}
-		skip := int(templates.ToInt64(iSkip))
-		orderby := "value_num DESC, id DESC"
-		if q.Reverse {
-			orderby = "value_num ASC, id ASC"
-		}
-
-		qms := []qm.QueryMod{qm.Where("guild_id = ?", ctx.GS.ID), qm.OrderBy(orderby), qm.Limit(amount), qm.Offset(skip)}
-		if q.Pattern.Valid {
-			qms = append(qms, qm.Where("key LIKE ?", limitString(q.Pattern.String, 256)))
-		}
-		if q.UserID.Valid {
-			qms = append(qms, qm.Where("user_id = ?", q.UserID.Int64))
-		}
-		rows, err := models.TemplatesUserDatabases(qms...).AllG(context.Background())
-		if err != nil {
-			return "", err
-		}
-		cleared, err := rows.DeleteAllG(context.Background())
-
-		return cleared, err
 	}
 }
 
@@ -695,18 +531,7 @@ func tmplDBRank(ctx *templates.Context) interface{} {
 			return "", templates.ErrTooManyCalls
 		}
 
-		dict, err := templates.StringKeyDictionary(query)
-		if err != nil {
-			return "", err
-		}
-
-		var q Query
-		encoded, err := json.Marshal(dict)
-		if err != nil {
-			return "", err
-		}
-
-		err = json.Unmarshal(encoded, &q)
+		q, err := queryFromArg(query)
 		if err != nil {
 			return "", err
 		}
@@ -715,7 +540,7 @@ func tmplDBRank(ctx *templates.Context) interface{} {
 		if q.Reverse {
 			order = `ASC`
 		}
-		q.Pattern.String = limitString(q.Pattern.String, 256)
+
 		if q.UserID.Valid && (q.UserID.Int64 != userID) { // some optimization
 			return 0, nil
 		}
@@ -745,6 +570,33 @@ WHERE user_id = $5 AND key = $6`
 	}
 }
 
+type Query struct {
+	UserID  null.Int64  `json:"user_id"`
+	Pattern null.String `json:"pattern"`
+	Reverse bool        `json:"reverse"`
+}
+
+func queryFromArg(query interface{}) (*Query, error) {
+
+	dict, err := templates.StringKeyDictionary(query)
+	if err != nil {
+		return nil, err
+	}
+
+	var q Query
+	encoded, err := json.Marshal(dict)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(encoded, &q)
+	if err != nil {
+		return nil, err
+	}
+	q.Pattern.String = limitString(q.Pattern.String, 256)
+	return &q, nil
+}
+
 func tmplDBCount(ctx *templates.Context) interface{} {
 	return func(variadicArg ...interface{}) (interface{}, error) {
 		if ctx.IncreaseCheckCallCounterPremium("db_interactions", 10, 50) {
@@ -756,8 +608,7 @@ func tmplDBCount(ctx *templates.Context) interface{} {
 		}
 
 		var userID null.Int64
-		// var key null.String
-		var pattern null.String
+		var key null.String
 		if len(variadicArg) > 0 {
 
 			switch arg := variadicArg[0].(type) {
@@ -768,42 +619,19 @@ func tmplDBCount(ctx *templates.Context) interface{} {
 				userID.Int64 = int64(arg)
 				userID.Valid = true
 			case string:
-				//keyStr := limitString(arg, 256)
-				//key.String = keyStr
-				//key.Valid = true
-				patternStr := limitString(arg, 256)
-				pattern.String = patternStr
-				pattern.Valid = true
+				keyStr := limitString(arg, 256)
+				key.String = keyStr
+				key.Valid = true
 			default:
-				//return "", errors.New("Invalid Argument Data Type")
-				dict, err := templates.StringKeyDictionary(arg)
-				if err != nil {
-					return "", err
-				}
-
-				var q Query
-				encoded, err := json.Marshal(dict)
-				if err != nil {
-					return "", err
-				}
-
-				err = json.Unmarshal(encoded, &q)
-				if err != nil {
-					return "", err
-				}
-				userID = q.UserID
-				pattern = q.Pattern
-				pattern.String = limitString(pattern.String, 256)
+				return "", errors.New("Invalid Argument Data Type")
 			}
 
 		}
 
-		//const q = `SELECT count(*) FROM templates_user_database WHERE (guild_id = $1) AND ($2::bigint IS NULL OR user_id = $2) AND ($3::text IS NULL OR key = $3) AND (expires_at IS NULL or expires_at > now())`
-		const q = `SELECT count(*) FROM templates_user_database WHERE (guild_id = $1) AND ($2::bigint IS NULL OR user_id = $2) AND ($3::text IS NULL OR key LIKE $3) AND (expires_at IS NULL or expires_at > now())`
+		const q = `SELECT count(*) FROM templates_user_database WHERE (guild_id = $1) AND ($2::bigint IS NULL OR user_id = $2) AND ($3::text IS NULL OR key = $3) AND (expires_at IS NULL or expires_at > now())`
 
 		var count int64
-		//err := common.PQ.QueryRow(q, ctx.GS.ID, userID, key).Scan(&count)
-		err := common.PQ.QueryRow(q, ctx.GS.ID, userID, pattern).Scan(&count)
+		err := common.PQ.QueryRow(q, ctx.GS.ID, userID, key).Scan(&count)
 		return count, err
 	}
 }
@@ -849,15 +677,13 @@ func serializeValue(v interface{}) ([]byte, error) {
 }
 
 // returns true if were above db limit for the specified guild
-func CheckGuildDBLimit(gs *dstate.GuildState) (bool, error) {
+func CheckGuildDBLimit(gs *dstate.GuildSet) (bool, error) {
 	limitMuliplier := 1
 	if isPremium, _ := premium.IsGuildPremium(gs.ID); isPremium {
 		limitMuliplier = 10
 	}
 
-	gs.RLock()
-	limit := gs.Guild.MemberCount * 50 * limitMuliplier
-	gs.RUnlock()
+	limit := gs.MemberCount * 50 * int64(limitMuliplier)
 
 	curValues, err := cacheCheckDBLimit(gs)
 	if err != nil {
@@ -872,8 +698,10 @@ func getGuildCCDBNumValues(guildID int64) (int64, error) {
 	return count, err
 }
 
-func cacheCheckDBLimit(gs *dstate.GuildState) (int64, error) {
-	v, err := gs.UserCacheFetch(CacheKeyDBLimits, func() (interface{}, error) {
+var cachedDBLimits = common.CacheSet.RegisterSlot("custom_commands_db_limits", nil, int64(0))
+
+func cacheCheckDBLimit(gs *dstate.GuildSet) (int64, error) {
+	v, err := cachedDBLimits.GetCustomFetch(gs.ID, func(key interface{}) (interface{}, error) {
 		n, err := getGuildCCDBNumValues(gs.ID)
 		return n, err
 	})
@@ -892,7 +720,7 @@ func limitString(s string, l int) string {
 	}
 
 	lastValidLoc := 0
-	for i, _ := range s {
+	for i := range s {
 		if i > l {
 			break
 		}
@@ -930,24 +758,6 @@ func ToLightDBEntry(m *models.TemplatesUserDatabase) (*LightDBEntry, error) {
 	if common.IsNumber(dst) {
 		decodedValue = m.ValueNum
 	}
-	var user discordgo.User
-	var trouble bool
-
-	member, err := bot.GetMember(m.GuildID, m.UserID)
-	if err != nil {
-		trouble = true
-	}
-
-	if !trouble {
-		userPtr := member.DGoUser()
-		user = discordgo.User{
-			ID:            userPtr.ID,
-			Username:      userPtr.Username,
-			Bot:           userPtr.Bot,
-			Avatar:        userPtr.Avatar,
-			Discriminator: userPtr.Discriminator,
-		}
-	}
 
 	entry := &LightDBEntry{
 		ID:      m.ID,
@@ -962,12 +772,7 @@ func ToLightDBEntry(m *models.TemplatesUserDatabase) (*LightDBEntry, error) {
 
 		ExpiresAt: m.ExpiresAt.Time,
 	}
-
-	if trouble {
-		entry.UserID = entry.UserID
-	} else {
-		entry.User = user
-	}
+	entry.User.ID = entry.UserID
 
 	return entry, nil
 }
@@ -1023,7 +828,7 @@ func newDecoder(buf *bytes.Buffer) *msgpack.Decoder {
 	return dec
 }
 
-func tmplResultSetToLightDBEntries(ctx *templates.Context, gs *dstate.GuildState, rs []*models.TemplatesUserDatabase) []*LightDBEntry {
+func tmplResultSetToLightDBEntries(ctx *templates.Context, gs *dstate.GuildSet, rs []*models.TemplatesUserDatabase) []*LightDBEntry {
 	// convert them into lightdb entries and decode their values
 	entries := make([]*LightDBEntry, 0, len(rs))
 	for _, v := range rs {
@@ -1054,9 +859,8 @@ func tmplResultSetToLightDBEntries(ctx *templates.Context, gs *dstate.GuildState
 			return entries
 		}
 
-		cop := member.DGoUser()
 		for _, v := range entries {
-			v.User = *cop
+			v.User = member.User
 		}
 
 		return entries
@@ -1070,8 +874,8 @@ func tmplResultSetToLightDBEntries(ctx *templates.Context, gs *dstate.GuildState
 
 	for _, v := range entries {
 		for _, m := range members {
-			if m.ID == v.UserID {
-				v.User = *(m.DGoUser())
+			if m.User.ID == v.UserID {
+				v.User = m.User
 				break
 			}
 		}

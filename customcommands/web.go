@@ -10,9 +10,11 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/null"
 
 	"emperror.dev/errors"
+	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/featureflags"
@@ -93,7 +95,7 @@ func (p *Plugin) InitWeb() {
 	subMux.Handle(pat.Post("/commands/:cmd/update"), web.ControllerPostHandler(handleUpdateCommand, getCmdHandler, CustomCommand{}))
 	subMux.Handle(pat.Post("/commands/:cmd/delete"), web.ControllerPostHandler(handleDeleteCommand, getHandler, nil))
 	subMux.Handle(pat.Post("/commands/:cmd/duplicate"), web.ControllerPostHandler(handleDuplicateCommand, getHandler, nil))
-
+	subMux.Handle(pat.Post("/commands/:cmd/run_now"), web.ControllerPostHandler(handleRunCommandNow, getCmdHandler, nil))
 	subMux.Handle(pat.Post("/creategroup"), web.ControllerPostHandler(handleNewGroup, getHandler, GroupForm{}))
 	subMux.Handle(pat.Post("/groups/:group/update"), web.ControllerPostHandler(handleUpdateGroup, getGroupHandler, GroupForm{}))
 	subMux.Handle(pat.Post("/groups/:group/delete"), web.ControllerPostHandler(handleDeleteGroup, getHandler, nil))
@@ -243,7 +245,7 @@ func handleNewCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData,
 
 	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyNewCommand, &cplogs.Param{Type: cplogs.ParamTypeInt, Value: dbModel.LocalID}))
 
-	common.LogIgnoreError(pubsub.Publish("custom_commands_clear_cache", activeGuild.ID, nil), "failed creating pubsub cache eviction event", web.CtxLogger(ctx).Data)
+	pubsub.EvictCacheSet(cachedCommandsMessage, activeGuild.ID)
 	return templateData, nil
 }
 
@@ -309,7 +311,7 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 
 	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyUpdatedCommand, &cplogs.Param{Type: cplogs.ParamTypeInt, Value: dbModel.LocalID}))
 
-	common.LogIgnoreError(pubsub.Publish("custom_commands_clear_cache", activeGuild.ID, nil), "failed creating pubsub cache eviction event", web.CtxLogger(ctx).Data)
+	pubsub.EvictCacheSet(cachedCommandsMessage, activeGuild.ID)
 	return templateData, err
 }
 
@@ -341,7 +343,7 @@ func handleDeleteCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 
 	err = DelNextRunEvent(cmd.GuildID, cmd.LocalID)
 	featureflags.MarkGuildDirty(activeGuild.ID)
-	common.LogIgnoreError(pubsub.Publish("custom_commands_clear_cache", activeGuild.ID, nil), "failed creating pubsub cache eviction event", web.CtxLogger(ctx).Data)
+	pubsub.EvictCacheSet(cachedCommandsMessage, activeGuild.ID)
 	return templateData, err
 }
 
@@ -440,6 +442,57 @@ func handleDuplicateCommand(w http.ResponseWriter, r *http.Request) (web.Templat
 	return templateData, nil
 }
 
+const RunCmdCooldownSeconds = 5
+
+func keyRunCmdCooldown(guildID, userID int64) string {
+	return "custom_command_run_now_cooldown:" + discordgo.StrID(guildID) + ":" + discordgo.StrID(userID)
+}
+
+func checkSetCooldown(guildID, userID int64) (bool, error) {
+	var resp string
+	err := common.RedisPool.Do(radix.FlatCmd(&resp, "SET", keyRunCmdCooldown(guildID, userID), true, "EX", RunCmdCooldownSeconds, "NX"))
+	if err != nil {
+		return false, err
+	}
+
+	return resp == "OK", nil
+}
+
+func handleRunCommandNow(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
+	ctx := r.Context()
+	activeGuild, templateData := web.GetBaseCPContextData(ctx)
+	member := web.ContextMember(ctx)
+	if member == nil {
+		templateData.AddAlerts()
+		return templateData, nil
+	}
+
+	cmdID, err := strconv.ParseInt(pat.Param(r, "cmd"), 10, 64)
+	if err != nil {
+		return templateData, err
+	}
+
+	// only interval commands can be ran from the dashboard currently
+	cmd, err := models.CustomCommands(qm.Where("guild_id = ? AND local_id = ? AND trigger_type = 5", activeGuild.ID, cmdID)).OneG(context.Background())
+	if err != nil {
+		return templateData, err
+	}
+
+	ok, err := checkSetCooldown(activeGuild.ID, member.User.ID)
+	if err != nil {
+		return templateData, err
+	}
+
+	if !ok {
+		templateData.AddAlerts(web.ErrorAlert("You're on cooldown, wait before trying again"))
+		return templateData, nil
+	}
+
+	go pubsub.Publish("custom_commands_run_now", activeGuild.ID, cmd)
+
+	return templateData, nil
+}
+
 // allow for max 5 triggers with intervals of less than 10 minutes
 func checkIntervalLimits(ctx context.Context, guildID int64, cmdID int64, templateData web.TemplateData) (ok bool, err error) {
 	num, err := models.CustomCommands(qm.Where("guild_id = ? AND local_id != ? AND trigger_type = 5 AND time_trigger_interval <= 10", guildID, cmdID)).CountG(ctx)
@@ -484,7 +537,7 @@ func handleNewGroup(w http.ResponseWriter, r *http.Request) (web.TemplateData, e
 
 	templateData["CurrentGroupID"] = dbModel.ID
 
-	common.LogIgnoreError(pubsub.Publish("custom_commands_clear_cache", activeGuild.ID, nil), "failed creating pubsub cache eviction event", web.CtxLogger(ctx).Data)
+	pubsub.EvictCacheSet(cachedCommandsMessage, activeGuild.ID)
 	return templateData, nil
 }
 
@@ -511,7 +564,7 @@ func handleUpdateGroup(w http.ResponseWriter, r *http.Request) (web.TemplateData
 		go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyUpdatedGroup, &cplogs.Param{Type: cplogs.ParamTypeString, Value: model.Name}))
 	}
 
-	common.LogIgnoreError(pubsub.Publish("custom_commands_clear_cache", activeGuild.ID, nil), "failed creating pubsub cache eviction event", web.CtxLogger(ctx).Data)
+	pubsub.EvictCacheSet(cachedCommandsMessage, activeGuild.ID)
 	return templateData, err
 }
 
@@ -533,7 +586,7 @@ func handleDeleteGroup(w http.ResponseWriter, r *http.Request) (web.TemplateData
 		go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyRemovedGroup, &cplogs.Param{Type: cplogs.ParamTypeInt, Value: id}))
 	}
 
-	common.LogIgnoreError(pubsub.Publish("custom_commands_clear_cache", activeGuild.ID, nil), "failed creating pubsub cache eviction event", web.CtxLogger(ctx).Data)
+	pubsub.EvictCacheSet(cachedCommandsMessage, activeGuild.ID)
 	return templateData, err
 }
 

@@ -3,7 +3,7 @@ package globalrl
 import (
 	"time"
 
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"

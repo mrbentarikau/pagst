@@ -13,13 +13,13 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v2"
+	"github.com/jonas747/dstate/v3"
 	"github.com/jonas747/template"
 	"github.com/mrbentarikau/pagst/bot"
-
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	"github.com/sirupsen/logrus"
+	"github.com/vmihailenco/msgpack"
 )
 
 var (
@@ -44,27 +44,15 @@ var (
 		"title":     strings.Title,
 
 		// math
-		"add":  add,
-		"sub":  tmplSub,
-		"mult": tmplMult,
-		"div":  tmplDiv,
-		"mod":  tmplMod,
-		"fdiv": tmplFDiv,
-		"sqrt": tmplSqrt,
-		"pow":  tmplPow,
-		"log":  tmplLog,
-		"max":  tmplMax,
-		"min":  tmplMin,
-
-		// bitwise functions
-		"bitwiseAnd":   tmplBitwiseAnd,
-		"bitwiseOr":    tmplBitwiseOr,
-		"bitwiseXor":   tmplBitwiseXor,
-		"bitwiseClear": tmplBitwiseClear,
-		"shiftLeft":    tmplShiftLeft,
-		"shiftRight":   tmplShiftRight,
-
-		// rounding etc...
+		"add":               add,
+		"sub":               tmplSub,
+		"mult":              tmplMult,
+		"div":               tmplDiv,
+		"mod":               tmplMod,
+		"fdiv":              tmplFDiv,
+		"sqrt":              tmplSqrt,
+		"pow":               tmplPow,
+		"log":               tmplLog,
 		"round":             tmplRound,
 		"roundCeil":         tmplRoundCeil,
 		"roundFloor":        tmplRoundFloor,
@@ -94,16 +82,6 @@ var (
 		"currentTime": tmplCurrentTime,
 		"newDate":     tmplNewDate,
 
-		"escapeHere": func(s string) (string, error) {
-			return "", errors.New("function is removed in favor of better direct control over mentions, join support server and read the announcements for more info.")
-		},
-		"escapeEveryone": func(s string) (string, error) {
-			return "", errors.New("function is removed in favor of better direct control over mentions, join support server and read the announcements for more info.")
-		},
-		"escapeEveryoneHere": func(s string) (string, error) {
-			return "", errors.New("function is removed in favor of better direct control over mentions, join support server and read the announcements for more info.")
-		},
-
 		"humanizeDurationHours":   tmplHumanizeDurationHours,
 		"humanizeDurationMinutes": tmplHumanizeDurationMinutes,
 		"humanizeDurationSeconds": tmplHumanizeDurationSeconds,
@@ -125,6 +103,10 @@ func RegisterSetupFunc(f ContextSetupFunc) {
 
 func init() {
 	RegisterSetupFunc(baseContextFuncs)
+
+	msgpack.RegisterExt(1, (*SDict)(nil))
+	msgpack.RegisterExt(2, (*Dict)(nil))
+	msgpack.RegisterExt(3, (*Slice)(nil))
 }
 
 // set by the premium package to return wether this guild is premium or not
@@ -133,7 +115,7 @@ var GuildPremiumFunc func(guildID int64) (bool, error)
 type Context struct {
 	Name string
 
-	GS      *dstate.GuildState
+	GS      *dstate.GuildSet
 	MS      *dstate.MemberState
 	Msg     *discordgo.Message
 	BotUser *discordgo.User
@@ -152,8 +134,6 @@ type Context struct {
 
 	CurrentFrame *contextFrame
 
-	IsExecedByLeaveMessage bool
-
 	contextFuncsAdded bool
 }
 
@@ -167,17 +147,15 @@ type contextFrame struct {
 	DelResponse bool
 
 	DelResponseDelay         int
-	EmbedsToSend             []*discordgo.MessageEmbed
+	EmebdsToSend             []*discordgo.MessageEmbed
 	AddResponseReactionNames []string
 
 	isNestedTemplate bool
 	parsedTemplate   *template.Template
-	execMode         bool
-	execReturn       []interface{}
 	SendResponseInDM bool
 }
 
-func NewContext(gs *dstate.GuildState, cs *dstate.ChannelState, ms *dstate.MemberState) *Context {
+func NewContext(gs *dstate.GuildSet, cs *dstate.ChannelState, ms *dstate.MemberState) *Context {
 	ctx := &Context{
 		GS: gs,
 		MS: ms,
@@ -211,10 +189,9 @@ func (c *Context) setupContextFuncs() {
 func (c *Context) setupBaseData() {
 
 	if c.GS != nil {
-		guild := c.GS.DeepCopy(false, true, true, false)
-		c.Data["Guild"] = guild
-		c.Data["Server"] = guild
-		c.Data["server"] = guild
+		c.Data["Guild"] = c.GS
+		c.Data["Server"] = c.GS
+		c.Data["server"] = c.GS
 	}
 
 	if c.CurrentFrame.CS != nil {
@@ -224,14 +201,11 @@ func (c *Context) setupBaseData() {
 	}
 
 	if c.MS != nil {
-		c.Data["Member"] = c.MS.DGoCopy()
-		c.Data["User"] = c.MS.DGoUser()
+		c.Data["Member"] = c.MS.DgoMember()
+		c.Data["User"] = &c.MS.User
 		c.Data["user"] = c.Data["User"]
 	}
-	botUser := common.BotUser
-	botMember, _ := bot.GetMember(c.GS.ID, botUser.ID)
-	c.Data["BotUser"] = botUser
-	c.Data["BotMember"] = botMember.DGoCopy()
+
 	c.Data["TimeSecond"] = time.Second
 	c.Data["TimeMinute"] = time.Minute
 	c.Data["TimeHour"] = time.Hour
@@ -281,18 +255,12 @@ func (c *Context) Execute(source string) (string, error) {
 				return "", errors.WithMessage(err, "ctx.Execute")
 			}
 
-			c.Msg.Member = member.DGoCopy()
+			c.Msg.Member = member.DgoMember()
 		}
 
 	}
 
-	if c.GS != nil {
-		c.GS.RLock()
-	}
 	c.setupBaseData()
-	if c.GS != nil {
-		c.GS.RUnlock()
-	}
 
 	parsed, err := c.Parse(source)
 	if err != nil {
@@ -302,25 +270,6 @@ func (c *Context) Execute(source string) (string, error) {
 
 	return c.executeParsed()
 }
-
-/*func (c *Context) executeParsed() (r string, err error) {
-defer func() {
-	if r := recover(); r != nil {
-		//err = errors.New("paniced!")
-		actual, ok := r.(error)
-		if !ok {
-			actual = nil
-		}
-
-		logger.WithField("guild", c.GS.ID).WithError(actual).Error("Panicked executing template: " + c.Name)
-		err = errors.New("bot unexpectedly panicked")
-	}
-}()
-
-if c.CurrentFrame.SendResponseInDM && c.IsExecedByLeaveMessage {
-	return "", errors.New("Can not send DM on leave message")
-}
-*/
 
 func (c *Context) executeParsed() (string, error) {
 	parsed := c.CurrentFrame.parsedTemplate
@@ -407,7 +356,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 			return nil, nil
 		}
 
-		if !bot.BotProbablyHasPermissionGS(c.GS, c.CurrentFrame.CS.ID, discordgo.PermissionSendMessages) {
+		if hasPerms, _ := bot.BotHasPermissionGS(c.GS, c.CurrentFrame.CS.ID, discordgo.PermissionSendMessages); !hasPerms {
 			// don't bother sending the response if we dont have perms
 			return nil, nil
 		}
@@ -417,30 +366,21 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 		if c.CurrentFrame.CS != nil && c.CurrentFrame.CS.Type == discordgo.ChannelTypeDM {
 			channelID = c.CurrentFrame.CS.ID
 		} else {
-			privChannel, err := common.BotSession.UserChannelCreate(c.MS.ID)
+			privChannel, err := common.BotSession.UserChannelCreate(c.MS.User.ID)
 			if err != nil {
 				return nil, err
 			}
 			channelID = privChannel.ID
 		}
 	}
-	isDM := c.CurrentFrame.CS.Type == discordgo.ChannelTypeDM
-	info := fmt.Sprintf("Custom Command DM From the server: %s", c.GS.Guild.Name)
 
-	for _, v := range c.CurrentFrame.EmbedsToSend {
-		if isDM {
-			v.Footer.Text = info
-		}
+	for _, v := range c.CurrentFrame.EmebdsToSend {
 		common.BotSession.ChannelMessageSendEmbed(channelID, v)
 	}
 
 	if strings.TrimSpace(content) == "" || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
 		// no point in sending the response if it gets deleted immedietely
 		return nil, nil
-	}
-
-	if isDM {
-		content = info + content
 	}
 
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
@@ -508,7 +448,7 @@ func (c *Context) LogEntry() *logrus.Entry {
 	})
 
 	if c.MS != nil {
-		f = f.WithField("user", c.MS.ID)
+		f = f.WithField("user", c.MS.User.ID)
 	}
 
 	if c.CurrentFrame.CS != nil {
@@ -526,18 +466,15 @@ func (c *Context) addContextFunc(name string, f interface{}) {
 
 func baseContextFuncs(c *Context) {
 	// message functions
-	c.ContextFuncs["sendDM"] = c.tmplSendDM
-	c.ContextFuncs["sendTargetDM"] = c.tmplSendTargetDM
-	c.ContextFuncs["sendMessage"] = c.tmplSendMessage(true, false)
-	c.ContextFuncs["sendTemplate"] = c.tmplSendTemplate
-	c.ContextFuncs["sendTemplateDM"] = c.tmplSendTemplateDM
-	c.ContextFuncs["sendMessageRetID"] = c.tmplSendMessage(true, true)
-	c.ContextFuncs["sendMessageNoEscape"] = c.tmplSendMessage(false, false)
-	c.ContextFuncs["sendMessageNoEscapeRetID"] = c.tmplSendMessage(false, true)
-	c.ContextFuncs["editMessage"] = c.tmplEditMessage(true)
-	c.ContextFuncs["editMessageNoEscape"] = c.tmplEditMessage(false)
-	c.ContextFuncs["pinMessage"] = c.tmplPinMessage
-	c.ContextFuncs["unpinMessage"] = c.tmplUnpinMessage
+	c.addContextFunc("sendDM", c.tmplSendDM)
+	c.addContextFunc("sendMessage", c.tmplSendMessage(true, false))
+	c.addContextFunc("sendTemplate", c.tmplSendTemplate)
+	c.addContextFunc("sendTemplateDM", c.tmplSendTemplateDM)
+	c.addContextFunc("sendMessageRetID", c.tmplSendMessage(true, true))
+	c.addContextFunc("sendMessageNoEscape", c.tmplSendMessage(false, false))
+	c.addContextFunc("sendMessageNoEscapeRetID", c.tmplSendMessage(false, true))
+	c.addContextFunc("editMessage", c.tmplEditMessage(true))
+	c.addContextFunc("editMessageNoEscape", c.tmplEditMessage(false))
 
 	// Mentions
 	c.addContextFunc("mentionEveryone", c.tmplMentionEveryone)
@@ -546,59 +483,52 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("mentionRoleID", c.tmplMentionRoleID)
 
 	// Role functions
-	c.ContextFuncs["setRoles"] = c.tmplSetRoles
+	c.addContextFunc("hasRoleName", c.tmplHasRoleName)
+	c.addContextFunc("hasRoleID", c.tmplHasRoleID)
 
-	c.ContextFuncs["hasRoleName"] = c.tmplHasRoleName
-	c.ContextFuncs["hasRoleID"] = c.tmplHasRoleID
+	c.addContextFunc("addRoleID", c.tmplAddRoleID)
+	c.addContextFunc("removeRoleID", c.tmplRemoveRoleID)
 
-	c.ContextFuncs["addRoleID"] = c.tmplAddRoleID
-	c.ContextFuncs["removeRoleID"] = c.tmplRemoveRoleID
+	c.addContextFunc("setRoles", c.tmplSetRoles)
+	c.addContextFunc("addRoleName", c.tmplAddRoleName)
+	c.addContextFunc("removeRoleName", c.tmplRemoveRoleName)
 
-	c.ContextFuncs["addRoleName"] = c.tmplAddRoleName
-	c.ContextFuncs["removeRoleName"] = c.tmplRemoveRoleName
+	c.addContextFunc("giveRoleID", c.tmplGiveRoleID)
+	c.addContextFunc("giveRoleName", c.tmplGiveRoleName)
 
-	c.ContextFuncs["giveRoleID"] = c.tmplGiveRoleID
-	c.ContextFuncs["giveRoleName"] = c.tmplGiveRoleName
+	c.addContextFunc("takeRoleID", c.tmplTakeRoleID)
+	c.addContextFunc("takeRoleName", c.tmplTakeRoleName)
 
-	c.ContextFuncs["takeRoleID"] = c.tmplTakeRoleID
-	c.ContextFuncs["takeRoleName"] = c.tmplTakeRoleName
+	c.addContextFunc("targetHasRoleID", c.tmplTargetHasRoleID)
+	c.addContextFunc("targetHasRoleName", c.tmplTargetHasRoleName)
 
-	c.ContextFuncs["targetHasRoleID"] = c.tmplTargetHasRoleID
-	c.ContextFuncs["targetHasRoleName"] = c.tmplTargetHasRoleName
+	c.addContextFunc("deleteResponse", c.tmplDelResponse)
+	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
+	c.addContextFunc("deleteMessage", c.tmplDelMessage)
+	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction)
+	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions)
+	c.addContextFunc("getMessage", c.tmplGetMessage)
+	c.addContextFunc("getMember", c.tmplGetMember)
+	c.addContextFunc("getChannel", c.tmplGetChannel)
+	c.addContextFunc("addReactions", c.tmplAddReactions)
+	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)
+	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions)
 
-	c.ContextFuncs["deleteResponse"] = c.tmplDelResponse
-	c.ContextFuncs["deleteTrigger"] = c.tmplDelTrigger
-	c.ContextFuncs["deleteMessage"] = c.tmplDelMessage
-	c.ContextFuncs["deleteMessageReaction"] = c.tmplDelMessageReaction
-	c.ContextFuncs["deleteAllMessageReactions"] = c.tmplDelAllMessageReactions
-	c.ContextFuncs["getMessage"] = c.tmplGetMessage
-	c.ContextFuncs["getMember"] = c.tmplGetMember
-	c.ContextFuncs["getChannel"] = c.tmplGetChannel
-	c.ContextFuncs["getRole"] = c.tmplGetRole
-	c.ContextFuncs["addReactions"] = c.tmplAddReactions
-	c.ContextFuncs["addResponseReactions"] = c.tmplAddResponseReactions
-	c.ContextFuncs["addMessageReactions"] = c.tmplAddMessageReactions
+	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
+	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman)
+	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes)
+	c.addContextFunc("sleep", c.tmplSleep)
+	c.addContextFunc("reFind", c.reFind)
+	c.addContextFunc("reFindAll", c.reFindAll)
+	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches)
+	c.addContextFunc("reReplace", c.reReplace)
+	c.addContextFunc("reSplit", c.reSplit)
 
-	c.ContextFuncs["currentUserCreated"] = c.tmplCurrentUserCreated
-	c.ContextFuncs["currentUserAgeHuman"] = c.tmplCurrentUserAgeHuman
-	c.ContextFuncs["currentUserAgeMinutes"] = c.tmplCurrentUserAgeMinutes
-	c.ContextFuncs["sleep"] = c.tmplSleep
-	c.ContextFuncs["reFind"] = c.reFind
-	c.ContextFuncs["reFindAll"] = c.reFindAll
-	c.ContextFuncs["reFindAllSubmatches"] = c.reFindAllSubmatches
-	c.ContextFuncs["reReplace"] = c.reReplace
-	c.ContextFuncs["reSplit"] = c.reSplit
-
-	c.ContextFuncs["editChannelTopic"] = c.tmplEditChannelTopic
-	c.ContextFuncs["editChannelName"] = c.tmplEditChannelName
-	c.ContextFuncs["onlineCount"] = c.tmplOnlineCount
-	c.ContextFuncs["onlineCountBots"] = c.tmplOnlineCountBots
-	c.ContextFuncs["editNickname"] = c.tmplEditNickname
-
-	c.ContextFuncs["sort"] = c.tmplSort
-	c.ContextFuncs["execTemplate"] = c.tmplExecTemplate
-	c.ContextFuncs["addReturn"] = c.tmplAddReturn
-
+	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
+	c.addContextFunc("editChannelName", c.tmplEditChannelName)
+	c.addContextFunc("onlineCount", c.tmplOnlineCount)
+	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots)
+	c.addContextFunc("editNickname", c.tmplEditNickname)
 }
 
 type limitedWriter struct {
@@ -646,79 +576,11 @@ func MaybeScheduledDeleteMessage(guildID, channelID, messageID int64, delaySecon
 	}
 }
 
-const startDetectingCyclesAfter = 1000
-
-type cyclicValueDetector struct {
-	ptrLevel uint
-	ptrSeen  map[interface{}]struct{}
-}
-
-func (c *cyclicValueDetector) check(v reflect.Value) error {
-	v, _ = indirect(v)
-
-	switch v.Kind() {
-	case reflect.Map:
-		if c.ptrLevel++; c.ptrLevel > startDetectingCyclesAfter {
-			ptr := v.Pointer()
-			if _, ok := c.ptrSeen[ptr]; ok {
-				return fmt.Errorf("encountered a cycle via %s", v.Type())
-			}
-			c.ptrSeen[ptr] = struct{}{}
-		}
-
-		iter := v.MapRange()
-		for iter.Next() {
-			if err := c.check(iter.Value()); err != nil {
-				return err
-			}
-		}
-
-		c.ptrLevel--
-		return nil
-
-	case reflect.Array, reflect.Slice:
-		if c.ptrLevel++; c.ptrLevel > startDetectingCyclesAfter {
-			ptr := struct {
-				ptr uintptr
-				len int
-			}{v.Pointer(), v.Len()}
-
-			if _, ok := c.ptrSeen[ptr]; ok {
-				return fmt.Errorf("encountered a cycle via %s", v.Type())
-			}
-
-			c.ptrSeen[ptr] = struct{}{}
-		}
-
-		for i := 0; i < v.Len(); i++ {
-			elem := v.Index(i)
-			if err := c.check(elem); err != nil {
-				return err
-			}
-
-		}
-
-		c.ptrLevel--
-		return nil
-
-	default:
-		return nil
-	}
-}
-
-func detectCyclicValue(v reflect.Value) error {
-	c := &cyclicValueDetector{ptrSeen: make(map[interface{}]struct{})}
-	return c.check(v)
-}
-
 type Dict map[interface{}]interface{}
 
-func (d Dict) Set(key interface{}, value interface{}) (string, error) {
+func (d Dict) Set(key interface{}, value interface{}) string {
 	d[key] = value
-	if err := detectCyclicValue(reflect.ValueOf(d)); err != nil {
-		return "", err
-	}
-	return "", nil
+	return ""
 }
 
 func (d Dict) Get(key interface{}) interface{} {
@@ -732,16 +594,9 @@ func (d Dict) Del(key interface{}) string {
 
 type SDict map[string]interface{}
 
-func (d SDict) Set(key string, value interface{}) (string, error) {
-	/*if reflect.DeepEqual(d, value) {
-		return "", errors.New("Recursion detected")
-	}*/
+func (d SDict) Set(key string, value interface{}) string {
 	d[key] = value
-	if err := detectCyclicValue(reflect.ValueOf(d)); err != nil {
-		return "", err
-	}
-
-	return "", nil
+	return ""
 }
 
 func (d SDict) Get(key string) interface{} {
@@ -771,33 +626,17 @@ func (s Slice) Append(item interface{}) (interface{}, error) {
 
 }
 
-func (s Slice) Del(index int) (string, error) {
-	if index >= len(s) || index < 0 {
-		return "", errors.New("Index out of bounds")
-	}
-
-	copy(s[index:], s[index+1:])
-	s[len(s)-1] = ""
-	s = s[:len(s)-1]
-	return "", nil
-}
-
 func (s Slice) Set(index int, item interface{}) (string, error) {
-	if index >= len(s) || index < 0 {
+	if index >= len(s) {
 		return "", errors.New("Index out of bounds")
 	}
 
 	s[index] = item
-	if err := detectCyclicValue(reflect.ValueOf(s)); err != nil {
-
-		return "", err
-	}
-
 	return "", nil
 }
 
 func (s Slice) AppendSlice(slice interface{}) (interface{}, error) {
-	val := reflect.ValueOf(slice)
+	val, _ := indirect(reflect.ValueOf(slice))
 	switch val.Kind() {
 	case reflect.Slice, reflect.Array:
 	// this is valid
@@ -818,7 +657,6 @@ func (s Slice) AppendSlice(slice interface{}) (interface{}, error) {
 
 		default:
 			result = reflect.Append(result, reflect.ValueOf(v))
-
 		}
 	}
 

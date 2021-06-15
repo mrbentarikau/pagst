@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v2"
+	"github.com/jonas747/dstate/v3"
 	"github.com/lib/pq"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/sirupsen/logrus"
@@ -216,7 +216,7 @@ func FallbackEmbed(embed *discordgo.MessageEmbed) string {
 	return body + "**I have no 'embed links' permissions here, this is a fallback. it looks prettier if i have that perm :)**"
 }
 
-// CutStringShort stops a strinng at "l"-3 if it's longer than "l" and adds "..."
+// CutStringShort stops a string at "l"-3 if it's longer than "l" and adds "..."
 func CutStringShort(s string, l int) string {
 	var mainBuf bytes.Buffer
 	var latestBuf bytes.Buffer
@@ -265,14 +265,14 @@ func AddRole(member *discordgo.Member, role int64, guildID int64) error {
 }
 
 func AddRoleDS(ms *dstate.MemberState, role int64) error {
-	for _, v := range ms.Roles {
+	for _, v := range ms.Member.Roles {
 		if v == role {
 			// Already has the role
 			return nil
 		}
 	}
 
-	return BotSession.GuildMemberRoleAdd(ms.Guild.ID, ms.ID, role)
+	return BotSession.GuildMemberRoleAdd(ms.GuildID, ms.User.ID, role)
 }
 
 func RemoveRole(member *discordgo.Member, role int64, guildID int64) error {
@@ -287,9 +287,9 @@ func RemoveRole(member *discordgo.Member, role int64, guildID int64) error {
 }
 
 func RemoveRoleDS(ms *dstate.MemberState, role int64) error {
-	for _, r := range ms.Roles {
+	for _, r := range ms.Member.Roles {
 		if r == role {
-			return BotSession.GuildMemberRoleRemove(ms.Guild.ID, ms.ID, r)
+			return BotSession.GuildMemberRoleRemove(ms.GuildID, ms.User.ID, r)
 		}
 	}
 

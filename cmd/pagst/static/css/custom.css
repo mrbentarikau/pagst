@@ -757,6 +757,14 @@ textarea::-webkit-scrollbar-thumb:hover {background:#aa8900 !important;}
 /*ADMIN panel*/
 form>div>button[class*="btn btn-secondary dropdown-toggle"]{background-color:#aa8900!important; border-color:#aa8900!important;color:#1a1a1a!important}
 
+/*CUSTOM COMMANDS && EDIT*/
+div[class="accordion accordion-primary"]>div[class="card"]>div[class="card-header clearfix"]>form>div[class="pull-right"]>button:nth-child(1){color:#89aa00!important;background-color:#282828!important;border-color:#282828!important}
+div[class="accordion accordion-primary"]>div[class="card"]>div[class="card-header clearfix"]>form>div[class="pull-right"]>button:nth-child(1):hover{color:#282828!important;background-color:#89aa00!important}
+div[class="col"]>button[class="btn btn-secondary btn-block"]{border-color:#89aa00!important}
+div[class="col"]>button[class="btn btn-secondary btn-block"]:hover{color:#2e2e2e!important; background-color:#89aa00!important; border-color: #89aa00!important}
+
+
+
 a.pagst:hover{ 
   background-color: transparent!important;
   text-decoration: none!important;

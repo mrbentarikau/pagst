@@ -13,7 +13,7 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v2"
+	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/customcommands/models"
@@ -268,11 +268,11 @@ func CmdRunsInChannel(cc *models.CustomCommand, channel int64) bool {
 func CmdRunsForUser(cc *models.CustomCommand, ms *dstate.MemberState) bool {
 	if cc.GroupID.Valid {
 		// check group restrictions
-		if common.ContainsInt64SliceOneOf(cc.R.Group.IgnoreRoles, ms.Roles) {
+		if common.ContainsInt64SliceOneOf(cc.R.Group.IgnoreRoles, ms.Member.Roles) {
 			return false
 		}
 
-		if len(cc.R.Group.WhitelistRoles) > 0 && !common.ContainsInt64SliceOneOf(cc.R.Group.WhitelistRoles, ms.Roles) {
+		if len(cc.R.Group.WhitelistRoles) > 0 && !common.ContainsInt64SliceOneOf(cc.R.Group.WhitelistRoles, ms.Member.Roles) {
 			return false
 		}
 	}
@@ -288,7 +288,7 @@ func CmdRunsForUser(cc *models.CustomCommand, ms *dstate.MemberState) bool {
 	}
 
 	for _, v := range cc.Roles {
-		if common.ContainsInt64Slice(ms.Roles, v) {
+		if common.ContainsInt64Slice(ms.Member.Roles, v) {
 			if cc.RolesWhitelistMode {
 				return true
 			}

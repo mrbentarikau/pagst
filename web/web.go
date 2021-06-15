@@ -93,7 +93,7 @@ func init() {
 		"formatTime":       prettyTime,
 		"checkbox":         tmplCheckbox,
 		"roleOptions":      tmplRoleDropdown,
-		"roleOptionsMulti": tmplRoleDropdownMulti,
+		"roleOptionsMulti": tmplRoleDropdownMutli,
 
 		"textChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews}, "#"),
 		"textChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews}, "#"),

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
@@ -38,7 +38,7 @@ var Command = &commands.YAGCommand{
 
 func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 	cID := data.ChannelID
-	if ok, err := bot.AdminOrPermMS(cID, data.GuildData.MS, discordgo.PermissionManageRoles); err != nil {
+	if ok, err := bot.AdminOrPermMS(data.GuildData.GS.ID, cID, data.GuildData.MS, discordgo.PermissionManageRoles); err != nil {
 		return "Failed checking perms", err
 	} else if !ok {
 		return "You need manage roles perms to use this command", nil
@@ -51,12 +51,12 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 		return "No role with the Name or ID`" + roleS + "` found", nil
 	}
 
-	data.GuildData.GS.RLock()
+	//data.GuildData.GS.RLock()
 	if !bot.IsMemberAboveRole(data.GuildData.GS, data.GuildData.MS, role) {
-		data.GuildData.GS.RUnlock()
+		//data.GuildData.GS.RUnlock()
 		return "Can't edit roles above you", nil
 	}
-	data.GuildData.GS.RUnlock()
+	//data.GuildData.GS.RUnlock()
 
 	change := false
 

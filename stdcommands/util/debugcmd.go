@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/jonas747/dcmd/v2"
+	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"

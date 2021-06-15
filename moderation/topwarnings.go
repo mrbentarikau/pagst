@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	//"github.com/jonas747/discordgo"
-	//"github.com/jonas747/dstate/v2"
+	//"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 )
