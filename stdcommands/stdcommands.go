@@ -31,6 +31,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/info"
 	"github.com/mrbentarikau/pagst/stdcommands/invite"
 	"github.com/mrbentarikau/pagst/stdcommands/leaveserver"
+	"github.com/mrbentarikau/pagst/stdcommands/listflags"
 	"github.com/mrbentarikau/pagst/stdcommands/listroles"
 	"github.com/mrbentarikau/pagst/stdcommands/memstats"
 	"github.com/mrbentarikau/pagst/stdcommands/openweathermap"
@@ -134,6 +135,7 @@ func (p *Plugin) AddCommands() {
 		exportcustomcommands.Command,
 		addspecialserver.Command,
 		removespecialserver.Command,
+		listflags.Command,
 	)
 
 	statedbg.Commands()
