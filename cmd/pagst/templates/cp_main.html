@@ -27,7 +27,7 @@
     <meta name="theme-color" content="#ffffff">
 
     <meta property="og:title" content="PAGSTDB" />
-    <meta property="og:description" content="Yet Another General Purpose Discord Bot" />
+    <meta property="og:description" content="People Against Generally Shitty Things Discord Bot" />
 
     <title>PAGSTDB - Control panel</title>
     <meta name="keywords" content="People Against Generally Shitty Things" />
@@ -186,6 +186,6 @@ For example, to mention a user, you would do <code><@{{"{{"}}.User.ID{{"}}"}}></
 
 {{/*Specific template helpers*/}}
 {{define "template_helper_user"}}<code>{{"{{"}}.User.(ID/Username/Mention/Discriminator/Bot){{"}}"}}</code>{{end}}
-{{define "template_helper_guild"}}<code>{{"{{"}}.Server.(ID/Name/Icon/Owner/Permissions){{"}}"}}</code>{{end}}
+{{define "template_helper_guild"}}<code>{{"{{"}}.Server.(ID/Name/Icon/Owner){{"}}"}}</code>{{end}}
 
 {{define "set_roles"}}<script>var activeGuildRoles = JSON.parse('{{json .ActiveGuild.Roles}}');</script>{{end}}
