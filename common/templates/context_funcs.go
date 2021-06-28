@@ -22,6 +22,40 @@ import (
 var ErrTooManyCalls = errors.New("too many calls to this function")
 var ErrTooManyAPICalls = errors.New("too many potential discord api calls function")
 
+func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
+	msgSend := &discordgo.MessageSend{
+		AllowedMentions: discordgo.AllowedMentions{
+			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
+		},
+	}
+
+	switch t := s[0].(type) {
+	case *discordgo.MessageEmbed:
+		msgSend.Embed = t
+	case *discordgo.MessageSend:
+		msgSend = t
+		if (strings.TrimSpace(msgSend.Content) == "") && (msgSend.File == nil) {
+			return nil
+		}
+	default:
+		msgSend.Content = fmt.Sprintf("%s", fmt.Sprint(s...))
+	}
+
+	if !bot.IsSpecialGuild(c.GS.GuildState.ID) {
+		info := fmt.Sprintf("DM from server: %s", gName)
+		if msgSend.Embed != nil {
+			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
+				Text: info,
+			}
+		} else {
+			info := fmt.Sprintf("DM from server: **%s**", gName)
+			msgSend.Content = info + "\n" + msgSend.Content
+		}
+	}
+
+	return msgSend
+}
+
 func (c *Context) tmplSendDM(s ...interface{}) string {
 	if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) || c.MS == nil {
 		return ""
