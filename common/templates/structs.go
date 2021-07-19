@@ -1,6 +1,8 @@
 package templates
 
 import (
+	"errors"
+
 	"github.com/jonas747/discordgo"
 	"github.com/jonas747/dstate/v3"
 )
@@ -23,11 +25,19 @@ type CtxChannel struct {
 	ParentID             int64                            `json:"parent_id"`
 }
 
+/* PAGST previous vers
 func (c *CtxChannel) Mention() string {
 	if c == nil {
 		return "No such channel to mention"
 	}
 	return "<#" + discordgo.StrID(c.ID) + ">"
+*/
+func (c *CtxChannel) Mention() (string, error) {
+	if c == nil {
+		return "", errors.New("channel not found")
+	}
+	return "<#" + discordgo.StrID(c.ID) + ">", nil
+
 }
 
 func CtxChannelFromCS(cs *dstate.ChannelState) *CtxChannel {

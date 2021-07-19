@@ -160,7 +160,7 @@ func Run() {
 	go pollCommandsRan()
 	go pollCCsRan()
 	go pollAMV2sRan()
-	go pollRedditQuotes()
+	//go pollRedditQuotes()
 
 	blogChannel := confAnnouncementsChannel.GetInt()
 	if blogChannel != 0 {

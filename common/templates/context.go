@@ -25,14 +25,15 @@ import (
 var (
 	StandardFuncMap = map[string]interface{}{
 		// conversion functions
-		"str":        ToString,
-		"toString":   ToString, // don't ask why we have 2 of these
-		"toInt":      tmplToInt,
-		"toInt64":    ToInt64,
-		"toFloat":    ToFloat64,
-		"toDuration": ToDuration,
-		"toRune":     ToRune,
-		"toByte":     ToByte,
+		"str":           ToString,
+		"toString":      ToString, // don't ask why we have 2 of these
+		"toInt":         tmplToInt,
+		"toInt64":       ToInt64,
+		"toInt64Base16": ToInt64Base16,
+		"toFloat":       ToFloat64,
+		"toDuration":    ToDuration,
+		"toRune":        ToRune,
+		"toByte":        ToByte,
 
 		// string manipulation
 		"joinStr":   joinStrings,
@@ -42,6 +43,8 @@ var (
 		"urlescape": url.PathEscape,
 		"split":     strings.Split,
 		"title":     strings.Title,
+		"hasPrefix": strings.HasPrefix,
+		"hasSuffix": strings.HasSuffix,
 
 		// math
 		"add":               add,
@@ -53,11 +56,23 @@ var (
 		"sqrt":              tmplSqrt,
 		"pow":               tmplPow,
 		"log":               tmplLog,
+		"max":               tmplMax,
+		"min":               tmplMin,
 		"round":             tmplRound,
 		"roundCeil":         tmplRoundCeil,
 		"roundFloor":        tmplRoundFloor,
 		"roundEven":         tmplRoundEven,
 		"humanizeThousands": tmplHumanizeThousands,
+		"abs":               tmplAbs,
+
+		// bitwise functions
+		"bitwiseAnd":   tmplBitwiseAnd,
+		"bitwiseOr":    tmplBitwiseOr,
+		"bitwiseNot":   tmplBitwiseNot,
+		"bitwiseXor":   tmplBitwiseXor,
+		"bitwiseClear": tmplBitwiseClear,
+		"shiftLeft":    tmplShiftLeft,
+		"shiftRight":   tmplShiftRight,
 
 		// misc
 		"dict":               Dictionary,
@@ -206,6 +221,11 @@ func (c *Context) setupBaseData() {
 		c.Data["user"] = c.Data["User"]
 	}
 
+	botUser := common.BotUser
+	botMember, _ := bot.GetMember(c.GS.ID, botUser.ID)
+
+	c.Data["BotUser"] = botUser
+	c.Data["BotMember"] = botMember.Member
 	c.Data["TimeSecond"] = time.Second
 	c.Data["TimeMinute"] = time.Minute
 	c.Data["TimeHour"] = time.Hour
@@ -467,6 +487,7 @@ func (c *Context) addContextFunc(name string, f interface{}) {
 func baseContextFuncs(c *Context) {
 	// message functions
 	c.addContextFunc("sendDM", c.tmplSendDM)
+	c.addContextFunc("sendTargetDM", c.tmplSendTargetDM)
 	c.addContextFunc("sendMessage", c.tmplSendMessage(true, false))
 	c.addContextFunc("sendTemplate", c.tmplSendTemplate)
 	c.addContextFunc("sendTemplateDM", c.tmplSendTemplateDM)
@@ -475,6 +496,8 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("sendMessageNoEscapeRetID", c.tmplSendMessage(false, true))
 	c.addContextFunc("editMessage", c.tmplEditMessage(true))
 	c.addContextFunc("editMessageNoEscape", c.tmplEditMessage(false))
+	c.addContextFunc("pinMessage", c.tmplPinMessage)
+	c.addContextFunc("unpinMessage", c.tmplUnpinMessage)
 
 	// Mentions
 	c.addContextFunc("mentionEveryone", c.tmplMentionEveryone)
@@ -510,6 +533,7 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getMessage", c.tmplGetMessage)
 	c.addContextFunc("getMember", c.tmplGetMember)
 	c.addContextFunc("getChannel", c.tmplGetChannel)
+	c.addContextFunc("getRole", c.tmplGetRole)
 	c.addContextFunc("addReactions", c.tmplAddReactions)
 	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)
 	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions)
@@ -529,6 +553,8 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("onlineCount", c.tmplOnlineCount)
 	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots)
 	c.addContextFunc("editNickname", c.tmplEditNickname)
+
+	c.addContextFunc("sort", c.tmplSort)
 }
 
 type limitedWriter struct {
@@ -584,7 +610,16 @@ func (d Dict) Set(key interface{}, value interface{}) string {
 }
 
 func (d Dict) Get(key interface{}) interface{} {
-	return d[key]
+	out, ok := d[key]
+	if !ok {
+		switch key.(type) {
+		case int:
+			out = d[ToInt64(key)]
+		case int64:
+			out = d[tmplToInt(key)]
+		}
+	}
+	return out
 }
 
 func (d Dict) Del(key interface{}) string {
@@ -624,6 +659,26 @@ func (s Slice) Append(item interface{}) (interface{}, error) {
 		return result.Interface(), nil
 	}
 
+}
+
+func (s Slice) Del(index int, flag ...bool) (interface{}, error) {
+	var compressed bool
+	if len(flag) > 0 {
+		compressed = flag[0]
+	}
+
+	if index >= len(s) || index < 0 {
+		return "", errors.New("Index out of bounds")
+	}
+
+	copy(s[index:], s[index+1:])
+	s[len(s)-1] = ""
+	s = s[:len(s)-1]
+
+	if compressed {
+		return s, nil
+	}
+	return "", nil
 }
 
 func (s Slice) Set(index int, item interface{}) (string, error) {

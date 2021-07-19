@@ -210,12 +210,12 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 		}
 
 		qm := &mqueue.QueuedElement{
-			Guild:   item.GuildID,
-			Channel: item.ChannelID,
 
+			GuildID:         item.GuildID,
+			ChannelID:       item.ChannelID,
 			MessageStr:      content,
 			Source:          "reddit",
-			SourceID:        idStr,
+			SourceItemID:    idStr,
 			UseWebhook:      true,
 			WebhookUsername: webhookUsername,
 			AllowedMentions: discordgo.AllowedMentions{

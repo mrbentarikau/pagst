@@ -44,7 +44,42 @@ func cmdFuncHelp(data *dcmd.Data) (interface{}, error) {
 		}
 
 		// Send short help in same channel
-		return resp, nil
+		//return resp, nil
+
+		// see if we can find the permissions the command needs and add that info to the help message
+		cmd, _ := data.ContainerChain[0].AbsFindCommand(target)
+		if cmd == nil {
+			// couldn't find command, just return the original help message
+			return resp, nil
+		}
+
+		yc, ok := cmd.Command.(*YAGCommand)
+		if !ok {
+			// not a yag command, so can't find out what perms it needs
+			return resp, nil
+		}
+
+		if len(yc.RequireDiscordPerms) == 0 && yc.RequiredDiscordPermsHelp == "" {
+			// no perm requirements, return original help message
+			return resp, nil
+		}
+
+		requiredPerms := yc.RequiredDiscordPermsHelp
+		if requiredPerms == "" {
+			humanizedPerms := make([]string, 0, len(yc.RequireDiscordPerms))
+			for _, v := range yc.RequireDiscordPerms {
+				h := common.HumanizePermissions(v)
+				joined := strings.Join(h, " and ")
+				humanizedPerms = append(humanizedPerms, "("+joined+")")
+			}
+			requiredPerms = strings.Join(humanizedPerms, " or ")
+		}
+
+		embed := resp[0]
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text: "Required permissions: " + requiredPerms,
+		}
+		return embed, nil
 	}
 
 	// Send full help in DM

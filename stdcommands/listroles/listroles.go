@@ -24,12 +24,13 @@ var Command = &commands.YAGCommand{
 
 	ArgSwitches: []*dcmd.ArgDef{
 		{Name: "nomanaged", Help: "Don't list managed/bot roles"},
+		{Name: "managed", Help: "List managed/bot roles"},
 		{Name: "raw", Help: "Raw, legacy output"},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var out, outFinal string
-		var noMana, raw bool
+		var noMana, yesMana, raw bool
 		var member *dstate.MemberState
 		maxLength := 24
 
@@ -39,6 +40,10 @@ var Command = &commands.YAGCommand{
 
 		if data.Switches["nomanaged"].Value != nil && data.Switches["nomanaged"].Value.(bool) && member == nil {
 			noMana = true
+		}
+
+		if data.Switches["managed"].Value != nil && data.Switches["managed"].Value.(bool) && member == nil {
+			yesMana = true
 		}
 
 		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
@@ -64,6 +69,8 @@ var Command = &commands.YAGCommand{
 		} else {
 			for _, r := range data.GuildData.GS.Roles {
 				if noMana && r.Managed {
+					continue
+				} else if yesMana && !r.Managed {
 					continue
 				} else {
 					counter++

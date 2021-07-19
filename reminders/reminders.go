@@ -40,6 +40,7 @@ type Reminder struct {
 	GuildID   int64
 	Message   string
 	When      int64
+	Repeat    int64
 }
 
 func (r *Reminder) UserIDInt() (i int64) {
@@ -53,22 +54,37 @@ func (r *Reminder) ChannelIDInt() (i int64) {
 }
 
 func (r *Reminder) Trigger() error {
-	// remove the actual reminder
-	rows := common.GORM.Delete(r).RowsAffected
-	if rows < 1 {
-		logger.Info("Tried to execute multiple reminders at once")
+	reminderRepeat := "**Reminder**"
+	if r.Repeat > 0 {
+		reminderRepeat = "**Repeated reminder**"
+		userID := r.UserIDInt()
+		repeatDuration := time.Duration(r.Repeat) * time.Nanosecond
+		when := time.Now().Add(repeatDuration)
+		r.When = when.Unix()
+
+		err := common.GORM.Save(r).Error
+		if err == gorm.ErrRecordNotFound {
+			err = nil
+		}
+		err = scheduledevents2.ScheduleEvent("reminders_check_user", r.GuildID, when, userID)
+	} else {
+		// remove the actual reminder
+		rows := common.GORM.Delete(r).RowsAffected
+		if rows < 1 {
+			logger.Info("Tried to execute multiple reminders at once")
+		}
 	}
 
 	logger.WithFields(logrus.Fields{"channel": r.ChannelID, "user": r.UserID, "message": r.Message, "id": r.ID}).Info("Triggered reminder")
 
 	mqueue.QueueMessage(&mqueue.QueuedElement{
-		Source:   "reminder",
-		SourceID: "",
+		Source:       "reminder",
+		SourceItemID: "",
 
-		Guild:   r.GuildID,
-		Channel: r.ChannelIDInt(),
+		GuildID:   r.GuildID,
+		ChannelID: r.ChannelIDInt(),
 
-		MessageStr: "**Reminder** <@" + r.UserID + ">: " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
+		MessageStr: reminderRepeat + " <@" + r.UserID + ">: " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
 		AllowedMentions: discordgo.AllowedMentions{
 			Users: []int64{r.UserIDInt()},
 		},
@@ -94,7 +110,7 @@ func GetChannelReminders(channel int64) (results []*Reminder, err error) {
 	return
 }
 
-func NewReminder(userID int64, guildID int64, channelID int64, message string, when time.Time) (*Reminder, error) {
+func NewReminder(userID int64, guildID int64, channelID int64, message string, when time.Time, repeatDuration time.Duration) (*Reminder, error) {
 	whenUnix := when.Unix()
 	reminder := &Reminder{
 		UserID:    discordgo.StrID(userID),
@@ -102,6 +118,7 @@ func NewReminder(userID int64, guildID int64, channelID int64, message string, w
 		Message:   message,
 		When:      whenUnix,
 		GuildID:   guildID,
+		Repeat:    repeatDuration.Nanoseconds(),
 	}
 
 	err := common.GORM.Create(reminder).Error

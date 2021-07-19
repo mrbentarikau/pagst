@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
@@ -13,10 +14,10 @@ import (
 )
 
 type ExportCC struct {
-	GuildID     int64  `json:"GuildID"`
-	CCID        int64  `json:"CCID"`
+	GuildID     string `json:"GuildID"`
+	CCID        string `json:"CCID"`
 	GroupName   string `json:"GroupName"`
-	TriggerType int    `json:"TriggerType"`
+	TriggerType string `json:"TriggerType"`
 	TextTrigger string `json:"TextTrigger"`
 	Responses   string `json:"Responses"`
 }
@@ -33,6 +34,9 @@ var Command = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "ServerID", Type: dcmd.Int},
 	},
+	ArgSwitches: []*dcmd.ArgDef{
+		{Name: "csv", Help: "Export to CSV with TAB as delimiter"},
+	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		guildIDToMatch := data.GuildData.GS.ID
 		if data.Args[0].Value != nil {
@@ -43,20 +47,36 @@ var Command = &commands.YAGCommand{
 			}
 
 		}
+		var exportCSV bool
+		if data.Switches["csv"].Value != nil && data.Switches["csv"].Value.(bool) {
+			exportCSV = true
+		}
+
 		result, err := dbQuery(guildIDToMatch)
 		if err != nil {
 			return nil, err
 		}
 		if result != nil {
-			buf, _ := json.Marshal(result)
-			send := &discordgo.MessageSend{
-				Content: "Custom Commands Export",
-				File: &discordgo.File{
+			send := &discordgo.MessageSend{Content: "Custom Commands Export"}
+			if exportCSV {
+				in := fmt.Sprintln("GuildID\tCCID\tGroupName\tTriggerType\tTextTrigger\tResponses")
+				for _, r := range result {
+					in += fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", r.GuildID, r.CCID, r.GroupName, r.TriggerType, r.TextTrigger, strings.ReplaceAll(strings.ReplaceAll(r.Responses, "\r\n", " "), "\t", " "))
+				}
+				send.File = &discordgo.File{
+					ContentType: "text/csv",
+					Name:        fmt.Sprintf("custom_commands_%d.csv", data.GuildData.GS.ID),
+					Reader:      strings.NewReader(in),
+				}
+			} else {
+				buf, _ := json.Marshal(result)
+				send.File = &discordgo.File{
 					ContentType: "application/json",
 					Name:        fmt.Sprintf("custom_commands_%d.json", data.GuildData.GS.ID),
 					Reader:      bytes.NewReader(buf),
-				},
+				}
 			}
+
 			_, err = common.BotSession.ChannelMessageSendComplex(data.ChannelID, send)
 			return nil, err
 		}
@@ -66,17 +86,18 @@ var Command = &commands.YAGCommand{
 }
 
 func dbQuery(guildID int64) ([]*ExportCC, error) {
-	const q = `SELECT
-						   		ccs.guild_id, 
-						   		ccs.local_id as ccID,
-						   		case(select 1 where ccg.name is null) when 1 then 'ungrouped' else ccg.name end as group_name,
-						   		ccs.trigger_type, 
-						   		ccs.text_trigger, 
-						   		ccs.responses
-						   FROM custom_commands AS ccs 
-						   LEFT JOIN custom_command_groups AS ccg 
-						   ON (ccs.guild_id = ccg.guild_id and ccs.group_id = ccg.id)
-						   WHERE ccs.guild_id=$1`
+	const q = `
+			SELECT
+				ccs.guild_id, 
+				ccs.local_id as ccID,
+				case(select 1 where ccg.name is null) when 1 then 'ungrouped' else ccg.name end as group_name,
+				ccs.trigger_type, 
+				ccs.text_trigger, 
+				ccs.responses
+			FROM custom_commands AS ccs 
+			LEFT JOIN custom_command_groups AS ccg 
+			ON (ccs.guild_id = ccg.guild_id and ccs.group_id = ccg.id)
+			WHERE ccs.guild_id=$1 ORDER BY ccID`
 
 	rows, err := common.PQ.Query(q, guildID)
 	if err != nil {
@@ -89,8 +110,8 @@ func dbQuery(guildID int64) ([]*ExportCC, error) {
 
 	result := make([]*ExportCC, 0)
 	for rows.Next() {
-		var guildID, ccID int64
-		var groupName, textTrigger string
+		//var guildID, ccID int64
+		var guildID, ccID, groupName, textTrigger string
 		var triggerType int
 		var responses string
 		var err = rows.Scan(&guildID, &ccID, &groupName, &triggerType, &textTrigger, &responses)
@@ -98,11 +119,24 @@ func dbQuery(guildID int64) ([]*ExportCC, error) {
 			return []*ExportCC{}, err
 		}
 
+		types := map[int]string{
+			10: "None",
+			0:  "Command",
+			1:  "Starts With",
+			2:  "Contains",
+			3:  "Regex",
+			4:  "Exact Match",
+			5:  "Interval",
+			6:  "Reaction",
+		}
+
+		triggerTypeString := types[triggerType]
+
 		result = append(result, &ExportCC{
 			GuildID:     guildID,
 			CCID:        ccID,
 			GroupName:   groupName,
-			TriggerType: triggerType,
+			TriggerType: triggerTypeString,
 			TextTrigger: textTrigger,
 			Responses:   responses,
 		})

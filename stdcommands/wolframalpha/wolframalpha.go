@@ -115,6 +115,9 @@ func requestWolframAPI(input, wolframID string) (string, error) {
 	}
 
 	result = waQuery.Queryresult.Pod[1].Subpod.Plaintext
+	if waQuery.Queryresult.Pod[2].Title == "Decimal approximation" {
+		result += "\nApproximation: " + waQuery.Queryresult.Pod[2].Subpod.Plaintext
+	}
 
 	return result, nil
 }

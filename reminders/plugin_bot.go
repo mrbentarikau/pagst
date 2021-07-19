@@ -37,12 +37,15 @@ var cmds = []*commands.YAGCommand{
 	{
 		CmdCategory:  commands.CategoryTool,
 		Name:         "Remindme",
-		Description:  "Schedules a reminder, example: 'remindme 1h30min are you alive still?'",
+		Description:  "Schedules a reminder, example: 'remindme 1h30min are you alive still?'\nFlag -repeat will repeat the reminder starting with min duration of 1 hour.",
 		Aliases:      []string{"remind", "reminder"},
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
 			{Name: "Time", Type: &commands.DurationArg{}},
 			{Name: "Message", Type: dcmd.String},
+		},
+		ArgSwitches: []*dcmd.ArgDef{
+			{Name: "repeat", Help: "Repeat the reminder at set duration"},
 		},
 		SlashCommandEnabled: true,
 		DefaultEnabled:      true,
@@ -54,6 +57,11 @@ var cmds = []*commands.YAGCommand{
 
 			fromNow := parsed.Args[0].Value.(time.Duration)
 
+			repeatDuration := time.Duration(0)
+			if parsed.Switch("repeat").Value != nil && parsed.Switch("repeat").Value.(bool) && fromNow.Hours() >= 1 {
+				repeatDuration = fromNow
+			}
+
 			durString := common.HumanizeDuration(common.DurationPrecisionSeconds, fromNow)
 			when := time.Now().Add(fromNow)
 			tStr := when.UTC().Format(time.RFC822)
@@ -62,7 +70,7 @@ var cmds = []*commands.YAGCommand{
 				return "Can be max 365 days from now...", nil
 			}
 
-			_, err := NewReminder(parsed.Author.ID, parsed.GuildData.GS.ID, parsed.ChannelID, parsed.Args[1].Str(), when)
+			_, err := NewReminder(parsed.Author.ID, parsed.GuildData.GS.ID, parsed.ChannelID, parsed.Args[1].Str(), when, repeatDuration)
 			if err != nil {
 				return nil, err
 			}
@@ -91,7 +99,8 @@ var cmds = []*commands.YAGCommand{
 	{
 		CmdCategory:         commands.CategoryTool,
 		Name:                "CReminders",
-		Description:         "Lists reminders in channel, only users with 'manage server' permissions can use this.",
+		Aliases:             []string{"channelreminders"},
+		Description:         "Lists reminders in channel, only users with 'manage channel' permissions can use this.",
 		SlashCommandEnabled: true,
 		DefaultEnabled:      true,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
@@ -201,22 +210,28 @@ var cmds = []*commands.YAGCommand{
 
 func stringReminders(reminders []*Reminder, displayUsernames bool) string {
 	out := ""
+	var repeatedReminder string
 	for _, v := range reminders {
 		parsedCID, _ := strconv.ParseInt(v.ChannelID, 10, 64)
 
 		t := time.Unix(v.When, 0)
 		timeFromNow := common.HumanizeTime(common.DurationPrecisionMinutes, t)
 		tStr := t.Format(time.RFC822)
+		if v.Repeat > 0 {
+			repeatedReminder = "- repeated reminder"
+		} else {
+			repeatedReminder = ""
+		}
 		if !displayUsernames {
 			channel := "<#" + discordgo.StrID(parsedCID) + ">"
-			out += fmt.Sprintf("**%d**: %s: '%s' - %s from now (%s)\n", v.ID, channel, limitString(v.Message), timeFromNow, tStr)
+			out += fmt.Sprintf("**%d**: %s: '%s' - %s from now (%s) %s\n", v.ID, channel, limitString(v.Message), timeFromNow, tStr, repeatedReminder)
 		} else {
 			member, _ := bot.GetMember(v.GuildID, v.UserIDInt())
 			username := "Unknown user"
 			if member != nil {
 				username = member.User.Username
 			}
-			out += fmt.Sprintf("**%d**: %s: '%s' - %s from now (%s)\n", v.ID, username, limitString(v.Message), timeFromNow, tStr)
+			out += fmt.Sprintf("**%d**: %s: '%s' - %s from now (%s) %s\n", v.ID, username, limitString(v.Message), timeFromNow, tStr, repeatedReminder)
 		}
 	}
 	return out

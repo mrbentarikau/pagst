@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	// Send bot leaves joins to this disocrd channel
+	// Send bot leaves joins to this discord channel
 	confBotLeavesJoins = config.RegisterOption("yagpdb.botleavesjoins", "Channel to log added/left servers to", 0)
 
 	logger = common.GetPluginLogger(&Plugin{})
@@ -64,10 +64,13 @@ func EventHandler(evt *eventsystem.EventData) (retry bool, err error) {
 
 			logger.WithError(err).Error("failed fetching guild data")
 		}
+
 		count = count - 1
 		msg = fmt.Sprintf(":x: Left guild **%s** :(", guildData.Name)
+		//From master code
+		//msg = fmt.Sprintf(":x: Left guild **%s** :(", common.ReplaceServerInvites(guildData.Name, 0, "[removed-server-invite]"))
 	case eventsystem.EventNewGuild:
-		msg = fmt.Sprintf(":white_check_mark: Joined guild **%s** :D", evt.GuildCreate().Guild.Name)
+		msg = fmt.Sprintf(":white_check_mark: Joined guild **%s** :D", common.ReplaceServerInvites(evt.GuildCreate().Guild.Name, 0, "[removed-server-invite]"))
 	}
 
 	msg += fmt.Sprintf(" (now connected to %d servers)", count)

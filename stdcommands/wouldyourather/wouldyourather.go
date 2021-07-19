@@ -33,6 +33,10 @@ var Command = &commands.YAGCommand{
 			},
 			Color:       int(rand.Int63n(16777215)),
 			Description: fmt.Sprintf("**EITHER...**\n🇦 %s\n\n **OR...**\n🇧 %s", q1, q2),
+			Footer: &discordgo.MessageEmbedFooter{
+				Text:    fmt.Sprintf("Requested by: %s#%s", data.Author.Username, data.Author.Discriminator),
+				IconURL: discordgo.EndpointUserAvatar(data.Author.ID, data.Author.Avatar),
+			},
 		}
 		msg, err := common.BotSession.ChannelMessageSendEmbed(data.ChannelID, content)
 		if err != nil {
@@ -60,7 +64,7 @@ func wouldYouRather() (q1 string, q2 string, err error) {
 		return
 	}
 
-	doc, err := goquery.NewDocumentFromResponse(resp)
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return
 	}

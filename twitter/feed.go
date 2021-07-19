@@ -201,11 +201,11 @@ OUTER:
 		}
 
 		mqueue.QueueMessage(&mqueue.QueuedElement{
-			Source:   "twitter",
-			SourceID: strconv.FormatInt(v.ID, 10),
+			Source:       "twitter",
+			SourceItemID: strconv.FormatInt(v.ID, 10),
 
-			Guild:   v.GuildID,
-			Channel: v.ChannelID,
+			GuildID:   v.GuildID,
+			ChannelID: v.ChannelID,
 
 			MessageStr:      content,
 			MessageEmbed:    embed,

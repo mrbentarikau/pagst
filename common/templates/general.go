@@ -722,6 +722,11 @@ func tmplBitwiseOr(arg1, arg2 int64) int64 {
 
 }
 
+func tmplBitwiseNot(arg1 int64) int64 {
+	return ^arg1
+
+}
+
 func tmplBitwiseXor(arg1, arg2 int64) int64 {
 	return arg1 ^ arg2
 
@@ -758,6 +763,24 @@ func randInt(args ...interface{}) int {
 
 	r := rand.Int63n(max - min)
 	return int(r + min)
+}
+
+func tmplAbs(arg interface{}) float64 {
+	var toAbs float64
+	var err error
+	switch arg.(type) {
+	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+		toAbs = ToFloat64(arg)
+	case string:
+		toAbs, err = strconv.ParseFloat(ToString(arg), 64)
+		if err != nil {
+			toAbs = math.NaN()
+		}
+	default:
+		toAbs = math.NaN()
+	}
+
+	return math.Abs(toAbs)
 }
 
 func tmplRound(args ...interface{}) float64 {
@@ -933,6 +956,8 @@ func ToInt64(from interface{}) int64 {
 		return int64(t)
 	case uint:
 		return int64(t)
+	case uint8:
+		return int64(t)
 	case uint32:
 		return int64(t)
 	case uint64:
@@ -942,6 +967,46 @@ func ToInt64(from interface{}) int64 {
 		return parsed
 	case time.Duration:
 		return int64(t)
+	default:
+		return 0
+	}
+}
+
+func ToInt64Base16(from interface{}) int64 {
+	switch t := from.(type) {
+	case int:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case int32:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case int64:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case float32:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case float64:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case uint:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case uint8:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case uint32:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case uint64:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
+	case string:
+		parsed, _ := strconv.ParseInt(t, 16, 64)
+		return parsed
+	case time.Duration:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		return parsed
 	default:
 		return 0
 	}
@@ -960,6 +1025,8 @@ func ToString(from interface{}) string {
 	case float64:
 		return strconv.FormatFloat(t, 'E', -1, 64)
 	case uint:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint8:
 		return strconv.FormatUint(uint64(t), 10)
 	case uint32:
 		return strconv.FormatUint(uint64(t), 10)
@@ -991,6 +1058,8 @@ func ToFloat64(from interface{}) float64 {
 	case float64:
 		return float64(t)
 	case uint:
+		return float64(t)
+	case uint8:
 		return float64(t)
 	case uint32:
 		return float64(t)

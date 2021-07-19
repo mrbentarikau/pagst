@@ -135,7 +135,7 @@ func HandleSelectServer(w http.ResponseWriter, r *http.Request) interface{} {
 		}
 	}
 
-	posts := discordblog.GetNewestPosts(30)
+	posts := discordblog.GetNewestPosts(100)
 	tmpl["Posts"] = posts
 	tmpl["RedditQuotes"] = html.UnescapeString(redditQuote)
 

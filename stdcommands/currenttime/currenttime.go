@@ -47,8 +47,6 @@ func cmdFuncCurrentTime(data *dcmd.Data) (interface{}, error) {
 		location := time.FixedZone("", data.Args[1].Int()*60*60)
 		return now.In(location).Format(format), nil
 	}
-
-	// No offset of zone specified, just return the bots location
 	loc := timezonecompanion.GetUserTimezone(data.Author.ID)
 	if loc != nil {
 		return now.In(loc).Format(format), nil

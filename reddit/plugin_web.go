@@ -132,12 +132,12 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 	}
 
 	watchItem := &models.RedditFeed{
-		GuildID:     activeGuild.ID,
-		ChannelID:   newElem.Channel,
-		Subreddit:   strings.ToLower(strings.TrimSpace(newElem.Subreddit)),
-		UseEmbeds:   newElem.UseEmbeds,
-		FilterNSFW:  newElem.NSFWMode,
-		MentionRole: newElem.MentionRole,
+		GuildID:    activeGuild.ID,
+		ChannelID:  newElem.Channel,
+		Subreddit:  strings.ToLower(strings.TrimSpace(newElem.Subreddit)),
+		UseEmbeds:  newElem.UseEmbeds,
+		FilterNSFW: newElem.NSFWMode,
+		Disabled:   false,
 	}
 
 	if newElem.Slow {
@@ -146,6 +146,9 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 		watchItem.MentionRole = newElem.MentionRole
 	}
 
+	if watchItem.ChannelID == 0 {
+		watchItem.Disabled = true
+	}
 	err := watchItem.InsertG(ctx, boil.Infer())
 	if web.CheckErr(templateData, err, "Failed saving item :'(", web.CtxLogger(ctx).Error) {
 		return templateData
@@ -195,7 +198,11 @@ func HandleModify(w http.ResponseWriter, r *http.Request) interface{} {
 		item.MentionRole = updated.MentionRole
 	}
 
-	_, err := item.UpdateG(ctx, boil.Whitelist("channel_id", "use_embeds", "filter_nsfw", "min_upvotes", "disabled", "mention_role"))
+	if item.ChannelID == 0 {
+		item.Disabled = true
+	}
+	_, err := item.UpdateG(ctx, boil.Whitelist("channel_id", "use_embeds", "filter_nsfw", "min_upvotes", "disabled"))
+
 	if web.CheckErr(templateData, err, "Failed saving item :'(", web.CtxLogger(ctx).Error) {
 		return templateData
 	}
