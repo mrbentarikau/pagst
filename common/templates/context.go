@@ -34,6 +34,7 @@ var (
 		"toDuration":    ToDuration,
 		"toRune":        ToRune,
 		"toByte":        ToByte,
+		"toSHA256":      ToSHA256,
 
 		// string manipulation
 		"joinStr":   joinStrings,

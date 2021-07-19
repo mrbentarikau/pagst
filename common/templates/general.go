@@ -2,6 +2,7 @@ package templates
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -1112,6 +1113,11 @@ func ToByte(from interface{}) []byte {
 	default:
 		return nil
 	}
+}
+
+func ToSHA256(from interface{}) string {
+	sum := sha256.Sum256(ToByte(from))
+	return fmt.Sprintf("%x", sum)
 }
 
 func tmplKindOf(input interface{}, flag ...bool) (string, error) {
