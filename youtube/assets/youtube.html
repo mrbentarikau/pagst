@@ -90,8 +90,7 @@
                                 </select>
                             </td>
                             <td>
-                                <select form="sub-item-{{.ID}}" id="mention-role" class="form-control" name="MentionRole"
-                                    data-requireperms-embed>
+                                <select form="mentionrole-feed-{{.ID}}" id="mention-role" class="form-control" name="MentionRole">
                                             {{roleOptions $dot.ActiveGuild.Roles nil .MentionRole "None selected"}}
                                 </select>
                             </td>
