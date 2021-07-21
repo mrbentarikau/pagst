@@ -150,6 +150,8 @@ type Context struct {
 
 	CurrentFrame *contextFrame
 
+	IsExecedByLeaveMessage bool
+
 	contextFuncsAdded bool
 }
 
@@ -294,6 +296,7 @@ func (c *Context) Execute(source string) (string, error) {
 
 func (c *Context) executeParsed() (string, error) {
 	parsed := c.CurrentFrame.parsedTemplate
+
 	if c.IsPremium {
 		parsed = parsed.MaxOps(MaxOpsPremium)
 	} else {
