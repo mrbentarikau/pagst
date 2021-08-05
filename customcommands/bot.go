@@ -773,6 +773,7 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	// pick a response and execute it
 	//f.Info("Custom command triggered")
 	f.Info("Custom command #", tmplCtx.Data["CCID"], " triggered")
+	//f.Debug("Custom command triggered")
 
 	chanMsg := cmd.Responses[rand.Intn(len(cmd.Responses))]
 	out, err := tmplCtx.Execute(chanMsg)
