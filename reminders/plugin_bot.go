@@ -2,6 +2,8 @@ package reminders
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/jonas747/dcmd/v3"
 	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
@@ -43,6 +46,7 @@ var cmds = []*commands.YAGCommand{
 		Arguments: []*dcmd.ArgDef{
 			{Name: "Time", Type: &commands.DurationArg{}},
 			{Name: "Message", Type: dcmd.String},
+			//{Name: "date", Help: "Enables specific date", Type: dcmd.String},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "repeat", Help: "Repeat the reminder at set duration"},
@@ -61,6 +65,36 @@ var cmds = []*commands.YAGCommand{
 			if parsed.Switch("repeat").Value != nil && parsed.Switch("repeat").Value.(bool) && fromNow.Hours() >= 1 {
 				repeatDuration = fromNow
 			}
+
+			/*if parsed.Switch("date").Value != nil {
+				dateArgs := strings.Split(parsed.Switch("date").Str(), "\x20")
+				if len(dateArgs) < 5 {
+					return "Needs at least 5 arguments", nil
+				}
+
+				loc := time.UTC
+				if len(dateArgs) >= 6 {
+					var err error
+					loc, err = time.LoadLocation(dateArgs[5])
+					if err != nil {
+						return nil, err
+					}
+				}
+				dateArgs = dateArgs[:5]
+				dateArgsInt := make([]int, len(dateArgs))
+				for k, v := range dateArgs {
+					toInt, err := strconv.ParseInt(v, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					dateArgsInt[k] = int(toInt)
+				}
+
+				newDate := time.Date(dateArgsInt[0], time.Month(dateArgsInt[1]), dateArgsInt[2], dateArgsInt[3], dateArgsInt[4], 0, 0, loc)
+				if newDate.Before(time.Now().Add(time.Hour * 24)) {
+					return "Date set is too early, needs to be at least 24h later from current time", nil
+				}
+			}*/
 
 			durString := common.HumanizeDuration(common.DurationPrecisionSeconds, fromNow)
 			when := time.Now().Add(fromNow)
@@ -84,16 +118,40 @@ var cmds = []*commands.YAGCommand{
 		Description:         "Lists your active reminders",
 		SlashCommandEnabled: true,
 		DefaultEnabled:      true,
+		ArgSwitches: []*dcmd.ArgDef{
+			{Name: "raw", Help: "Raw, legacy output"},
+		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			pagination := true
+			maxLength := 5
+
+			if parsed.Switches["raw"].Value != nil && parsed.Switches["raw"].Value.(bool) {
+				pagination = false
+			}
+
 			currentReminders, err := GetUserReminders(parsed.Author.ID)
 			if err != nil {
 				return nil, err
 			}
 
-			out := "Your reminders:\n"
-			out += stringReminders(currentReminders, false)
-			out += "\nRemove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above.\nTo clear all reminders, use `delreminder` with the `-a` switch."
-			return out, nil
+			if !pagination {
+				out := "Your reminders:\n"
+				out += stringReminders(currentReminders, false)
+				out += "```Remove a reminder with 'delreminder/rmreminder (id)' where id is the first number for each reminder above.\nTo clear all reminders, use 'delreminder' with the '-a' switch.```"
+				return out, nil
+			}
+
+			_, err = paginatedmessages.CreatePaginatedMessage(
+				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+					i := page - 1
+					paginatedEmbed := embedCreator(currentReminders, i, maxLength, 0, parsed)
+					return paginatedEmbed, nil
+				})
+			if err != nil {
+				return fmt.Sprintf("Something went wrong: %s", err), nil
+			}
+
+			return nil, nil
 		},
 	},
 	{
@@ -103,7 +161,17 @@ var cmds = []*commands.YAGCommand{
 		Description:         "Lists reminders in channel, only users with 'manage channel' permissions can use this.",
 		SlashCommandEnabled: true,
 		DefaultEnabled:      true,
+		ArgSwitches: []*dcmd.ArgDef{
+			{Name: "raw", Help: "Raw, legacy output"},
+		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			pagination := true
+			maxLength := 5
+
+			if parsed.Switches["raw"].Value != nil && parsed.Switches["raw"].Value.(bool) {
+				pagination = false
+			}
+
 			ok, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, parsed.ChannelID, parsed.GuildData.MS, discordgo.PermissionManageChannels)
 			if err != nil {
 				return nil, err
@@ -117,10 +185,24 @@ var cmds = []*commands.YAGCommand{
 				return nil, err
 			}
 
-			out := "Reminders in this channel:\n"
-			out += stringReminders(currentReminders, true)
-			out += "\nRemove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above"
-			return out, nil
+			if !pagination {
+				out := "Reminders in this channel:\n"
+				out += stringReminders(currentReminders, true)
+				out += "```Remove a reminder with 'delreminder/rmreminder (id)' where id is the first number for each reminder above```"
+				return out, nil
+			}
+
+			_, err = paginatedmessages.CreatePaginatedMessage(
+				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+					i := page - 1
+					paginatedEmbed := embedCreator(currentReminders, i, maxLength, 1, parsed)
+					return paginatedEmbed, nil
+				})
+			if err != nil {
+				return fmt.Sprintf("Something went wrong: %s", err), nil
+			}
+
+			return nil, nil
 		},
 	},
 	{
@@ -281,4 +363,41 @@ func limitString(s string) string {
 
 	runes := []rune(s)
 	return string(runes[:47]) + "..."
+}
+
+func embedCreator(currentReminders []*Reminder, i, ml, flag int, parsed *dcmd.Data) *discordgo.MessageEmbed {
+	//var username string
+	member := parsed.GuildData.MS
+	embedTitle := []string{"Your reminders:", "Reminders in this channel:"}
+	embedDescription := []string{"Remove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above.\nTo clear all reminders, use `delreminder` with the `-a` switch.", "Remove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above."}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       embedTitle[flag],
+		Color:       int(rand.Int63n(16777215)),
+		Description: embedDescription[flag],
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar),
+		},
+	}
+	for k, v := range currentReminders[i*ml:] {
+		var username string
+		if k < ml {
+			if flag > 0 {
+				remindGuy, _ := bot.GetMember(v.GuildID, v.UserIDInt())
+				username = "Unknown user"
+				if remindGuy != nil {
+					username = remindGuy.User.Username
+				}
+			}
+			repeat := ""
+			if v.Repeat > 0 {
+				repeat = "Repeated"
+			}
+			t := time.Unix(v.When, 0)
+			tStr := t.Format(time.RFC822)
+			timeFromNow := common.HumanizeTime(common.DurationPrecisionMinutes, t)
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{Name: fmt.Sprintf("**#%d** %s", v.ID, username), Value: fmt.Sprintf("<#%s>\n%s\n%s from now (%s)\n%s", v.ChannelID, v.Message, timeFromNow, tStr, repeat)})
+		}
+	}
+	return embed
 }
