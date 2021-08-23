@@ -1335,7 +1335,7 @@ func (c *Context) compileRegex(r string) (*regexp.Regexp, error) {
 		return cached, nil
 	}
 
-	if len(c.RegexCache) >= 10 {
+	if len(c.RegexCache) >= 20 {
 		return nil, ErrTooManyAPICalls
 	}
 
@@ -1553,6 +1553,50 @@ func (c *Context) tmplUnpinMessage(channel, message interface{}) (string, error)
 	}
 
 	return "", nil
+}
+
+func (c *Context) tmplLastMessages(channel interface{}, num ...int) ([]*dstate.MessageState, error) {
+	var fetchNum int
+	var sameChannel bool
+
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("last_messages", 1) {
+		return nil, ErrTooManyCalls
+	}
+
+	if len(num) < 1 {
+		fetchNum = 1
+	} else {
+		fetchNum = num[0]
+	}
+
+	if fetchNum > 10 {
+		fetchNum = 10
+	}
+
+	if channel == nil {
+		fetchNum = fetchNum + 1
+		sameChannel = true
+	}
+
+	cID := c.ChannelArg(channel)
+	if cID == 0 {
+		return nil, errors.New("Unknown channel")
+	}
+
+	msg, err := bot.GetMessages(c.GS.ID, cID, fetchNum, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if sameChannel {
+		msg = msg[1:]
+	}
+
+	return msg, err
 }
 
 func (c *Context) tmplSort(input interface{}, sortargs ...interface{}) (interface{}, error) {
