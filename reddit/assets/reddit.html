@@ -91,7 +91,11 @@
             </div>
             <div class="form-row mb-2">
                 <div class="form-group col">
-                    {{checkbox "use_embeds" (joinStr "" "format-new-slow-" .Slow) `Use embeds<small class="ml-2">(Videos won't be attached, but just linked)</small>` true}}
+                {{$formatNewSlow := "format-new-slow-"}}
+                {{if .Slow}}
+                    {{$formatNewSlow = "format-new-slow-active-"}}
+                {{end}}
+                {{checkbox "use_embeds" (joinStr "" $formatNewSlow .Slow) `Use embeds<small class="ml-2">(Videos won't be attached, but just linked)</small>` true}}
                 </div>
                 {{if .Slow}}
                 <div class="form-group col">

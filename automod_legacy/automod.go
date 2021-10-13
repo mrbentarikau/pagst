@@ -2,10 +2,10 @@ package automod_legacy
 
 import (
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/jonas747/discordgo/v2"
 )
 
 var logger = common.GetPluginLogger(&Plugin{})

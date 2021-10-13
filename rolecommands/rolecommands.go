@@ -9,13 +9,13 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/rolecommands/models"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/tidwall/buntdb"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )

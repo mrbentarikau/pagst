@@ -11,8 +11,6 @@ import (
 	"unicode/utf8"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
@@ -23,6 +21,8 @@ import (
 	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/verification/models"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
@@ -280,6 +280,18 @@ func (p *Plugin) handleUserVerifiedScheduledEvent(ms *dstate.MemberState, guildI
 	return false, nil
 }
 
+func (p *Plugin) checkMemberAlreadyVerified(ms *dstate.MemberState, conf *models.VerificationConfig) bool {
+	if !common.ContainsInt64Slice(ms.Member.Roles, conf.VerifiedRole) {
+		return false
+	}
+
+	err := p.clearScheduledEvents(context.Background(), ms.GuildID, ms.User.ID)
+	if err != nil {
+		logger.WithError(err).WithField("guild", ms.GuildID).WithField("user", ms.User.ID).Error("failed clearing past scheduled warn/kick events")
+	}
+	return true
+}
+
 func (p *Plugin) clearScheduledEvents(ctx context.Context, guildID, userID int64) error {
 	_, err := seventsmodels.ScheduledEvents(
 		qm.Where("(event_name='verification_user_warn' OR event_name='verification_user_kick')"),
@@ -339,6 +351,10 @@ func (p *Plugin) CheckBanned(guildID int64, users []*discordgo.User) (*discordgo
 }
 
 func (p *Plugin) handleWarnUserVerification(ms *dstate.MemberState, guildID int64, conf *models.VerificationConfig, rawData interface{}) (retry bool, err error) {
+	if p.checkMemberAlreadyVerified(ms, conf) {
+		return false, nil
+	}
+
 	gs := bot.State.GetGuild(guildID)
 	if gs == nil {
 		return false, nil
@@ -389,6 +405,9 @@ func (p *Plugin) sendWarning(ms *dstate.MemberState, gs *dstate.GuildSet, token 
 }
 
 func (p *Plugin) handleKickUser(ms *dstate.MemberState, guildID int64, conf *models.VerificationConfig, rawData interface{}) (retry bool, err error) {
+	if p.checkMemberAlreadyVerified(ms, conf) {
+		return false, nil
+	}
 
 	dataCast := rawData.(*VerificationEventData)
 

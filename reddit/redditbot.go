@@ -10,14 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/go-reddit"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/feeds"
 	"github.com/mrbentarikau/pagst/reddit/models"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/go-reddit"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -206,7 +206,7 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 		parseMentions := []discordgo.AllowedMentionType{}
 		if len(item.MentionRole) > 0 {
 			parseMentions = []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles}
-			content = fmt.Sprintf("Hey <@&%d>, a new Reddit post!\n", item.MentionRole[0])
+			content += "Hey <@&" + strconv.FormatInt(item.MentionRole[0], 10) + ">, a new Reddit post!\n"
 		}
 
 		qm := &mqueue.QueuedElement{

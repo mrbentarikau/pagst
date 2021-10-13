@@ -20,10 +20,10 @@ import (
 	"github.com/volatiletech/null"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2/models"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/volatiletech/sqlboiler/boil"
 )
 

@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/mediocregopher/radix/v3"
 )
 
@@ -32,13 +32,13 @@ var Command = &commands.YAGCommand{
 		{Name: "Expression", Type: dcmd.String},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		{Name: "appID", Help: "Add your Wolfram|Alpha appID case sensitive"},
+		{Name: "appid", Help: "Add your Wolfram|Alpha appID case sensitive"},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var directURL = "https://www.wolframalpha.com/input/?i="
 
-		if data.Switches["appID"].Value != nil && data.Switches["appID"].Value.(bool) {
+		if data.Switches["appid"].Value != nil && data.Switches["appid"].Value.(bool) {
 
 			targetID := data.Author.ID
 			target, _ := bot.GetMember(data.GuildData.GS.ID, targetID)
@@ -114,10 +114,21 @@ func requestWolframAPI(input, wolframID string) (string, error) {
 		return "Wolfram has no good answer for this query", nil
 	}
 
-	result = waQuery.Queryresult.Pod[1].Subpod.Plaintext
-	if waQuery.Queryresult.Pod[2].Title == "Decimal approximation" {
-		result += "\nApproximation: " + waQuery.Queryresult.Pod[2].Subpod.Plaintext
+	result = waQuery.Queryresult.Pod[1].Subpod[0].Plaintext
+	if result == "" {
+		result = waQuery.Queryresult.Pod[0].Subpod[0].Plaintext
 	}
+	if len(waQuery.Queryresult.Pod) > 2 {
+		if waQuery.Queryresult.Pod[2].Title == "Decimal approximation" {
+			result += "\n\nApproximation: " + waQuery.Queryresult.Pod[2].Subpod[0].Plaintext
+		}
+		if waQuery.Queryresult.Pod[2].Title == "Unit conversions" {
+			result += "\n\nUnit conversions:\n"
+			for _, v := range waQuery.Queryresult.Pod[2].Subpod {
+				result += fmt.Sprintf("%s\n", v.Plaintext)
+			}
+		}
 
+	}
 	return result, nil
 }

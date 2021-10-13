@@ -11,10 +11,10 @@ import (
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mediocregopher/radix/v3"
 
-	"github.com/jonas747/dshardorchestrator/v2"
-	"github.com/jonas747/dshardorchestrator/v2/node"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/dshardorchestrator/v3"
+	"github.com/jonas747/dshardorchestrator/v3/node"
+	"github.com/jonas747/dstate/v4"
 )
 
 func init() {

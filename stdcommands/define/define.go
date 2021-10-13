@@ -3,20 +3,22 @@ package define
 import (
 	"fmt"
 	"math/rand"
+	"net/url"
+	"regexp"
 
-	"github.com/dpatrie/urbandictionary"
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/dpatrie/urbandictionary"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
 )
 
 var Command = &commands.YAGCommand{
 	CmdCategory:  commands.CategoryFun,
 	Name:         "Define",
 	Aliases:      []string{"df"},
-	Description:  "Look up an urban dictionary definition",
+	Description:  "Look up an urban dictionary definition, default paginated view.",
 	RequiredArgs: 1,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Topic", Type: dcmd.String},
@@ -73,14 +75,14 @@ func embedCreator(udResult []urbandictionary.Result, i int) *discordgo.MessageEm
 	}
 	example := "None given"
 	if len(udResult[i].Example) > 0 {
-		example = udResult[i].Example
+		example = linkReferencedTerms(udResult[i].Example)
 	}
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
 			Name: udResult[i].Word,
 			URL:  udResult[i].Permalink,
 		},
-		Description: fmt.Sprintf("**Definition**: %s", definition),
+		Description: fmt.Sprintf("**Definition**: %s", linkReferencedTerms(definition)),
 		Color:       int(rand.Int63n(16777215)),
 		Fields: []*discordgo.MessageEmbedField{
 			&discordgo.MessageEmbedField{Name: "Example:", Value: example},
@@ -93,4 +95,15 @@ func embedCreator(udResult []urbandictionary.Result, i int) *discordgo.MessageEm
 	}
 
 	return embed
+}
+
+const urbanDictionaryDefineEndpoint = "https://www.urbandictionary.com/define.php?term="
+
+var termRefRe = regexp.MustCompile(`\[.+?\]`)
+
+func linkReferencedTerms(def string) string {
+	return termRefRe.ReplaceAllStringFunc(def, func(match string) string {
+		term := match[1 : len(match)-1]
+		return fmt.Sprintf("[%s](%s%s)", term, urbanDictionaryDefineEndpoint, url.QueryEscape(term))
+	})
 }

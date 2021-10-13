@@ -19,10 +19,10 @@ jobs: # basic units of work in a run
             - v1-pkg-cache
      
       - run: 
-          name: main pagstdb binary build
+          name: main yagpdb binary build
           command: |
             VERSION=$(git describe --tags)
-            cd cmd/pagst
+            cd cmd/yagpdb
             go install -i -ldflags "-X github.com/mrbentarikau/pagst/common.VERSION=${VERSION}"
             cd -
       - run: cd cmd/shardorchestrator && go install -i && cd -
@@ -34,18 +34,6 @@ jobs: # basic units of work in a run
           key: v1-pkg-cache
           paths:
             - "/go/pkg"
-
-      - run:
-          name: Prepare arifacts
-          command: |
-            mkdir -p cmd/pagst/templates/plugins
-            cp */assets/* cmd/pagst/templates/plugins/
-
-            tar -cvf misc_artifacts.tar cmd/pagst/templates/ cmd/pagst/static/
-            
-      - store_artifacts:
-          path: misc_artifacts.tar
-          destination: misc
 
       - store_artifacts:
           path: /go/bin/

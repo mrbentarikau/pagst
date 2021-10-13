@@ -5,10 +5,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
+	"github.com/jonas747/dcmd/v4"
 )
 
 var Command = &commands.YAGCommand{

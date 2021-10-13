@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
+	"github.com/jonas747/discordgo/v2"
 )
 
 var (

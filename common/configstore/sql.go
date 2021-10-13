@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jinzhu/gorm"
 	"golang.org/x/net/context"
 )
 

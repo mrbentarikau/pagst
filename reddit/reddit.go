@@ -8,12 +8,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jonas747/go-reddit"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/reddit/models"
+	"github.com/jonas747/go-reddit"
 )
 
 const (

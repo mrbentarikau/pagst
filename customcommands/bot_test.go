@@ -3,9 +3,9 @@ package customcommands
 import (
 	"testing"
 
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/customcommands/models"
+	"github.com/jonas747/discordgo/v2"
 )
 
 func TestCheckMatch(t *testing.T) {

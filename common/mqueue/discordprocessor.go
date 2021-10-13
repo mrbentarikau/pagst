@@ -2,12 +2,14 @@ package mqueue
 
 import (
 	"encoding/json"
+	"regexp"
+	"strings"
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -145,9 +147,14 @@ func trySendWebhook(l *logrus.Entry, elem *QueuedElement) (err error) {
 	wh := whI.(*webhook)
 
 	webhookParams := &discordgo.WebhookParams{
-		Username:        elem.WebhookUsername,
-		Content:         elem.MessageStr,
-		AllowedMentions: &discordgo.AllowedMentions{},
+		Username: elem.WebhookUsername,
+		Content:  elem.MessageStr,
+		//AllowedMentions: &discordgo.AllowedMentions{},
+	}
+
+	r := regexp.MustCompile("@everyone")
+	if r.MatchString(webhookParams.Content) {
+		webhookParams.Content = strings.Replace(webhookParams.Content, "@everyone", "everyone", -1)
 	}
 
 	if elem.MessageEmbed != nil {

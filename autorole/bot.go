@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
@@ -17,6 +15,8 @@ import (
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	scheduledEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/mediocregopher/radix/v3"
 )
 

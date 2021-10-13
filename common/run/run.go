@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/botrest"
 	"github.com/mrbentarikau/pagst/commands"
@@ -24,6 +23,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/sentryhook"
 	"github.com/mrbentarikau/pagst/feeds"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/getsentry/sentry-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -102,7 +102,7 @@ func Init() {
 
 	log.Info("Starting YAGPDB version " + common.VERSION)
 
-	err := common.CoreInit()
+	err := common.CoreInit(true)
 	if err != nil {
 		log.WithError(err).Fatal("Failed running core init ")
 	}

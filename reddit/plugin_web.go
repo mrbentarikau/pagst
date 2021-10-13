@@ -2,6 +2,7 @@ package reddit
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -9,17 +10,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/reddit/models"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 	"goji.io"
 	"goji.io/pat"
 )
+
+//go:embed assets/reddit.html
+var PageHTML string
 
 type CtxKey int
 
@@ -54,7 +58,7 @@ var (
 )
 
 func (p *Plugin) InitWeb() {
-	web.LoadHTMLTemplate("../../reddit/assets/reddit.html", "templates/plugins/reddit.html")
+	web.AddHTMLTemplate("reddit/assets/reddit.html", PageHTML)
 	web.AddSidebarItem(web.SidebarCategoryFeeds, &web.SidebarItem{
 		Name: "Reddit",
 		URL:  "reddit",
@@ -132,12 +136,13 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 	}
 
 	watchItem := &models.RedditFeed{
-		GuildID:    activeGuild.ID,
-		ChannelID:  newElem.Channel,
-		Subreddit:  strings.ToLower(strings.TrimSpace(newElem.Subreddit)),
-		UseEmbeds:  newElem.UseEmbeds,
-		FilterNSFW: newElem.NSFWMode,
-		Disabled:   false,
+		GuildID:     activeGuild.ID,
+		ChannelID:   newElem.Channel,
+		Subreddit:   strings.ToLower(strings.TrimSpace(newElem.Subreddit)),
+		UseEmbeds:   newElem.UseEmbeds,
+		FilterNSFW:  newElem.NSFWMode,
+		MentionRole: newElem.MentionRole,
+		Disabled:    false,
 	}
 
 	if newElem.Slow {
@@ -201,7 +206,7 @@ func HandleModify(w http.ResponseWriter, r *http.Request) interface{} {
 	if item.ChannelID == 0 {
 		item.Disabled = true
 	}
-	_, err := item.UpdateG(ctx, boil.Whitelist("channel_id", "use_embeds", "filter_nsfw", "min_upvotes", "disabled"))
+	_, err := item.UpdateG(ctx, boil.Whitelist("channel_id", "use_embeds", "filter_nsfw", "min_upvotes", "disabled", "mention_role"))
 
 	if web.CheckErr(templateData, err, "Failed saving item :'(", web.CtxLogger(ctx).Error) {
 		return templateData

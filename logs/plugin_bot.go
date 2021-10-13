@@ -11,14 +11,14 @@ import (
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/common/config"
 
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/logs/models"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -459,11 +459,6 @@ func HandlePresenceUpdate(evt *eventsystem.EventData) {
 	}
 
 	if pu.User.Username != "" && pu.User.Username != ms.User.Username {
-		queueEvt(pu)
-		return
-	}
-
-	if pu.Nick != ms.Member.Nick {
 		queueEvt(pu)
 		return
 	}

@@ -1,13 +1,11 @@
 package globalrl
 
 import (
-	"time"
-
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
 )
 
 var Command = &commands.YAGCommand{
@@ -25,7 +23,7 @@ var Command = &commands.YAGCommand{
 			TooManyRequests: &discordgo.TooManyRequests{
 				Bucket:     "wewsss",
 				Message:    "Too many!",
-				RetryAfter: time.Duration(5000),
+				RetryAfter: 5,
 			},
 		}
 

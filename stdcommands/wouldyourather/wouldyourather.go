@@ -7,10 +7,10 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
 )
 
 var Command = &commands.YAGCommand{
@@ -29,7 +29,7 @@ var Command = &commands.YAGCommand{
 			Author: &discordgo.MessageEmbedAuthor{
 				Name:    "Would you rather?",
 				URL:     "http://either.io",
-				IconURL: "https://pagst.xyz/static/icons/favicon-16x16.png",
+				IconURL: "https://pagst.xyz/static/icons/favicon-32x32.png",
 			},
 			Color:       int(rand.Int63n(16777215)),
 			Description: fmt.Sprintf("**EITHER...**\n🇦 %s\n\n **OR...**\n🇧 %s", q1, q2),

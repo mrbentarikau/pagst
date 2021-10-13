@@ -1,16 +1,12 @@
 package simpleembed
 
 import (
-	"strconv"
-	"strings"
-
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"golang.org/x/image/colornames"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 )
 
 var Command = &commands.YAGCommand{
@@ -39,7 +35,9 @@ var Command = &commands.YAGCommand{
 	},
 	SlashCommandEnabled: true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+
 		content := data.Switch("content").Str()
+
 		embed := &discordgo.MessageEmbed{
 			Title:       data.Switch("title").Str(),
 			Description: data.Switch("desc").Str(),
@@ -47,7 +45,7 @@ var Command = &commands.YAGCommand{
 		}
 
 		if color := data.Switch("color").Str(); color != "" {
-			parsedColor, ok := ParseColor(color)
+			parsedColor, ok := common.ParseColor(color)
 			if !ok {
 				return "Unknown color: " + color + ", can be either hex color code or name for a known color", nil
 			}
@@ -105,8 +103,9 @@ var Command = &commands.YAGCommand{
 			AllowedMentions: discordgo.AllowedMentions{},
 		}
 		_, err := common.BotSession.ChannelMessageSendComplex(cID, messageSend)
+
 		if err != nil {
-			return err, err
+			return "HTTP Error 400, failed parsing input switches.\n```" + err.Error() + "```", err
 		}
 
 		if cID != data.ChannelID {
@@ -115,28 +114,4 @@ var Command = &commands.YAGCommand{
 
 		return nil, nil
 	},
-}
-
-func ParseColor(raw string) (int, bool) {
-	if strings.HasPrefix(raw, "#") {
-		raw = raw[1:]
-	}
-
-	// try to parse as hex color code first
-	parsed, err := strconv.ParseInt(raw, 16, 32)
-	if err == nil {
-		return int(parsed), true
-	}
-
-	// look up the color code table
-	for _, v := range colornames.Names {
-		if strings.EqualFold(v, raw) {
-			cStruct := colornames.Map[v]
-
-			color := (int(cStruct.R) << 16) | (int(cStruct.G) << 8) | int(cStruct.B)
-			return color, true
-		}
-	}
-
-	return 0, false
 }

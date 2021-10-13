@@ -9,8 +9,8 @@ import (
 
 	"github.com/mrbentarikau/pagst/common/config"
 
-	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/jonas747/dcmd/v4"
 )
 
 func GenCommandsDocs() {

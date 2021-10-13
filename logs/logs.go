@@ -10,11 +10,11 @@ import (
 	"strings"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/logs/models"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -91,7 +91,7 @@ func CreateChannelLog(ctx context.Context, config *models.GuildLoggingConfig, gu
 	}
 
 	// Make a light copy of the channel
-	channel := gs.GetChannel(channelID)
+	channel := gs.GetChannelOrThread(channelID)
 	if channel == nil {
 		return nil, errors.New("Unknown channel")
 	}

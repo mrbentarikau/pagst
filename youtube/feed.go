@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/feeds"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/oauth2/google"
@@ -341,10 +341,10 @@ func (p *Plugin) CheckVideo(videoID string, channelID string) error {
 
 	item := resp.Items[0]
 
-	if item.Snippet.LiveBroadcastContent != "none" {
-		// ignore livestreams for now, might enable them at some point
-		return nil
-	}
+	//if item.Snippet.LiveBroadcastContent != "none" {
+	// ignore livestreams for now, might enable them at some point
+	//		return nil
+	//	}
 
 	parsedPublishedAt, err := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
 	if err != nil {

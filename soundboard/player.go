@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dca"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/dca/v2"
+	"github.com/jonas747/discordgo/v2"
 )
 
 type PlayRequest struct {

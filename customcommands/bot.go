@@ -14,19 +14,15 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/jonas747/template"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/premium"
+	"github.com/jonas747/template"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
-	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/keylock"
@@ -37,6 +33,12 @@ import (
 	"github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/customcommands/models"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
+
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
+
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
 	"github.com/volatiletech/null"
@@ -331,7 +333,7 @@ func handleDelayedRunCC(evt *schEventsModels.ScheduledEvent, data interface{}) (
 		return true, nil
 	}
 
-	cs := gs.GetChannel(dataCast.ChannelID)
+	cs := gs.GetChannelOrThread(dataCast.ChannelID)
 	if cs == nil {
 		// don't reschedule if channel is deleted, make sure its actually not there, and not just a discord downtime
 		if !gs.Available {
@@ -540,7 +542,7 @@ func ExecuteCustomCommandFromReaction(cc *models.CustomCommand, gs *dstate.Guild
 
 func HandleMessageCreate(evt *eventsystem.EventData) {
 	mc := evt.MessageCreate()
-	cs := evt.CS()
+	cs := evt.CSOrThread()
 
 	if !evt.HasFeatureFlag(featureFlagHasCommands) {
 		return
@@ -597,7 +599,7 @@ func findMessageTriggerCustomCommands(ctx context.Context, cs *dstate.ChannelSta
 
 	var matched []*TriggeredCC
 	for _, cmd := range cmds {
-		if !CmdRunsInChannel(cmd, mc.ChannelID) || !CmdRunsForUser(cmd, ms) {
+		if !CmdRunsInChannel(cmd, common.ChannelOrThreadParentID(cs)) || !CmdRunsForUser(cmd, ms) {
 			continue
 		}
 
@@ -633,7 +635,7 @@ func findReactionTriggerCustomCommands(ctx context.Context, cs *dstate.ChannelSt
 
 	var matched []*TriggeredCC
 	for _, cmd := range cmds {
-		if !CmdRunsInChannel(cmd, reaction.ChannelID) {
+		if !CmdRunsInChannel(cmd, common.ChannelOrThreadParentID(cs)) {
 			continue
 		}
 
@@ -751,7 +753,7 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 		"channel_name": csCop.Name,
 	})
 
-	// do not allow concurrect executions of the same custom command, to prevent most common kinds of abuse
+	// do not allow concurrent executions of the same custom command, to prevent most common kinds of abuse
 	lockKey := CCExecKey{
 		GuildID: cmd.GuildID,
 		CCID:    cmd.LocalID,
@@ -779,7 +781,7 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	out, err := tmplCtx.Execute(chanMsg)
 
 	if utf8.RuneCountInString(out) > 2000 {
-		out = "Custom command response was longer than 2k (contact an admin on the server...)"
+		out = "Custom command (#" + discordgo.StrID(cmd.LocalID) + ") response was longer than 2k (contact an admin on the server...)"
 	}
 
 	go updatePostCommandRan(cmd, err)

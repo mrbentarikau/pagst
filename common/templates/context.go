@@ -12,12 +12,12 @@ import (
 	"unicode/utf8"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
-	"github.com/jonas747/template"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
+	"github.com/jonas747/template"
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
 )
@@ -35,17 +35,19 @@ var (
 		"toRune":        ToRune,
 		"toByte":        ToByte,
 		"toSHA256":      ToSHA256,
+		"hexToDecimal":  HexToDecimal,
 
 		// string manipulation
-		"joinStr":   joinStrings,
-		"lower":     strings.ToLower,
-		"upper":     strings.ToUpper,
-		"slice":     slice,
-		"urlescape": url.PathEscape,
-		"split":     strings.Split,
-		"title":     strings.Title,
-		"hasPrefix": strings.HasPrefix,
-		"hasSuffix": strings.HasSuffix,
+		"joinStr":     joinStrings,
+		"lower":       strings.ToLower,
+		"upper":       strings.ToUpper,
+		"slice":       slice,
+		"urlescape":   url.PathEscape,
+		"urlunescape": url.PathUnescape,
+		"split":       strings.Split,
+		"title":       strings.Title,
+		"hasPrefix":   strings.HasPrefix,
+		"hasSuffix":   strings.HasSuffix,
 
 		// math
 		"add":               add,
@@ -97,6 +99,7 @@ var (
 		"seq":         sequence,
 		"currentTime": tmplCurrentTime,
 		"newDate":     tmplNewDate,
+		"weekNumber":  tmplWeekNumber,
 
 		"humanizeDurationHours":   tmplHumanizeDurationHours,
 		"humanizeDurationMinutes": tmplHumanizeDurationMinutes,
@@ -165,7 +168,7 @@ type contextFrame struct {
 	DelResponse bool
 
 	DelResponseDelay         int
-	EmebdsToSend             []*discordgo.MessageEmbed
+	EmbedsToSend             []*discordgo.MessageEmbed
 	AddResponseReactionNames []string
 
 	isNestedTemplate bool
@@ -216,6 +219,12 @@ func (c *Context) setupBaseData() {
 		channel := CtxChannelFromCS(c.CurrentFrame.CS)
 		c.Data["Channel"] = channel
 		c.Data["channel"] = channel
+
+		if parentID := common.ChannelOrThreadParentID(c.CurrentFrame.CS); parentID != c.CurrentFrame.CS.ID {
+			c.Data["ChannelOrThreadParent"] = CtxChannelFromCS(c.GS.GetChannelOrThread(parentID))
+		} else {
+			c.Data["ChannelOrThreadParent"] = channel
+		}
 	}
 
 	if c.MS != nil {
@@ -398,13 +407,25 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 		}
 	}
 
-	for _, v := range c.CurrentFrame.EmebdsToSend {
+	isDM := c.CurrentFrame.SendResponseInDM || (c.CurrentFrame.CS != nil && c.CurrentFrame.CS.IsPrivate())
+
+	for _, v := range c.CurrentFrame.EmbedsToSend {
+		if isDM {
+			v.Footer = &discordgo.MessageEmbedFooter{
+				Text:    "Custom Command DM from the server " + c.GS.Name,
+				IconURL: c.GS.Icon,
+			}
+		}
 		common.BotSession.ChannelMessageSendEmbed(channelID, v)
 	}
 
 	if strings.TrimSpace(content) == "" || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
 		// no point in sending the response if it gets deleted immedietely
 		return nil, nil
+	}
+
+	if isDM {
+		content = "Custom Command DM from the server **" + c.GS.Name + "**\n" + content
 	}
 
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
@@ -502,6 +523,7 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("editMessageNoEscape", c.tmplEditMessage(false))
 	c.addContextFunc("pinMessage", c.tmplPinMessage)
 	c.addContextFunc("unpinMessage", c.tmplUnpinMessage)
+	c.addContextFunc("lastMessages", c.tmplLastMessages)
 
 	// Mentions
 	c.addContextFunc("mentionEveryone", c.tmplMentionEveryone)
@@ -537,6 +559,8 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getMessage", c.tmplGetMessage)
 	c.addContextFunc("getMember", c.tmplGetMember)
 	c.addContextFunc("getChannel", c.tmplGetChannel)
+	c.addContextFunc("getThread", c.tmplGetThread)
+	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
 	c.addContextFunc("getRole", c.tmplGetRole)
 	c.addContextFunc("addReactions", c.tmplAddReactions)
 	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)

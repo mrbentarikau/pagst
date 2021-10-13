@@ -2,6 +2,7 @@ package logs
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"html/template"
@@ -9,18 +10,24 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot/botrest"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/logs/models"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"goji.io"
 	"goji.io/pat"
 )
+
+//go:embed assets/logs_control_panel.html
+var PageHTMLControlPanel string
+
+//go:embed assets/logs_view.html
+var PageHTMLView string
 
 var AuthorColors = []string{
 	"7c7cff", // blue-ish
@@ -54,8 +61,8 @@ var (
 )
 
 func (lp *Plugin) InitWeb() {
-	web.LoadHTMLTemplate("../../logs/assets/logs_control_panel.html", "templates/plugins/logs_control_panel.html")
-	web.LoadHTMLTemplate("../../logs/assets/logs_view.html", "templates/plugins/logs_view.html")
+	web.AddHTMLTemplate("logs/assets/logs_control_panel.html", PageHTMLControlPanel)
+	web.AddHTMLTemplate("logs/assets/logs_view.html", PageHTMLView)
 
 	web.AddSidebarItem(web.SidebarCategoryTools, &web.SidebarItem{
 		Name: "Logging",

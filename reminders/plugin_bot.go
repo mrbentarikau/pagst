@@ -9,15 +9,16 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/jinzhu/gorm"
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
-	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	seventsmodels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
+	"github.com/jinzhu/gorm"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
+
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 )
 
 var logger = common.GetPluginLogger(&Plugin{})

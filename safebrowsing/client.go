@@ -3,8 +3,8 @@ package safebrowsing
 import (
 	"emperror.dev/errors"
 	"encoding/json"
-	"github.com/google/safebrowsing"
 	"github.com/mrbentarikau/pagst/common/backgroundworkers"
+	"github.com/google/safebrowsing"
 	"io/ioutil"
 	"net/http"
 	"strings"

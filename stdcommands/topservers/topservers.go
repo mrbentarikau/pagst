@@ -3,10 +3,10 @@ package topservers
 import (
 	"fmt"
 
-	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/bot/models"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/dcmd/v4"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
 

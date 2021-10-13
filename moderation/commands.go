@@ -9,16 +9,16 @@ import (
 	"unicode/utf8"
 
 	"emperror.dev/errors"
-	"github.com/jinzhu/gorm"
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
+	"github.com/jinzhu/gorm"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 )
 
 func MBaseCmd(cmdData *dcmd.Data, targetID int64) (config *Config, targetUser *discordgo.User, err error) {
@@ -50,7 +50,7 @@ func MBaseCmd(cmdData *dcmd.Data, targetID int64) (config *Config, targetUser *d
 
 }
 
-func MBaseCmdSecond(cmdData *dcmd.Data, reason string, reasonArgOptional bool, neededPerm int, additionalPermRoles []int64, enabled bool) (oreason string, err error) {
+func MBaseCmdSecond(cmdData *dcmd.Data, reason string, reasonArgOptional bool, neededPerm int64, additionalPermRoles []int64, enabled bool) (oreason string, err error) {
 	cmdName := cmdData.Cmd.Trigger.Names[0]
 	oreason = reason
 	if !enabled {
@@ -190,7 +190,6 @@ var ModerationCommands = []*commands.YAGCommand{
 			{Name: "force", Help: "Force Unlock Permission Overwrite", Default: false},
 			{Name: "d", Help: "Duration", Type: &commands.DurationArg{}},
 		},
-		RequiredDiscordPermsHelp: "(ManageRoles)",
 		RunFunc: func(data *dcmd.Data) (interface{}, error) {
 			config, _, err := MBaseCmd(data, 0)
 			if err != nil {
@@ -249,7 +248,6 @@ var ModerationCommands = []*commands.YAGCommand{
 			{Name: "all", Help: "All Flags"},
 			{Name: "force", Help: "Force Unlock Permission Overwrite", Default: false},
 		},
-		RequiredDiscordPermsHelp: "(ManageRoles)",
 		RunFunc: func(data *dcmd.Data) (interface{}, error) {
 			config, _, err := MBaseCmd(data, 0)
 			if err != nil {
@@ -580,8 +578,10 @@ var ModerationCommands = []*commands.YAGCommand{
 			{Name: "i", Help: "Regex case insensitive"},
 			{Name: "nopin", Help: "Ignore pinned messages"},
 			{Name: "bot", Help: "Only remove message made by bots"},
+			{Name: "notbot", Help: "Only remove message made by users"},
 			{Name: "a", Help: "Only remove messages with attachments"},
 			{Name: "to", Help: "Stop at this msg ID", Type: dcmd.BigInt},
+			{Name: "ignoreuser", Help: "Ignore flagged user"},
 		},
 		RequiredDiscordPermsHelp: "(ManageMessages)",
 		RequireBotPerms:          [][]int64{{discordgo.PermissionAdministrator}, {discordgo.PermissionManageServer}, {discordgo.PermissionManageMessages}},
@@ -694,6 +694,18 @@ var ModerationCommands = []*commands.YAGCommand{
 				filtered = true
 			}
 
+			var onlyNotBots bool
+			if parsed.Switches["notbot"].Value != nil && parsed.Switches["notbot"].Value.(bool) {
+				onlyNotBots = true
+				filtered = true
+			}
+
+			var ignoreUser bool
+			if parsed.Switches["ignoreuser"].Value != nil && parsed.Switches["ignoreuser"].Value.(bool) {
+				ignoreUser = true
+				filtered = true
+			}
+
 			// Check if we should only delete messages with attachments
 			attachments := false
 			if parsed.Switches["a"].Value != nil && parsed.Switches["a"].Value.(bool) {
@@ -718,7 +730,11 @@ var ModerationCommands = []*commands.YAGCommand{
 			time.Sleep(time.Second)
 
 			//numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, userFilter, re, invertRegexMatch, toID, ma, minAge, pe, attachments, num, limitFetch)
-			numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, triggerID, userFilter, re, invertRegexMatch, toID, ma, minAge, pe, onlyBots, attachments, num, limitFetch)
+			numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, triggerID, userFilter, re, invertRegexMatch, toID, ma, minAge, pe, onlyBots, onlyNotBots, ignoreUser, attachments, num, limitFetch)
+			/*deleteMessageWord := "messages"
+			if numDeleted == 1 {
+				deleteMessageWord = "message"
+			}*/
 			return dcmd.NewTemporaryResponse(time.Second*5, fmt.Sprintf("Deleted %d message(s)! :')", numDeleted), true), err
 		},
 	},
@@ -1169,7 +1185,7 @@ var ModerationCommands = []*commands.YAGCommand{
 }
 
 //func AdvancedDeleteMessages(guildID, channelID int64, filterUser int64, regex string, invertRegexMatch bool, toID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable bool, attachmentFilterEnable bool, deleteNum, fetchNum int) (int, error) {
-func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUser int64, regex string, invertRegexMatch bool, toID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable bool, onlyBotsFilterEnable bool, attachmentFilterEnable bool, deleteNum, fetchNum int) (int, error) {
+func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUser int64, regex string, invertRegexMatch bool, toID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable, onlyBotsFilterEnable, onlyNotBotsFilterEnable, ignoreUserFilterEnabled, attachmentFilterEnable bool, deleteNum, fetchNum int) (int, error) {
 	var compiledRegex *regexp.Regexp
 	if regex != "" {
 		// Start by compiling the regex
@@ -1207,7 +1223,11 @@ func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUse
 			continue
 		}
 
-		if filterUser != 0 && msgs[i].Author.ID != filterUser {
+		if ignoreUserFilterEnabled && msgs[i].Author.ID == filterUser {
+			continue
+		}
+
+		if !ignoreUserFilterEnabled && filterUser != 0 && msgs[i].Author.ID != filterUser {
 			continue
 		}
 
@@ -1249,6 +1269,11 @@ func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUse
 			continue
 		}
 
+		// Check if only notbots deletion
+		if onlyNotBotsFilterEnable && msgs[i].Author.Bot {
+			continue
+		}
+
 		// Continue only if current msg ID is < toID
 		if toID > msgs[i].ID {
 			continue
@@ -1265,10 +1290,6 @@ func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUse
 		if len(toDelete) >= deleteNum || len(toDelete) >= 100 {
 			break
 		}
-	}
-
-	if len(toDelete) < 1 {
-		return 0, nil
 	}
 
 	if len(toDelete) < 1 {

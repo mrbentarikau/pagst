@@ -13,10 +13,8 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dutil"
-
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/discordgo/v2"
 )
 
 // dictionary creates a map[string]interface{} from the given parameters by
@@ -750,7 +748,7 @@ func tmplShiftRight(arg1, arg2 int64) int64 {
 }
 
 func roleIsAbove(a, b *discordgo.Role) bool {
-	return dutil.IsRoleAbove(a, b)
+	return common.IsRoleAbove(a, b)
 }
 
 func randInt(args ...interface{}) int {
@@ -1121,6 +1119,14 @@ func ToSHA256(from interface{}) string {
 	return fmt.Sprintf("%x", sum)
 }
 
+func HexToDecimal(from string) interface{} {
+	parsedColor, ok := common.ParseColor(from)
+	if !ok {
+		return "Unknown color: " + from + ", can be either hex color code or name for a known color"
+	}
+	return parsedColor
+}
+
 func tmplKindOf(input interface{}, flag ...bool) (string, error) {
 
 	switch len(flag) {
@@ -1330,6 +1336,12 @@ func tmplNewDate(year, monthInt, day, hour, min, sec int, location ...string) (t
 	}
 
 	return time.Date(year, month, day, hour, min, sec, 0, loc), nil
+}
+
+func tmplWeekNumber(t time.Time) int {
+	_, weekNumber := t.ISOWeek()
+
+	return weekNumber
 }
 
 func tmplHumanizeDurationHours(in interface{}) string {

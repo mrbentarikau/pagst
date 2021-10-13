@@ -4,9 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/timezonecompanion"
+	"github.com/jonas747/dcmd/v4"
 	"github.com/tkuchiki/go-timezone"
 )
 

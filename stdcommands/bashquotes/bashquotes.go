@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/jonas747/dcmd/v4"
 )
 
 var Command = &commands.YAGCommand{

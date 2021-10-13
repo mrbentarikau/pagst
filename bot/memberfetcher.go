@@ -1,9 +1,9 @@
 package bot
 
 import (
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot/shardmemberfetcher"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/dstate/v4"
 )
 
 var (

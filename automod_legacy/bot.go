@@ -3,8 +3,6 @@ package automod_legacy
 import (
 	"time"
 
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
@@ -12,6 +10,8 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/moderation"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/karlseguin/ccache"
 )
 
@@ -79,7 +79,7 @@ func CheckMessage(evt *eventsystem.EventData, m *discordgo.Message) bool {
 		return false
 	}
 
-	cs := evt.GS.GetChannel(m.ChannelID)
+	cs := evt.GS.GetChannelOrThread(m.ChannelID)
 	if cs == nil {
 		logger.WithField("channel", m.ChannelID).Error("Channel not found in state")
 		return false
@@ -109,7 +109,7 @@ func CheckMessage(evt *eventsystem.EventData, m *discordgo.Message) bool {
 
 	// We gonna need to have this locked while we check
 	for _, r := range rules {
-		if r.ShouldIgnore(m, member) {
+		if r.ShouldIgnore(cs, m, member) {
 			continue
 		}
 		didCheck = true

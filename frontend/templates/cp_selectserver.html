@@ -1,0 +1,104 @@
+{{define "cp_selectserver"}}
+
+{{template "cp_head" .}}
+<header class="page-header"><h2>News and Updates</h2></header>
+<div class="row">
+    <div class="col-lg-7">
+
+        {{if .JoinedGuild}}
+        <section class="card card-featured card-featured-success mb-4">
+            <header class="card-header">
+                <h2 class="card-title">Bot added to <b>{{.JoinedGuild.Name}}!</b></h2>
+            </header>
+            <div class="card-body">
+                <p>Welcome to <i>Cessation of Existence...</i></p>
+                {{if .User}}
+                <a class="btn btn-primary" href="/manage/{{.JoinedGuild.ID}}/home">Click here to start managing it</a><br/>
+                {{else}}
+                <a class="btn btn-primary" href='/login?goto={{urlquery "/manage/" .JoinedGuild.ID "/home" }}'>Click here to login and start managing it</a>
+                {{end}}
+                <br/>
+                <p>For future reference, you can log in and access your server in the top right menu. If the server did not show up as added in the menu above now, try reloading the page, and if it still does not show up as added then join the support server. (Link above)</p>
+            </div>
+        </section>
+        {{end}}
+
+        {{if .Posts}}
+        {{range .Posts}}
+        <secton class="card">
+            <header class="card-header">
+                <h2 class="card-title float-left"><img class="avatar mr-2" src='{{.Message.Author.AvatarURL "256"}}'></img>{{.Message.Author.Username}}</h2>
+                <span class="float-right">{{humanizeTimeSinceDays .ParsedTimestamp}} ago ({{.ParsedTimestamp.Format "02 Jan 06 15:04"}})</span>
+            </header>
+            <div class="card-body">
+                {{.RenderedBody}}
+            </div>
+        </secton>
+        {{end}}
+
+        <p>
+        {{if .CurrentPostsOffset}}
+        <a class="btn btn-default" href="/manage?offset={{.PreviousPostsOffset}}">Newer Posts</a>
+        {{end}}
+        {{if .NextPostsOffset}}
+        <a class="btn btn-default" href="/manage?offset={{.NextPostsOffset}}">Older Posts</a>
+        {{end}}
+        {{end}}
+        </p>
+    </div>
+    <!-- /.col-lg-6 -->
+    <div class="col-lg-5">
+        <section class="card">
+            <header class="card-header">
+                <h2 class="card-title">Daily Quote from r/caubert</h2>
+            </header>
+            <div class="card-body">
+                <p>{{.RedditQuotes}}</p>
+            </div>
+        </section>
+        <section class="card">
+            <header class="card-header">
+                <h2 class="card-title">Information</h2>
+            </header>
+            <div class="card-body">
+                <p>PAGSTDB* is not meant as a stable variant of YAGPDB, although PAGST is a safe haven at times when YAG goes down and if you want to explore more fringe stuff. That in mind, feel free to add it to your server, alas it goes up/down randomly.</p>
+                <p>If you stumble into any issues and need help, <a class="pagst" href="https://docs.yagpdb.xyz/" target="_blang">RTFM.</a></p>
+                <p style="line-height: normal!important;vertical-align:sub!important;font-size:0.8em!important">*If you build your Discord server relying on PAGST.xyz service and it goes down by any means, deleted databases or permanent changes included - don't come complaining and try self-hosting yourself; or actually instead of buying shitty Nitros, toss some coin to Jonas!</p>
+            </div>
+        </section>
+        {{if .patreonActive}}
+        <section class="card">
+            <header class="card-header">
+                <h2 class="card-title">Thanks to our patrons!</h2>
+            </header>
+            <div class="card-body">
+                {{range .activePatrons}}{{if ge .AmountCents 1000}}
+                <img class="avatar" src="{{.Avatar}}" data-toggle="tooltip" data-placement="top" title="" data-original-title="{{.Name}}"></img>
+                {{end}}{{end}}
+                <br>
+                <p>Only showing patrons above $10</p>
+                <p>Patreon tiers above 3$ will grant you premium slots you can assign to servers, see <a href="/premium">the premium page</a> for more info.</p>
+            </div>
+        </section>
+        {{end}}
+        <section class="card">
+            <header class="card-header">
+                <h2 class="card-title">Check out...</h2>
+            </header>
+            <div class="card-body">
+                <p>YAGPDB is open source! The project is hosted on GitHub here: <a class="pagst" href="https://github.com/mrbentarikau/pagst" target="_blank">jonas747/yagpdb</a>.</br>
+                and PAGSTPDB is here: <a class="pagst" href="https://github.com/mrbentarikau/pagst" target="_blank">mrbentarikau/pagst</a>.</p>
+                <p>PAGST does not have a support server, although a safe zone is on libera.chat for feedback: <a class="pagst" href="https://web.libera.chat/?nick=pagster|?#pagst" target="_blank"> #pagst.</a></p>
+                <p>Basic tutorial installing pure code <a class="pagst" href="https://lbry.tv/@caubert:c47/pagst-yagpdb-install-on-archlinux:4" target="_blank">PAGST 
+                    <i class="fab fa-youtube"></i> </a>
+                </p>
+                <p>Want to support the stability (more RAM etc) of this server? <a class="pagst" href="https://paypal.me/mrbentarikau" target="_blank">Donate here.</a> (will get you permanent premium [but you have to leave your discord username#discriminator])</p><img src="/static/img/pagstcard.png" width="98%" />
+            </div>
+        </section>
+    </div>
+</div>
+<!-- /.row -->
+
+{{template "cp_footer" .}}
+
+{{end}}

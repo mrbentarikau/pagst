@@ -8,16 +8,15 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jinzhu/gorm"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
-	"github.com/jonas747/dutil"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	seventsmodels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/logs"
+	"github.com/jinzhu/gorm"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
@@ -277,7 +276,7 @@ func BanUser(config *Config, guildID int64, channel *dstate.ChannelState, messag
 	return BanUserWithDuration(config, guildID, channel, message, author, reason, user, 0, 1)
 }
 
-func LockUnlockRole(config *Config, lock bool, gs *dstate.GuildSet, channel *dstate.ChannelState, authorMember *dstate.MemberState, modlogAuthor *discordgo.User, reason, roleS string, force bool, totalPerms int, dur time.Duration) (interface{}, error) {
+func LockUnlockRole(config *Config, lock bool, gs *dstate.GuildSet, channel *dstate.ChannelState, authorMember *dstate.MemberState, modlogAuthor *discordgo.User, reason, roleS string, force bool, totalPerms int64, dur time.Duration) (interface{}, error) {
 	config, err := getConfigIfNotSet(gs.ID, config)
 	if err != nil {
 		return nil, common.ErrWithCaller(err)
@@ -326,10 +325,9 @@ func LockUnlockRole(config *Config, lock bool, gs *dstate.GuildSet, channel *dst
 		return nil, common.ErrWithCaller(err)
 	}
 
-	var newPerms int
+	var newPerms int64
 	action := MAUnlock
-	outDur := ""
-	outPerms := ""
+	var outDur, outPerms string
 	if !alreadyLocked {
 		currentLockdown.GuildID = gs.ID
 		currentLockdown.RoleID = role.ID
@@ -365,13 +363,13 @@ func LockUnlockRole(config *Config, lock bool, gs *dstate.GuildSet, channel *dst
 	} else {
 
 		if totalPerms == 0 { //This happens during scheduled Unlock events
-			totalPerms = int(currentLockdown.PermsToggle)
+			totalPerms = currentLockdown.PermsToggle
 			force = currentLockdown.Overwrite
 		}
 		if force {
 			newPerms = role.Permissions | totalPerms
 		} else {
-			newPerms = role.Permissions | (int(currentLockdown.PermsOriginal) & totalPerms)
+			newPerms = role.Permissions | (currentLockdown.PermsOriginal & totalPerms)
 		}
 	}
 
@@ -592,7 +590,7 @@ func MuteUnmuteUser(config *Config, mute bool, guildID int64, channel *dstate.Ch
 
 	gs := bot.State.GetGuild(guildID)
 	if gs != nil {
-		sendPunishDM(config, dmMsg, action, gs, channel, message, author, member, time.Duration(duration)*time.Minute, reason, -1)
+		go sendPunishDM(config, dmMsg, action, gs, channel, message, author, member, time.Duration(duration)*time.Minute, reason, -1)
 	}
 
 	// Create the modlog entry
@@ -665,7 +663,7 @@ func decideUnmuteRoles(config *Config, currentRoles []int64, mute MuteModel) []s
 
 	for _, v := range mute.RemovedRoles {
 		r := gs.GetRole(v)
-		if !common.ContainsInt64Slice(currentRoles, v) && r != nil && dutil.IsRoleAbove(yagHighest, r) {
+		if !common.ContainsInt64Slice(currentRoles, v) && r != nil && common.IsRoleAbove(yagHighest, r) {
 			newMemberRoles = append(newMemberRoles, strconv.FormatInt(v, 10))
 		}
 	}

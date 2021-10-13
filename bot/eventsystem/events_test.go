@@ -1,10 +1,11 @@
 package eventsystem
 
 import (
-	"github.com/mrbentarikau/pagst/common"
 	"testing"
 
-	"github.com/jonas747/discordgo"
+	"github.com/mrbentarikau/pagst/common"
+
+	"github.com/jonas747/discordgo/v2"
 )
 
 type mockPlugin struct {

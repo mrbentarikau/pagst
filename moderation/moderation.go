@@ -2,10 +2,10 @@ package moderation
 
 import (
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/configstore"
 	"github.com/mrbentarikau/pagst/common/featureflags"
+	"github.com/jonas747/discordgo/v2"
 	"golang.org/x/net/context"
 )
 

@@ -30,7 +30,7 @@ type WolframAlpha struct {
 			Error      string `xml:"error,attr"`
 			Numsubpods string `xml:"numsubpods,attr"`
 			Primary    string `xml:"primary,attr"`
-			Subpod     struct {
+			Subpod     []struct {
 				Text         string `xml:",chardata"`
 				Title        string `xml:"title,attr"`
 				Plaintext    string `xml:"plaintext"`

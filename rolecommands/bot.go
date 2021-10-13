@@ -4,9 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
@@ -15,6 +12,9 @@ import (
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEvtsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/rolecommands/models"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -136,7 +136,8 @@ func (p *Plugin) AddCommands() {
 		RunFunc: cmdFuncRoleMenuComplete,
 	}
 
-	menuContainer := commands.CommandSystem.Root.Sub("RoleMenu", "rmenu")
+	menuContainer, t := commands.CommandSystem.Root.Sub("RoleMenu", "rmenu")
+	t.SetEnabledInThreads(false)
 	menuContainer.Description = "Command for managing role menus"
 
 	const notFoundMessage = "Unknown rolemenu command, if you've used this before it was recently revamped.\nTry almost the same command but `rolemenu create ...` and `rolemenu update ...` instead (replace '...' with the rest of the command).\nSee `help rolemenu` for all rolemenu commands."

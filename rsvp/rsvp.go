@@ -5,12 +5,12 @@ package rsvp
 import (
 	"sync"
 
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/timezonecompanion/trules"
 	"github.com/jonas747/when"
 	"github.com/jonas747/when/rules"
 	wcommon "github.com/jonas747/when/rules/common"
 	"github.com/jonas747/when/rules/en"
-	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/timezonecompanion/trules"
 )
 
 var (

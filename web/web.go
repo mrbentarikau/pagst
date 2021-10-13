@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"html/template"
+	"io/fs"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -11,12 +12,13 @@ import (
 
 	"github.com/Masterminds/go-fileserver"
 	"github.com/NYTimes/gziphandler"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/patreon"
 	yagtmpl "github.com/mrbentarikau/pagst/common/templates"
+	"github.com/mrbentarikau/pagst/frontend"
 	"github.com/mrbentarikau/pagst/web/discordblog"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/natefinch/lumberjack"
 	"goji.io"
 	"goji.io/middleware"
@@ -117,12 +119,11 @@ func loadTemplates() {
 	coreTemplates := []string{
 		"templates/index.html", "templates/cp_main.html",
 		"templates/cp_nav.html", "templates/cp_selectserver.html", "templates/cp_logs.html",
-		"templates/status.html", "templates/cp_server_home.html", "templates/cp_core_settings.html",
-		"templates/error404.html",
+		"templates/status.html", "templates/cp_server_home.html", "templates/cp_core_settings.html", "templates/error404.html",
 	}
 
 	for _, v := range coreTemplates {
-		LoadHTMLTemplate(v, v)
+		loadCoreHTMLTemplate(v)
 	}
 }
 
@@ -160,7 +161,7 @@ func Run() {
 	go pollCommandsRan()
 	go pollCCsRan()
 	go pollAMV2sRan()
-	//go pollRedditQuotes()
+	go pollRedditQuotes()
 
 	blogChannel := confAnnouncementsChannel.GetInt()
 	if blogChannel != 0 {
@@ -335,11 +336,6 @@ func setupRoutes() *goji.Mux {
 	RootMux.Handle(pat.Get("/guild_selection"), RequireSessionMiddleware(ControllerHandler(HandleGetManagedGuilds, "cp_guild_selection")))
 	CPMux.Handle(pat.Get("/guild_selection"), RequireSessionMiddleware(ControllerHandler(HandleGetManagedGuilds, "cp_guild_selection")))
 
-	/*Error404Mux = goji.SubMux()
-	RootMux.Handle(pat.New("/error404"), Error404Mux)
-	error404Handler := RenderHandler(nil, "error404")
-	Error404Mux.Handle(pat.Get("/error404"), error404Handler)*/
-
 	// Set up the routes for the per server home widgets
 	for _, p := range common.Plugins {
 		if cast, ok := p.(PluginWithServerHomeWidget); ok {
@@ -390,7 +386,9 @@ func NotFound() func(http.Handler) http.Handler {
 	}
 }
 
-var StaticFileserverDir = "."
+var StaticFilesFS fs.FS = frontend.StaticFiles
+
+//var StaticFileserverDir = "."
 
 func setupRootMux() {
 	mux := goji.NewMux()
@@ -409,8 +407,9 @@ func setupRootMux() {
 	}
 
 	// Setup fileserver
-	//mux.Handle(pat.Get("/static/*"), http.FileServer(http.Dir(StaticFileserverDir)))
-	mux.Handle(pat.Get("/static/*"), fileserver.FileServer(http.Dir(StaticFileserverDir)))
+	//mux.Handle(pat.Get("/static/*"), http.FileServer(http.FS(StaticFilesFS)))
+	mux.Handle(pat.Get("/static"), fileserver.FileServer(http.FS(StaticFilesFS)))
+	mux.Handle(pat.Get("/static/*"), fileserver.FileServer(http.FS(StaticFilesFS)))
 	mux.Handle(pat.Get("/robots.txt"), http.HandlerFunc(handleRobotsTXT))
 	mux.Handle(pat.Get("/ads.txt"), http.HandlerFunc(handleAdsTXT))
 
@@ -444,16 +443,18 @@ func legacyCPRedirHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/manage"+trimmed, http.StatusMovedPermanently)
 }
 
-func LoadHTMLTemplate(pathTesting, pathProd string) {
-	path := pathProd
-	if common.Testing {
-		path = pathTesting
-		if TestingTemplatePathResolver != nil {
-			path = TestingTemplatePathResolver(path)
-		}
-	}
+func AddHTMLTemplate(name, contents string) {
+	Templates = Templates.New(name)
+	Templates = template.Must(Templates.Parse(contents))
+}
 
-	Templates = template.Must(Templates.ParseFiles(path))
+func loadCoreHTMLTemplate(path string) {
+	contents, err := frontend.CoreTemplates.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	Templates = Templates.New(path)
+	Templates = template.Must(Templates.Parse(string(contents)))
 }
 
 const (
@@ -478,6 +479,3 @@ var sideBarItems = make(map[string][]*SidebarItem)
 func AddSidebarItem(category string, sItem *SidebarItem) {
 	sideBarItems[category] = append(sideBarItems[category], sItem)
 }
-
-// Resolves the path to template files in testing mode
-var TestingTemplatePathResolver func(in string) string

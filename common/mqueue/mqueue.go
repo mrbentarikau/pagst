@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/sirupsen/logrus"
 )
 

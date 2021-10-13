@@ -10,9 +10,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
@@ -21,6 +18,9 @@ import (
 	eventModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/rsvp/models"
 	"github.com/mrbentarikau/pagst/timezonecompanion"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
@@ -42,7 +42,7 @@ func (p *Plugin) AddCommands() {
 		HelpEmoji:   "🎟",
 		EmbedColor:  0x42b9f4,
 	}
-	container := commands.CommandSystem.Root.Sub("events", "event")
+	container, _ := commands.CommandSystem.Root.Sub("events", "event")
 	container.NotFound = commands.CommonContainerNotFoundHandler(container, "")
 
 	cmdCreateEvent := &commands.YAGCommand{

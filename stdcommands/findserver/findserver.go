@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jonas747/dcmd/v3"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/bot/models"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/dstate/v4"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
 

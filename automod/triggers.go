@@ -7,13 +7,13 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/automod/models"
 	"github.com/mrbentarikau/pagst/automod_legacy"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/safebrowsing"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 )
 
 var forwardSlashReplacer = strings.NewReplacer("\\", "")

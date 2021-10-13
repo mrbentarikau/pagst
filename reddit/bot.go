@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/reddit/models"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
+	"github.com/jonas747/dcmd/v4"
 )
 
 var _ bot.RemoveGuildHandler = (*Plugin)(nil)

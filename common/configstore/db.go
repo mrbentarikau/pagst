@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
+	"github.com/jinzhu/gorm"
 	"github.com/karlseguin/ccache"
 	"golang.org/x/net/context"
 )

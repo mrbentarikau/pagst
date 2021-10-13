@@ -6,8 +6,6 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/jonas747/discordgo"
-	"github.com/jonas747/dstate/v3"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/automod/models"
 	"github.com/mrbentarikau/pagst/bot"
@@ -16,6 +14,8 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -51,7 +51,7 @@ func (p *Plugin) checkMessage(evt *eventsystem.EventData, msg *discordgo.Message
 		return true
 	}
 
-	cs := evt.GS.GetChannel(msg.ChannelID)
+	cs := evt.GS.GetChannelOrThread(msg.ChannelID)
 	if cs == nil {
 		return true
 	}

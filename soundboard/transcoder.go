@@ -2,12 +2,6 @@ package soundboard
 
 import (
 	"context"
-	"github.com/jonas747/dca"
-	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/common/backgroundworkers"
-	"github.com/mrbentarikau/pagst/soundboard/models"
-	"goji.io/pat"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -16,6 +10,13 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/backgroundworkers"
+	"github.com/mrbentarikau/pagst/soundboard/models"
+	"github.com/jonas747/dca/v2"
+	"goji.io/pat"
 )
 
 var (

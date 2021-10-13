@@ -4,9 +4,10 @@ package tickets
 
 import (
 	"fmt"
-	"github.com/jonas747/discordgo"
+
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/tickets/models"
+	"github.com/jonas747/discordgo/v2"
 )
 
 type Plugin struct{}

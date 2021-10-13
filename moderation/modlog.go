@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/discordgo/v2"
 )
 
 type ModlogAction struct {

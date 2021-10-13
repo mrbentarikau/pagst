@@ -3,9 +3,9 @@ package safebrowsing
 import (
 	"encoding/json"
 	"errors"
-	"github.com/google/safebrowsing"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
+	"github.com/google/safebrowsing"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"

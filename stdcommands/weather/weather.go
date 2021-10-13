@@ -8,8 +8,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/jonas747/dcmd/v4"
 	"github.com/lunixbochs/vtclean"
 )
 

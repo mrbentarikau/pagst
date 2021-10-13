@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonas747/dcmd/v3"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/dcmd/v4"
 )
 
 var Command = &commands.YAGCommand{

@@ -1,6 +1,7 @@
 package rolecommands
 
 import (
+	_ "embed"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -9,13 +10,13 @@ import (
 	"strings"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	schEvtsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/rolecommands/models"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/jonas747/discordgo/v2"
 	"github.com/volatiletech/null/v8"
 	v3_qm "github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -23,6 +24,9 @@ import (
 	"goji.io"
 	"goji.io/pat"
 )
+
+//go:embed assets/rolecommands.html
+var PageHTML string
 
 var (
 	panelLogKeyNewCommand        = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "rolecommands_new_command", FormatString: "Created a new role command: %s"})
@@ -61,7 +65,7 @@ type FormGroup struct {
 }
 
 func (p *Plugin) InitWeb() {
-	web.LoadHTMLTemplate("../../rolecommands/assets/rolecommands.html", "templates/plugins/rolecommands.html")
+	web.AddHTMLTemplate("rolecommands/assets/rolecommands.html", PageHTML)
 
 	web.AddSidebarItem(web.SidebarCategoryTools, &web.SidebarItem{
 		Name: "Role Commands",
@@ -73,7 +77,7 @@ func (p *Plugin) InitWeb() {
 	subMux := goji.SubMux()
 	web.CPMux.Handle(pat.New("/rolecommands/*"), subMux)
 	web.CPMux.Handle(pat.New("/rolecommands"), subMux)
-	web.CPMux.Use(web.NotFound())
+	//web.CPMux.Use(web.NotFound())
 	subMux.Use(web.RequireBotMemberMW)
 	subMux.Use(web.RequirePermMW(discordgo.PermissionManageRoles))
 	subMux.Use(web.NotFound())
