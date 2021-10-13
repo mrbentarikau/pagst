@@ -303,7 +303,7 @@ func RefreshStatus(session *discordgo.Session) {
 
 	if idle != "" {
 		idleState = &discordgo.UpdateStatusData{Status: "idle"}
-		now = int(time.Now().UnixMilli())
+		now = int(time.Now().Unix() * 1000)
 		idleState.IdleSince = &now
 	} else {
 		idleState = &discordgo.UpdateStatusData{Status: "online"}
