@@ -61,7 +61,8 @@
                             {{if eq (call .GetCCIntervalType .CC) 1}}hour(s){{else}}minute(s){{end}}{{end}}
                         </h2>
                         <input type="text" class="hidden form-control" name="id" value="{{.CC.LocalID}}">
-                        Last saved: {{if ne .CC.DateUpdated.Time.Year 1}}{{.CC.DateUpdated.Time.UTC}}{{else}}N/A{{end}}<br/><br/>
+                        {{if (eq .CC.TriggerType 5)}}<span class="cc-text-interval-span">Next run: <span class="cc-text-next-run-span">{{.CC.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span><br/></span>{{end}}
+                        Last saved: {{if ne .CC.DateUpdated.Time.Year 1}}{{.CC.DateUpdated.Time.UTC.Format "2006-01-02 15:04:05 MST"}}{{else}}N/A{{end}}<br/><br/>
                         <div class="row">
                             <!-- Trigger -->
                             <div class="col-sm-4">
