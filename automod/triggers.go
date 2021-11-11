@@ -524,6 +524,54 @@ func (inv *ServerInviteTrigger) MergeDuplicates(data []interface{}) interface{} 
 
 /////////////////////////////////////////////////////////////
 
+var _ MessageTrigger = (*AntiFishDetectorTrigger)(nil)
+
+type AntiFishDetectorTrigger struct{}
+
+func (g *AntiFishDetectorTrigger) Kind() RulePartType {
+	return RulePartTrigger
+}
+
+func (g *AntiFishDetectorTrigger) DataType() interface{} {
+	return nil
+}
+
+func (g *AntiFishDetectorTrigger) Name() string {
+	return "Anti-Fish API flagged bad links"
+}
+
+func (g *AntiFishDetectorTrigger) Description() string {
+	return "Triggers on messages containing links that are flagged by Anti-Fish API as unsafe."
+}
+
+func (g *AntiFishDetectorTrigger) UserSettings() []*SettingDef {
+	return []*SettingDef{}
+}
+
+func (g *AntiFishDetectorTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
+	if common.LinkRegex.MatchString(forwardSlashReplacer.Replace(m.Content)) {
+		antiFish, err := common.AntiFishQuery(m.Content)
+		if err != nil {
+			logger.WithError(err).Error("Failed checking URLs from Anti-Fish API.")
+			return false, nil
+		}
+
+		if !antiFish.Match {
+			return false, nil
+		} else {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (g *AntiFishDetectorTrigger) MergeDuplicates(data []interface{}) interface{} {
+	return data[0] // no point in having duplicates of this
+}
+
+/////////////////////////////////////////////////////////////
+
 var _ MessageTrigger = (*GoogleSafeBrowsingTrigger)(nil)
 
 type GoogleSafeBrowsingTrigger struct{}
@@ -1107,8 +1155,8 @@ func (r *UserStatusRegexTrigger) Description() string {
 	return "Triggers when a members UserStatus matches the provided regex"
 }
 
-func (r *UserStatusRegexTrigger) CheckUserStatus(ms *dstate.MemberState, data interface{}) (bool, error) {
-	dataCast := data.(*BaseRegexTriggerData)
+func (r *UserStatusRegexTrigger) CheckUserStatus(t *TriggerContext) (bool, error) {
+	dataCast := t.Data.(*BaseRegexTriggerData)
 
 	item, err := RegexCache.Fetch(dataCast.Regex, time.Minute*10, func() (interface{}, error) {
 		re, err := regexp.Compile(dataCast.Regex)
@@ -1124,11 +1172,14 @@ func (r *UserStatusRegexTrigger) CheckUserStatus(ms *dstate.MemberState, data in
 	}
 
 	re := item.Value().(*regexp.Regexp)
-	if re.MatchString(ms.PresenceGame.State) {
-		if r.BaseRegexTrigger.Inverse {
-			return false, nil
+
+	if t.MS.Presence.Game != nil {
+		if re.MatchString(t.MS.Presence.Game.State) {
+			if r.BaseRegexTrigger.Inverse {
+				return false, nil
+			}
+			return true, nil
 		}
-		return true, nil
 	}
 
 	if r.BaseRegexTrigger.Inverse {
@@ -1183,15 +1234,15 @@ func (nwl *UserStatusWordlistTrigger) UserSettings() []*SettingDef {
 	}
 }
 
-func (nwl *UserStatusWordlistTrigger) CheckUserStatus(ms *dstate.MemberState, data interface{}) (bool, error) {
-	dataCast := data.(*UserStatusWordlistTriggerData)
+func (nwl *UserStatusWordlistTrigger) CheckUserStatus(t *TriggerContext) (bool, error) {
+	dataCast := t.Data.(*UserStatusWordlistTriggerData)
 
-	list, err := FindFetchGuildList(ms.Guild, dataCast.ListID)
+	list, err := FindFetchGuildList(t.MS.GuildID, dataCast.ListID)
 	if err != nil {
 		return false, nil
 	}
 
-	fields := strings.Fields(PrepareMessageForWordCheck(ms.PresenceGame.State))
+	fields := strings.Fields(PrepareMessageForWordCheck(t.MS.Presence.Game.State))
 
 	for _, mf := range fields {
 		contained := false

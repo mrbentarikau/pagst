@@ -52,7 +52,7 @@ var Command = &commands.YAGCommand{
 					return paginatedEmbed, nil
 				})
 			if err != nil {
-				return "Something went wrong", nil
+				return "Something went wrong", err
 			}
 		} else {
 			result := qResp.Results[0]
@@ -75,7 +75,7 @@ func embedCreator(udResult []urbandictionary.Result, i int) *discordgo.MessageEm
 	}
 	example := "None given"
 	if len(udResult[i].Example) > 0 {
-		example = linkReferencedTerms(udResult[i].Example)
+		example = common.CutStringShort(linkReferencedTerms(udResult[i].Example), 768)
 	}
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{

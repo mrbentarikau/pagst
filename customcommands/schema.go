@@ -61,6 +61,14 @@ ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS disabled BOOLEAN NOT NULL D
 `, `
 ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS date_updated TIMESTAMP WITH TIME ZONE;
 `, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS categories BIGINT[];
+`, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS categories_whitelist_mode BOOL NOT NULL DEFAULT false;
+`, `
+ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS ignore_categories BIGINT[];
+`, `
+ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS whitelist_categories BIGINT[];
+`, `
 CREATE TABLE IF NOT EXISTS templates_user_database (
 	id BIGSERIAL PRIMARY KEY,
 

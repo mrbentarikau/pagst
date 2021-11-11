@@ -2,7 +2,6 @@ package bot
 
 import (
 	"context"
-	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -110,7 +109,7 @@ func SnowflakeToTime(i int64) time.Time {
 	return t
 }
 
-func SetStatus(streaming, status, idle string) {
+func SetStatus(streaming, status, idle string, activity string) {
 	if status == "" {
 		r, _ := regexp.Compile(`\d+\.\d+\.\d+`)
 		status = "v" + r.FindString(common.VERSION) + " :)"
@@ -119,6 +118,7 @@ func SetStatus(streaming, status, idle string) {
 	err1 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_streaming", streaming))
 	err2 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_name", status))
 	err3 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_idle", idle))
+	err4 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_activity", activity))
 	if err1 != nil {
 		logger.WithError(err1).Error("failed setting bot status in redis")
 	}
@@ -127,6 +127,9 @@ func SetStatus(streaming, status, idle string) {
 		logger.WithError(err2).Error("failed setting bot status in redis")
 	}
 	if err3 != nil {
+		logger.WithError(err2).Error("failed setting bot status in redis")
+	}
+	if err4 != nil {
 		logger.WithError(err2).Error("failed setting bot status in redis")
 	}
 
@@ -268,6 +271,7 @@ func RefreshStatus(session *discordgo.Session) {
 	var streamingURL string
 	var status string
 	var idle string
+	var activity string
 	var idleState *discordgo.UpdateStatusData
 	var now = 0
 	var gameType discordgo.GameType
@@ -275,6 +279,7 @@ func RefreshStatus(session *discordgo.Session) {
 	err1 := common.RedisPool.Do(radix.Cmd(&streamingURL, "GET", "status_streaming"))
 	err2 := common.RedisPool.Do(radix.Cmd(&status, "GET", "status_name"))
 	err3 := common.RedisPool.Do(radix.Cmd(&idle, "GET", "status_idle"))
+	err4 := common.RedisPool.Do(radix.Cmd(&activity, "GET", "status_activity"))
 	if err1 != nil {
 		logger.WithError(err1).Error("failed retrieving bot streaming status")
 	}
@@ -284,12 +289,23 @@ func RefreshStatus(session *discordgo.Session) {
 	if err3 != nil {
 		logger.WithError(err3).Error("failed retrieving bot status")
 	}
+	if err4 != nil {
+		logger.WithError(err4).Error("failed retrieving bot status")
+	}
 
 	if streamingURL != "" {
 		gameType = discordgo.GameTypeStreaming
 		//session.UpdateStreamingStatus(0, status, streamingURL)
 	} else {
-		timeMod := math.Mod(float64(time.Now().Hour()), 3)
+		activity = strings.ToLower(activity)
+		if activity == "listening" {
+			gameType = discordgo.GameTypeListening
+		} else if activity == "watching" {
+			gameType = discordgo.GameTypeWatching
+		} else {
+			gameType = discordgo.GameTypeGame
+		}
+		/*timeMod := math.Mod(float64(time.Now().Hour()), 3)
 		if timeMod == 0 {
 			//session.UpdateStatus(0, status)
 			gameType = discordgo.GameTypeGame
@@ -298,7 +314,7 @@ func RefreshStatus(session *discordgo.Session) {
 			gameType = discordgo.GameTypeListening
 		} else {
 			gameType = discordgo.GameTypeWatching
-		}
+		}*/
 	}
 
 	if idle != "" {

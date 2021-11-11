@@ -49,6 +49,8 @@ type CustomCommand struct {
 	ShowErrors                bool              `boil:"show_errors" json:"show_errors" toml:"show_errors" yaml:"show_errors"`
 	Disabled                  bool              `boil:"disabled" json:"disabled" toml:"disabled" yaml:"disabled"`
 	DateUpdated               null.Time         `boil:"date_updated" json:"date_updated,omitempty" toml:"date_updated" yaml:"date_updated,omitempty"`
+	Categories                types.Int64Array  `boil:"categories" json:"categories,omitempty" toml:"categories" yaml:"categories,omitempty"`
+	CategoriesWhitelistMode   bool              `boil:"categories_whitelist_mode" json:"categories_whitelist_mode" toml:"categories_whitelist_mode" yaml:"categories_whitelist_mode"`
 
 	R *customCommandR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L customCommandL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -79,6 +81,8 @@ var CustomCommandColumns = struct {
 	ShowErrors                string
 	Disabled                  string
 	DateUpdated               string
+	Categories                string
+	CategoriesWhitelistMode   string
 }{
 	LocalID:                   "local_id",
 	GuildID:                   "guild_id",
@@ -104,6 +108,8 @@ var CustomCommandColumns = struct {
 	ShowErrors:                "show_errors",
 	Disabled:                  "disabled",
 	DateUpdated:               "date_updated",
+	Categories:                "categories",
+	CategoriesWhitelistMode:   "categories_whitelist_mode",
 }
 
 // Generated where
@@ -241,6 +247,8 @@ var CustomCommandWhere = struct {
 	ShowErrors                whereHelperbool
 	Disabled                  whereHelperbool
 	DateUpdated               whereHelpernull_Time
+	Categories                whereHelpertypes_Int64Array
+	CategoriesWhitelistMode   whereHelperbool
 }{
 	LocalID:                   whereHelperint64{field: "\"custom_commands\".\"local_id\""},
 	GuildID:                   whereHelperint64{field: "\"custom_commands\".\"guild_id\""},
@@ -266,6 +274,8 @@ var CustomCommandWhere = struct {
 	ShowErrors:                whereHelperbool{field: "\"custom_commands\".\"show_errors\""},
 	Disabled:                  whereHelperbool{field: "\"custom_commands\".\"disabled\""},
 	DateUpdated:               whereHelpernull_Time{field: "\"custom_commands\".\"date_updated\""},
+	Categories:                whereHelpertypes_Int64Array{field: "\"custom_commands\".\"categories\""},
+	CategoriesWhitelistMode:   whereHelperbool{field: "\"custom_commands\".\"categories_whitelist_mode\""},
 }
 
 // CustomCommandRels is where relationship names are stored.
@@ -289,9 +299,9 @@ func (*customCommandR) NewStruct() *customCommandR {
 type customCommandL struct{}
 
 var (
-	customCommandAllColumns            = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated"}
-	customCommandColumnsWithoutDefault = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "last_error_time", "date_updated"}
-	customCommandColumnsWithDefault    = []string{"context_channel", "reaction_trigger_mode", "last_error", "run_count", "show_errors", "disabled"}
+	customCommandAllColumns            = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode"}
+	customCommandColumnsWithoutDefault = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "last_error_time", "date_updated", "categories"}
+	customCommandColumnsWithDefault    = []string{"context_channel", "reaction_trigger_mode", "last_error", "run_count", "show_errors", "disabled", "categories_whitelist_mode"}
 	customCommandPrimaryKeyColumns     = []string{"guild_id", "local_id"}
 )
 

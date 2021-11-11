@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"sort"
 
 	"github.com/mrbentarikau/pagst/analytics"
@@ -205,14 +206,21 @@ func (p *Plugin) handleGuildMemberUpdate(evt *eventsystem.EventData) {
 }
 
 /*func (p *Plugin) handlePresenceUpdate(evt *eventsystem.EventData) {
+
 	evtData := evt.PresenceUpdate()
 
 	presence := evtData.Presence
-	if presence.Game.State == "" {
+	if len(presence.Activities) > 0 {
+		if presence.Activities[0].State == "" {
+			return
+		}
+	}
+
+	ms, err := bot.GetMember(evt.GS.GuildState.ID, presence.User.ID)
+	if err != nil {
 		return
 	}
 
-	ms := evt.GS.MemberCopy(true, presence.User.ID)
 	p.checkUserStatus(ms)
 }*/
 
@@ -242,13 +250,18 @@ func (p *Plugin) checkNickname(ms *dstate.MemberState) {
 }
 
 /*func (p *Plugin) checkUserStatus(ms *dstate.MemberState) {
-	p.CheckTriggers(nil, ms, nil, nil, func(trig *ParsedPart) (activated bool, err error) {
+	gs := bot.State.GetGuild(ms.GuildID)
+	if gs == nil {
+		return
+	}
+
+	p.CheckTriggers(nil, gs, ms, nil, nil, func(trig *ParsedPart) (activated bool, err error) {
 		cast, ok := trig.Part.(UserStatusListener)
 		if !ok {
 			return false, nil
 		}
 
-		return cast.CheckUserStatus(ms, trig.ParsedSettings)
+		return cast.CheckUserStatus(&TriggerContext{GS: gs, MS: ms, Data: trig.ParsedSettings})
 	})
 }*/
 

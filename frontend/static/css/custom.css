@@ -579,6 +579,8 @@ ul[class*="nav-main"]{margin-top:0px!important}
 /*end*/
 
 
+
+
 /*primary font colours - default for all is #c1c1c1*/
 a{color:#89aa00!important}
 a>span,a>i,li>a{color:#abb4be!important}
@@ -591,6 +593,13 @@ nav[class="bg-dark"],nav[class="background-color-dark"]{background-color:red!imp
 code,[class*="sidebar"]:hover>i,li[class*="nav-active"]>a[class*="nav-link"]{color:#aa8900!important}
 .intro-text{color:#1f1f1f!important; font-weight:200!important}
 
+
+/*customcommands a border*/
+.cc-trigger-regex{border-left:3px solid #5E81AC!important}
+.cc-trigger-command{border-left:3px solid #A3BE8C!important}
+.cc-trigger-interval{border-left:3px solid #EBCB8B!important}
+.cc-trigger-reaction{border-left:3px solid #D08770!important}
+.cc-trigger-none{border-left:3px solid #1f1f1f!important}
 
 ul>li[class*="nav-active"]>a[class*="nav-link"],li[class*="nav-parent nav-expanded nav-active"]>a,li[class*="nav-parent nav-active"]>a{box-shadow:2px 0 0 #aa8900 inset!important}
 ul[class*="nav-children"]>li[class*="nav-active"]>a[class*="nav-link"]{box-shadow:none!important}

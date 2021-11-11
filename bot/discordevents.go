@@ -130,10 +130,12 @@ func HandleGuildCreate(evt *eventsystem.EventData) (retry bool, err error) {
 
 	saddRes := 0
 	isBanned := false
+	isBannedOwner := false
 
 	err = common.RedisPool.Do(radix.Pipeline(
 		radix.Cmd(&saddRes, "SADD", "connected_guilds", discordgo.StrID(g.ID)),
 		radix.Cmd(&isBanned, "SISMEMBER", "banned_servers", discordgo.StrID(g.ID)),
+		radix.Cmd(&isBannedOwner, "SISMEMBER", "banned_server_owners", discordgo.StrID(g.OwnerID)),
 	))
 	if err != nil {
 		return true, errors.WithStackIf(err)
@@ -152,6 +154,15 @@ func HandleGuildCreate(evt *eventsystem.EventData) (retry bool, err error) {
 	if isBanned {
 		logger.WithField("guild", g.ID).Info("Banned server tried to add bot back")
 		common.BotSession.ChannelMessageSend(g.ID, "This server is banned from using this bot. Join the support server for more info.")
+		err = common.BotSession.GuildLeave(g.ID)
+		if err != nil {
+			return CheckDiscordErrRetry(err), errors.WithStackIf(err)
+		}
+	}
+
+	if isBannedOwner {
+		logger.WithField("guild", g.ID).Info("Banned server owner tried to add bot back")
+		common.BotSession.ChannelMessageSend(g.ID, "This owner is banned from using this bot. Join the support server for more info.")
 		err = common.BotSession.GuildLeave(g.ID)
 		if err != nil {
 			return CheckDiscordErrRetry(err), errors.WithStackIf(err)

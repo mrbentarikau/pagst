@@ -87,27 +87,45 @@
                                     <button type="submit" class="btn btn-success">Save group settings</button>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label>Channels these commands can be used in (empty for all)</label><br>
-                                    <select multiple="multiple" class="form-control" data-plugin-multiselect
-                                        name="WhitelistChannels" data-placeholder="Everywhere">
-                                        {{textChannelOptionsMulti .ActiveGuild.Channels .CurrentCommandGroup.WhitelistChannels }}
-                                    </select>
+                            <div class="row" style="width:33%">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label>Categories<br/>commands can be used in<br/>(empty for everywhere)</label><br>
+                                        <select multiple="multiple" class="form-control" data-plugin-multiselect
+                                            name="WhitelistCategories" data-placeholder="Everywhere">
+                                            {{catChannelOptionsMulti .ActiveGuild.Channels .CurrentCommandGroup.WhitelistCategories }}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Categories blacklisted</label><br>
+                                        <select multiple="multiple" class="form-control" data-plugin-multiselect
+                                            name="BlacklistCategories">
+                                            {{catChannelOptionsMulti .ActiveGuild.Channels .CurrentCommandGroup.IgnoreCategories }}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="submit"
+                                            title="Group #{{.CurrentCommandGroup.ID}} - {{.CurrentCommandGroup.Name}} &#013;Deleted group's commands become ungrouped."
+                                            class="btn btn-danger"
+                                            formaction="/manage/{{.ActiveGuild.ID}}/customcommands/groups/{{.CurrentCommandGroup.ID}}/delete">Delete
+                                            group</button>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label>Channels blacklisted</label><br>
-                                    <select multiple="multiple" class="form-control" data-plugin-multiselect
-                                        name="BlacklistChannels">
-                                        {{textChannelOptionsMulti .ActiveGuild.Channels .CurrentCommandGroup.IgnoreChannels }}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit"
-                                        title="Group #{{.CurrentCommandGroup.ID}} - {{.CurrentCommandGroup.Name}} &#013;Deleted group's commands become ungrouped."
-                                        class="btn btn-danger"
-                                        formaction="/manage/{{.ActiveGuild.ID}}/customcommands/groups/{{.CurrentCommandGroup.ID}}/delete">Delete
-                                        group</button>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label>Channels<br/>commands can be used in<br/>(empty for everywhere)</label><br>
+                                        <select multiple="multiple" class="form-control" data-plugin-multiselect
+                                            name="WhitelistChannels" data-placeholder="Everywhere">
+                                            {{textChannelOptionsMulti .ActiveGuild.Channels .CurrentCommandGroup.WhitelistChannels }}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Channels blacklisted</label><br>
+                                        <select multiple="multiple" class="form-control" data-plugin-multiselect
+                                            name="BlacklistChannels">
+                                            {{textChannelOptionsMulti .ActiveGuild.Channels .CurrentCommandGroup.IgnoreChannels }}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -146,9 +164,18 @@
                 </div>
             </form>
             <h2 class="card-title">
-                <a style="padding:15px 20px 10px 20px!important" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.LocalID}}" class="cc-collapsibleDown">
-                    #{{.LocalID}} - {{index $dot.CCTriggerTypes .TriggerType}}{{if and (ne .TriggerType 10) (ne .TriggerType 5) (ne .TriggerType 6)}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{else if and (ne .TriggerType 10) (ne .TriggerType 6)}}: <span class="cc-text-interval-span">Every {{call $dot.GetCCInterval .}} {{if eq (call $dot.GetCCIntervalType .) 1}}hour(s)</span>{{else}}minute(s)</span>{{end}} next run: <span class="cc-text-next-run-span">{{.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span>{{end}}
-                </a>
+                {{$dotSDict := sdict "dot" $dot "insideDot" .}}
+                {{if eq .TriggerType 1 2 3 4}}
+                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}</a>
+                {{else if eq .TriggerType 0}}
+                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}</a>
+                {{else if eq .TriggerType 5}}
+                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-interval-span">Every {{call $dot.GetCCInterval .}} {{if eq (call $dot.GetCCIntervalType .) 1}}hour(s)</span>{{else}}minute(s)</span>{{end}} Next run: <span class="cc-text-next-run-span">{{.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span>&nbsp;&nbsp;Channel: <span class="cc-text-interval-span">{{if .ContextChannel}}{{call $dot.GetChannelName .}}{{else}}None{{end}}</span></a>
+                {{else if eq .TriggerType 6}}
+                     {{template "cc_beginning" $dotSDict}}{{template "cc_restrictions" .}}</a>
+                {{else}}
+                     {{template "cc_beginning" $dotSDict}}</a>
+                {{end}}
             </h2>
         </div>
         <div id="collapse_cmd{{.LocalID}}" class="collapse">
@@ -231,4 +258,23 @@
 </script>
 {{template "cp_footer" .}}
 
+{{end}}
+
+{{define "cc_beginning"}}
+    {{$triggerStyleClasses := "cc-trigger-none"}}
+    {{if eq .insideDot.TriggerType 1 2 3 4}}
+        {{$triggerStyleClasses = "cc-trigger-regex"}}
+    {{else if eq .insideDot.TriggerType 0}}
+        {{$triggerStyleClasses = "cc-trigger-command"}}
+    {{else if eq .insideDot.TriggerType 5}}
+        {{$triggerStyleClasses = "cc-trigger-interval"}}
+    {{else if eq .insideDot.TriggerType 6}}
+        {{$triggerStyleClasses = "cc-trigger-reaction"}}
+    {{end}}
+    <a style="padding:15px 20px 10px 20px!important" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType}}
+{{end}}
+
+{{define "cc_restrictions"}}
+    {{if or .Channels .ChannelsWhitelistMode .Roles .RolesWhitelistMode .Categories .CategoriesWhitelistMode}}&nbsp;&nbsp;<span style="color:#ec9386!important">Restrictions: </span><span>{{if and (or .Channels .ChannelsWhitelistMode) (or .Roles .RolesWhitelistMode) (or .Categories .CategoriesWhitelistMode)}}categories, channels, roles{{else if and (or .Channels .ChannelsWhitelistMode) (or .Roles .RolesWhitelistMode)}}channels, roles{{else if and (or .Categories .CategoriesWhitelistMode) (or .Roles .RolesWhitelistMode)}}categories, roles{{else if and (or .Categories .CategoriesWhitelistMode) (or .Channels .ChannelsWhitelistMode)}}categories, channels{{else if or .Categories .CategoriesWhitelistMode}}categories{{else if or .Channels .ChannelsWhitelistMode}}channels{{else if or .Roles .RolesWhitelistMode}}roles{{end}}</span>
+    {{end}}
 {{end}}

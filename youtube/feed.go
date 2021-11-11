@@ -152,20 +152,31 @@ func (p *Plugin) removeAllSubsForChannel(channel string) {
 	go p.MaybeRemoveChannelWatch(channel)
 }
 
-func (p *Plugin) sendNewVidMessage(guild, discordChannel string, channelTitle string, videoID string, mentionEveryone bool, mentionRole string) {
+func (p *Plugin) sendNewVidMessage(guild, discordChannel string, channelTitle string, videoID string, mentionEveryone bool, mentionRole string, liveBroadcastContent string) {
 	var content string
 
 	parsedChannel, _ := strconv.ParseInt(discordChannel, 10, 64)
 	parsedGuild, _ := strconv.ParseInt(guild, 10, 64)
 	parseMentionRole, _ := strconv.ParseInt(mentionRole, 10, 64)
 
-	if mentionEveryone {
-		content += "Hey @everyone, a new Youtube video!\n"
-	} else if parseMentionRole > 0 {
-		content += "Hey <@&" + mentionRole + ">, a new Youtube video!\n"
-	}
+	videoYT := "https://www.youtube.com/watch?v=" + videoID
 
-	content += fmt.Sprintf("**%s** uploaded a new youtube video!\n%s", channelTitle, "https://www.youtube.com/watch?v="+videoID)
+	if mentionEveryone {
+		if liveBroadcastContent != "none" {
+			content += fmt.Sprintf("Hey @everyone, incoming %s YouTube video by **%s**!\n%s\n", liveBroadcastContent, channelTitle, videoYT)
+		} else {
+			content += fmt.Sprintf("Hey @everyone, incoming YouTube video by **%s**!\n%s\n", channelTitle, videoYT)
+			//content += "Hey @everyone, incoming YouTube video!\n\n"
+		}
+	} else if parseMentionRole > 0 {
+		if liveBroadcastContent != "none" {
+			content += fmt.Sprintf("Hey <@&%s>, incoming %s YouTube video by **%s**!\n%s\n", mentionRole, liveBroadcastContent, channelTitle, videoYT)
+		} else {
+			content += fmt.Sprintf("Hey <@&%s>, incoming YouTube video by **%s!**\n%s\n", mentionRole, channelTitle, videoYT)
+		}
+	} else {
+		content += fmt.Sprintf("**%s** uploaded a new YouTube video!\n%s", channelTitle, videoYT)
+	}
 
 	parseMentions := []discordgo.AllowedMentionType{}
 	if mentionEveryone {
@@ -375,7 +386,7 @@ func (p *Plugin) postVideo(subs []*ChannelSubscription, publishedAt time.Time, v
 	}
 
 	for _, sub := range subs {
-		p.sendNewVidMessage(sub.GuildID, sub.ChannelID, video.Snippet.ChannelTitle, video.Id, sub.MentionEveryone, sub.MentionRole)
+		p.sendNewVidMessage(sub.GuildID, sub.ChannelID, video.Snippet.ChannelTitle, video.Id, sub.MentionEveryone, sub.MentionRole, video.Snippet.LiveBroadcastContent)
 	}
 
 	return nil

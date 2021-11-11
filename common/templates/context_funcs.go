@@ -312,8 +312,20 @@ func (c *Context) checkSafeStringDictNoRecursion(d SDict, n int) bool {
 			}
 		}
 
+		if cast, ok := v.(*Dict); ok {
+			if !c.checkSafeDictNoRecursion(*cast, n+1) {
+				return false
+			}
+		}
+
 		if cast, ok := v.(SDict); ok {
 			if !c.checkSafeStringDictNoRecursion(cast, n+1) {
+				return false
+			}
+		}
+
+		if cast, ok := v.(*SDict); ok {
+			if !c.checkSafeStringDictNoRecursion(*cast, n+1) {
 				return false
 			}
 		}
@@ -338,8 +350,20 @@ func (c *Context) checkSafeDictNoRecursion(d Dict, n int) bool {
 			}
 		}
 
+		if cast, ok := v.(*Dict); ok {
+			if !c.checkSafeDictNoRecursion(*cast, n+1) {
+				return false
+			}
+		}
+
 		if cast, ok := v.(SDict); ok {
 			if !c.checkSafeStringDictNoRecursion(cast, n+1) {
+				return false
+			}
+		}
+
+		if cast, ok := v.(*SDict); ok {
+			if !c.checkSafeStringDictNoRecursion(*cast, n+1) {
 				return false
 			}
 		}
@@ -693,7 +717,13 @@ func (c *Context) tmplTakeRoleID(target interface{}, roleID interface{}, optiona
 
 	delay := 0
 	if len(optionalArgs) > 0 {
-		delay = tmplToInt(optionalArgs[0])
+		switch oa := optionalArgs[0].(type) {
+		case time.Duration:
+			delay = tmplToInt(oa.Seconds())
+		default:
+			delay = tmplToInt(oa)
+		}
+
 	}
 
 	targetID := targetUserID(target)
@@ -716,7 +746,13 @@ func (c *Context) tmplTakeRoleName(target interface{}, name string, optionalArgs
 
 	delay := 0
 	if len(optionalArgs) > 0 {
-		delay = tmplToInt(optionalArgs[0])
+		switch oa := optionalArgs[0].(type) {
+		case time.Duration:
+			delay = tmplToInt(oa.Seconds())
+		default:
+			delay = tmplToInt(oa)
+		}
+
 	}
 
 	targetID := targetUserID(target)
@@ -901,7 +937,13 @@ func (c *Context) tmplRemoveRoleID(role interface{}, optionalArgs ...interface{}
 
 	delay := 0
 	if len(optionalArgs) > 0 {
-		delay = tmplToInt(optionalArgs[0])
+		switch oa := optionalArgs[0].(type) {
+		case time.Duration:
+			delay = tmplToInt(oa.Seconds())
+		default:
+			delay = tmplToInt(oa)
+		}
+
 	}
 
 	rid := ToInt64(role)
@@ -929,7 +971,13 @@ func (c *Context) tmplRemoveRoleName(name string, optionalArgs ...interface{}) (
 
 	delay := 0
 	if len(optionalArgs) > 0 {
-		delay = tmplToInt(optionalArgs[0])
+		switch oa := optionalArgs[0].(type) {
+		case time.Duration:
+			delay = tmplToInt(oa.Seconds())
+		default:
+			delay = tmplToInt(oa)
+		}
+
 	}
 
 	if c.MS == nil {
@@ -1109,7 +1157,12 @@ func (c *Context) tmplGetMessage(channel, msgID interface{}) (*discordgo.Message
 
 	mID := ToInt64(msgID)
 
-	message, _ := common.BotSession.ChannelMessage(cID, mID)
+	message, err := common.BotSession.ChannelMessage(cID, mID)
+	if err != nil {
+		return nil, err
+	}
+	message.GuildID = c.GS.ID
+
 	return message, nil
 }
 
@@ -1578,8 +1631,8 @@ func (c *Context) tmplLastMessages(channel interface{}, num ...int) ([]*dstate.M
 		fetchNum = num[0]
 	}
 
-	if fetchNum > 10 {
-		fetchNum = 10
+	if fetchNum > 25 {
+		fetchNum = 25
 	}
 
 	if channel == nil {
@@ -1609,7 +1662,8 @@ func (c *Context) tmplSort(input interface{}, sortargs ...interface{}) (interfac
 		return "", ErrTooManyCalls
 	}
 
-	inputSlice := reflect.ValueOf(input)
+	//inputSlice := reflect.ValueOf(input)
+	inputSlice, _ := indirect(reflect.ValueOf(input))
 	switch inputSlice.Kind() {
 	case reflect.Slice, reflect.Array:
 		// valid
@@ -1665,7 +1719,9 @@ func (c *Context) tmplSort(input interface{}, sortargs ...interface{}) (interfac
 	var intSlice, floatSlice, stringSlice, timeSlice, csliceSlice, mapSlice, defaultSlice, outputSlice Slice
 
 	for i := 0; i < inputSlice.Len(); i++ {
-		switch t := inputSlice.Index(i).Interface().(type) {
+		//switch t := inputSlice.Index(i).Interface().(type) {
+		iv, _ := indirect(inputSlice.Index(i))
+		switch t := iv.Interface().(type) {
 		case int, int64:
 			intSlice = append(intSlice, t)
 		case *int:
@@ -1769,7 +1825,8 @@ func (c *Context) tmplSort(input interface{}, sortargs ...interface{}) (interfac
 }
 
 func getLen(from interface{}) int {
-	v := reflect.ValueOf(from)
+	//v := reflect.ValueOf(from)
+	v, _ := indirect(reflect.ValueOf(from))
 	switch v.Kind() {
 	case reflect.Slice, reflect.Array, reflect.Map:
 		return v.Len()

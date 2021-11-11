@@ -793,7 +793,7 @@ func tmplDBTopEntries(ctx *templates.Context, bottom bool) interface{} {
 
 func serializeValue(v interface{}) ([]byte, error) {
 	var b bytes.Buffer
-	enc := msgpack.NewEncoder(templates.LimitWriter(&b, 100000))
+	enc := msgpack.NewEncoder(templates.LimitWriter(&b, 256000))
 	err := enc.Encode(v)
 	return b.Bytes(), err
 }

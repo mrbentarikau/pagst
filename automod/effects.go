@@ -265,7 +265,7 @@ func (kick *KickUserEffect) UserSettings() []*SettingDef {
 func (kick *KickUserEffect) Apply(ctxData *TriggeredRuleData, settings interface{}) error {
 	settingsCast := settings.(*KickUserEffectData)
 
-	reason := "Automoderator:\n"
+	reason := "amV2:\n"
 	if settingsCast.CustomReason != "" {
 		reason += settingsCast.CustomReason
 	} else {
@@ -335,7 +335,7 @@ func (ban *BanUserEffect) UserSettings() []*SettingDef {
 func (ban *BanUserEffect) Apply(ctxData *TriggeredRuleData, settings interface{}) error {
 	settingsCast := settings.(*BanUserEffectData)
 
-	reason := "Automoderator:\n"
+	reason := "amV2:\n"
 	if settingsCast.CustomReason != "" {
 		reason += settingsCast.CustomReason
 	} else {
@@ -398,7 +398,7 @@ func (mute *MuteUserEffect) Description() (description string) {
 func (mute *MuteUserEffect) Apply(ctxData *TriggeredRuleData, settings interface{}) error {
 	settingsCast := settings.(*MuteUserEffectData)
 
-	reason := "Automoderator:\n"
+	reason := "amV2:\n"
 	if settingsCast.CustomReason != "" {
 		reason += settingsCast.CustomReason
 	} else {
@@ -452,7 +452,7 @@ func (warn *WarnUserEffect) Description() (description string) {
 func (warn *WarnUserEffect) Apply(ctxData *TriggeredRuleData, settings interface{}) error {
 	settingsCast := settings.(*WarnUserEffectData)
 
-	reason := "Automoderator:\n"
+	reason := "amV2:\n"
 	if settingsCast.CustomReason != "" {
 		reason += settingsCast.CustomReason
 	} else {
@@ -701,6 +701,7 @@ func (rf *RemoveRoleEffect) Apply(ctxData *TriggeredRuleData, settings interface
 
 type SendChannelMessageEffectData struct {
 	CustomReason string `valid:",0,280,trimspace"`
+	Duration     int    `valid:",0,43200,trimspace"`
 	PingUser     bool
 }
 
@@ -730,6 +731,14 @@ func (send *SendChannelMessageEffect) UserSettings() []*SettingDef {
 			Min:  0,
 			Max:  280,
 			Kind: SettingTypeString,
+		},
+		{
+			Name:    "Delete effect's message after x seconds (0 for non-deletion)",
+			Key:     "Duration",
+			Kind:    SettingTypeInt,
+			Default: 0,
+			Min:     0,
+			Max:     3600,
 		},
 		{
 			Name:    "Ping user committing the infraction",
@@ -762,14 +771,21 @@ func (send *SendChannelMessageEffect) Apply(ctxData *TriggeredRuleData, settings
 		}
 	}
 
-	msgSend.Content += "Automoderator:\n"
+	msgSend.Content += "amV2:\n"
 	if settingsCast.CustomReason != "" {
 		msgSend.Content += settingsCast.CustomReason
 	} else {
 		msgSend.Content += ctxData.ConstructReason(true)
 	}
 
-	_, err := common.BotSession.ChannelMessageSendComplex(ctxData.CS.ID, msgSend)
+	messageID, err := common.BotSession.ChannelMessageSendComplex(ctxData.CS.ID, msgSend)
+	if settingsCast.Duration > 0 {
+		err := scheduledevents2.ScheduleDeleteMessages(ctxData.GS.ID, ctxData.CS.ID, time.Now().Add(time.Second*time.Duration(settingsCast.Duration)), messageID.ID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 

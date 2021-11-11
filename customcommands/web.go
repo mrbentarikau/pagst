@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"emperror.dev/errors"
+	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/featureflags"
@@ -36,8 +37,12 @@ var PageHTMLMain string
 
 // GroupForm is the form bindings used when creating or updating groups
 type GroupForm struct {
-	ID                int64
-	Name              string  `valid:",100"`
+	ID   int64
+	Name string `valid:",100"`
+
+	WhitelistCategories []int64 `valid:"category,true"`
+	BlacklistCategories []int64 `valid:"category,true"`
+
 	WhitelistChannels []int64 `valid:"channel,true"`
 	BlacklistChannels []int64 `valid:"channel,true"`
 
@@ -155,6 +160,7 @@ func handleGetCommandsGroup(w http.ResponseWriter, r *http.Request) (web.Templat
 func serveGroupSelected(r *http.Request, templateData web.TemplateData, groupID int64, guildID int64) (web.TemplateData, error) {
 	templateData["GetCCIntervalType"] = tmplGetCCIntervalTriggerType
 	templateData["GetCCInterval"] = tmplGetCCInterval
+	templateData["GetChannelName"] = tmplGetChannelName
 
 	_, ok := templateData["CustomCommands"]
 	if !ok {
@@ -292,7 +298,6 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 			return templateData, err
 		}
 	}
-
 	_, err := dbModel.UpdateG(ctx, boil.Blacklist("last_run", "next_run", "local_id", "guild_id", "last_error", "last_error_time", "run_count"))
 	if err != nil {
 		return templateData, nil
@@ -403,10 +408,12 @@ func handleDuplicateCommand(w http.ResponseWriter, r *http.Request) (web.Templat
 		Disabled:   true,
 		ShowErrors: true,
 
-		Channels:              cmd.Channels,
-		ChannelsWhitelistMode: cmd.ChannelsWhitelistMode,
-		Roles:                 cmd.Roles,
-		RolesWhitelistMode:    cmd.RolesWhitelistMode,
+		Categories:              cmd.Categories,
+		CategoriesWhitelistMode: cmd.CategoriesWhitelistMode,
+		Channels:                cmd.Channels,
+		ChannelsWhitelistMode:   cmd.ChannelsWhitelistMode,
+		Roles:                   cmd.Roles,
+		RolesWhitelistMode:      cmd.RolesWhitelistMode,
 
 		ReactionTriggerMode: cmd.ReactionTriggerMode,
 
@@ -559,6 +566,8 @@ func handleUpdateGroup(w http.ResponseWriter, r *http.Request) (web.TemplateData
 		return templateData, err
 	}
 
+	model.WhitelistCategories = groupForm.WhitelistCategories
+	model.IgnoreCategories = groupForm.BlacklistCategories
 	model.WhitelistChannels = groupForm.WhitelistChannels
 	model.IgnoreChannels = groupForm.BlacklistChannels
 	model.WhitelistRoles = groupForm.WhitelistRoles
@@ -649,6 +658,13 @@ func tmplGetCCInterval(cc *models.CustomCommand) int {
 	}
 
 	return cc.TimeTriggerInterval
+}
+
+// returns the channel's name
+func tmplGetChannelName(cc *models.CustomCommand) string {
+	gs := bot.State.GetGuild(cc.GuildID)
+	cs := gs.GetChannel(cc.ContextChannel)
+	return cs.Name
 }
 
 var _ web.PluginWithServerHomeWidget = (*Plugin)(nil)

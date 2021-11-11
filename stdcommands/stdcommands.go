@@ -9,6 +9,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/advice"
 	"github.com/mrbentarikau/pagst/stdcommands/allocstat"
 	"github.com/mrbentarikau/pagst/stdcommands/banserver"
+	"github.com/mrbentarikau/pagst/stdcommands/banserverowner"
 	"github.com/mrbentarikau/pagst/stdcommands/bashquotes"
 	"github.com/mrbentarikau/pagst/stdcommands/calc"
 	"github.com/mrbentarikau/pagst/stdcommands/catfact"
@@ -116,6 +117,7 @@ func (p *Plugin) AddCommands() {
 		stateinfo.Command,
 		leaveserver.Command,
 		banserver.Command,
+		banserverowner.Command,
 		allocstat.Command,
 		unbanserver.Command,
 		topservers.Command,

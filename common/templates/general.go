@@ -172,6 +172,8 @@ func CreateEmbed(values ...interface{}) (*discordgo.MessageEmbed, error) {
 	switch t := values[0].(type) {
 	case SDict:
 		m = t
+	case *SDict:
+		m = *t
 	case map[string]interface{}:
 		m = t
 	case *discordgo.MessageEmbed:
@@ -391,7 +393,8 @@ func indirect(v reflect.Value) (rv reflect.Value, isNil bool) {
 
 // in returns whether v is in the set l.  l may be an array or slice.
 func in(l interface{}, v interface{}) bool {
-	lv := reflect.ValueOf(l)
+	//lv := reflect.ValueOf(l)
+	lv, _ := indirect(reflect.ValueOf(l))
 	vv := reflect.ValueOf(v)
 
 	if !reflect.ValueOf(vv).IsZero() {
@@ -437,7 +440,8 @@ func in(l interface{}, v interface{}) bool {
 // in returns whether v is in the set l. l may only be a slice of strings, or a string, v may only be a string
 // it differs from "in" because its case insensitive
 func inFold(l interface{}, v string) bool {
-	lv := reflect.ValueOf(l)
+	//lv := reflect.ValueOf(l)
+	lv, _ := indirect(reflect.ValueOf(l))
 	vv := reflect.ValueOf(v)
 
 	switch lv.Kind() {
@@ -686,8 +690,13 @@ func tmplLog(arguments ...interface{}) (float64, error) {
 }
 
 //tmplHumanizeThousands comma separates thousands
-func tmplHumanizeThousands(input interface{}) string {
+func tmplHumanizeThousands(input interface{}, dot ...bool) string {
 	var f1, f2 string
+	separator := ","
+
+	if len(dot) > 0 && dot[0] {
+		separator = "."
+	}
 
 	i := tmplToInt(input)
 	if i < 0 {
@@ -701,7 +710,7 @@ func tmplHumanizeThousands(input interface{}) string {
 		idx++
 		if idx == 4 {
 			idx = 1
-			f1 = f1 + ","
+			f1 = f1 + separator
 		}
 		f1 = f1 + string(str[i])
 	}
@@ -867,8 +876,8 @@ func sequence(start, stop int) ([]int, error) {
 		return nil, errors.New("stop is less than start?")
 	}
 
-	if stop-start > 10000 {
-		return nil, errors.New("Sequence max length is 10000")
+	if stop-start > 100000 {
+		return nil, errors.New("Sequence max length is 100 000")
 	}
 
 	out := make([]int, stop-start)
@@ -893,14 +902,16 @@ func shuffle(seq interface{}) (interface{}, error) {
 		return nil, errors.New("can't iterate over a nil value")
 	}
 
-	switch seqv.Kind() {
+	/*switch seqv.Kind() {
 	case reflect.Array, reflect.Slice, reflect.String:
 		// okay
-	default:
+	default:*/
+	if seqv.Kind() != reflect.Slice {
 		return nil, errors.New("can't iterate over " + reflect.ValueOf(seq).Type().String())
 	}
 
-	shuffled := reflect.MakeSlice(reflect.TypeOf(seq), seqv.Len(), seqv.Len())
+	//shuffled := reflect.MakeSlice(reflect.TypeOf(seq), seqv.Len(), seqv.Len())
+	shuffled := reflect.MakeSlice(seqv.Type(), seqv.Len(), seqv.Len())
 
 	rand.Seed(time.Now().UTC().UnixNano())
 	randomIndices := rand.Perm(seqv.Len())

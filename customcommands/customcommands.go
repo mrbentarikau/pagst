@@ -134,6 +134,10 @@ type CustomCommand struct {
 
 	ReactionTriggerMode int `schema:"reaction_trigger_mode"`
 
+	// If set, then the following categories are required, otherwise they are ignored
+	RequireCategories bool    `json:"require_categories" schema:"require_categories"`
+	Categories        []int64 `json:"categories" schema:"categories"`
+
 	// If set, then the following channels are required, otherwise they are ignored
 	RequireChannels bool    `json:"require_channels" schema:"require_channels"`
 	Channels        []int64 `json:"channels" schema:"channels"`
@@ -192,10 +196,12 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 		TextTrigger:              cc.Trigger,
 		TextTriggerCaseSensitive: cc.CaseSensitive,
 
-		Channels:              cc.Channels,
-		ChannelsWhitelistMode: cc.RequireChannels,
-		Roles:                 cc.Roles,
-		RolesWhitelistMode:    cc.RequireRoles,
+		Categories:              cc.Categories,
+		CategoriesWhitelistMode: cc.RequireCategories,
+		Channels:                cc.Channels,
+		ChannelsWhitelistMode:   cc.RequireChannels,
+		Roles:                   cc.Roles,
+		RolesWhitelistMode:      cc.RequireRoles,
 
 		TimeTriggerInterval:       cc.TimeTriggerInterval,
 		TimeTriggerExcludingDays:  cc.TimeTriggerExcludingDays,
@@ -228,6 +234,41 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 	}
 
 	return pqCommand
+}
+
+func CmdRunsInCategory(cc *models.CustomCommand, channel int64) bool {
+	if cc.GroupID.Valid {
+		// check group restrictions
+		if common.ContainsInt64Slice(cc.R.Group.IgnoreCategories, channel) {
+			return false
+		}
+
+		if len(cc.R.Group.WhitelistCategories) > 0 {
+			if !common.ContainsInt64Slice(cc.R.Group.WhitelistCategories, channel) {
+				return false
+			}
+		}
+	}
+
+	// check command specifc restrictions
+	for _, v := range cc.Categories {
+		if v == channel {
+			if cc.CategoriesWhitelistMode {
+				return true
+			}
+
+			// Ignore the channel
+			return false
+		}
+	}
+
+	// Not found
+	if cc.CategoriesWhitelistMode {
+		return false
+	}
+
+	// Not in ignore list
+	return true
 }
 
 func CmdRunsInChannel(cc *models.CustomCommand, channel int64) bool {

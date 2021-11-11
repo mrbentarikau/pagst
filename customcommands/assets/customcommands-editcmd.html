@@ -61,7 +61,7 @@
                             {{if eq (call .GetCCIntervalType .CC) 1}}hour(s){{else}}minute(s){{end}}{{end}}
                         </h2>
                         <input type="text" class="hidden form-control" name="id" value="{{.CC.LocalID}}">
-                        {{if (eq .CC.TriggerType 5)}}<span class="cc-text-interval-span">Next run: <span class="cc-text-next-run-span">{{.CC.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span><br/></span>{{end}}
+                        {{if (eq .CC.TriggerType 5)}}<span>Next run: {{.CC.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span><br/>{{end}}
                         Last saved: {{if ne .CC.DateUpdated.Time.Year 1}}{{.CC.DateUpdated.Time.UTC.Format "2006-01-02 15:04:05 MST"}}{{else}}N/A{{end}}<br/><br/>
                         <div class="row">
                             <!-- Trigger -->
@@ -324,13 +324,13 @@
                                     {{.CC.LastError}}</code>{{else}}None{{end}}</p>
 
                                 <h4>Run count</h4>
-                                <p><code>{{.CC.RunCount}}</code></p>
+                                <p><code>{{humanizeThousands .CC.RunCount}}</code></p>
 
                                 <h4>Output errors as command response</h4>
                                 {{checkbox "show_errors" "show_errors" "" .CC.ShowErrors}}
                             </div>
                             <div id="cc-extra-settings" class="col-sm-6">
-                                <h3>Channel/User role restrictions</h3>
+                                <h3>User Role/Category/Channel restrictions</h3>
                                 <div class="radio">
                                     <label>
                                         <input id="require-role-mode" type="radio" name="require_roles" value="on"
@@ -351,25 +351,48 @@
                                 </select>
 
                                 <hr>
-
-                                <div class="radio">
-                                    <label>
-                                        <input id="require-channel-mode" type="radio" name="require_channels" value="on"
-                                            {{if .CC.ChannelsWhitelistMode}}checked{{end}}>
-                                        Only run in the following channels
-                                    </label>
+                                <div class="row mb-0">
+                                    <div class="col mb-0">
+                                        <div class="radio">
+                                            <label>
+                                                <input id="require-category-mode" type="radio" name="require_categories" value="on"
+                                                    {{if .CC.CategoriesWhitelistMode}}checked{{end}}>
+                                                Only run in the following categories
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label>
+                                                <input id="ignore-category-mode" type="radio" name="require_categories" value=""
+                                                    {{if not .CC.CategoriesWhitelistMode}}checked{{end}}>
+                                                Ignore the categories in the following list
+                                            </label>
+                                        </div>
+                                        <select name="categories" class="multiselect form-control" multiple="multiple"
+                                            id="command-categories" data-plugin-multiselect>
+                                            {{catChannelOptionsMulti $g.Channels .CC.Categories}}
+                                        </select>
+                                    </div>
+                                    <div class="col mb-0">
+                                        <div class="radio">
+                                            <label>
+                                                <input id="require-channel-mode" type="radio" name="require_channels" value="on"
+                                                    {{if .CC.ChannelsWhitelistMode}}checked{{end}}>
+                                                Only run in the following channels
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label>
+                                                <input id="ignore-channel-mode" type="radio" name="require_channels" value=""
+                                                    {{if not .CC.ChannelsWhitelistMode}}checked{{end}}>
+                                                Ignore the channels in the following list
+                                            </label>
+                                        </div>
+                                        <select name="channels" class="multiselect form-control" multiple="multiple"
+                                            id="command-channels" data-plugin-multiselect>
+                                            {{textChannelOptionsMulti $g.Channels .CC.Channels}}
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="radio">
-                                    <label>
-                                        <input id="ignore-channel-mode" type="radio" name="require_channels" value=""
-                                            {{if not .CC.ChannelsWhitelistMode}}checked{{end}}>
-                                        Ignore the channels in the following list
-                                    </label>
-                                </div>
-                                <select name="channels" class="multiselect form-control" multiple="multiple"
-                                    id="command-channels" data-plugin-multiselect>
-                                    {{textChannelOptionsMulti $g.Channels .CC.Channels}}
-                                </select>
                             </div>
                         </div>
 
@@ -548,6 +571,7 @@
         handleTimeTriggerChannelChange();
         handleRestrictionChange($("#require-role-mode").prop("checked"), $("#command-roles"), "require-no-roles-warning", requireNoRolesWarning);
         handleRestrictionChange($("#require-channel-mode").prop("checked"), $("#command-channels"), "require-no-channels-warning", requireNoChannelsWarning);
+        handleRestrictionChange($("#require-categories-mode").prop("checked"), $("#command-categories"), "require-no-categories-warning", requireNoCategoriesWarning);
     })
     
     var textAreaTheme = "no CodeMirror"
@@ -642,7 +666,8 @@
     }
 
     var requireNoRolesWarning = "Requiring no roles effectively disables your command, making it run for no one. If you want no role restrictions, set the mode to 'ignore roles' instead.";
-    var requireNoChannelsWarning = "Requiring no channels effectively disables your command, making it run for no one. If you want no channel restrictions, set the mode to 'ignore channels' instead.";
+    var requireNoChannelsWarning = "Requiring no channels effectively disables your command. If you want no channel restrictions, set the mode to 'ignore channels' instead.";
+    var requireNoCategoriesWarning = "Requiring no categories effectively disables your command. If you want no category restrictions, set the mode to 'ignore categories' instead.";
 
     $("#require-role-mode").change(function() {
         handleRestrictionChange($(this).prop("checked"), $("#command-roles"), "require-no-roles-warning", requireNoRolesWarning);
@@ -662,6 +687,16 @@
     });
     $("#command-channels").change(function() {
         handleRestrictionChange($("#require-channel-mode").prop("checked"), $(this), "require-no-channels-warning", requireNoChannelsWarning); 
+    });
+
+    $("#require-category-mode").change(function() {
+        handleRestrictionChange($(this).prop("checked"), $("#command-categories"), "require-no-categories-warning", requireNoCategoriesWarning);
+    });
+    $("#ignore-category-mode").change(function() {
+        handleRestrictionChange(!$(this).prop("checked"), $("#command-categories"), "require-no-categories-warning", requireNoCategoriesWarning);
+    });
+    $("#command-categories").change(function() {
+        handleRestrictionChange($("#require-category-mode").prop("checked"), $(this), "require-no-categories-warning", requireNoCategoriesWarning); 
     });
 
     function handleRestrictionChange(modeIsRequire, selectMenu, warningID, warningText) {
