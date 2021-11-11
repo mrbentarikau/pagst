@@ -3,7 +3,7 @@ package youtube
 import (
 	"fmt"
 
-	"github.com/botlabs-gg/yagpdb/common"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mediocregopher/radix/v3"
 )
 
