@@ -1467,6 +1467,55 @@ func (mj *MemberJoinTrigger) CheckJoin(t *TriggerContext) (isAffected bool, err 
 }
 
 /////////////////////////////////////////////////////////////
+/*
+var _ VoiceStateListener = (*VoiceStateUpdateTrigger)(nil)
+
+type VoiceStateUpdateTrigger struct {
+	UserJoin bool
+}
+
+func (vs *VoiceStateUpdateTrigger) Kind() RulePartType {
+	return RulePartTrigger
+}
+
+func (vs *VoiceStateUpdateTrigger) DataType() interface{} {
+	return nil
+}
+
+func (vs *VoiceStateUpdateTrigger) Name() (name string) {
+	if vs.UserJoin {
+		return "Member joins VC"
+	}
+	return "Member leaves VC"
+}
+
+func (vs *VoiceStateUpdateTrigger) Description() (description string) {
+	if vs.UserJoin {
+		return "Triggers when a member joins voice-channel"
+	}
+	return "Triggers when a member joins voice-channel"
+}
+
+func (vs *VoiceStateUpdateTrigger) UserSettings() []*SettingDef {
+	return []*SettingDef{}
+}
+
+func (vs *VoiceStateUpdateTrigger) CheckVoiceState(t *TriggerContext, cs *dstate.ChannelState) (isAffected bool, err error) {
+	//func (vs *VoiceStateUpdateTrigger) CheckVoiceState(t *TriggerContext, gs *dstate.GuildState, ms *dstate.MemberState) (isAffected bool, err error) {
+	gs := bot.State.GetGuild(t.MS.GuildID)
+	userVoiceState := gs.GetVoiceState(t.MS.User.ID)
+	if vs.UserJoin && userVoiceState != nil {
+		return true, nil
+	}
+
+	if !vs.UserJoin && userVoiceState == nil {
+		return true, nil
+	}
+
+	return false, nil
+}
+*/
+/////////////////////////////////////////////////////////////
 
 var _ MessageTrigger = (*MessageAttachmentTrigger)(nil)
 

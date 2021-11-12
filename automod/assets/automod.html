@@ -325,6 +325,9 @@ table{
     <select id="automod-channel-multi-template" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
         {{textChannelOptionsMulti .ActiveGuild.Channels nil}}
     </select>
+    <select id="automod-voice-channel-multi-template" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+        {{voiceChannelOptionsMulti .ActiveGuild.Channels nil}}
+    </select>
     <select id="automod-list-selection-template" class="form-control">
         {{range .AutomodLists}}
         <option value="{{.ID}}">{{.Name}}</option>
@@ -532,6 +535,9 @@ $(function(){
         case "multi_channel":
             cloneDropdown(column, "#automod-channel-multi-template", key, true);
             break;
+        case "multi_voice_channel":
+            cloneDropdown(column, "#automod-voice-channel-multi-template", key, true);
+            break;
         case "multi_channel_cat":
             cloneDropdown(column, "#automod-channel-cat-multi-template", key, true);
             break;
@@ -606,6 +612,10 @@ $(function(){
                     {{else if eq .Kind "multi_channel"}}
                     <select name="{{$name}}" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
                         {{textChannelOptionsMulti $dot.dot.ActiveGuild.Channels (index $dot.settings .Key)}}
+                    </select>
+                    {{else if eq .Kind "multi_voice_channel"}}
+                    <select name="{{$name}}" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+                        {{voiceChannelOptionsMulti $dot.dot.ActiveGuild.Channels (index $dot.settings .Key)}}
                     </select>
                     {{else if eq .Kind "multi_channel_cat"}}
                     <select name="{{$name}}" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>

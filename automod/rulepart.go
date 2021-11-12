@@ -45,10 +45,14 @@ var RulePartMap = map[int]RulePart{
 	30: &MemberJoinTrigger{},
 	31: &MessageAttachmentTrigger{},
 	32: &MessageAttachmentTrigger{RequiresAttachment: true},
-	/*33:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
-	34:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: true}},
-	35:  &UserStatusWordlistTrigger{Blacklist: false},
-	36:  &UserStatusWordlistTrigger{Blacklist: true},*/
+	/*
+		94:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
+		95:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: true}},
+		96:  &UserStatusWordlistTrigger{Blacklist: false},
+		97:  &UserStatusWordlistTrigger{Blacklist: true},
+		98:  &VoiceStateUpdateTrigger{UserJoin: true},
+		99:  &VoiceStateUpdateTrigger{UserJoin: false},
+	*/
 	100: &AntiFishDetectorTrigger{},
 
 	// Conditions 2xx
@@ -66,6 +70,10 @@ var RulePartMap = map[int]RulePart{
 	212: &ChannelCategoriesCondition{Blacklist: false},
 	213: &MessageEditedCondition{NewMessage: true},
 	214: &MessageEditedCondition{NewMessage: false},
+	/*
+		298: &VoiceChannelsCondition{Blacklist: true},
+		299: &VoiceChannelsCondition{Blacklist: false},
+	*/
 
 	// Effects 3xx
 	300: &DeleteMessageEffect{},
@@ -114,6 +122,7 @@ const (
 	SettingTypeMultiRole              = "multi_role"
 	SettingTypeChannel                = "channel"
 	SettingTypeMultiChannel           = "multi_channel"
+	SettingTypeMultiVoiceChannel      = "multi_voice_channel"
 	SettingTypeMultiChannelCategories = "multi_channel_cat"
 	SettingTypeInt                    = "int"
 	SettingTypeString                 = "string"
@@ -261,3 +270,10 @@ type JoinListener interface {
 
 	CheckJoin(triggerCtx *TriggerContext) (isAffected bool, err error)
 }
+
+// VoiceStateListener is a trigger that gets triggered on a voiceState changes
+/*type VoiceStateListener interface {
+	RulePart
+
+	CheckVoiceState(triggerCtx *TriggerContext, cs *dstate.ChannelState) (isAffected bool, err error)
+}*/

@@ -29,6 +29,7 @@ func (p *Plugin) BotInit() {
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleGuildMemberUpdate, eventsystem.EventGuildMemberUpdate)
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleMsgUpdate, eventsystem.EventMessageUpdate)
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleGuildMemberJoin, eventsystem.EventGuildMemberAdd)
+	//eventsystem.AddHandlerAsyncLastLegacy(p, p.handleVoiceStateUpdate, eventsystem.EventVoiceStateUpdate)
 	//eventsystem.AddHandlerAsyncLastLegacy(p, p.handlePresenceUpdate, eventsystem.EventPresenceUpdate)
 
 	scheduledevents2.RegisterHandler("amod2_reset_channel_ratelimit", ResetChannelRatelimitData{}, handleResetChannelRatelimit)
@@ -205,7 +206,38 @@ func (p *Plugin) handleGuildMemberUpdate(evt *eventsystem.EventData) {
 	p.checkNickname(ms)
 }
 
-/*func (p *Plugin) handlePresenceUpdate(evt *eventsystem.EventData) {
+/*func (p *Plugin) handleVoiceStateUpdate(evt *eventsystem.EventData) {
+
+	evtData := evt.VoiceStateUpdate()
+	voiceState := evtData.VoiceState
+
+	ms, err := bot.GetMember(voiceState.GuildID, voiceState.UserID)
+	if err != nil {
+		return
+	}
+
+	p.checkVoiceState(ms, voiceState.ChannelID)
+}
+
+func (p *Plugin) checkVoiceState(ms *dstate.MemberState, cID int64) { //, cs *dstate.ChannelState) {
+	gs := bot.State.GetGuild(ms.GuildID)
+	if gs == nil {
+		return
+	}
+
+	cs := gs.GetChannel(cID)
+
+	p.CheckTriggers(nil, gs, ms, nil, cs, func(trig *ParsedPart) (activated bool, err error) {
+		cast, ok := trig.Part.(VoiceStateListener)
+		if !ok {
+			return false, nil
+		}
+
+		return cast.CheckVoiceState(&TriggerContext{GS: gs, MS: ms, Data: trig.ParsedSettings}, cs)
+	})
+}
+
+func (p *Plugin) handlePresenceUpdate(evt *eventsystem.EventData) {
 
 	evtData := evt.PresenceUpdate()
 
@@ -222,6 +254,22 @@ func (p *Plugin) handleGuildMemberUpdate(evt *eventsystem.EventData) {
 	}
 
 	p.checkUserStatus(ms)
+}
+
+func (p *Plugin) checkUserStatus(ms *dstate.MemberState) {
+	gs := bot.State.GetGuild(ms.GuildID)
+	if gs == nil {
+		return
+	}
+
+	p.CheckTriggers(nil, gs, ms, nil, nil, func(trig *ParsedPart) (activated bool, err error) {
+		cast, ok := trig.Part.(UserStatusListener)
+		if !ok {
+			return false, nil
+		}
+
+		return cast.CheckUserStatus(&TriggerContext{GS: gs, MS: ms, Data: trig.ParsedSettings})
+	})
 }*/
 
 func (p *Plugin) handleGuildMemberJoin(evt *eventsystem.EventData) {
@@ -248,22 +296,6 @@ func (p *Plugin) checkNickname(ms *dstate.MemberState) {
 		return cast.CheckNickname(&TriggerContext{GS: gs, MS: ms, Data: trig.ParsedSettings})
 	})
 }
-
-/*func (p *Plugin) checkUserStatus(ms *dstate.MemberState) {
-	gs := bot.State.GetGuild(ms.GuildID)
-	if gs == nil {
-		return
-	}
-
-	p.CheckTriggers(nil, gs, ms, nil, nil, func(trig *ParsedPart) (activated bool, err error) {
-		cast, ok := trig.Part.(UserStatusListener)
-		if !ok {
-			return false, nil
-		}
-
-		return cast.CheckUserStatus(&TriggerContext{GS: gs, MS: ms, Data: trig.ParsedSettings})
-	})
-}*/
 
 func (p *Plugin) checkUsername(ms *dstate.MemberState) {
 	gs := bot.State.GetGuild(ms.GuildID)

@@ -195,6 +195,97 @@ func (cd *ChannelsCondition) MergeDuplicates(data []interface{}) interface{} {
 }
 
 /////////////////////////////////////////////////////////////////
+/*
+type VoiceChannelsConditionData struct {
+	Channels []int64
+}
+
+var _ Condition = (*VoiceChannelsCondition)(nil)
+
+type VoiceChannelsCondition struct {
+	Blacklist bool // if true, then blacklist mode, otherwise whitelist mode
+}
+
+func (cd *VoiceChannelsCondition) Kind() RulePartType {
+	return RulePartCondition
+}
+
+func (cd *VoiceChannelsCondition) DataType() interface{} {
+	return &VoiceChannelsConditionData{}
+}
+
+func (cd *VoiceChannelsCondition) Name() string {
+	if cd.Blacklist {
+		return "Ignore voice channels"
+	}
+
+	return "Active in voice channels"
+}
+
+func (cd *VoiceChannelsCondition) Description() string {
+	if cd.Blacklist {
+		return "Ignore the following voice channels"
+	}
+
+	return "Only check the following voice channels"
+}
+
+func (cd *VoiceChannelsCondition) UserSettings() []*SettingDef {
+	return []*SettingDef{
+		&SettingDef{
+			Name: "Channels",
+			Key:  "Channels",
+			Kind: SettingTypeMultiVoiceChannel,
+		},
+	}
+}
+
+func (cd *VoiceChannelsCondition) IsMet(data *TriggeredRuleData, settings interface{}) (bool, error) {
+	settingsCast := settings.(*VoiceChannelsConditionData)
+	if data.CS == nil {
+		return true, nil
+	}
+
+	if common.ContainsInt64Slice(settingsCast.Channels, common.ChannelOrThreadParentID(data.CS)) {
+		if cd.Blacklist {
+			// Blacklisted channel
+			return false, nil
+		} else {
+			// Whilelisted channel
+			return true, nil
+		}
+	}
+
+	if cd.Blacklist {
+		// Not in a blacklisted channel
+		return true, nil
+	}
+
+	// Not in a whitelisted channel
+	return false, nil
+}
+
+func (cd *VoiceChannelsCondition) MergeDuplicates(data []interface{}) interface{} {
+	totalChannels := make([]int64, 0, 100)
+	for _, dupe := range data {
+		cast := dupe.(*VoiceChannelsConditionData)
+	OUTER:
+		for _, c := range cast.Channels {
+			for _, existing := range totalChannels {
+				if c == existing {
+					continue OUTER
+				}
+			}
+
+			// not added
+			totalChannels = append(totalChannels, c)
+		}
+	}
+
+	return &VoiceChannelsConditionData{Channels: totalChannels}
+}
+*/
+/////////////////////////////////////////////////////////////////
 
 type ChannelCategoryConditionData struct {
 	Categories []int64
