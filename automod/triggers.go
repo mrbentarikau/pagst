@@ -1493,7 +1493,7 @@ func (vs *VoiceStateUpdateTrigger) Description() (description string) {
 	if vs.UserJoin {
 		return "Triggers when a member joins voice-channel"
 	}
-	return "Triggers when a member joins voice-channel"
+	return "Triggers when a member leaves voice-channel"
 }
 
 func (vs *VoiceStateUpdateTrigger) UserSettings() []*SettingDef {
