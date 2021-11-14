@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
@@ -76,21 +77,23 @@ func (r *Reminder) Trigger() error {
 	}
 
 	logger.WithFields(logrus.Fields{"channel": r.ChannelID, "user": r.UserID, "message": r.Message, "id": r.ID}).Info("Triggered reminder")
+	member, _ := bot.GetMember(r.GuildID, r.UserIDInt())
+	if member != nil {
+		mqueue.QueueMessage(&mqueue.QueuedElement{
+			Source:       "reminder",
+			SourceItemID: "",
 
-	mqueue.QueueMessage(&mqueue.QueuedElement{
-		Source:       "reminder",
-		SourceItemID: "",
+			GuildID:   r.GuildID,
+			ChannelID: r.ChannelIDInt(),
 
-		GuildID:   r.GuildID,
-		ChannelID: r.ChannelIDInt(),
+			MessageStr: reminderRepeat + " <@" + r.UserID + ">: " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
+			AllowedMentions: discordgo.AllowedMentions{
+				Users: []int64{r.UserIDInt()},
+			},
 
-		MessageStr: reminderRepeat + " <@" + r.UserID + ">: " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
-		AllowedMentions: discordgo.AllowedMentions{
-			Users: []int64{r.UserIDInt()},
-		},
-
-		Priority: 10, // above all feeds
-	})
+			Priority: 10, // above all feeds
+		})
+	}
 	return nil
 }
 
