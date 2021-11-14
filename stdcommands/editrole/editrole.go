@@ -51,22 +51,22 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 		return "No role with the Name or ID`" + roleS + "` found", nil
 	}
 
-	//data.GuildData.GS.RLock()
 	if !bot.IsMemberAboveRole(data.GuildData.GS, data.GuildData.MS, role) {
 		//data.GuildData.GS.RUnlock()
 		return "Can't edit roles above you", nil
 	}
-	//data.GuildData.GS.RUnlock()
 
 	change := false
 
 	name := role.Name
 	if n := data.Switch("name").Str(); n != "" {
+		fmt.Println("1")
 		name = limitString(n, 100)
 		change = true
 	}
 	color := role.Color
 	if c := data.Switch("color").Str(); c != "" {
+		fmt.Println("2")
 		if data.Source == dcmd.TriggerSourceDM {
 			return nil, errors.New("Cannot use role color edit in custom commands to prevent api abuse")
 		}
@@ -78,18 +78,18 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 		change = true
 	}
 	mentionable := role.Mentionable
-	if m := data.Switch("mention"); m != nil {
-		mentionable = m.Bool()
+	if m := data.Switch("mention").Bool(); m != false {
+		mentionable = m
 		change = true
 	}
 	hoisted := role.Hoist
-	if h := data.Switch("hoist"); h != nil {
-		hoisted = h.Bool()
+	if h := data.Switch("hoist").Bool(); h != false {
+		hoisted = h
 		change = true
 	}
 	perms := role.Permissions
-	if p := data.Switch("perms"); p != nil {
-		perms = p.Int64()
+	if p := data.Switch("perms").Int64(); p != 0 {
+		perms = p
 		change = true
 	}
 
@@ -101,7 +101,7 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 	}
 
 	_, err := common.BotSession.ChannelMessageSendComplex(cID, &discordgo.MessageSend{
-		Content:         fmt.Sprintf("__**Edited Role(%d) properties to :**__\n\n**Name **: `%s`\n**Color **: `%d`\n**Mentionable **: `%t`\n**Hoisted **: `%t`\n**Permissions **: `%d`", role.ID, name, color, mentionable, hoisted, perms),
+		Content:         fmt.Sprintf("__**Role(%d) properties:**__\n\n**Name **: `%s`\n**Color **: `%d`\n**Mentionable **: `%t`\n**Hoisted **: `%t`\n**Permissions **: `%d`", role.ID, name, color, mentionable, hoisted, perms),
 		AllowedMentions: discordgo.AllowedMentions{},
 	})
 
