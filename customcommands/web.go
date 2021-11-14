@@ -677,9 +677,12 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 
 	numCustomCommands, err := models.CustomCommands(qm.Where("guild_id = ?", ag.ID)).CountG(r.Context())
 
-	format := `<p>Number of custom commands: <code>%d</code></p>`
+	format := `<p>Number of custom commands: <code>%d</code></p>
+			   <div>CCs ran today: <code>%s</code></div>
+			   <div>CCs executed total: <code>%s</code></div>
+	`
 
-	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, numCustomCommands))
+	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, numCustomCommands, queryCCsRan(ag.ID, false), queryCCsRan(ag.ID, true)))
 
 	if numCustomCommands > 0 {
 		templateData["WidgetEnabled"] = true
@@ -688,4 +691,25 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 	}
 
 	return templateData, err
+}
+
+func queryCCsRan(ag int64, total bool) string {
+	within := time.Now().Add(-24 * time.Hour)
+	guildID := ag
+	var result null.Int64
+	if total {
+		const q = "SELECT SUM(count) FROM analytics WHERE guild_id = $1 AND (name='executed_cc' OR name='cmd_executed_customcommands')"
+		err := common.PQ.QueryRow(q, guildID).Scan(&result)
+		if err != nil {
+			logger.WithError(err).Error("failed counting commands ran today")
+		}
+	} else {
+		const q = "SELECT SUM(count) FROM analytics WHERE guild_id = $1 AND created_at > $2 AND (name='executed_cc' OR name='cmd_executed_customcommands')"
+		err := common.PQ.QueryRow(q, guildID, within).Scan(&result)
+		if err != nil {
+			logger.WithError(err).Error("failed counting commands ran today")
+		}
+	}
+	queryReturn := common.HumanizeThousands(result.Int64)
+	return queryReturn
 }

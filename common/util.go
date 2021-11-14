@@ -624,3 +624,60 @@ func ParseColor(raw string) (int, bool) {
 
 	return 0, false
 }
+
+//HumanizeThousands comma separates thousands
+func HumanizeThousands(input interface{}) string {
+	var f1, f2 string
+
+	i := tmplToInt(input)
+	if i < 0 {
+		i = i * -1
+		f2 = "-"
+	}
+	str := strconv.Itoa(i)
+
+	idx := 0
+	for i = len(str) - 1; i >= 0; i-- {
+		idx++
+		if idx == 4 {
+			idx = 1
+			f1 = f1 + ","
+		}
+		f1 = f1 + string(str[i])
+	}
+
+	for i = len(f1) - 1; i >= 0; i-- {
+		f2 = f2 + string(f1[i])
+	}
+	return f2
+}
+
+func tmplToInt(from interface{}) int {
+	switch t := from.(type) {
+	case int:
+		return t
+	case int32:
+		return int(t)
+	case int64:
+		return int(t)
+	case float32:
+		return int(t)
+	case float64:
+		return int(t)
+	case uint:
+		return int(t)
+	case uint8:
+		return int(t)
+	case uint32:
+		return int(t)
+	case uint64:
+		return int(t)
+	case string:
+		parsed, _ := strconv.ParseInt(t, 10, 64)
+		return int(parsed)
+	case time.Duration:
+		return int(t)
+	default:
+		return 0
+	}
+}
