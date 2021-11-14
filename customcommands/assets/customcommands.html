@@ -155,7 +155,7 @@
             <form class="form-horizontal" method="post" method="post" action="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/update" data-async-form>
                 <div class="pull-right">
                     {{if eq .TriggerType 5}}
-                        <button type="submit" class="btn btn-secondary" title="This will trigger this custom command immediately"
+                    <button type="submit" class="btn btn-secondary" title="This will trigger this custom command immediately"
                         formaction="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/run_now" style="margin: 5px 5px 5px 0px!important">Run now</button>
                     {{end}}
                     <button type="button" title="#{{.LocalID}} - {{.TextTrigger}}" class="btn btn-success" onclick="window.location.href = '/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/';" style="margin: 5px 5px 5px 0px!important">Edit</button>
@@ -166,16 +166,17 @@
             <h2 class="card-title">
                 {{$dotSDict := sdict "dot" $dot "insideDot" .}}
                 {{if eq .TriggerType 1 2 3 4}}
-                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}</a>
+                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}
                 {{else if eq .TriggerType 0}}
-                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}</a>
+                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}
                 {{else if eq .TriggerType 5}}
-                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-interval-span">Every {{call $dot.GetCCInterval .}} {{if eq (call $dot.GetCCIntervalType .) 1}}hour(s)</span>{{else}}minute(s)</span>{{end}} Next run: <span class="cc-text-next-run-span">{{.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span>&nbsp;&nbsp;Channel: <span class="cc-text-interval-span">{{if .ContextChannel}}{{call $dot.GetChannelName .}}{{else}}None{{end}}</span></a>
+                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-interval-span">Every {{call $dot.GetCCInterval .}} {{if eq (call $dot.GetCCIntervalType .) 1}}hour(s)</span>{{else}}minute(s)</span>{{end}} Next run: <span class="cc-text-next-run-span">{{.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span>&nbsp;&nbsp;Channel: <span class="cc-text-interval-span">{{if .ContextChannel}}{{call $dot.GetChannelName .}}{{else}}None{{end}}</span>
                 {{else if eq .TriggerType 6}}
-                     {{template "cc_beginning" $dotSDict}}{{template "cc_restrictions" .}}</a>
+                     {{template "cc_beginning" $dotSDict}}{{template "cc_restrictions" .}}
                 {{else}}
-                     {{template "cc_beginning" $dotSDict}}</a>
+                     {{template "cc_beginning" $dotSDict}}
                 {{end}}
+                </a>
             </h2>
         </div>
         <div id="collapse_cmd{{.LocalID}}" class="collapse">
@@ -271,7 +272,7 @@
     {{else if eq .insideDot.TriggerType 6}}
         {{$triggerStyleClasses = "cc-trigger-reaction"}}
     {{end}}
-    <a style="padding:15px 20px 10px 20px!important" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType}}
+    <a style="padding:15px 20px 10px 20px" title="Run count: {{humanizeThousands .insideDot.RunCount}}" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType}}
 {{end}}
 
 {{define "cc_restrictions"}}
