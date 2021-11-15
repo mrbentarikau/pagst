@@ -1163,6 +1163,13 @@ func (c *Context) tmplGetMessage(channel, msgID interface{}) (*discordgo.Message
 	}
 	message.GuildID = c.GS.ID
 
+	member, err := common.BotSession.GuildMember(message.GuildID, message.Author.ID)
+	if err != nil {
+		return nil, err
+	}
+	message.Member = member
+	message.Member.GuildID = message.GuildID
+
 	return message, nil
 }
 
@@ -1573,44 +1580,28 @@ func (c *Context) tmplEditNickname(Nickname string) (string, error) {
 	return "", nil
 }
 
-func (c *Context) tmplPinMessage(channel, message interface{}) (string, error) {
-	if c.IncreaseCheckCallCounter("messagePins", 10) {
-		return "", ErrTooManyCalls
-	}
+func (c *Context) tmplPinMessage(unpin bool) func(channel, message interface{}) (string, error) {
+	return func(channel, message interface{}) (string, error) {
+		if c.IncreaseCheckCallCounter("message_pins", 10) {
+			return "", ErrTooManyCalls
+		}
 
-	cID := c.ChannelArg(channel)
-	if cID == 0 {
-		return "", errors.New("Unknown channel")
-	}
+		cID := c.ChannelArgNoDM(channel)
+		if cID == 0 {
+			return "", errors.New("Unknown channel")
+		}
 
-	mID := ToInt64(message)
+		mID := ToInt64(message)
+		var err error
 
-	err := common.BotSession.ChannelMessagePin(cID, mID)
-	if err != nil {
+		if unpin {
+			err = common.BotSession.ChannelMessagePin(cID, mID)
+		} else {
+			err = common.BotSession.ChannelMessageUnpin(cID, mID)
+		}
+
 		return "", err
 	}
-
-	return "", nil
-}
-
-func (c *Context) tmplUnpinMessage(channel, message interface{}) (string, error) {
-	if c.IncreaseCheckCallCounter("messagePins", 10) {
-		return "", ErrTooManyCalls
-	}
-
-	cID := c.ChannelArg(channel)
-	if cID == 0 {
-		return "", errors.New("Unknown channel")
-	}
-
-	mID := ToInt64(message)
-
-	err := common.BotSession.ChannelMessageUnpin(cID, mID)
-	if err != nil {
-		return "", err
-	}
-
-	return "", nil
 }
 
 func (c *Context) tmplLastMessages(channel interface{}, num ...int) ([]*dstate.MessageState, error) {
