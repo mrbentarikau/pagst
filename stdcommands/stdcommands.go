@@ -22,6 +22,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/dcallvoice"
 	"github.com/mrbentarikau/pagst/stdcommands/define"
 	"github.com/mrbentarikau/pagst/stdcommands/dogfact"
+	"github.com/mrbentarikau/pagst/stdcommands/editchannelpermissions"
 	"github.com/mrbentarikau/pagst/stdcommands/editrole"
 	"github.com/mrbentarikau/pagst/stdcommands/exportcustomcommands"
 	"github.com/mrbentarikau/pagst/stdcommands/findserver"
@@ -98,6 +99,7 @@ func (p *Plugin) AddCommands() {
 		customembed.Command,
 		simpleembed.Command,
 		currenttime.Command,
+		editchannelpermissions.Command,
 		editrole.Command,
 		listroles.Command,
 		memstats.Command,
