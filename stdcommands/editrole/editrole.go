@@ -16,12 +16,13 @@ import (
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory:     commands.CategoryTool,
-	Name:            "EditRole",
-	Aliases:         []string{"ERole"},
-	Description:     "Edits a role",
-	LongDescription: "Requires the manage roles permission and the bot and your highest role being above the edited role. Role permissions follow discord standard encoding can can be calculated [here](https://discordapp.com/developers/docs/topics/permissions)",
-	RequiredArgs:    1,
+	CmdCategory:         commands.CategoryTool,
+	Name:                "EditRole",
+	Aliases:             []string{"ERole"},
+	Description:         "Edits a role",
+	LongDescription:     "\nRequires the manage roles permission and the bot and your highest role being above the edited role.\nRole permissions follow Discord's standard [encoding](https://discordapp.com/developers/docs/topics/permissions) and can be calculated on websites like [this](https://discordapi.com/permissions.html).",
+	RequiredArgs:        1,
+	SlashCommandEnabled: false,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Role", Type: dcmd.String},
 	},
@@ -30,7 +31,7 @@ var Command = &commands.YAGCommand{
 		{Name: "color", Help: "Role color - Either hex code or name", Type: dcmd.String, Default: ""},
 		{Name: "mention", Help: "Role Mentionable - 1 for true 0 for false", Type: &dcmd.IntArg{Min: 0, Max: 1}},
 		{Name: "hoist", Help: "Role Hoisted - 1 for true 0 for false", Type: &dcmd.IntArg{Min: 0, Max: 1}},
-		{Name: "perms", Help: "Role Permissions - 0 to 2147483647", Type: &dcmd.IntArg{Min: 0, Max: 2147483647}},
+		{Name: "perms", Help: "Role Permissions - 0 to 1099511627775 ", Type: &dcmd.IntArg{Min: 0, Max: 1099511627775}},
 	},
 	RunFunc:            cmdFuncEditRole,
 	GuildScopeCooldown: 30,
@@ -48,11 +49,10 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 	role := moderation.FindRole(data.GuildData.GS, roleS)
 
 	if role == nil {
-		return "No role with the Name or ID`" + roleS + "` found", nil
+		return "No role with the Name or ID `" + roleS + "` found", nil
 	}
 
 	if !bot.IsMemberAboveRole(data.GuildData.GS, data.GuildData.MS, role) {
-		//data.GuildData.GS.RUnlock()
 		return "Can't edit roles above you", nil
 	}
 
@@ -60,13 +60,11 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 
 	name := role.Name
 	if n := data.Switch("name").Str(); n != "" {
-		fmt.Println("1")
 		name = limitString(n, 100)
 		change = true
 	}
 	color := role.Color
 	if c := data.Switch("color").Str(); c != "" {
-		fmt.Println("2")
 		if data.Source == dcmd.TriggerSourceDM {
 			return nil, errors.New("Cannot use role color edit in custom commands to prevent api abuse")
 		}
