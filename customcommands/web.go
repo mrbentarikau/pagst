@@ -710,6 +710,33 @@ func queryCCsRan(ag int64, total bool) string {
 			logger.WithError(err).Error("failed counting commands ran today")
 		}
 	}
-	queryReturn := common.HumanizeThousands(result.Int64)
+	queryReturn := humanizeThousands(result.Int64)
 	return queryReturn
+}
+
+//HumanizeThousands comma separates thousands
+func humanizeThousands(input int64) string {
+	var f1, f2 string
+
+	i := int(input)
+	if i < 0 {
+		i = i * -1
+		f2 = "-"
+	}
+	str := strconv.Itoa(i)
+
+	idx := 0
+	for i = len(str) - 1; i >= 0; i-- {
+		idx++
+		if idx == 4 {
+			idx = 1
+			f1 = f1 + ","
+		}
+		f1 = f1 + string(str[i])
+	}
+
+	for i = len(f1) - 1; i >= 0; i-- {
+		f2 = f2 + string(f1[i])
+	}
+	return f2
 }
