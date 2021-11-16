@@ -25,17 +25,18 @@ import (
 var (
 	StandardFuncMap = map[string]interface{}{
 		// conversion functions
-		"str":           ToString,
-		"toString":      ToString, // don't ask why we have 2 of these
-		"toInt":         tmplToInt,
-		"toInt64":       ToInt64,
-		"toInt64Base16": ToInt64Base16,
-		"toFloat":       ToFloat64,
-		"toDuration":    ToDuration,
-		"toRune":        ToRune,
-		"toByte":        ToByte,
-		"toSHA256":      ToSHA256,
-		"hexToDecimal":  HexToDecimal,
+		"str":               ToString,
+		"toString":          ToString, // don't ask why we have 2 of these
+		"toInt":             tmplToInt,
+		"toInt64":           ToInt64,
+		"toInt64Base16":     ToInt64Base16,
+		"toFloat":           ToFloat64,
+		"toDuration":        ToDuration,
+		"toRune":            ToRune,
+		"toByte":            ToByte,
+		"toSHA256":          ToSHA256,
+		"hexToDecimal":      HexToDecimal,
+		"decodeStringToHex": DecodeStringToHex,
 
 		// string manipulation
 		"joinStr":     joinStrings,
@@ -561,6 +562,7 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getChannel", c.tmplGetChannel)
 	c.addContextFunc("getThread", c.tmplGetThread)
 	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
+	c.addContextFunc("getPinCount", c.tmplGetChannelPinCount)
 	c.addContextFunc("getRole", c.tmplGetRole)
 	c.addContextFunc("addReactions", c.tmplAddReactions)
 	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)

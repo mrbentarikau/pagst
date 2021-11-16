@@ -3,11 +3,13 @@ package templates
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -1130,12 +1132,27 @@ func ToSHA256(from interface{}) string {
 	return fmt.Sprintf("%x", sum)
 }
 
-func HexToDecimal(from string) interface{} {
-	parsedColor, ok := common.ParseColor(from)
+func HexToDecimal(from interface{}) interface{} {
+	s := ToString(from)
+	parsedColor, ok := common.ParseColor(s)
 	if !ok {
-		return "Unknown color: " + from + ", can be either hex color code or name for a known color"
+		return "Unknown color: " + s + ", can be either hex color code or name for a known color"
 	}
 	return parsedColor
+}
+
+func DecodeStringToHex(from interface{}) ([]byte, error) {
+	s := ToString(from)
+	r := regexp.MustCompile("0x")
+	if r.MatchString(s) {
+		s = strings.Replace(s, "0x", "", -1)
+	}
+
+	decoded, err := hex.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	return decoded, nil
 }
 
 func tmplKindOf(input interface{}, flag ...bool) (string, error) {
