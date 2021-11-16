@@ -75,34 +75,3 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 	}
 	return "Doneso", nil
 }
-
-// just for reference
-/*if data.Switches["member"].Value != nil && data.Switches["member"].Value.(bool) && data.Switches["role"].Value == nil {
-	if strings.HasPrefix(arg, "<@") && strings.HasSuffix(arg, ">") {
-		re := regexp.MustCompile(`\d+`)
-		found := re.FindAllString(arg, 1)
-		if len(found) > 0 {
-			argID, _ = strconv.ParseInt(found[0], 10, 64)
-		}
-	} else {
-		argID, _ = strconv.ParseInt(data.Args[0].Str(), 10, 64)
-	}
-
-	member, err := bot.GetMember(data.GuildData.GS.ID, argID)
-	if err != nil {
-		return nil, err
-	}
-	targetID = member.User.ID
-	overwriteType = discordgo.PermissionOverwriteTypeMember
-	fmt.Printf("KRAAKA %#v\n", overwriteType)
-}
-
-if data.Switches["role"].Value != nil && data.Switches["role"].Value.(bool) && data.Switches["member"].Value == nil {
-	role := moderation.FindRole(data.GuildData.GS, arg)
-	if role == nil {
-		return "No role with the Name or ID `" + arg + "` found", nil
-	}
-	targetID = role.ID
-	overwriteType = discordgo.PermissionOverwriteTypeRole
-	fmt.Printf("UUGU %#v\n", overwriteType)
-}*/
