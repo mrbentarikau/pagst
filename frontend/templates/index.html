@@ -52,8 +52,8 @@
       <ul class="navbar-nav mr-auto">
         {{ if not (ge .JoinedServers 99) }}
         <li class="nav-item active">
-		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827775&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
-			         
+		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827767&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
+
 	      </li>
         {{ end }}
         <li class="nav-item active">
@@ -101,7 +101,7 @@
   <div class="about">
     <section class="container content-section text-center">
       <a id="about"></a>
-      
+
       <div class="row justify-content-md-center">
         <img class="img-responsive about aboutlogo" src="/static/img/logo_y.png" alt="logo of pagstdb" style="height:10%"/>
         <div class="col col-lg-8 abouttext" style="padding-bottom: 3%; text-align: left">
