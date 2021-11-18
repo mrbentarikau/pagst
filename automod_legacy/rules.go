@@ -2,7 +2,6 @@ package automod_legacy
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -189,7 +188,7 @@ func CheckMessageForBadInvites(msg string, guildID int64) (containsBadInvites bo
 	// check third party sites
 	msg, err := url.QueryUnescape(msg)
 	if err != nil {
-		log.Fatal(err)
+		logger.WithError(err).Error("Failed checking urls against bad invites")
 		return false
 	}
 
