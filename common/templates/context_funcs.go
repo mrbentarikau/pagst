@@ -1084,7 +1084,7 @@ func (c *Context) tmplDelMessageReaction(values ...reflect.Value) (reflect.Value
 			return reflect.ValueOf("non-existing channel"), nil
 		}
 
-		var mID int64
+		var mID, uID int64
 		if args[1].IsValid() {
 			mID = ToInt64(args[1].Interface())
 			if mID == 0 {
@@ -1092,7 +1092,6 @@ func (c *Context) tmplDelMessageReaction(values ...reflect.Value) (reflect.Value
 			}
 		}
 
-		var uID int64
 		if args[2].IsValid() {
 			uID = targetUserID(args[2].Interface())
 			if uID == 0 {
@@ -1133,7 +1132,13 @@ func (c *Context) tmplDelAllMessageReactions(values ...reflect.Value) (reflect.V
 			return reflect.ValueOf("non-existing channel"), nil
 		}
 
-		mID := ToInt64(args[1].Interface())
+		var mID int64
+		if args[1].IsValid() {
+			mID = ToInt64(args[1].Interface())
+			if cID == 0 {
+				return reflect.ValueOf("non-existing message"), nil
+			}
+		}
 
 		if len(args) > 2 {
 			for _, emoji := range args[2:] {
