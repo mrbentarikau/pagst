@@ -1135,7 +1135,7 @@ func (c *Context) tmplDelAllMessageReactions(values ...reflect.Value) (reflect.V
 		var mID int64
 		if args[1].IsValid() {
 			mID = ToInt64(args[1].Interface())
-			if cID == 0 {
+			if mID == 0 {
 				return reflect.ValueOf("non-existing message"), nil
 			}
 		}
