@@ -192,6 +192,7 @@ func CheckMessageForBadInvites(msg string, guildID int64) (containsBadInvites bo
 		log.Fatal(err)
 		return false
 	}
+
 	if common.ContainsInvite(msg, false, true) != nil {
 		return true
 	}
