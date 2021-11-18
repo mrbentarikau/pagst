@@ -1084,8 +1084,21 @@ func (c *Context) tmplDelMessageReaction(values ...reflect.Value) (reflect.Value
 			return reflect.ValueOf("non-existing channel"), nil
 		}
 
-		mID := ToInt64(args[1].Interface())
-		uID := targetUserID(args[2].Interface())
+		var mID int64
+		if args[1].IsValid() {
+			mID = ToInt64(args[1].Interface())
+			if mID == 0 {
+				return reflect.ValueOf("non-existing message"), nil
+			}
+		}
+
+		var uID int64
+		if args[2].IsValid() {
+			uID = targetUserID(args[2].Interface())
+			if uID == 0 {
+				return reflect.ValueOf("non-existing user"), nil
+			}
+		}
 
 		for _, reaction := range args[3:] {
 
