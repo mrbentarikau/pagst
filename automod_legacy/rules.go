@@ -2,6 +2,7 @@ package automod_legacy
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -186,6 +187,11 @@ func (i *InviteRule) Check(evt *discordgo.Message, cs *dstate.ChannelState) (del
 
 func CheckMessageForBadInvites(msg string, guildID int64) (containsBadInvites bool) {
 	// check third party sites
+	msg, err := url.QueryUnescape(msg)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
 	if common.ContainsInvite(msg, false, true) != nil {
 		return true
 	}
