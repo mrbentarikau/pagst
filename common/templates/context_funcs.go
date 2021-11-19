@@ -1358,15 +1358,19 @@ func (c *Context) tmplAddMessageReactions(values ...reflect.Value) (reflect.Valu
 
 		// cArg := args[0].Interface()
 		var cArg interface{}
+		var mID int64
+
 		if args[0].IsValid() {
 			cArg = args[0].Interface()
 		}
 
 		cID := c.ChannelArg(cArg)
-		mID := ToInt64(args[1].Interface())
-
 		if cID == 0 {
 			return reflect.ValueOf(""), nil
+		}
+
+		if args[1].IsValid() {
+			mID = ToInt64(args[1].Interface())
 		}
 
 		for i, reaction := range args {
