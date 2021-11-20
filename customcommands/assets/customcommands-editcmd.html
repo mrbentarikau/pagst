@@ -632,6 +632,9 @@
         var combinedLength = 0;
                 
         textAreas.forEach(function (elem) {
+            if(elem.value.match(/\n/g)) {
+                combinedLength += (elem.value.match(/\n/g)).length;
+            }
             combinedLength += elem.value.length;
         })
         
