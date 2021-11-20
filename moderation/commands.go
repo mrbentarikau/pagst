@@ -94,6 +94,25 @@ func MBaseCmdSecond(cmdData *dcmd.Data, reason string, reasonArgOptional bool, n
 	return oreason, nil
 }
 
+func checkHierarchy(cmdData *dcmd.Data, targetID int64) error {
+	botMember, err := bot.GetMember(cmdData.GuildData.GS.ID, common.BotUser.ID)
+	if err != nil {
+		return commands.NewUserError("Failed fetching bot member to check hierarchy")
+	}
+
+	gs := cmdData.GuildData.GS
+	targetMember, _ := bot.GetMember(gs.ID, targetID)
+
+	above := bot.IsMemberAbove(gs, botMember, targetMember)
+
+	if !above {
+		cmdName := cmdData.Cmd.Trigger.Names[0]
+		return commands.NewUserErrorf("Can't use the **%s** command on members that are ranked higher than the bot.", cmdName)
+	}
+
+	return nil
+}
+
 func SafeArgString(data *dcmd.Data, arg int) string {
 	if arg >= len(data.Args) || data.Args[arg].Value == nil {
 		return ""
@@ -153,6 +172,11 @@ var ModerationCommands = []*commands.YAGCommand{
 
 			if utf8.RuneCountInString(reason) > 470 {
 				return "Error: Reason too long (can be max 470 characters).", nil
+			}
+
+			err = checkHierarchy(parsed, parsed.Args[0].Int64())
+			if err != nil {
+				return nil, err
 			}
 
 			ddays := int(config.DefaultBanDeleteDays.Int64)
@@ -362,6 +386,11 @@ var ModerationCommands = []*commands.YAGCommand{
 
 			if utf8.RuneCountInString(reason) > 470 {
 				return "Error: Reason too long (can be max 470 characters).", nil
+			}
+
+			err = checkHierarchy(parsed, parsed.Args[0].Int64())
+			if err != nil {
+				return nil, err
 			}
 
 			var msg *discordgo.Message
@@ -927,7 +956,7 @@ var ModerationCommands = []*commands.YAGCommand{
 		CustomEnabled: true,
 		CmdCategory:   commands.CategoryModeration,
 		Name:          "DelWarning",
-		Aliases:       []string{"dw"},
+		Aliases:       []string{"dw", "delwarn", "deletewarning"},
 		Description:   "Deletes a warning, id is the first number of each warning from the warnings command",
 		RequiredArgs:  1,
 		Arguments: []*dcmd.ArgDef{
