@@ -9,6 +9,12 @@ import (
 // (both being 1, new roles always have 1 as position)
 // then it checjs by lower id
 func IsRoleAbove(a, b *discordgo.Role) bool {
+	if a == nil {
+		return false
+	} else if b == nil {
+		return true
+	}
+
 	if a.Position != b.Position {
 		return a.Position > b.Position
 	}
