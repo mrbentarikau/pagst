@@ -1171,18 +1171,16 @@ func (c *Context) tmplGetMessage(channel, msgID interface{}) (*discordgo.Message
 
 	mID := ToInt64(msgID)
 
-	message, err := common.BotSession.ChannelMessage(cID, mID)
-	if err != nil {
-		return nil, err
-	}
-	message.GuildID = c.GS.ID
+	message, _ := common.BotSession.ChannelMessage(cID, mID)
+	if message != nil {
+		message.GuildID = c.GS.ID
 
-	member, err := common.BotSession.GuildMember(message.GuildID, message.Author.ID)
-	if err != nil {
-		return nil, err
+		member, err := common.BotSession.GuildMember(message.GuildID, message.Author.ID)
+		if err == nil {
+			message.Member = member
+			message.Member.GuildID = message.GuildID
+		}
 	}
-	message.Member = member
-	message.Member.GuildID = message.GuildID
 
 	return message, nil
 }
