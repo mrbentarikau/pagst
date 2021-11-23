@@ -82,7 +82,7 @@ var cmdLogs = &commands.YAGCommand{
 			return "", err
 		}
 
-		return CreateLink(cmd.GuildData.GS.ID, l.ID), err
+		return "<" + CreateLink(cmd.GuildData.GS.ID, l.ID) + ">", err
 	},
 }
 
