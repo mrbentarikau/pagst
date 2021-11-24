@@ -723,6 +723,31 @@ func tmplHumanizeThousands(input interface{}, dot ...bool) string {
 	return f2
 }
 
+//tmplOrdinalize gives you English ordinal numbers
+func tmplOrdinalize(input interface{}) string {
+	var ordinal string
+	i := tmplToInt(input)
+	iAbs := int(math.Abs(float64(i)))
+
+	ordTh := iAbs % 100
+	if ordTh == 11 || ordTh == 12 || ordTh == 13 {
+		return strconv.Itoa(i) + "th"
+	}
+
+	switch iAbs % 10 {
+	case 1:
+		ordinal = "st"
+	case 2:
+		ordinal = "nd"
+	case 3:
+		ordinal = "rd"
+	default:
+		ordinal = "th"
+	}
+
+	return strconv.Itoa(i) + ordinal
+}
+
 func tmplBitwiseAnd(arg1, arg2 int64) int64 {
 	return arg1 & arg2
 

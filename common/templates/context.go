@@ -67,6 +67,7 @@ var (
 		"roundFloor":        tmplRoundFloor,
 		"roundEven":         tmplRoundEven,
 		"humanizeThousands": tmplHumanizeThousands,
+		"ordinalize":        tmplOrdinalize,
 		"abs":               tmplAbs,
 
 		// bitwise functions
