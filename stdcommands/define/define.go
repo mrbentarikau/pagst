@@ -77,6 +77,7 @@ func embedCreator(udResult []urbandictionary.Result, i int) *discordgo.MessageEm
 	if len(udResult[i].Example) > 0 {
 		example = common.CutStringShort(linkReferencedTerms(udResult[i].Example), 768)
 	}
+
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
 			Name: udResult[i].Word,
@@ -100,8 +101,10 @@ func embedCreator(udResult []urbandictionary.Result, i int) *discordgo.MessageEm
 const urbanDictionaryDefineEndpoint = "https://www.urbandictionary.com/define.php?term="
 
 var termRefRe = regexp.MustCompile(`\[.+?\]`)
+var chevronRe = regexp.MustCompile(`<`)
 
 func linkReferencedTerms(def string) string {
+	def = chevronRe.ReplaceAllString(def, `\<`)
 	return termRefRe.ReplaceAllStringFunc(def, func(match string) string {
 		term := match[1 : len(match)-1]
 		return fmt.Sprintf("[%s](%s%s)", term, urbanDictionaryDefineEndpoint, url.QueryEscape(term))
