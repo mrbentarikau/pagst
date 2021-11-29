@@ -66,27 +66,35 @@ func cmdFuncTopCommands(data *dcmd.Data) (interface{}, error) {
 	})
 
 	// display it
-	out := "```\nTop games being played currently\n#    Count -  Game\n"
-	for k, result := range fullResult {
-		out += fmt.Sprintf("#%02d: %5d - %s\n", k+1, result.Count, result.Game)
-		if k >= 20 {
-			break
+	if len(fullResult) > 0 {
+		out := "```\nTop games being played currently\n#    Count -  Game\n"
+		for k, result := range fullResult {
+			out += fmt.Sprintf("#%02d: %5d - %s\n", k+1, result.Count, result.Game)
+			if k >= 20 {
+				break
+			}
 		}
-	}
-	out += "\n```"
+		out += "\n```"
 
-	return out, nil
+		return out, nil
+	}
+	return "Sadly, no games have been played...", nil
 }
 
 func checkGuild(dst map[string]int, gs *dstate.GuildSet) {
 
 	bot.State.IterateMembers(gs.ID, func(chunk []*dstate.MemberState) bool {
 		for _, ms := range chunk {
-			if ms.Presence == nil || ms.Presence.Game == nil || ms.Presence.Game.Name == "" {
+
+			if ms.Presence == nil || ms.Presence.Game == nil || ms.Presence.Game.Name == "" || ms.Presence.Game.Type == 3 || ms.Presence.Game.Type == 4 {
 				continue
 			}
 
 			if ms.User.Bot {
+				continue
+			}
+
+			if ms.Presence.Game.Name == "Spotify" {
 				continue
 			}
 
