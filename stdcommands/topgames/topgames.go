@@ -78,7 +78,7 @@ func cmdFuncTopCommands(data *dcmd.Data) (interface{}, error) {
 
 		return out, nil
 	}
-	return "Sadly, no games have been played...", nil
+	return "Sadly, no games are being played...", nil
 }
 
 func checkGuild(dst map[string]int, gs *dstate.GuildSet) {
