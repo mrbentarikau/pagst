@@ -7,6 +7,7 @@ import (
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/jonas747/dcmd/v4"
 )
 
@@ -19,51 +20,53 @@ var Command = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "shard", Type: dcmd.Int},
 	},
-	RunFunc: cmdFuncTopEvents,
-}
+	// RunFunc: cmdFuncTopEvents,
+	//}
+	RunFunc: util.RequireBotAdmin(func(data *dcmd.Data) (interface{}, error) {
 
-func cmdFuncTopEvents(data *dcmd.Data) (interface{}, error) {
+		//func cmdFuncTopEvents(data *dcmd.Data) (interface{}, error) {
 
-	shardsTotal, lastPeriod := bot.EventLogger.GetStats()
+		shardsTotal, lastPeriod := bot.EventLogger.GetStats()
 
-	sortable := make([]*DiscordEvtEntry, len(eventsystem.AllDiscordEvents))
-	for i, _ := range sortable {
-		sortable[i] = &DiscordEvtEntry{
-			Name: eventsystem.AllDiscordEvents[i].String(),
-		}
-	}
-
-	for i, _ := range shardsTotal {
-		if data.Args[0].Value != nil && data.Args[0].Int() != i {
-			continue
+		sortable := make([]*DiscordEvtEntry, len(eventsystem.AllDiscordEvents))
+		for i, _ := range sortable {
+			sortable[i] = &DiscordEvtEntry{
+				Name: eventsystem.AllDiscordEvents[i].String(),
+			}
 		}
 
-		for de, j := range eventsystem.AllDiscordEvents {
-			sortable[de].Total += shardsTotal[i][j]
-			sortable[de].PerSecond += float64(lastPeriod[i][j]) / bot.EventLoggerPeriodDuration.Seconds()
+		for i, _ := range shardsTotal {
+			if data.Args[0].Value != nil && data.Args[0].Int() != i {
+				continue
+			}
+
+			for de, j := range eventsystem.AllDiscordEvents {
+				sortable[de].Total += shardsTotal[i][j]
+				sortable[de].PerSecond += float64(lastPeriod[i][j]) / bot.EventLoggerPeriodDuration.Seconds()
+			}
 		}
-	}
 
-	sort.Sort(DiscordEvtEntrySortable(sortable))
+		sort.Sort(DiscordEvtEntrySortable(sortable))
 
-	out := "Total event stats across all shards:\n"
-	if data.Args[0].Value != nil {
-		out = fmt.Sprintf("Stats for shard %d:\n", data.Args[0].Int())
-	}
+		out := "Total event stats across all shards:\n"
+		if data.Args[0].Value != nil {
+			out = fmt.Sprintf("Stats for shard %d:\n", data.Args[0].Int())
+		}
 
-	out += "```\n#     Total  -   /s  - Event\n"
-	sum := int64(0)
-	sumPerSecond := float64(0)
-	for k, entry := range sortable {
-		out += fmt.Sprintf("#%-2d: %7d - %5.1f - %s\n", k+1, entry.Total, entry.PerSecond, entry.Name)
-		sum += entry.Total
-		sumPerSecond += entry.PerSecond
-	}
+		out += "```\n#     Total  -   /s  - Event\n"
+		sum := int64(0)
+		sumPerSecond := float64(0)
+		for k, entry := range sortable {
+			out += fmt.Sprintf("#%-2d: %7d - %5.1f - %s\n", k+1, entry.Total, entry.PerSecond, entry.Name)
+			sum += entry.Total
+			sumPerSecond += entry.PerSecond
+		}
 
-	out += fmt.Sprintf("\nTotal: %d, Events per second: %.1f", sum, sumPerSecond)
-	out += "\n```"
+		out += fmt.Sprintf("\nTotal: %d, Events per second: %.1f", sum, sumPerSecond)
+		out += "\n```"
 
-	return out, nil
+		return out, nil
+	}),
 }
 
 type DiscordEvtEntry struct {
