@@ -103,6 +103,7 @@ var (
 		"newDate":          tmplNewDate,
 		"loadTimeLocation": tmplLoadTimeLocation,
 		"weekNumber":       tmplWeekNumber,
+		"snowflakeToTime":  tmplSnowflakeToTime,
 
 		"humanizeDurationHours":   tmplHumanizeDurationHours,
 		"humanizeDurationMinutes": tmplHumanizeDurationMinutes,
@@ -778,4 +779,10 @@ func (s Slice) StringSlice(flag ...bool) interface{} {
 	}
 
 	return StringSlice
+}
+
+func tmplSnowflakeToTime(arg interface{}) time.Time {
+	argInt64 := ToInt64(arg)
+
+	return bot.SnowflakeToTime(argInt64).UTC()
 }
