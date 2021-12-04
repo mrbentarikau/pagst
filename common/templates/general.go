@@ -245,7 +245,7 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			buf.WriteString(stringFile)
 
 			msg.File = &discordgo.File{
-				Name:        "Attachment.txt",
+				Name:        "attachment_" + time.Now().UTC().Format("20060102_150405") + ".txt",
 				ContentType: "text/plain",
 				Reader:      &buf,
 			}
