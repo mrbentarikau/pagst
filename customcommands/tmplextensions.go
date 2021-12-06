@@ -36,7 +36,8 @@ func init() {
 
 		ctx.ContextFuncs["dbSet"] = tmplDBSet(ctx)
 		ctx.ContextFuncs["dbSetExpire"] = tmplDBSetExpire(ctx)
-		ctx.ContextFuncs["dbIncr"] = tmplDBIncr(ctx)
+		ctx.ContextFuncs["dbIncr"] = tmplDBIncr(ctx, false)
+		ctx.ContextFuncs["dbDecr"] = tmplDBIncr(ctx, true)
 		ctx.ContextFuncs["dbGet"] = tmplDBGet(ctx)
 		ctx.ContextFuncs["dbGetPattern"] = tmplDBGetPattern(ctx, false)
 		ctx.ContextFuncs["dbGetPatternReverse"] = tmplDBGetPattern(ctx, true)
@@ -447,7 +448,7 @@ func tmplDBSetExpire(ctx *templates.Context) func(userID int64, key interface{},
 	}
 }
 
-func tmplDBIncr(ctx *templates.Context) interface{} {
+func tmplDBIncr(ctx *templates.Context, decrease bool) interface{} {
 	return func(userID int64, key interface{}, incrBy interface{}) (interface{}, error) {
 		if ctx.IncreaseCheckCallCounterPremium("db_interactions", 10, 50) {
 			return "", templates.ErrTooManyCalls
@@ -462,6 +463,9 @@ func tmplDBIncr(ctx *templates.Context) interface{} {
 		}
 
 		vNum := templates.ToFloat64(incrBy)
+		if decrease {
+			vNum = -vNum
+		}
 		valueSerialized, err := serializeValue(vNum)
 		if err != nil {
 			return "", err
