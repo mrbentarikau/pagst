@@ -975,6 +975,8 @@ func tmplToInt(from interface{}) int {
 		return int(parsed)
 	case time.Duration:
 		return int(t)
+	case time.Month:
+		return int(t)
 	default:
 		return 0
 	}
@@ -1004,6 +1006,8 @@ func ToInt64(from interface{}) int64 {
 		parsed, _ := strconv.ParseInt(t, 10, 64)
 		return parsed
 	case time.Duration:
+		return int64(t)
+	case time.Month:
 		return int64(t)
 	default:
 		return 0
