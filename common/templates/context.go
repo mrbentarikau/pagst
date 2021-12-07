@@ -695,24 +695,15 @@ func (s Slice) Append(item interface{}) (interface{}, error) {
 
 }
 
-func (s Slice) Del(index int, flag ...bool) (interface{}, error) {
-	var compressed bool
-	if len(flag) > 0 {
-		compressed = flag[0]
-	}
-
+func (s Slice) Del(index int) (interface{}, error) {
 	if index >= len(s) || index < 0 {
 		return "", errors.New("Index out of bounds")
 	}
 
-	copy(s[index:], s[index+1:])
-	s[len(s)-1] = ""
-	s = s[:len(s)-1]
+	v := reflect.Append(reflect.ValueOf(&s).Elem(), reflect.Zero(reflect.TypeOf((*interface{})(nil)).Elem()))
+	v = reflect.AppendSlice(v.Slice(0, index), v.Slice(index+1, v.Len()-1))
+	return v.Interface(), nil
 
-	if compressed {
-		return s, nil
-	}
-	return "", nil
 }
 
 func (s Slice) Set(index int, item interface{}) (string, error) {
