@@ -301,3 +301,22 @@ func tmplCheckbox(name, id, description string, checked bool, extraInputAttrs ..
 
 	return template.HTML(builder.String())
 }
+
+func tmplCheckboxWithInput(name, id, description string, checked bool, inputName string, inputValue string, extraInputAttrs ...string) template.HTML {
+	var builder strings.Builder
+	builder.WriteString(`<label for="input-description">` + description + `</label>`)
+	builder.WriteString(`<div class="form-group d-flex align-items-center">`)
+	builder.WriteString(`<input type="checkbox" class="tgl tgl-flat"`)
+	builder.WriteString(` name="` + name + `" id="` + id + `"`)
+
+	if checked {
+		builder.WriteString(" checked")
+	}
+	if len(extraInputAttrs) > 0 {
+		builder.WriteString(" " + strings.Join(extraInputAttrs, " "))
+	}
+	builder.WriteString(`><label for="` + id + `" class="tgl-btn mb-2"></label>`)
+	builder.WriteString(`<input type="text" class="form-control ml-2 mb-2" id="` + id + `" name="` + inputName + `" value="` + inputValue + `"></div>`)
+
+	return template.HTML(builder.String())
+}

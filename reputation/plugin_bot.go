@@ -38,6 +38,8 @@ var thanksRegex = regexp.MustCompile(`(?i)(?:\A|.+)(?:\+(?:\s+|rep)?|t(?:y(?:sm|
 //var thanksRegex = regexp.MustCompile(`(?i)(?:\A|\b|\s+)(?:\+(?:\s+|rep)?|t(?:y(?:sm|vm)?|h(?:a?nks?|n?x)(?:\s+you)?(?:\s+(?:so|very)\s+much|\s+?a?\s*lot)?)|danke?s?)\s+<@!?\d{17,19}>(?:\s+|\b|\z)`)
 
 func handleMessageCreate(evt *eventsystem.EventData) {
+	var inbuiltThanks, customThanks bool
+
 	msg := evt.MessageCreate()
 
 	if !bot.IsNormalUserMessage(msg.Message) {
@@ -48,49 +50,60 @@ func handleMessageCreate(evt *eventsystem.EventData) {
 		return
 	}
 
-	if !thanksRegex.MatchString(msg.Content) {
-		return
-	}
-
 	who := msg.Mentions[0]
 	if who.ID == msg.Author.ID {
 		return
 	}
 
-	if !evt.HasFeatureFlag(featureFlagThanksEnabled) {
+	if !evt.HasFeatureFlag(featureFlagThanksEnabled) && !evt.HasFeatureFlag(featureFlagCustomThanksEnabled) {
 		return
 	}
 
 	conf, err := GetConfig(evt.Context(), msg.GuildID)
-	if err != nil || !conf.Enabled || conf.DisableThanksDetection {
+	if err != nil || !conf.Enabled || (conf.DisableThanksDetection && conf.DisableCustomThanksDetection) {
 		return
 	}
 
-	target, err := bot.GetMember(msg.GuildID, who.ID)
-	sender := dstate.MemberStateFromMember(msg.Member)
-	if err != nil {
-		logger.WithError(err).Error("Failed retrieving target member")
-		return
+	if !conf.DisableThanksDetection {
+		if thanksRegex.MatchString(msg.Content) {
+			inbuiltThanks = true
+		}
 	}
 
-	if err = CanModifyRep(conf, sender, target); err != nil {
-		return
+	if !conf.DisableCustomThanksDetection && len(conf.CustomThanksRegex) > 0 {
+		customThanksRegex, err := regexp.Compile(conf.CustomThanksRegex)
+		if err == nil && customThanksRegex.MatchString(msg.Content) {
+			customThanks = true
+		}
 	}
 
-	err = ModifyRep(evt.Context(), conf, msg.GuildID, sender, target, 1)
-	if err != nil {
-		if err == ErrCooldown {
-			// Ignore this error silently
+	if inbuiltThanks || customThanks {
+		target, err := bot.GetMember(msg.GuildID, who.ID)
+		sender := dstate.MemberStateFromMember(msg.Member)
+		if err != nil {
+			logger.WithError(err).Error("Failed retrieving target member")
 			return
 		}
-		logger.WithError(err).Error("Failed giving rep")
-		return
+
+		if err = CanModifyRep(conf, sender, target); err != nil {
+			return
+		}
+
+		err = ModifyRep(evt.Context(), conf, msg.GuildID, sender, target, 1)
+		if err != nil {
+			if err == ErrCooldown {
+				// Ignore this error silently
+				return
+			}
+			logger.WithError(err).Error("Failed giving rep")
+			return
+		}
+
+		go analytics.RecordActiveUnit(msg.GuildID, &Plugin{}, "auto_add_rep")
+
+		content := fmt.Sprintf("Gave +1 %s to **%s**", conf.PointsName, who.Mention())
+		common.BotSession.ChannelMessageSend(msg.ChannelID, content)
 	}
-
-	go analytics.RecordActiveUnit(msg.GuildID, &Plugin{}, "auto_add_rep")
-
-	content := fmt.Sprintf("Gave +1 %s to **%s**", conf.PointsName, who.Mention())
-	common.BotSession.ChannelMessageSend(msg.ChannelID, content)
 }
 
 var cmds = []*commands.YAGCommand{

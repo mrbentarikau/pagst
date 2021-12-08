@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS reputation_configs (
 `, `
 ALTER TABLE reputation_configs ADD COLUMN IF NOT EXISTS disable_thanks_detection BOOLEAN NOT NULL DEFAULT false;
 `, `
+ALTER TABLE reputation_configs ADD COLUMN IF NOT EXISTS disable_custom_thanks_detection BOOLEAN NOT NULL DEFAULT false;
+`, `
+ALTER TABLE reputation_configs ADD COLUMN IF NOT EXISTS custom_thanks_regex VARCHAR(64) NOT NULL DEFAULT '';
+`, `
 DO $$
 BEGIN
 

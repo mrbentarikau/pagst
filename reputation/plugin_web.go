@@ -27,32 +27,36 @@ var PageHTMLLeaderboard string
 var PageHTMLSettings string
 
 type PostConfigForm struct {
-	Enabled                 bool
-	EnableThanksDetection   bool
-	PointsName              string `valid:",50"`
-	Cooldown                int    `valid:"0,86401"` // One day
-	MaxGiveAmount           int64
-	MaxRemoveAmount         int64
-	RequiredGiveRoles       []int64 `valid:"role,true"`
-	RequiredReceiveRoles    []int64 `valid:"role,true"`
-	BlacklistedGiveRoles    []int64 `valid:"role,true"`
-	BlacklistedReceiveRoles []int64 `valid:"role,true"`
-	AdminRoles              []int64 `valid:"role,true"`
+	Enabled                     bool
+	EnableThanksDetection       bool
+	PointsName                  string `valid:",50"`
+	Cooldown                    int    `valid:"0,86401"` // One day
+	MaxGiveAmount               int64
+	MaxRemoveAmount             int64
+	RequiredGiveRoles           []int64 `valid:"role,true"`
+	RequiredReceiveRoles        []int64 `valid:"role,true"`
+	BlacklistedGiveRoles        []int64 `valid:"role,true"`
+	BlacklistedReceiveRoles     []int64 `valid:"role,true"`
+	AdminRoles                  []int64 `valid:"role,true"`
+	EnableCustomThanksDetection bool
+	CustomThanksRegex           string `valid:",64"`
 }
 
 func (p PostConfigForm) RepConfig() *models.ReputationConfig {
 	return &models.ReputationConfig{
-		PointsName:              p.PointsName,
-		Enabled:                 p.Enabled,
-		Cooldown:                p.Cooldown,
-		MaxGiveAmount:           p.MaxGiveAmount,
-		MaxRemoveAmount:         p.MaxRemoveAmount,
-		RequiredGiveRoles:       p.RequiredGiveRoles,
-		RequiredReceiveRoles:    p.RequiredReceiveRoles,
-		BlacklistedGiveRoles:    p.BlacklistedGiveRoles,
-		BlacklistedReceiveRoles: p.BlacklistedReceiveRoles,
-		AdminRoles:              p.AdminRoles,
-		DisableThanksDetection:  !p.EnableThanksDetection,
+		PointsName:                   p.PointsName,
+		Enabled:                      p.Enabled,
+		Cooldown:                     p.Cooldown,
+		MaxGiveAmount:                p.MaxGiveAmount,
+		MaxRemoveAmount:              p.MaxRemoveAmount,
+		RequiredGiveRoles:            p.RequiredGiveRoles,
+		RequiredReceiveRoles:         p.RequiredReceiveRoles,
+		BlacklistedGiveRoles:         p.BlacklistedGiveRoles,
+		BlacklistedReceiveRoles:      p.BlacklistedReceiveRoles,
+		AdminRoles:                   p.AdminRoles,
+		DisableThanksDetection:       !p.EnableThanksDetection,
+		DisableCustomThanksDetection: !p.EnableCustomThanksDetection,
+		CustomThanksRegex:            p.CustomThanksRegex,
 	}
 }
 
@@ -123,6 +127,8 @@ func HandlePostReputation(w http.ResponseWriter, r *http.Request) (templateData 
 		"blacklisted_receive_roles",
 		"admin_roles",
 		"disable_thanks_detection",
+		"disable_custom_thanks_detection",
+		"custom_thanks_regex",
 	), boil.Infer())
 
 	if err == nil {

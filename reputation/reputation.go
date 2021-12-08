@@ -377,8 +377,9 @@ func DetailedLeaderboardEntries(guildID int64, ranks []*RankEntry) ([]*Leaderboa
 var _ featureflags.PluginWithFeatureFlags = (*Plugin)(nil)
 
 const (
-	featureFlagReputationEnabled = "reputation_enabled"
-	featureFlagThanksEnabled     = "reputation_thanks_enabled"
+	featureFlagReputationEnabled   = "reputation_enabled"
+	featureFlagThanksEnabled       = "reputation_thanks_enabled"
+	featureFlagCustomThanksEnabled = "reputation_custom_thanks_enabled"
 )
 
 func (p *Plugin) UpdateFeatureFlags(guildID int64) ([]string, error) {
@@ -394,6 +395,10 @@ func (p *Plugin) UpdateFeatureFlags(guildID int64) ([]string, error) {
 		if !config.DisableThanksDetection {
 			flags = append(flags, featureFlagThanksEnabled)
 		}
+
+		if !config.DisableCustomThanksDetection {
+			flags = append(flags, featureFlagCustomThanksEnabled)
+		}
 	}
 
 	return flags, nil
@@ -401,7 +406,8 @@ func (p *Plugin) UpdateFeatureFlags(guildID int64) ([]string, error) {
 
 func (p *Plugin) AllFeatureFlags() []string {
 	return []string{
-		featureFlagReputationEnabled, // set if reputation is enabled on this server
-		featureFlagThanksEnabled,     // set if reputation thanks detection is anabled
+		featureFlagReputationEnabled,   // set if reputation is enabled on this server
+		featureFlagThanksEnabled,       // set if reputation thanks detection is anabled
+		featureFlagCustomThanksEnabled, // set if reputation custom thanks detection is anabled
 	}
 }

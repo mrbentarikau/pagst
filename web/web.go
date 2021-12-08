@@ -90,12 +90,13 @@ func init() {
 
 	Templates = template.New("")
 	Templates = Templates.Funcs(template.FuncMap{
-		"mTemplate":        mTemplate,
-		"hasPerm":          hasPerm,
-		"formatTime":       prettyTime,
-		"checkbox":         tmplCheckbox,
-		"roleOptions":      tmplRoleDropdown,
-		"roleOptionsMulti": tmplRoleDropdownMutli,
+		"mTemplate":         mTemplate,
+		"hasPerm":           hasPerm,
+		"formatTime":        prettyTime,
+		"checkbox":          tmplCheckbox,
+		"checkboxWithInput": tmplCheckboxWithInput,
+		"roleOptions":       tmplRoleDropdown,
+		"roleOptionsMulti":  tmplRoleDropdownMutli,
 
 		"textChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews}, "#"),
 		"textChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews}, "#"),
