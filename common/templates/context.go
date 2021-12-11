@@ -59,6 +59,8 @@ var (
 		"fdiv":              tmplFDiv,
 		"sqrt":              tmplSqrt,
 		"cbrt":              tmplCbrt,
+		"exp":               tmplExp,
+		"exp2":              tmplExp2,
 		"pow":               tmplPow,
 		"log":               tmplLog,
 		"max":               tmplMax,

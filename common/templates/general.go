@@ -619,6 +619,24 @@ func tmplCbrt(arg interface{}) float64 {
 	}
 }
 
+func tmplExp(arg interface{}) float64 {
+	switch arg.(type) {
+	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+		return math.Exp(ToFloat64(arg))
+	default:
+		return math.NaN()
+	}
+}
+
+func tmplExp2(arg interface{}) float64 {
+	switch arg.(type) {
+	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+		return math.Exp2(ToFloat64(arg))
+	default:
+		return math.NaN()
+	}
+}
+
 func tmplPow(argX, argY interface{}) float64 {
 	var xyValue float64
 	var xySlice []float64
