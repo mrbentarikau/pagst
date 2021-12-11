@@ -158,6 +158,24 @@ $(function(){
     });*/
 })
 </script>
+<script>
+$(function(){
+    $.getJSON("https://srhpyqt94yxb.statuspage.io/api/v2/incidents/unresolved.json", function(data) {
+        if (data.incidents) {
+            data.incidents.forEach(function(incident) {
+                addAlertPAGST("warning","Discord has " + incident.status + " an incident: " + incident.name + ". Functionality may be limited.");
+            })
+        }
+    });
+})
+</script>
+<div id="alerts_pagst">
+    {{if .Alerts}}
+    <div class="pagst">
+        
+    </div>
+    {{end}}
+</div>
 <div id="alerts">
     {{if .Alerts}}
     <div class="row">

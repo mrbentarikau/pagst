@@ -241,8 +241,33 @@ function addAlert(kind, msg, id) {
 	).appendTo("#alerts");
 }
 
+function addAlertPAGST(kind, msg, id) {
+	var style_alert = {
+		margin: "0px",
+		border: "none"
+	}
+	var style_text = {
+		color: "#abb4be",
+		fontFamily: "'Open Sans',Arial, sans-serif",
+		fontWeight: 400,
+		fontStyle: "italic"
+	}
+	const alert = $(`<div/>`);
+	if (id !== undefined) alert.prop("id", id)
+	alert.addClass("pagst").append(
+			$("<div/>").addClass("alert alertPAGST-" + kind).css(style_alert).append(
+				$('<i/>').attr("title", msg).addClass("fas fa-exclamation-circle").css("color","#aa8900").text(" ").append(
+					$("<a />").attr("href","https://discordstatus.com").attr("target","_blank").addClass("pagst").append(
+						$("<span />").css(style_text).text(msg)
+					)
+				)
+			)
+	).appendTo("#alerts_pagst");
+}
+
 function clearAlerts() {
 	$("#alerts").empty();
+	$("#alerts_pagst").empty();
 }
 
 function addListeners() {

@@ -612,7 +612,7 @@ ul[class*="nav-children"]>li[class*="nav-active"]>a[class*="nav-link"]{box-shado
 
 /*background colours*/
 #tscene>header{background-color:transparent!important}
-a:focus,a:hover{ background-color:#2e2e2e!important}
+a:focus,a:hover{background-color:#2e2e2e!important}
 body,header,[class*="navbar"],[class*="sidebar"]{background-color:#1a1a1a!important}
 [class*="navbar"]>[class*="nav-item"]>[class*="nav-link"]{background-color:#1a1a1a!important}
 [class*="card"]{background-color:#1f1f1f!important}
