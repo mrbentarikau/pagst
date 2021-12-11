@@ -117,10 +117,12 @@
 
     function onCCChanged(textArea) {
         var textAreas = textArea.parentElement.querySelectorAll('textarea');
-        console.log(textAreas)
         var combinedLength = 0;
                 
         textAreas.forEach(function (elem) {
+            if(nl = elem.value.match(/\n/g)) {
+                combinedLength += nl.length;
+            }
             combinedLength += elem.value.length;
         })
         
