@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -55,8 +56,8 @@ var (
 		"sub":               tmplSub,
 		"mult":              tmplMult,
 		"div":               tmplDiv,
-		"mod":               tmplMod,
 		"fdiv":              tmplFDiv,
+		"mod":               tmplMod,
 		"sqrt":              tmplSqrt,
 		"cbrt":              tmplCbrt,
 		"exp":               tmplExp,
@@ -65,6 +66,9 @@ var (
 		"log":               tmplLog,
 		"max":               tmplMax,
 		"min":               tmplMin,
+		"cos":               tmplCos,
+		"sin":               tmplSin,
+		"tan":               tmplTan,
 		"round":             tmplRound,
 		"roundCeil":         tmplRoundCeil,
 		"roundFloor":        tmplRoundFloor,
@@ -252,6 +256,9 @@ func (c *Context) setupBaseData() {
 	c.Data["DiscordEpoch"] = time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC)
 	c.Data["GuildEpoch"] = bot.SnowflakeToTime(c.GS.ID).UTC()
 	c.Data["IsPremium"] = c.IsPremium
+
+	//Math constants
+	c.Data["MathConst"] = map[string]float64{"E": math.E, "Pi": math.Pi, "Phi": math.Phi, "Ln2": math.Ln2, "Ln10": math.Ln10}
 }
 
 func (c *Context) Parse(source string) (*template.Template, error) {
