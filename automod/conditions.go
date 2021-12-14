@@ -195,7 +195,7 @@ func (cd *ChannelsCondition) MergeDuplicates(data []interface{}) interface{} {
 }
 
 /////////////////////////////////////////////////////////////////
-/*
+
 type VoiceChannelsConditionData struct {
 	Channels []int64
 }
@@ -284,7 +284,7 @@ func (cd *VoiceChannelsCondition) MergeDuplicates(data []interface{}) interface{
 
 	return &VoiceChannelsConditionData{Channels: totalChannels}
 }
-*/
+
 /////////////////////////////////////////////////////////////////
 
 type ChannelCategoryConditionData struct {

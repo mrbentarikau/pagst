@@ -556,10 +556,23 @@ func (g *AntiFishDetectorTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 			return false, nil
 		}
 
-		if !antiFish.Match {
-			return false, nil
-		} else {
+		if antiFish.Match {
 			return true, nil
+		}
+
+		matches := common.LinkRegex.FindAllString(forwardSlashReplacer.Replace(m.Content), -1)
+
+		for _, v := range matches {
+			trasparencyReport, err := common.TransparencyReportQuery(v)
+			if err != nil {
+				logger.WithError(err).Error("Failed checking URLs from Google's Transparency Report API.")
+				return false, nil
+			}
+
+			if (trasparencyReport.UnsafeContent > 1 && trasparencyReport.UnsafeContent <= 3) || trasparencyReport.ScoreTotal >= 2 {
+				return true, nil
+			}
+
 		}
 	}
 
@@ -626,6 +639,7 @@ var _ MessageTrigger = (*SlowmodeTrigger)(nil)
 type SlowmodeTrigger struct {
 	ChannelBased bool
 	Attachments  bool // whether this trigger checks any messages or just attachments
+	Links        bool // whether this trigger checks any messages or just links
 }
 
 func (s *SlowmodeTrigger) Kind() RulePartType {
@@ -642,12 +656,21 @@ func (s *SlowmodeTrigger) Name() string {
 			return "x channel attachments in y seconds"
 		}
 
+		if s.Links {
+			return "x channel links in y seconds"
+		}
+
 		return "x channel messages in y seconds"
 	}
 
 	if s.Attachments {
 		return "x user attachments in y seconds"
 	}
+
+	if s.Links {
+		return "x user links in y seconds"
+	}
+
 	return "x user messages in y seconds"
 }
 
@@ -657,11 +680,19 @@ func (s *SlowmodeTrigger) Description() string {
 			return "Triggers when a channel has more than x attachments within y seconds"
 		}
 
+		if s.Links {
+			return "Triggers when a channel has more than x links within y seconds"
+		}
+
 		return "Triggers when a channel has more than x messages in y seconds."
 	}
 
 	if s.Attachments {
 		return "Triggers when a user has more than x attachments within y seconds in a single channel"
+	}
+
+	if s.Links {
+		return "Triggers when a user has more than x links within y seconds in a single channel"
 	}
 
 	return "Triggers when a user has more than x messages in y seconds in a single channel."
@@ -697,6 +728,10 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 		return false, nil
 	}
 
+	if s.Links && !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(m.Content)) {
+		return false, nil
+	}
+
 	settings := triggerCtx.Data.(*SlowmodeTriggerData)
 
 	within := time.Duration(settings.Interval) * time.Second
@@ -725,6 +760,10 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 
 		if s.Attachments && len(v.Attachments) < 1 {
 			continue // were only checking messages with attachments
+		}
+
+		if s.Links && !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(v.Content)) {
+			continue // were only checking messages with links
 		}
 
 		amount++
@@ -1467,7 +1506,7 @@ func (mj *MemberJoinTrigger) CheckJoin(t *TriggerContext) (isAffected bool, err 
 }
 
 /////////////////////////////////////////////////////////////
-/*
+
 var _ VoiceStateListener = (*VoiceStateUpdateTrigger)(nil)
 
 type VoiceStateUpdateTrigger struct {
@@ -1514,7 +1553,7 @@ func (vs *VoiceStateUpdateTrigger) CheckVoiceState(t *TriggerContext, cs *dstate
 
 	return false, nil
 }
-*/
+
 /////////////////////////////////////////////////////////////
 
 var _ MessageTrigger = (*MessageAttachmentTrigger)(nil)

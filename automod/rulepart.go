@@ -46,13 +46,15 @@ var RulePartMap = map[int]RulePart{
 	31: &MessageAttachmentTrigger{},
 	32: &MessageAttachmentTrigger{RequiresAttachment: true},
 	/*
-		94:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
-		95:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: true}},
-		96:  &UserStatusWordlistTrigger{Blacklist: false},
-		97:  &UserStatusWordlistTrigger{Blacklist: true},
-		98:  &VoiceStateUpdateTrigger{UserJoin: true},
-		99:  &VoiceStateUpdateTrigger{UserJoin: false},
+		9X:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
+		9X:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: true}},
+		9X:  &UserStatusWordlistTrigger{Blacklist: false},
+		9X:  &UserStatusWordlistTrigger{Blacklist: true},
 	*/
+	96:  &SlowmodeTrigger{ChannelBased: false, Links: true},
+	97:  &SlowmodeTrigger{ChannelBased: true, Links: true},
+	98:  &VoiceStateUpdateTrigger{UserJoin: true},
+	99:  &VoiceStateUpdateTrigger{UserJoin: false},
 	100: &AntiFishDetectorTrigger{},
 
 	// Conditions 2xx
@@ -70,10 +72,8 @@ var RulePartMap = map[int]RulePart{
 	212: &ChannelCategoriesCondition{Blacklist: false},
 	213: &MessageEditedCondition{NewMessage: true},
 	214: &MessageEditedCondition{NewMessage: false},
-	/*
-		298: &VoiceChannelsCondition{Blacklist: true},
-		299: &VoiceChannelsCondition{Blacklist: false},
-	*/
+	298: &VoiceChannelsCondition{Blacklist: true},
+	299: &VoiceChannelsCondition{Blacklist: false},
 
 	// Effects 3xx
 	300: &DeleteMessageEffect{},
@@ -272,8 +272,8 @@ type JoinListener interface {
 }
 
 // VoiceStateListener is a trigger that gets triggered on a voiceState changes
-/*type VoiceStateListener interface {
+type VoiceStateListener interface {
 	RulePart
 
 	CheckVoiceState(triggerCtx *TriggerContext, cs *dstate.ChannelState) (isAffected bool, err error)
-}*/
+}
