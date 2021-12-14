@@ -114,21 +114,40 @@ func requestWolframAPI(input, wolframID string) (string, error) {
 		return "Wolfram has no good answer for this query", nil
 	}
 
-	result = waQuery.Queryresult.Pod[1].Subpod[0].Plaintext
-	if result == "" {
+	/*if waQuery.Queryresult.Pod[0].Title == "Input interpretation" {
 		result = waQuery.Queryresult.Pod[0].Subpod[0].Plaintext
 	}
-	if len(waQuery.Queryresult.Pod) > 2 {
-		if waQuery.Queryresult.Pod[2].Title == "Decimal approximation" {
-			result += "\n\nApproximation: " + waQuery.Queryresult.Pod[2].Subpod[0].Plaintext
+
+	result += waQuery.Queryresult.Pod[1].Subpod[0].Plaintext
+	if result == "" {
+		result = waQuery.Queryresult.Pod[0].Subpod[0].Plaintext
+	}*/
+	//if len(waQuery.Queryresult.Pod) > 2 {
+	for k, v := range waQuery.Queryresult.Pod {
+		if v.Subpod[0].Plaintext != "" && k <= 6 {
+			result += "\n\n" + v.Title + ":\n"
+			for _, vv := range v.Subpod {
+				result += fmt.Sprintf("%s\n", vv.Plaintext)
+			}
+			//result += fmt.Sprintf("%s\n", v.Subpod[0].Plaintext)
 		}
-		if waQuery.Queryresult.Pod[2].Title == "Unit conversions" {
+
+		/*if v.Title == "Decimal approximation" {
+			result += "\n\nApproximation: " + v.Subpod[0].Plaintext
+		}
+
+		if v.Title == "Unit conversions" {
 			result += "\n\nUnit conversions:\n"
-			for _, v := range waQuery.Queryresult.Pod[2].Subpod {
-				result += fmt.Sprintf("%s\n", v.Plaintext)
+			for _, vv := range v.Subpod {
+				result += fmt.Sprintf("%s\n", vv.Plaintext)
 			}
 		}
 
+		if v.Title == "Basic elemental properties" {
+			result += "\n\nBasic elemental properties:\n"
+			result += fmt.Sprintf("%s\n", v.Subpod[0].Plaintext)
+		}*/
 	}
+	//}
 	return result, nil
 }
