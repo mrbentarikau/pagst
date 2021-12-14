@@ -66,11 +66,19 @@ var Command = &commands.YAGCommand{
 
 		input := url.QueryEscape(data.Args[0].Str())
 		response := "```\n"
+		responseTooLong := "\n\n(response too long)"
+		responseEnd := "\n```<" + directURL + input + ">"
+
 		query, err := requestWolframAPI(input, appID)
 		if err != nil {
 			return "", err
 		}
-		response += query + "\n```<" + directURL + input + ">"
+
+		if len(query) > 2000 {
+			query = common.CutStringShort(query, 1980-len(responseTooLong+responseEnd)) + responseTooLong
+		}
+
+		response += query + responseEnd
 		return response, nil
 	},
 }
