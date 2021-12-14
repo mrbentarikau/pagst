@@ -244,11 +244,7 @@ func (c *Context) setupBaseData() {
 		c.Data["user"] = c.Data["User"]
 	}
 
-	botUser := common.BotUser
-	botMember, _ := bot.GetMember(c.GS.ID, botUser.ID)
-
-	c.Data["BotUser"] = botUser
-	c.Data["BotMember"] = botMember.Member
+	c.Data["BotUser"] = common.BotUser
 	c.Data["TimeSecond"] = time.Second
 	c.Data["TimeMinute"] = time.Minute
 	c.Data["TimeHour"] = time.Hour
