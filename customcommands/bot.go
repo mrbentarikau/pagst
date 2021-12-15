@@ -208,37 +208,47 @@ var cmdListCommands = &commands.YAGCommand{
 				Reader: &buf,
 			}
 		}
+
+		var caseSensitiveTrigger, response, restrictions, link string
+
+		coreSConf := common.GetCoreServerConfCached(data.GuildData.GS.ID)
+		if coreSConf.AllowAllMembersReadOnly || len(coreSConf.AllowedReadOnlyRoles) > 0 {
+			link = fmt.Sprintf("<https://%s/manage/%d/customcommands/commands/%d/>", common.ConfHost.GetString(), data.GuildData.GS.ID, cc.LocalID)
+		}
+
+		if len(cc.Categories) > 0 || cc.CategoriesWhitelistMode {
+			restrictions += "`categories` "
+		}
+		if len(cc.Channels) > 0 || cc.ChannelsWhitelistMode {
+			restrictions += "`channels` "
+		}
+		if len(cc.Roles) > 0 || cc.RolesWhitelistMode {
+			restrictions += "`roles` "
+		}
+		if restrictions != "" {
+			restrictions = "Restrictions: " + restrictions + "\n"
+		}
+
 		// Every text-based custom command trigger has a numerical value less than 5, so this is quite safe to do
 		if cc.TriggerType < 5 {
-			if ccFile != nil {
-				msg = &discordgo.MessageSend{
-					Content: fmt.Sprintf("#%d - %s: `%s` - Case sensitive trigger: `%t` Group: `%s`",
-						cc.LocalID, CommandTriggerType(cc.TriggerType), cc.TextTrigger, cc.TextTriggerCaseSensitive, groupMap[cc.GroupID.Int64]),
-					Files: []*discordgo.File{
-						ccFile,
-					},
-				}
-				return msg, nil
-			}
-
-			return fmt.Sprintf("#%d - %s: `%s` - Case sensitive trigger: `%t` - Group: `%s`\n```%s\n%s\n```",
-				cc.LocalID, CommandTriggerType(cc.TriggerType), cc.TextTrigger, cc.TextTriggerCaseSensitive,
-				groupMap[cc.GroupID.Int64], highlight, strings.Join(cc.Responses, "```\n```")), nil
+			caseSensitiveTrigger = fmt.Sprintf(": `%s` - Case sensitive trigger: `%t`", cc.TextTrigger, cc.TextTriggerCaseSensitive)
 		}
+
 		if ccFile != nil {
 			msg = &discordgo.MessageSend{
-				Content: fmt.Sprintf("#%d - %s - Group `%s`", cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64]),
+				Content: fmt.Sprintf("#%d - %s%s - Group: `%s`\n%s",
+					cc.LocalID, CommandTriggerType(cc.TriggerType), caseSensitiveTrigger, groupMap[cc.GroupID.Int64], restrictions),
 				Files: []*discordgo.File{
 					ccFile,
 				},
 			}
-
 			return msg, nil
-
 		}
-		return fmt.Sprintf("#%d - %s - Group: `%s`\n```%s\n%s\n```",
-			cc.LocalID, CommandTriggerType(cc.TriggerType), groupMap[cc.GroupID.Int64],
-			highlight, strings.Join(cc.Responses, "```\n```")), nil
+
+		response = fmt.Sprintf("#%d - %s%s - Group: `%s`\n%s```%s\n%s",
+			cc.LocalID, CommandTriggerType(cc.TriggerType), caseSensitiveTrigger, groupMap[cc.GroupID.Int64], restrictions,
+			highlight, common.CutStringShort(strings.Join(cc.Responses, "```\n```"), 1744))
+		return response + "\n```" + link, nil
 	},
 }
 
