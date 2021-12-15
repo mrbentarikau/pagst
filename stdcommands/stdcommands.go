@@ -40,6 +40,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/pagstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/ping"
 	"github.com/mrbentarikau/pagst/stdcommands/poll"
+	"github.com/mrbentarikau/pagst/stdcommands/quack"
 	"github.com/mrbentarikau/pagst/stdcommands/removespecialserver"
 	"github.com/mrbentarikau/pagst/stdcommands/roll"
 	"github.com/mrbentarikau/pagst/stdcommands/setstatus"
@@ -114,6 +115,7 @@ func (p *Plugin) AddCommands() {
 		getiplocation.Command,
 		wolframalpha.Command,
 		bashquotes.Command,
+		quack.Command,
 
 		// Maintenance
 		stateinfo.Command,
