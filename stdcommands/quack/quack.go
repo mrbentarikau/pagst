@@ -3,14 +3,15 @@ package quack
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/discordgo/v2"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/jonas747/dcmd/v4"
+	"github.com/jonas747/discordgo/v2"
 )
 
 var Command = &commands.YAGCommand{
@@ -22,24 +23,21 @@ var Command = &commands.YAGCommand{
 	SlashCommandEnabled: true,
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		quacknotfound := "https://" + common.ConfHost.GetString() + "/static/img/quacknotfound.png"
+		var descr, quackURL string
+		quackURL = "https://" + common.ConfHost.GetString() + "/static/img/quacknotfound.png"
 
 		quack, err := duckFromAPI()
 		if err != nil {
-			embed := &discordgo.MessageEmbed{
-				Description: "QuackAPI wonky... ducks are sad : /",
-				Color:       int(rand.Int63n(16777215)),
-				Image: &discordgo.MessageEmbedImage{
-					URL: quacknotfound,
-				},
-			}
-			return embed, nil
+			descr = fmt.Sprintf("%s\nQuackAPI wonky... ducks are sad : /", err)
+		} else {
+			quackURL = quack
 		}
 
 		embed := &discordgo.MessageEmbed{
-			Color: int(rand.Int63n(16777215)),
+			Description: descr,
+			Color:       int(rand.Int63n(16777215)),
 			Image: &discordgo.MessageEmbedImage{
-				URL: quack,
+				URL: quackURL,
 			},
 		}
 		return embed, nil
@@ -65,7 +63,7 @@ func duckFromAPI() (string, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		return "", commands.NewPublicError("Not 200!")
+		return "", commands.NewPublicError("HTTP err: ", resp.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
