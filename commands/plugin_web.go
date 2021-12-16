@@ -7,6 +7,7 @@ import (
 	"html"
 	"html/template"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -122,6 +123,7 @@ func HandleCommands(w http.ResponseWriter, r *http.Request) (web.TemplateData, e
 		for _, v := range commands {
 			if v.Category == cmd.CmdCategory.Name {
 				v.Commands = append(v.Commands, name)
+				sort.Strings(v.Commands)
 				return
 			}
 		}

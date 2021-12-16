@@ -16,7 +16,7 @@ import (
 
 var Command = &commands.YAGCommand{
 	CmdCategory:         commands.CategoryFun,
-	Name:                "duck",
+	Name:                "Duck",
 	Aliases:             []string{"quack"},
 	Description:         "Random duck images from random-d.uk API",
 	DefaultEnabled:      true,

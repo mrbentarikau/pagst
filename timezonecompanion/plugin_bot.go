@@ -30,7 +30,7 @@ func (p *Plugin) BotInit() {
 func (p *Plugin) AddCommands() {
 	commands.AddRootCommands(p, &commands.YAGCommand{
 		CmdCategory: commands.CategoryTool,
-		Name:        "settimezone",
+		Name:        "Settimezone",
 		Aliases:     []string{"setz", "tzset"},
 		Description: "Sets your timezone, used for various purposes such as auto conversion. Give it your country.",
 		Arguments: []*dcmd.ArgDef{
