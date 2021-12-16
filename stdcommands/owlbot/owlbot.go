@@ -48,7 +48,7 @@ var _ commands.CommandProvider = (*Plugin)(nil)
 func (p *Plugin) AddCommands() {
 	commands.AddRootCommands(p, &commands.YAGCommand{
 		CmdCategory:  commands.CategoryFun,
-		Name:         "dictionary",
+		Name:         "Dictionary",
 		Aliases:      []string{"dict", "owl"},
 		Description:  "Get the definition of an English word using the Owlbot API.",
 		RequiredArgs: 1,
