@@ -45,7 +45,17 @@ table{
 }
 
 </style>
-
+<script>
+    function pagstamV2Sort(select){
+        select.html(select.find('option').sort(function(x, y) {
+        var z = "";
+        if ($(y).val() > 0){
+            z = $(x).text() > $(y).text() ? 1 : -1;
+        }
+        return z;
+        }));
+    }
+</script>
 <div class="row">
     <div class="col">
         <!-- Nav tabs -->
@@ -104,7 +114,7 @@ table{
                                     </table>
                                     <button type="button" class="btn btn-primary btn-sm automod-add-rule-part">+</button>
                                 </div>
-                                <button class="btn btn-success" type="submit">Save</button>
+                                <button class="btn btn-success" type="submit" style="color:#282828!important;background-color:#89aa00!important">Save</button>
                                 <button class="btn btn-danger" type="submit" formaction="/manage/{{.ActiveGuild.ID}}/automod/ruleset/{{.CurrentRuleset.ID}}/delete">Delete entire ruleset</button>
                             </form>
                         </div>
@@ -135,7 +145,6 @@ table{
                                 You start by creating a ruleset, then creating rules inside said ruleset.<br>
                                 Rules consist of one or more triggers, conditions, and effects, you can also apply general conditions on the ruleset itself.<br>
                                 Visit the <a href="https://docs.yagpdb.xyz/tools-and-utilities/automoderator-v2" target="_blank">documentation</a> for more information on how to build rules and some examples.</p>
-                            <p>If you have some suggestions for triggers, conditions, or effects then either open a issue on <a href="https://github.com/mrbentarikau/pagst" target="_blank">GitHub</a> or join the support server (link located above).</p>
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -232,7 +241,11 @@ table{
                                 {{if .R}}{{range $j, $jv := .R.RuleAutomodRuleData}}{{if eq .Kind 0}}
                                 {{$settings := index (index $dot.RulePartData $i) $j}}
                                 {{$partType := index $dot.PartMap .TypeID}}
-                                {{mTemplate "automod_rule_part_row" "dot" $dot "partIndex" $j "settings" $settings "partType" $partType "part" . "kind" "trigger"}}
+                                {{mTemplate "automod_rule_part_row" "dot" $dot "partIndex" $j "settings" $settings "partType" $partType "part" . "kind" "trigger" "amV2Rule" $i}}
+                                <script>
+                                    var selectTriggers = $('select[pagst="Triggers.{{$j}}.PAGSTamvRULE{{$i}}"]');
+                                    pagstamV2Sort(selectTriggers);
+                                </script>
                                 {{end}}{{end}}{{end}}
                             </tbody>
                         </table>
@@ -252,7 +265,11 @@ table{
                                 {{if.R}}{{range $j, $jv := .R.RuleAutomodRuleData}}{{if eq .Kind 1}}
                                 {{$settings := index (index $dot.RulePartData $i) $j}}
                                 {{$partType := index $dot.PartMap .TypeID}}
-                                {{mTemplate "automod_rule_part_row" "dot" $dot "partIndex" $j "settings" $settings "partType" $partType "part" . "kind" "condition"}}
+                                {{mTemplate "automod_rule_part_row" "dot" $dot "partIndex" $j "settings" $settings "partType" $partType "part" . "kind" "condition" "amV2Rule" $i}}
+                                <script>
+                                    var selectConditions = $('select[pagst="Conditions.{{$j}}.PAGSTamvRULE{{$i}}"]');
+                                    pagstamV2Sort(selectConditions);
+                                </script>
                                 {{end}}{{end}}{{end}}
                             </tbody>
                         </table>
@@ -272,7 +289,11 @@ table{
                                 {{if .R}}{{range $j, $jv := .R.RuleAutomodRuleData}}{{if eq .Kind 2}}
                                 {{$settings := index (index $dot.RulePartData $i) $j}}
                                 {{$partType := index $dot.PartMap .TypeID}}
-                                {{mTemplate "automod_rule_part_row" "dot" $dot "partIndex" $j "settings" $settings "partType" $partType "part" . "kind" "effect"}}
+                                {{mTemplate "automod_rule_part_row" "dot" $dot "partIndex" $j "settings" $settings "partType" $partType "part" . "kind" "effect" "amV2Rule" $i}}
+                                <script>
+                                    var selectEffects = $('select[pagst="Effects.{{$j}}.PAGSTamvRULE{{$i}}"]');
+                                    pagstamV2Sort(selectEffects);
+                                </script>
                                 {{end}}{{end}}{{end}}
                             </tbody>
                         </table>
@@ -391,7 +412,17 @@ $(function(){
             typeSelect.append("<option value='"+i+"'> "+partType.name+"</option>");
         }
 
+        typeSelect.html(typeSelect.find('option').sort(function(x,y){
+            // to change to descending order switch "<" for ">"
+            var z = "";
+            if ($(y).val() > 0){
+                z = $(x).text() > $(y).text() ? 1 : -1;    
+            }
+            return z;
+        }))
+
         row.append($("<td class='d-flex'>").append(typeSelect))
+
         row.append("<td class='automod-options-column'></td>")
 
         row.append("<td><button type='button' class='btn btn-danger automod-delete-rule-part btn-sm' noconfirm>-</button></td>")
@@ -579,7 +610,7 @@ $(function(){
 <tr class="automod-rule-row">
     <td>
         <div class="form-gorup d-flex">
-            <select class="form-control automod-type-dropdown" name="{{$namePrefix}}.{{.partIndex}}.Type">
+            <select class="form-control automod-type-dropdown" pagst="{{$namePrefix}}.{{.partIndex}}.PAGSTamvRULE{{.amV2Rule}}" name="{{$namePrefix}}.{{.partIndex}}.Type">
                 <option value="0"{{if eq .part.TypeID 0}}selected{{end}}>None</option>
                 {{$kind := .part.Kind}}
                 {{$selected := .part.TypeID}}
