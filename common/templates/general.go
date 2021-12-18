@@ -224,7 +224,7 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 
 	for key, val := range messageSdict {
 
-		switch key {
+		switch strings.ToLower(key) {
 		case "content":
 			msg.Content = fmt.Sprint(val)
 		case "embed":

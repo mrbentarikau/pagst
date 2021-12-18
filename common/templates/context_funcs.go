@@ -377,9 +377,9 @@ func (c *Context) checkSafeDictNoRecursion(d Dict, n int) bool {
 }
 
 func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) func(channel interface{}, msg interface{}) interface{} {
-	parseMentions := []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers}
+	parseMentions := []discordgo.AllowedMentionType{}
 	if !filterSpecialMentions {
-		parseMentions = append(parseMentions, discordgo.AllowedMentionTypeRoles, discordgo.AllowedMentionTypeEveryone)
+		parseMentions = append(parseMentions, discordgo.AllowedMentionTypeUsers, discordgo.AllowedMentionTypeRoles, discordgo.AllowedMentionTypeEveryone)
 	}
 
 	return func(channel interface{}, msg interface{}) interface{} {
@@ -417,7 +417,9 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 			msgSend.Embed = typedMsg
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
-			msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
+			if !filterSpecialMentions {
+				msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
+			}
 
 			if isDM {
 				if typedMsg.Embed != nil {
@@ -476,9 +478,16 @@ func (c *Context) tmplEditMessage(filterSpecialMentions bool) func(channel inter
 			}
 			msgEdit.Content = typedMsg.Content
 			msgEdit.Embed = typedMsg.Embed
+			msgEdit.AllowedMentions = typedMsg.AllowedMentions
 		default:
 			temp := fmt.Sprint(msg)
 			msgEdit.Content = &temp
+		}
+
+		if !filterSpecialMentions {
+			msgEdit.AllowedMentions = &discordgo.AllowedMentions{
+				Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers, discordgo.AllowedMentionTypeRoles, discordgo.AllowedMentionTypeEveryone},
+			}
 		}
 
 		_, err = common.BotSession.ChannelMessageEditComplex(msgEdit)
@@ -1371,6 +1380,10 @@ func (c *Context) tmplAddMessageReactions(values ...reflect.Value) (reflect.Valu
 			mID = ToInt64(args[1].Interface())
 		}
 
+		if args[1].IsValid() {
+			mID = ToInt64(args[1].Interface())
+		}
+
 		for i, reaction := range args {
 			if i < 2 {
 				continue
@@ -1683,7 +1696,7 @@ func (c *Context) tmplLastMessages(channel interface{}, num ...int) ([]*dstate.M
 }
 
 func (c *Context) tmplSort(input interface{}, sortargs ...interface{}) (interface{}, error) {
-	if c.IncreaseCheckCallCounterPremium("sortfuncs", 1, 3) {
+	if c.IncreaseCheckCallCounterPremium("sortfuncs", 1, 10) {
 		return "", ErrTooManyCalls
 	}
 
