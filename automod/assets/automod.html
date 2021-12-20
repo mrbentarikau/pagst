@@ -412,14 +412,7 @@ $(function(){
             typeSelect.append("<option value='"+i+"'> "+partType.name+"</option>");
         }
 
-        typeSelect.html(typeSelect.find('option').sort(function(x,y){
-            // to change to descending order switch "<" for ">"
-            var z = "";
-            if ($(y).val() > 0){
-                z = $(x).text() > $(y).text() ? 1 : -1;    
-            }
-            return z;
-        }))
+        pagstamV2Sort(typeSelect)
 
         row.append($("<td class='d-flex'>").append(typeSelect))
 
