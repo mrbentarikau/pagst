@@ -56,6 +56,8 @@ func getRedditQuote() string {
 		return fmt.Sprint("Error: ", err)
 	}
 
+	defer resp.Body.Close()
+
 	body, _ := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Sprint("Error: ", err)
