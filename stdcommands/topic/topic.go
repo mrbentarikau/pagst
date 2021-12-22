@@ -42,6 +42,7 @@ func topicAPI() (response string, err error) {
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {

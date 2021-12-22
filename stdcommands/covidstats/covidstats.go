@@ -197,6 +197,8 @@ func getData(query, loc, qtype string) ([]byte, error) {
 		return nil, commands.NewPublicError("Cannot fetch corona statistics data for the given location:** " + qtype + ": " + loc + "**")
 	}
 
+	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

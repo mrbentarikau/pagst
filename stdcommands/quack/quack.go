@@ -66,6 +66,8 @@ func duckFromAPI() (string, error) {
 		return "", commands.NewPublicError("HTTP err: ", resp.StatusCode)
 	}
 
+	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err

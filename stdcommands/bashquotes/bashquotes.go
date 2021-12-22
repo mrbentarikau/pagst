@@ -47,6 +47,8 @@ var Command = &commands.YAGCommand{
 			return "", commands.NewPublicError("HTTP Response was not 200, but ", resp.StatusCode)
 		}
 
+		defer resp.Body.Close()
+
 		bytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return "", err

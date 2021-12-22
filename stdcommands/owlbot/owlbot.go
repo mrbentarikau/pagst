@@ -76,6 +76,7 @@ func (p *Plugin) AddCommands() {
 			if resp.StatusCode == 404 {
 				return "Could not find a definition for that word.", nil
 			}
+			defer resp.Body.Close()
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {

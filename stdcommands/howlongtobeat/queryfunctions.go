@@ -48,6 +48,7 @@ func getGameData(searchTitle string) (string, error) {
 		return "", commands.NewPublicError("Unable to fetch data from howlongtobeat.com")
 	}
 	r.Body.Close()
+	defer resp.Body.Close()
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

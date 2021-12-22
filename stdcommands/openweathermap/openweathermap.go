@@ -60,6 +60,8 @@ var Command = &commands.YAGCommand{
 			return "Cannot fetch weather data for the given location: " + where, nil
 		}
 
+		defer resp.Body.Close()
+
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err

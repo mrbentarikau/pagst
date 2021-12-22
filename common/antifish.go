@@ -83,6 +83,7 @@ func AntiFishQuery(phisingQuery string) (*AntiFish, error) {
 		return nil, respError
 	}
 	r.Body.Close()
+	defer resp.Body.Close()
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -120,6 +121,7 @@ func TransparencyReportQuery(phisingQuery string) (*TransparencyReport, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

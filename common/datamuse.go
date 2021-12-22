@@ -41,6 +41,7 @@ func wordFromAPI(wrd string, synSwitch bool) string {
 	if resp.StatusCode != 200 {
 		return response
 	}
+	resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

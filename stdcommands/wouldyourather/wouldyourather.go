@@ -63,6 +63,7 @@ func wouldYouRather() (q1 string, q2 string, err error) {
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {

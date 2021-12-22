@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 
 	"github.com/mrbentarikau/pagst/bot"
@@ -21,6 +22,7 @@ var Command = &commands.YAGCommand{
 	Name:        "WolframAlpha",
 	Aliases:     []string{"wolfram", "wa"},
 	Description: `Queries the API of WolframAlpha for results on ...anything!
+					Results are given in metric system, link below would use user's local unit-system.
 
 					Needs user created AppID for WolframAlpha.
 					To setup a WolframAlpha appID, you must register a Wolfram ID and sign in to the Wolfram|Alpha Developer Portal > https://developer.wolframalpha.com/portal/
@@ -86,10 +88,10 @@ var Command = &commands.YAGCommand{
 func requestWolframAPI(input, wolframID string) (string, error) {
 	var baseURL = "http://api.wolframalpha.com/v2/query"
 	var waQuery WolframAlpha
-	var result string
+	var result, subpodResult string
 	appID := wolframID
 
-	queryURL := baseURL + "?appid=" + appID + "&input=" + input + "&format=plaintext"
+	queryURL := baseURL + "?appid=" + appID + "&input=" + input + "&format=plaintext&unit=metric"
 	req, err := http.NewRequest("GET", queryURL, nil)
 	if err != nil {
 		return "", err
@@ -105,6 +107,7 @@ func requestWolframAPI(input, wolframID string) (string, error) {
 	if resp.StatusCode != 200 {
 		return fmt.Sprintf("Wolfram is wonky: status code is not 200! But: %d", resp.StatusCode), nil
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -119,43 +122,24 @@ func requestWolframAPI(input, wolframID string) (string, error) {
 	}
 
 	if len(waQuery.Queryresult.Pod) == 0 {
-		return "Wolfram has no good answer for this query", nil
+		return "Wolfram has no good answer for this query...", nil
 	}
+	//Convert response to somewhat general Discord format (maybe separete func.)
+	var re = regexp.MustCompile(`\x0a\x20\x7C`)
 
-	/*if waQuery.Queryresult.Pod[0].Title == "Input interpretation" {
-		result = waQuery.Queryresult.Pod[0].Subpod[0].Plaintext
-	}
-
-	result += waQuery.Queryresult.Pod[1].Subpod[0].Plaintext
-	if result == "" {
-		result = waQuery.Queryresult.Pod[0].Subpod[0].Plaintext
-	}*/
-	//if len(waQuery.Queryresult.Pod) > 2 {
 	for k, v := range waQuery.Queryresult.Pod {
 		if v.Subpod[0].Plaintext != "" && k <= 6 {
-			result += "\n\n" + v.Title + ":\n"
+			result += "\n" + v.Title + ":\n"
+			subpodResult = ""
 			for _, vv := range v.Subpod {
-				result += fmt.Sprintf("%s\n", vv.Plaintext)
+				subpodResult += fmt.Sprintf("%s\n", re.ReplaceAllString(vv.Plaintext, " |"))
 			}
-			//result += fmt.Sprintf("%s\n", v.Subpod[0].Plaintext)
-		}
-
-		/*if v.Title == "Decimal approximation" {
-			result += "\n\nApproximation: " + v.Subpod[0].Plaintext
-		}
-
-		if v.Title == "Unit conversions" {
-			result += "\n\nUnit conversions:\n"
-			for _, vv := range v.Subpod {
-				result += fmt.Sprintf("%s\n", vv.Plaintext)
+			if len(subpodResult) >= 512 {
+				subpodResult = common.CutStringShort(subpodResult, 510) + "\n"
 			}
+			result += subpodResult
 		}
-
-		if v.Title == "Basic elemental properties" {
-			result += "\n\nBasic elemental properties:\n"
-			result += fmt.Sprintf("%s\n", v.Subpod[0].Plaintext)
-		}*/
 	}
-	//}
+
 	return result, nil
 }

@@ -107,6 +107,7 @@ func getData(query string) ([]byte, error) {
 	if resp.StatusCode != 200 {
 		return nil, commands.NewPublicError("Cannot fetch IP-location. Try again later.")
 	}
+	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

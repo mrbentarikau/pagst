@@ -33,6 +33,7 @@ var Command = &commands.YAGCommand{
 		if err != nil {
 			return nil, err
 		}
+		defer resp.Body.Close()
 
 		var decoded interface{}
 
