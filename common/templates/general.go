@@ -1368,14 +1368,6 @@ func tmplCurrentTime() time.Time {
 	return time.Now().UTC()
 }
 
-func tmplLoadTimeLocation(name string) (*time.Location, error) {
-	location, err := time.LoadLocation(name)
-	if err != nil {
-		return nil, err
-	}
-	return location, nil
-}
-
 func tmplNewDate(year, monthInt, day, hour, min, sec int, location ...string) (time.Time, error) {
 	loc := time.UTC
 	month := time.Month(monthInt)

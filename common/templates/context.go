@@ -98,21 +98,21 @@ var (
 		"complexMessageEdit": CreateMessageEdit,
 		"kindOf":             KindOf,
 
-		"formatTime":       tmplFormatTime,
-		"json":             tmplJson,
-		"in":               in,
-		"inFold":           inFold,
-		"roleAbove":        roleIsAbove,
-		"adjective":        common.RandomAdjective,
-		"noun":             common.RandomNoun,
-		"randInt":          randInt,
-		"shuffle":          shuffle,
-		"seq":              sequence,
-		"currentTime":      tmplCurrentTime,
-		"newDate":          tmplNewDate,
-		"loadTimeLocation": tmplLoadTimeLocation,
-		"weekNumber":       tmplWeekNumber,
-		"snowflakeToTime":  tmplSnowflakeToTime,
+		"formatTime":      tmplFormatTime,
+		"json":            tmplJson,
+		"in":              in,
+		"inFold":          inFold,
+		"roleAbove":       roleIsAbove,
+		"adjective":       common.RandomAdjective,
+		"noun":            common.RandomNoun,
+		"randInt":         randInt,
+		"shuffle":         shuffle,
+		"seq":             sequence,
+		"currentTime":     tmplCurrentTime,
+		"newDate":         tmplNewDate,
+		"loadLocation":    time.LoadLocation,
+		"weekNumber":      tmplWeekNumber,
+		"snowflakeToTime": tmplSnowflakeToTime,
 
 		"humanizeDurationHours":   tmplHumanizeDurationHours,
 		"humanizeDurationMinutes": tmplHumanizeDurationMinutes,
@@ -893,6 +893,5 @@ func (s Slice) StringSlice(flag ...bool) interface{} {
 
 func tmplSnowflakeToTime(arg interface{}) time.Time {
 	argInt64 := ToInt64(arg)
-
 	return bot.SnowflakeToTime(argInt64).UTC()
 }
