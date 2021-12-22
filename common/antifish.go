@@ -8,7 +8,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -39,6 +39,8 @@ type TransparencyReport struct {
 }
 
 var (
+	AntiFishLinkRegex = regexp.MustCompile(`(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]`)
+
 	antiFishScheme   = "https"
 	antiFishHost     = "anti-fish.bitflow.dev"
 	antiFishURL      = fmt.Sprintf("%s://%s/", antiFishScheme, antiFishHost)
@@ -49,10 +51,13 @@ var (
 	transparencyReportHostPath = "transparencyreport/api/v3/safebrowsing/status"
 )
 
-func AntiFishQuery(phisingQuery string) (*AntiFish, error) {
+func AntiFishQuery(phishingQuery string) (*AntiFish, error) {
 	antiFish := AntiFish{}
-	phisingQuery = strings.Replace(phisingQuery, "\n", " ", -1)
-	queryString := fmt.Sprintf(`{"message":"%s"}`, phisingQuery)
+	phishingQuery = strings.Replace(phishingQuery, "\n", " ", -1)
+	queryBytes, _ := json.Marshal(struct {
+		Message string `json:"message"`
+	}{phishingQuery})
+	queryString := string(queryBytes)
 
 	u := &url.URL{
 		Scheme: antiFishScheme,
@@ -77,15 +82,17 @@ func AntiFishQuery(phisingQuery string) (*AntiFish, error) {
 	if resp.StatusCode == 404 {
 		antiFish.Match = false
 		return &antiFish, nil
+	}
 
-	} else if resp.StatusCode != 200 {
-		respError := fmt.Errorf("Unable to fetch data from that site, status-code %d", resp.StatusCode)
+	if resp.StatusCode != 200 {
+		respError := fmt.Errorf("Unable to fetch data from AntiFish API, status-code %d", resp.StatusCode)
 		return nil, respError
 	}
+
 	r.Body.Close()
 	defer resp.Body.Close()
 
-	bytes, err := ioutil.ReadAll(resp.Body)
+	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +106,9 @@ func AntiFishQuery(phisingQuery string) (*AntiFish, error) {
 }
 
 /*This one is really based on maybes, there's no official google documentation how this works : ) */
-func TransparencyReportQuery(phisingQuery string) (*TransparencyReport, error) {
+func TransparencyReportQuery(phishingQuery string) (*TransparencyReport, error) {
 	transparencyReport := TransparencyReport{}
-	queryString := fmt.Sprintf(`?site=%s`, phisingQuery)
+	queryString := fmt.Sprintf(`?site=%s`, phishingQuery)
 
 	u := &url.URL{
 		Scheme: antiFishScheme,
@@ -123,7 +130,7 @@ func TransparencyReportQuery(phisingQuery string) (*TransparencyReport, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
