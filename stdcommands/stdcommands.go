@@ -37,6 +37,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/listroles"
 	"github.com/mrbentarikau/pagst/stdcommands/memstats"
 	"github.com/mrbentarikau/pagst/stdcommands/openweathermap"
+	"github.com/mrbentarikau/pagst/stdcommands/owldictionary"
 	"github.com/mrbentarikau/pagst/stdcommands/pagstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/ping"
 	"github.com/mrbentarikau/pagst/stdcommands/poll"
@@ -145,6 +146,13 @@ func (p *Plugin) AddCommands() {
 	)
 
 	statedbg.Commands()
+
+	if !owldictionary.ShouldRegister() {
+		common.GetPluginLogger(p).Warn("Owlbot API token not provided, skipping adding dictionary command...")
+		return
+	}
+
+	commands.AddRootCommands(p, owldictionary.Command)
 
 }
 

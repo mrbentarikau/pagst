@@ -37,7 +37,6 @@ import (
 	"github.com/mrbentarikau/pagst/serverstats"
 	"github.com/mrbentarikau/pagst/soundboard"
 	"github.com/mrbentarikau/pagst/stdcommands"
-	"github.com/mrbentarikau/pagst/stdcommands/owlbot"
 	"github.com/mrbentarikau/pagst/streaming"
 	"github.com/mrbentarikau/pagst/tickets"
 	"github.com/mrbentarikau/pagst/timezonecompanion"
@@ -57,7 +56,6 @@ func main() {
 
 	// Setup plugins
 	analytics.RegisterPlugin()
-	owlbot.RegisterPlugin()
 	safebrowsing.RegisterPlugin()
 	discordlogger.Register()
 	commands.RegisterPlugin()
