@@ -28,7 +28,7 @@ func ShouldRegister() bool {
 
 var Command = &commands.YAGCommand{
 	CmdCategory:  commands.CategoryFun,
-	Name:         "owldictionary",
+	Name:         "Owldictionary",
 	Aliases:      []string{"dict", "owl"},
 	Description:  "Get the definition of an English word using the Owlbot API.",
 	RequiredArgs: 1,
