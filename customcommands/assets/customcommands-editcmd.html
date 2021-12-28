@@ -65,6 +65,7 @@
                             Every
                             {{call .GetCCInterval .CC}}
                             {{if eq (call .GetCCIntervalType .CC) 1}}hour(s){{else}}minute(s){{end}}{{end}}
+                            <a href="." title="Reload page"><i style="font-size: 0.5em" class="fas fa-sync fa-xs"></i></a>
                         </h2>
                         <input type="text" class="hidden form-control" name="id" value="{{.CC.LocalID}}">
                         {{if (eq .CC.TriggerType 5)}}<span>Next run: {{.CC.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span><br/>{{end}}
