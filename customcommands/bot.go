@@ -159,6 +159,7 @@ var cmdListCommands = &commands.YAGCommand{
 			var title string
 			maxLength := 25
 			list := StringCommands(ccs, groupMap)
+
 			if len(list) == 0 {
 				return "This server has no custom commands, sry.", nil
 			}
@@ -245,8 +246,18 @@ var cmdListCommands = &commands.YAGCommand{
 			return msg, nil
 		}
 
-		response = fmt.Sprintf("#%d - %s%s - Group: `%s`\n%s```%s\n%s",
-			cc.LocalID, CommandTriggerType(cc.TriggerType), caseSensitiveTrigger, groupMap[cc.GroupID.Int64], restrictions,
+		var intervalText = ""
+		if cc.TriggerType == 5 {
+			interval := cc.TimeTriggerInterval
+			if interval >= 60 {
+				intervalText = fmt.Sprintf(" of %d hour(s)", interval/60)
+			} else {
+				intervalText = fmt.Sprintf(" of %d minute(s)", interval)
+			}
+		}
+
+		response = fmt.Sprintf("#%d - %s%s%s - Group: `%s`\n%s```%s\n%s",
+			cc.LocalID, CommandTriggerType(cc.TriggerType), intervalText, caseSensitiveTrigger, groupMap[cc.GroupID.Int64], restrictions,
 			highlight, common.CutStringShort(strings.Join(cc.Responses, "```\n```"), 1744))
 		return response + "\n```" + link, nil
 	},
