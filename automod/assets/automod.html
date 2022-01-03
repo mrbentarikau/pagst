@@ -47,13 +47,18 @@ table{
 </style>
 <script>
     function pagstamV2Sort(select){
-        select.html(select.find('option').sort(function(x, y) {
-        var z = "";
-        if ($(y).val() > 0){
-            z = $(x).text() > $(y).text() ? 1 : -1;
-        }
-        return z;
-        }));
+        var sel = $(select);
+        var selected = sel.val();
+        var opts_list = sel.find('option');
+        opts_list.sort(function(a,b){
+            var z = "";
+            if (($(a).val() > 0)&&($(b).val() > 0)){
+                z = $(a).text() > $(b).text() ? 1 : -1;
+            }
+            return z;
+        });
+        sel.html('').append(opts_list);
+        sel.val(selected);
     }
 </script>
 <div class="row">
@@ -372,8 +377,10 @@ $(function(){
         kind: {{.Kind}},
         options: JSON.parse({{json .UserSettings}})
     }
+    //partMap = partMap.sort((a,b) => a.name > b.name)
     {{end}}
-    console.log(partMap)
+
+    console.log("PAGST_partMap",partMap);
 
     function namePrefixFromKind(kind){
         namePrefix = "Triggers."
