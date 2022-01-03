@@ -138,6 +138,7 @@ var cmdListCommands = &commands.YAGCommand{
 		{Name: "raw", Help: "Raw, legacy output"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		var raw bool
 		ccs, err := models.CustomCommands(qm.Where("guild_id = ?", data.GuildData.GS.ID), qm.OrderBy("local_id")).AllG(data.Context())
 		if err != nil {
 			return "Failed retrieving custom commands", err
@@ -154,6 +155,10 @@ var cmdListCommands = &commands.YAGCommand{
 			groupMap[group.ID] = group.Name
 		}
 
+		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+			raw = true
+		}
+
 		foundCCS, provided := FindCommands(ccs, data)
 		if len(foundCCS) < 1 {
 			var title string
@@ -164,12 +169,12 @@ var cmdListCommands = &commands.YAGCommand{
 				return "This server has no custom commands, sry.", nil
 			}
 
-			title = "No id or trigger provided...\nHere is a list of all server commands:"
+			title = "No id or trigger provided...\nHere is a list of all server commands:\n"
 			if provided {
-				title = "No command by that name or id found...\nHere is a list of them all:"
+				title = "No command by that name or id found...\nHere is a list of them all:\n"
 			}
 
-			if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+			if raw {
 				return title + list, nil
 			}
 			_, err := paginatedmessages.CreatePaginatedMessage(
@@ -232,6 +237,9 @@ var cmdListCommands = &commands.YAGCommand{
 
 		// Every text-based custom command trigger has a numerical value less than 5, so this is quite safe to do
 		if cc.TriggerType < 5 {
+			if len(cc.TextTrigger) == 0 {
+				cc.TextTrigger = "None"
+			}
 			caseSensitiveTrigger = fmt.Sprintf(": `%s` - Case sensitive trigger: `%t`", cc.TextTrigger, cc.TextTriggerCaseSensitive)
 		}
 
@@ -256,9 +264,13 @@ var cmdListCommands = &commands.YAGCommand{
 			}
 		}
 
+		ccResponsesString := strings.Join(cc.Responses, "```\n```")
+		if !raw {
+			ccResponsesString = common.CutStringShort(ccResponsesString, 1744)
+		}
 		response = fmt.Sprintf("#%d - %s%s%s - Group: `%s`\n%s```%s\n%s",
 			cc.LocalID, CommandTriggerType(cc.TriggerType), intervalText, caseSensitiveTrigger, groupMap[cc.GroupID.Int64], restrictions,
-			highlight, common.CutStringShort(strings.Join(cc.Responses, "```\n```"), 1744))
+			highlight, ccResponsesString)
 		return response + "\n```" + link, nil
 	},
 }
@@ -323,6 +335,9 @@ func StringCommands(ccs []*models.CustomCommand, gMap map[int64]string) string {
 		case cc.TriggerType >= 5:
 			out += fmt.Sprintf("`#%3d:` %s - Group: `%s`\n", cc.LocalID, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
 		default:
+			if len(cc.TextTrigger) == 0 {
+				cc.TextTrigger = "None"
+			}
 			out += fmt.Sprintf("`#%3d:` `%s`: %s - Group: `%s`\n", cc.LocalID, cc.TextTrigger, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
 		}
 	}
