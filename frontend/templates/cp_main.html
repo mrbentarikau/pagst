@@ -149,32 +149,21 @@
 <script>
 $(function(){
     showAlerts("{{json .Alerts}}");
-    /*$.getJSON("https://srhpyqt94yxb.statuspage.io/api/v2/incidents/unresolved.json", function(data) {
-        if (data.incidents) {
-            data.incidents.forEach(function(incident) {
-                addAlert("warning", "Discord's " + incident.status + " an incident: " + incident.name + ". Functionality may be limited.");
-            })
-        }
-    });*/
-})
-</script>
-<script>
-$(function(){
     $.getJSON("https://srhpyqt94yxb.statuspage.io/api/v2/incidents/unresolved.json", function(data) {
         if (data.incidents) {
             data.incidents.forEach(function(incident) {
-                addAlertPAGST("warning","Discord has " + incident.status + " an incident: " + incident.name + ". Functionality may be limited.");
+                addAlertPAGST("warning","Discord's " + incident.status + " an incident: " + incident.name + ". Functionality may be limited.");
             })
         }
     });
 })
 </script>
 <div id="alerts_pagst">
-    {{if .Alerts}}
-    <div class="pagst">
-        
-    </div>
-    {{end}}
+	{{if .Alerts}}
+	<div class="pagst">
+
+	</div>
+	{{end}}
 </div>
 <div id="alerts">
     {{if .Alerts}}
