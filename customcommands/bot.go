@@ -782,6 +782,19 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	tmplCtx.Data["CCID"] = cmd.LocalID
 	tmplCtx.Data["CCRunCount"] = cmd.RunCount + 1
 
+	modConfig, _ := moderation.GetConfig(cmd.GuildID)
+	if modConfig.IntActionChannel() == 0 {
+		tmplCtx.Data["ModlogID"] = nil
+	} else {
+		tmplCtx.Data["ModlogID"] = modConfig.IntActionChannel()
+	}
+
+	if modConfig.IntReportChannel() == 0 {
+		tmplCtx.Data["ReportlogID"] = nil
+	} else {
+		tmplCtx.Data["ReportlogID"] = modConfig.IntReportChannel()
+	}
+
 	csCop := tmplCtx.CurrentFrame.CS
 	f := logger.WithFields(logrus.Fields{
 		"trigger":      cmd.TextTrigger,
