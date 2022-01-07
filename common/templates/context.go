@@ -60,8 +60,8 @@ var (
 		"div":               tmplDiv,
 		"fdiv":              tmplFDiv,
 		"mod":               tmplMod,
-		"sqrt":              tmplSqrt,
 		"cbrt":              tmplCbrt,
+		"sqrt":              tmplSqrt,
 		"exp":               tmplExp,
 		"exp2":              tmplExp2,
 		"pow":               tmplPow,
@@ -99,6 +99,8 @@ var (
 		"kindOf":             KindOf,
 
 		"formatTime":      tmplFormatTime,
+		"snowflakeToTime": tmplSnowflakeToTime,
+		"loadLocation":    time.LoadLocation,
 		"json":            tmplJson,
 		"in":              in,
 		"inFold":          inFold,
@@ -110,9 +112,7 @@ var (
 		"seq":             sequence,
 		"currentTime":     tmplCurrentTime,
 		"newDate":         tmplNewDate,
-		"loadLocation":    time.LoadLocation,
 		"weekNumber":      tmplWeekNumber,
-		"snowflakeToTime": tmplSnowflakeToTime,
 
 		"humanizeDurationHours":   tmplHumanizeDurationHours,
 		"humanizeDurationMinutes": tmplHumanizeDurationMinutes,
@@ -257,6 +257,8 @@ func (c *Context) setupBaseData() {
 
 	//Math constants
 	c.Data["MathConst"] = map[string]float64{"E": math.E, "Pi": math.Pi, "Phi": math.Phi, "Ln2": math.Ln2, "Ln10": math.Ln10}
+
+	//fmt.Printf("KRAAKA %#v\n", configstore.Cached.GetGuildConfig())
 }
 
 func (c *Context) Parse(source string) (*template.Template, error) {
@@ -534,8 +536,8 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("sendMessageNoEscapeRetID", c.tmplSendMessage(false, true))
 	c.addContextFunc("editMessage", c.tmplEditMessage(true))
 	c.addContextFunc("editMessageNoEscape", c.tmplEditMessage(false))
-	c.addContextFunc("pinMessage", c.tmplPinMessage(true))
-	c.addContextFunc("unpinMessage", c.tmplPinMessage(false))
+	c.addContextFunc("pinMessage", c.tmplPinMessage(false))
+	c.addContextFunc("unpinMessage", c.tmplPinMessage(true))
 	c.addContextFunc("lastMessages", c.tmplLastMessages)
 
 	// Mentions
@@ -889,9 +891,4 @@ func (s Slice) StringSlice(flag ...bool) interface{} {
 	}
 
 	return StringSlice
-}
-
-func tmplSnowflakeToTime(arg interface{}) time.Time {
-	argInt64 := ToInt64(arg)
-	return bot.SnowflakeToTime(argInt64).UTC()
 }

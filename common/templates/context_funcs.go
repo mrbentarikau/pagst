@@ -1689,9 +1689,9 @@ func (c *Context) tmplPinMessage(unpin bool) func(channel, message interface{}) 
 		var err error
 
 		if unpin {
-			err = common.BotSession.ChannelMessagePin(cID, mID)
-		} else {
 			err = common.BotSession.ChannelMessageUnpin(cID, mID)
+		} else {
+			err = common.BotSession.ChannelMessagePin(cID, mID)
 		}
 
 		return "", err

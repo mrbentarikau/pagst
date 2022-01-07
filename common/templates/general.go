@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/jonas747/discordgo/v2"
 )
@@ -395,7 +396,6 @@ func indirect(v reflect.Value) (rv reflect.Value, isNil bool) {
 
 // in returns whether v is in the set l.  l may be an array or slice.
 func in(l interface{}, v interface{}) bool {
-	//lv := reflect.ValueOf(l)
 	lv, _ := indirect(reflect.ValueOf(l))
 	vv := reflect.ValueOf(v)
 
@@ -1275,6 +1275,10 @@ func tmplFormatTime(t time.Time, args ...string) string {
 	}
 
 	return t.Format(layout)
+}
+
+func tmplSnowflakeToTime(v interface{}) time.Time {
+	return bot.SnowflakeToTime(ToInt64(v)).UTC()
 }
 
 type variadicFunc func([]reflect.Value) (reflect.Value, error)
