@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/binary"
 	"strings"
 	"time"
 
@@ -193,7 +194,7 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			return "", errors.New("Unknown channel")
 		}
 
-		cs := ctx.GS.GetChannel(channelID)
+		cs := ctx.GS.GetChannelOrThread(channelID)
 		if cs == nil {
 			return "", errors.New("Channel not in state")
 		}
@@ -273,7 +274,7 @@ func tmplScheduleUniqueCC(ctx *templates.Context) interface{} {
 			return "", errors.New("Unknown channel")
 		}
 
-		cs := ctx.GS.GetChannel(channelID)
+		cs := ctx.GS.GetChannelOrThread(channelID)
 		if cs == nil {
 			return "", errors.New("Channel not in state")
 		}
@@ -870,11 +871,14 @@ type LightDBEntry struct {
 	User discordgo.User
 
 	ExpiresAt time.Time
+
+	ValueSize int
 }
 
 func ToLightDBEntry(m *models.TemplatesUserDatabase) (*LightDBEntry, error) {
 	var dst interface{}
 	dec := newDecoder(bytes.NewBuffer(m.ValueRaw))
+	size := len(m.ValueRaw)
 	err := dec.Decode(&dst)
 	if err != nil {
 		return nil, err
@@ -882,6 +886,13 @@ func ToLightDBEntry(m *models.TemplatesUserDatabase) (*LightDBEntry, error) {
 
 	decodedValue := dst
 	if common.IsNumber(dst) {
+		var buf bytes.Buffer
+		err := binary.Write(&buf, binary.BigEndian, m.ValueNum)
+		if err != nil {
+			return nil, err
+		}
+		size = len(buf.Bytes())
+
 		decodedValue = m.ValueNum
 	}
 
@@ -897,6 +908,8 @@ func ToLightDBEntry(m *models.TemplatesUserDatabase) (*LightDBEntry, error) {
 		Value: decodedValue,
 
 		ExpiresAt: m.ExpiresAt.Time,
+
+		ValueSize: size,
 	}
 	entry.User.ID = entry.UserID
 
