@@ -45,12 +45,15 @@ var RulePartMap = map[int]RulePart{
 	30: &MemberJoinTrigger{},
 	31: &MessageAttachmentTrigger{},
 	32: &MessageAttachmentTrigger{RequiresAttachment: true},
+
 	/*
 		9X:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
 		9X:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: true}},
 		9X:  &UserStatusWordlistTrigger{Blacklist: false},
 		9X:  &UserStatusWordlistTrigger{Blacklist: true},
 	*/
+	94:  &MessageLengthTrigger{},
+	95:  &MessageLengthTrigger{Inverted: true},
 	96:  &SlowmodeTrigger{ChannelBased: false, Links: true},
 	97:  &SlowmodeTrigger{ChannelBased: true, Links: true},
 	98:  &VoiceStateUpdateTrigger{UserJoin: true},

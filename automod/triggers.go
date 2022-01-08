@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/mrbentarikau/pagst/automod/models"
 	"github.com/mrbentarikau/pagst/automod_legacy"
@@ -967,7 +968,7 @@ func (spam *SpamTrigger) Name() string {
 }
 
 func (spam *SpamTrigger) Description() string {
-	return "Triggers when a user sends x identical messages after eachother"
+	return "Triggers when a user sends x identical messages after each other"
 }
 
 func (spam *SpamTrigger) UserSettings() []*SettingDef {
@@ -1558,6 +1559,11 @@ func (vs *VoiceStateUpdateTrigger) CheckVoiceState(t *TriggerContext, cs *dstate
 
 var _ MessageTrigger = (*MessageAttachmentTrigger)(nil)
 
+type MessageAttachmentTriggerData struct {
+	FilenameRegex string `valid:",0,256"`
+	InverseMatch  bool
+}
+
 type MessageAttachmentTrigger struct {
 	RequiresAttachment bool
 }
@@ -1567,7 +1573,7 @@ func (mat *MessageAttachmentTrigger) Kind() RulePartType {
 }
 
 func (mat *MessageAttachmentTrigger) DataType() interface{} {
-	return nil
+	return &MessageAttachmentTriggerData{}
 }
 
 func (mat *MessageAttachmentTrigger) Name() string {
@@ -1587,13 +1593,65 @@ func (mat *MessageAttachmentTrigger) Description() string {
 }
 
 func (mat *MessageAttachmentTrigger) UserSettings() []*SettingDef {
+	if mat.RequiresAttachment {
+		return []*SettingDef{
+			{
+				Name: "Filename regex",
+				Key:  "FilenameRegex",
+				Kind: SettingTypeString,
+				Min:  0,
+				Max:  256,
+			},
+			{
+				Name:    "Inverse match",
+				Key:     "InverseMatch",
+				Kind:    SettingTypeBool,
+				Default: false,
+			},
+		}
+	}
 	return []*SettingDef{}
 }
 
 func (mat *MessageAttachmentTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
 	contains := len(m.Attachments) > 0
 	if contains && mat.RequiresAttachment {
+
+		dataCast := triggerCtx.Data.(*MessageAttachmentTriggerData)
+		if dataCast.FilenameRegex != "" {
+			item, err := RegexCache.Fetch(dataCast.FilenameRegex, time.Minute*10, func() (interface{}, error) {
+				re, err := regexp.Compile(dataCast.FilenameRegex)
+				if err != nil {
+					return nil, err
+				}
+
+				return re, nil
+			})
+
+			if err != nil {
+				return false, nil
+			}
+
+			re := item.Value().(*regexp.Regexp)
+			for _, ma := range m.Attachments {
+				if re.MatchString(ma.Filename) {
+					if dataCast.InverseMatch {
+						return false, nil
+					}
+
+					return true, nil
+				}
+			}
+
+			if dataCast.InverseMatch {
+				return true, nil
+			}
+
+			return false, nil
+		}
+
 		return true, nil
+
 	} else if !contains && !mat.RequiresAttachment {
 		return true, nil
 	}
@@ -1603,4 +1661,59 @@ func (mat *MessageAttachmentTrigger) CheckMessage(triggerCtx *TriggerContext, cs
 
 func (mat *MessageAttachmentTrigger) MergeDuplicates(data []interface{}) interface{} {
 	return data[0] // no point in having duplicates of this
+}
+
+/////////////////////////////////////////////////////////////
+
+var _ MessageTrigger = (*MessageLengthTrigger)(nil)
+
+type MessageLengthTrigger struct {
+	Inverted bool
+}
+type MessageLengthTriggerData struct {
+	Length int
+}
+
+func (ml *MessageLengthTrigger) Kind() RulePartType {
+	return RulePartTrigger
+}
+
+func (ml *MessageLengthTrigger) DataType() interface{} {
+	return &MessageLengthTriggerData{}
+}
+
+func (ml *MessageLengthTrigger) Name() (name string) {
+	if ml.Inverted {
+		return "Message length less than x characters"
+	}
+
+	return "Message length more than x characters"
+}
+
+func (ml *MessageLengthTrigger) Description() (description string) {
+	if ml.Inverted {
+		return "Triggers on messages where the content length is lesser than the specified value"
+	}
+
+	return "Triggers on messages where the content length is greater than the specified value"
+}
+
+func (ml *MessageLengthTrigger) UserSettings() []*SettingDef {
+	return []*SettingDef{
+		{
+			Name: "Length",
+			Key:  "Length",
+			Kind: SettingTypeInt,
+		},
+	}
+}
+
+func (ml *MessageLengthTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
+	dataCast := triggerCtx.Data.(*MessageLengthTriggerData)
+
+	if ml.Inverted {
+		return utf8.RuneCountInString(m.Content) < dataCast.Length, nil
+	}
+
+	return utf8.RuneCountInString(m.Content) > dataCast.Length, nil
 }
