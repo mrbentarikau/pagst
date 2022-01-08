@@ -802,39 +802,35 @@ func tmplOrdinalize(input interface{}) string {
 	return strconv.Itoa(i) + ordinal
 }
 
-func tmplBitwiseAnd(arg1, arg2 int64) int64 {
-	return arg1 & arg2
-
+func tmplBitwiseAnd(arg1, arg2 interface{}) int {
+	return tmplToInt(arg1) & tmplToInt(arg2)
 }
 
-func tmplBitwiseOr(arg1, arg2 int64) int64 {
-	return arg1 | arg2
-
+func tmplBitwiseOr(args ...interface{}) (res int) {
+	for _, arg := range args {
+		res |= tmplToInt(arg)
+	}
+	return
 }
 
-func tmplBitwiseNot(arg1 int64) int64 {
-	return ^arg1
-
+func tmplBitwiseXor(arg1, arg2 interface{}) int {
+	return tmplToInt(arg1) ^ tmplToInt(arg2)
 }
 
-func tmplBitwiseXor(arg1, arg2 int64) int64 {
-	return arg1 ^ arg2
-
+func tmplBitwiseNot(arg interface{}) int {
+	return ^tmplToInt(arg)
 }
 
-func tmplBitwiseClear(arg1, arg2 int64) int64 {
-	return arg1 &^ arg2
-
+func tmplBitwiseAndNot(arg1, arg2 interface{}) int {
+	return tmplToInt(arg1) &^ tmplToInt(arg2)
 }
 
-func tmplShiftLeft(arg1, arg2 int64) int64 {
-	return arg1 << arg2
-
+func tmplBitwiseShiftLeft(arg1, arg2 interface{}) int {
+	return tmplToInt(arg1) << tmplToInt(arg2)
 }
 
-func tmplShiftRight(arg1, arg2 int64) int64 {
-	return arg1 >> arg2
-
+func tmplBitwiseShiftRight(arg1, arg2 interface{}) int {
+	return tmplToInt(arg1) >> tmplToInt(arg2)
 }
 
 func roleIsAbove(a, b *discordgo.Role) bool {

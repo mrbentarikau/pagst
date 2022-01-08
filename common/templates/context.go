@@ -80,13 +80,14 @@ var (
 		"abs":               tmplAbs,
 
 		// bitwise functions
-		"bitwiseAnd":   tmplBitwiseAnd,
-		"bitwiseOr":    tmplBitwiseOr,
-		"bitwiseNot":   tmplBitwiseNot,
-		"bitwiseXor":   tmplBitwiseXor,
-		"bitwiseClear": tmplBitwiseClear,
-		"shiftLeft":    tmplShiftLeft,
-		"shiftRight":   tmplShiftRight,
+		"bitwiseAnd":    tmplBitwiseAnd,
+		"bitwiseOr":     tmplBitwiseOr,
+		"bitwiseNot":    tmplBitwiseNot,
+		"bitwiseXor":    tmplBitwiseXor,
+		"bitwiseClear":  tmplBitwiseAndNot,
+		"bitwiseAndNot": tmplBitwiseAndNot,
+		"shiftLeft":     tmplBitwiseShiftLeft,
+		"shiftRight":    tmplBitwiseShiftRight,
 
 		// misc
 		"dict":               Dictionary,
