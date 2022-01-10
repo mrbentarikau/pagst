@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jonas747/discordgo/v2"
+	"github.com/jonas747/dstate/v4"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
 )
 
 var ErrTooManyCalls = errors.New("too many calls to this function")
@@ -1729,16 +1729,15 @@ func (c *Context) addRole(roleInput interface{}, optionalArgs ...interface{}) (s
 	return "", nil
 }
 
-func (c *Context) tmplAddRole(roleInput interface{}, optionalArgs ...interface{}) string {
-	out, _ := c.addRole(roleInput, optionalArgs...)
-	return out
+func (c *Context) tmplAddRole(roleInput interface{}, optionalArgs ...interface{}) (string, error) {
+	return c.addRole(roleInput, optionalArgs...)
 }
 
-func (c *Context) tmplAddRoleID(roleID interface{}, optionalArgs ...interface{}) string {
+func (c *Context) tmplAddRoleID(roleID interface{}, optionalArgs ...interface{}) (string, error) {
 	return c.tmplAddRole(roleID, optionalArgs...)
 }
 
-func (c *Context) tmplAddRoleName(roleName string, optionalArgs ...interface{}) string {
+func (c *Context) tmplAddRoleName(roleName string, optionalArgs ...interface{}) (string, error) {
 	return c.tmplAddRole(roleName, optionalArgs...)
 }
 
@@ -1843,16 +1842,15 @@ func (c *Context) removeRole(roleInput interface{}, optionalArgs ...interface{})
 	return "", nil
 }
 
-func (c *Context) tmplRemoveRole(roleInput interface{}, optionalArgs ...interface{}) string {
-	out, _ := c.removeRole(roleInput, optionalArgs...)
-	return out
+func (c *Context) tmplRemoveRole(roleInput interface{}, optionalArgs ...interface{}) (string, error) {
+	return c.removeRole(roleInput, optionalArgs...)
 }
 
-func (c *Context) tmplRemoveRoleID(roleID interface{}, optionalArgs ...interface{}) string {
+func (c *Context) tmplRemoveRoleID(roleID interface{}, optionalArgs ...interface{}) (string, error) {
 	return c.tmplRemoveRole(roleID, optionalArgs...)
 }
 
-func (c *Context) tmplRemoveRoleName(roleName string, optionalArgs ...interface{}) string {
+func (c *Context) tmplRemoveRoleName(roleName string, optionalArgs ...interface{}) (string, error) {
 	return c.tmplRemoveRole(roleName, optionalArgs...)
 }
 
