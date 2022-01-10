@@ -576,6 +576,16 @@ func tmplDiv(args ...interface{}) interface{} {
 	}
 }
 
+func tmplDivMod(numerator, denominator interface{}) Slice {
+	slice := make([]interface{}, 0)
+
+	quotient := ToInt64(numerator) / ToInt64(denominator)
+	remainder := ToInt64(numerator) % ToInt64(denominator)
+	slice = append(slice, quotient, remainder)
+
+	return Slice(slice)
+}
+
 func tmplMod(args ...interface{}) float64 {
 	if len(args) != 2 {
 		return math.NaN()
@@ -1215,13 +1225,22 @@ func ToSHA256(from interface{}) string {
 	return fmt.Sprintf("%x", sum)
 }
 
-func HexToDecimal(from interface{}) interface{} {
-	s := ToString(from)
-	parsedColor, ok := common.ParseColor(s)
-	if !ok {
-		return "Unknown color: " + s + ", can be either hex color code or name for a known color"
+func HexToDecimal(from interface{}) (int, error) {
+	switch t := from.(type) {
+	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+		return tmplToInt(t), nil
+	default:
+		raw := ToString(t)
+		if strings.HasPrefix(raw, "#") {
+			raw = raw[1:]
+		}
+
+		parsed, err := strconv.ParseInt(raw, 16, 32)
+		if err != nil {
+			return 0, err
+		}
+		return tmplToInt(parsed), nil
 	}
-	return parsedColor
 }
 
 func DecodeStringToHex(from interface{}) ([]byte, error) {
@@ -1370,6 +1389,49 @@ func slice(item reflect.Value, indices ...reflect.Value) (reflect.Value, error) 
 
 func tmplCurrentTime() time.Time {
 	return time.Now().UTC()
+}
+
+func tmplParseTime(input string, layout interface{}, locations ...string) (time.Time, error) {
+	loc := time.UTC
+
+	var err error
+	if len(locations) > 0 {
+		loc, err = time.LoadLocation(locations[0])
+		if err != nil {
+			return time.Time{}, err
+		}
+	}
+
+	var parsed time.Time
+
+	rv, _ := indirect(reflect.ValueOf(layout))
+	switch rv.Kind() {
+	case reflect.Slice, reflect.Array:
+		if rv.Len() > 50 {
+			return time.Time{}, errors.New("max number of layouts is 50")
+		}
+
+		for i := 0; i < rv.Len(); i++ {
+			lv, _ := indirect(rv.Index(i))
+			if lv.Kind() != reflect.String {
+				return time.Time{}, errors.New("layout must be either a slice of strings or a single string")
+			}
+
+			parsed, err = time.ParseInLocation(lv.String(), input, loc)
+			if err == nil {
+				// found a layout that matched
+				break
+			}
+		}
+	case reflect.String:
+		parsed, _ = time.ParseInLocation(rv.String(), input, loc)
+	default:
+		return time.Time{}, errors.New("layout must be either a slice of strings or a single string")
+	}
+
+	// if no layout matched, parsed will be the zero Time.
+	// thus, users can call <time>.IsZero() to determine whether parseTime() was able to parse the time.
+	return parsed, nil
 }
 
 func tmplNewDate(year, monthInt, day, hour, min, sec int, location ...string) (time.Time, error) {
