@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jonas747/dcmd/v4"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common/config"
-	"github.com/jonas747/dcmd/v4"
 )
 
 var (
@@ -25,9 +25,9 @@ var Command = &commands.YAGCommand{
 	CmdCategory:         commands.CategoryTool,
 	Name:                "OpenWeatherMap",
 	Aliases:             []string{"owm", "oweather", "ow"},
-	Description:         "Shows the weather using OpenWeatherMap API. \nLocation is set by city name and optional state code, country code \n eg. <prefix>owm Paris,AR,US",
+	Description:         "Shows the weather using OpenWeatherMap API. \nLocation is set by city name and optional state code, country code \n eg. <prefix>owm Paris,AR,US.\n -zip needs zipcode, countrycode",
 	RunInDM:             true,
-	RequiredArgs:        1,
+	RequiredArgs:        0,
 	SlashCommandEnabled: true,
 	DefaultEnabled:      true,
 	Arguments: []*dcmd.ArgDef{
@@ -36,9 +36,20 @@ var Command = &commands.YAGCommand{
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var queryData []string
 		weather := openWeatherMap{}
+		queryParam := "?q="
+
+		if data.Args[0].Value == nil && data.Switches["zip"].Value == nil {
+			return "Provide at least a location name or use -zip flag...", nil
+		}
+
 		where := data.Args[0].Str()
 
-		queryURL := fmt.Sprintf(openWeatherMapAPIHost + "weather?q=" + where + "&units=" + units + "&appid=" + confOpenWeaterMapAPIKey.GetString())
+		if data.Switches["zip"].Value != nil {
+			queryParam = "?zip="
+			where = data.Switch("zip").Str()
+		}
+
+		queryURL := fmt.Sprintf(openWeatherMapAPIHost + "weather" + queryParam + where + "&units=" + units + "&appid=" + confOpenWeaterMapAPIKey.GetString())
 
 		req, err := http.NewRequest("GET", queryURL, nil)
 		if err != nil {
