@@ -15,12 +15,12 @@ import (
 	"unicode/utf8"
 
 	"emperror.dev/errors"
-	"github.com/mrbentarikau/pagst/bot"
-	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	"github.com/jonas747/discordgo/v2"
 	"github.com/jonas747/dstate/v4"
 	"github.com/jonas747/template"
+	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
 )
@@ -46,6 +46,9 @@ var (
 		"hasSuffix":   strings.HasSuffix,
 		"joinStr":     joinStrings,
 		"lower":       strings.ToLower,
+		"print":       tmplSprintSprintln("sprint"),
+		"printf":      tmplSprintf,
+		"println":     tmplSprintSprintln("sprintln"),
 		"slice":       slice,
 		"split":       strings.Split,
 		"upper":       strings.ToUpper,
