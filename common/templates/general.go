@@ -981,7 +981,7 @@ func tmplSprintSprintln(printType string) func(input ...interface{}) (string, er
 		case "sprint":
 			return fmt.Sprint(input...), nil
 		case "sprintln":
-			return fmt.Sprint(input...), nil
+			return fmt.Sprintln(input...), nil
 		case "sprintf":
 			return "", errors.New("sprintf called on tmplSprintSprintln should use tmplSprintf instead")
 		default:
