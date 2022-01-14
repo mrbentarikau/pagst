@@ -16,7 +16,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/feeds"
 	"github.com/mrbentarikau/pagst/reddit/models"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/jonas747/go-reddit"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"

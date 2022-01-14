@@ -5,9 +5,9 @@ package timezonecompanion
 
 import (
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/lib/when"
+	"github.com/mrbentarikau/pagst/lib/when/rules"
 	"github.com/mrbentarikau/pagst/timezonecompanion/trules"
-	"github.com/jonas747/when"
-	"github.com/jonas747/when/rules"
 )
 
 type Plugin struct {

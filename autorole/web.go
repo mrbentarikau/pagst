@@ -12,7 +12,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mediocregopher/radix/v3"
 	"goji.io"
 	"goji.io/pat"

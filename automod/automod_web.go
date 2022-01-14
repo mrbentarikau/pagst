@@ -17,10 +17,11 @@ import (
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/common/pubsub"
+	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/web"
 	"github.com/fatih/structs"
 	"github.com/gorilla/schema"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 	"goji.io"
@@ -491,6 +492,23 @@ func (p *Plugin) handlePostAutomodUpdateRule(w http.ResponseWriter, r *http.Requ
 	tx, err := common.PQ.BeginTx(r.Context(), nil)
 	if err != nil {
 		return tmpl, err
+	}
+
+	anyMute := false
+	for _, effect := range effects {
+		if effect.TypeID == 304 {
+			anyMute = true
+			break
+		}
+	}
+
+	if anyMute {
+		conf, err := moderation.GetConfig(g.ID)
+		if conf.MuteRole == "" || err != nil {
+			tx.Rollback()
+			tmpl.AddAlerts(web.ErrorAlert("No mute role set, please set one up."))
+			return tmpl, nil
+		}
 	}
 
 	// First wipe all previous rule data

@@ -15,8 +15,8 @@ import (
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/sirupsen/logrus"
 	"goji.io/pattern"
 )

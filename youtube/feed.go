@@ -12,7 +12,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/feeds"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/oauth2/google"

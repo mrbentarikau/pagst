@@ -17,7 +17,7 @@ import (
 	schEvtsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/rolecommands/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/volatiletech/null/v8"
 	v3_qm "github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/boil"

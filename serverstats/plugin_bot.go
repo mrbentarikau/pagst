@@ -13,8 +13,8 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/serverstats/messagestatscollector"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mediocregopher/radix/v3"
 )
 

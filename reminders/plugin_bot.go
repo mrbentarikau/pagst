@@ -15,8 +15,8 @@ import (
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	seventsmodels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/jinzhu/gorm"
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 )
@@ -99,7 +99,7 @@ var cmds = []*commands.YAGCommand{
 
 			durString := common.HumanizeDuration(common.DurationPrecisionSeconds, fromNow)
 			when := time.Now().Add(fromNow)
-			tStr := when.UTC().Format(time.RFC822)
+			tUnix := fmt.Sprint(when.Unix())
 
 			if when.After(time.Now().Add(time.Hour * 24 * 366)) {
 				return "Can be max 365 days from now...", nil
@@ -110,7 +110,7 @@ var cmds = []*commands.YAGCommand{
 				return nil, err
 			}
 
-			return "Set a reminder in " + durString + " from now (" + tStr + ")\nView reminders with the reminders command", nil
+			return "Set a reminder in " + durString + " from now (<t:" + tUnix + ":f>)\nView reminders with the reminders command", nil
 		},
 	},
 	{
@@ -210,13 +210,14 @@ var cmds = []*commands.YAGCommand{
 		CmdCategory:  commands.CategoryTool,
 		Name:         "DelReminder",
 		Aliases:      []string{"rmreminder"},
-		Description:  "Deletes a reminder. You can delete reminders from other users provided you are running this command in the same guild the reminder was created in and have the Manage Channel permission in the channel the reminder was created in.",
+		Description:  "Deletes a reminder. You can delete reminders from other users provided you are running this command in the same guild the reminder was created in and have the Manage Channel permission in the channel the reminder was created in.\n\n Switch -a combined with -userid flag give proper roles the possibility to delete all user's reminders in that server.",
 		RequiredArgs: 0,
 		Arguments: []*dcmd.ArgDef{
 			{Name: "ID", Type: dcmd.Int},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "a", Help: "All"},
+			{Name: "userid", Type: dcmd.Int, Default: 0, Help: "userID"},
 		},
 		SlashCommandEnabled: true,
 		DefaultEnabled:      true,
@@ -225,7 +226,25 @@ var cmds = []*commands.YAGCommand{
 
 			clearAll := parsed.Switch("a").Value != nil && parsed.Switch("a").Value.(bool)
 			if clearAll {
-				db := common.GORM.Where("user_id = ?", parsed.Author.ID).Delete(&reminder)
+				var userID int64
+				userIDArg := parsed.Switch("userid").Int64()
+				if userIDArg > 0 && parsed.Author.ID != userIDArg {
+					ok, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, parsed.GuildData.MS, discordgo.PermissionManageChannels)
+
+					if err != nil {
+						return nil, err
+					}
+
+					if !ok {
+						return "You need manage server permission in the server the reminder is in to delete reminders that are not your own", nil
+					}
+
+					userID = userIDArg
+				} else {
+					userID = parsed.Author.ID
+				}
+
+				db := common.GORM.Where("user_id = ?", userID).Delete(&reminder)
 
 				err := db.Error
 				if err != nil {
@@ -298,8 +317,9 @@ func stringReminders(reminders []*Reminder, displayUsernames bool) string {
 		parsedCID, _ := strconv.ParseInt(v.ChannelID, 10, 64)
 
 		t := time.Unix(v.When, 0)
+		tUnix := t.Unix()
 		timeFromNow := common.HumanizeTime(common.DurationPrecisionMinutes, t)
-		tStr := t.Format(time.RFC822)
+
 		if v.Repeat > 0 {
 			repeatedReminder = "- repeated reminder"
 		} else {
@@ -307,14 +327,14 @@ func stringReminders(reminders []*Reminder, displayUsernames bool) string {
 		}
 		if !displayUsernames {
 			channel := "<#" + discordgo.StrID(parsedCID) + ">"
-			out += fmt.Sprintf("**%d**: %s: '%s' - %s from now (%s) %s\n", v.ID, channel, limitString(v.Message), timeFromNow, tStr, repeatedReminder)
+			out += fmt.Sprintf("**%d**: %s: '%s' - %s from now (<t:%d:f>) %s\n", v.ID, channel, limitString(v.Message), timeFromNow, tUnix, repeatedReminder)
 		} else {
 			member, _ := bot.GetMember(v.GuildID, v.UserIDInt())
 			username := "Unknown user"
 			if member != nil {
 				username = member.User.Username
 			}
-			out += fmt.Sprintf("**%d**: %s: '%s' - %s from now (%s) %s\n", v.ID, username, limitString(v.Message), timeFromNow, tStr, repeatedReminder)
+			out += fmt.Sprintf("**%d**: %s: '%s' - %s from now (<t:%d:f>) %s\n", v.ID, username, limitString(v.Message), timeFromNow, tUnix, repeatedReminder)
 		}
 	}
 	return out

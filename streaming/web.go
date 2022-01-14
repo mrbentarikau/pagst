@@ -13,7 +13,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"goji.io"
 	"goji.io/pat"
 )

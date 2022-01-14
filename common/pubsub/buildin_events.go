@@ -7,7 +7,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cacheset"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
 // PublishRatelimit publishes a new global ratelimit hit on discord

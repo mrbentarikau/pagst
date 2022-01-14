@@ -5,7 +5,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/configstore"
 	"github.com/mrbentarikau/pagst/common/featureflags"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"golang.org/x/net/context"
 )
 

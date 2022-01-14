@@ -8,7 +8,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
@@ -16,8 +16,8 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/reputation/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
 

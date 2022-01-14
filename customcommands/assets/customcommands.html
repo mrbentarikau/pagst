@@ -150,7 +150,7 @@
     {{$g := .ActiveGuild}}
     {{$dot := .}}
     {{range .CustomCommands}}
-    <div class="card">
+    <div class="card"> 
         <div class="card-header clearfix">
             <form class="form-horizontal" method="post" method="post" action="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/update" data-async-form>
                 <div class="pull-right">

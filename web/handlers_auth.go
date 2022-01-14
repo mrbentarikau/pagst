@@ -10,7 +10,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/models"
 	"github.com/mrbentarikau/pagst/web/discorddata"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mediocregopher/radix/v3"
 	"golang.org/x/oauth2"
 )

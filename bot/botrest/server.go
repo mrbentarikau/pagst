@@ -10,8 +10,8 @@ import (
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/internalapi"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"goji.io"
 	"goji.io/pat"
 )

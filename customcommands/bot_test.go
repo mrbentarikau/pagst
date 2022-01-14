@@ -5,7 +5,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/customcommands/models"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
 func TestCheckMatch(t *testing.T) {

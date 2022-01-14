@@ -15,8 +15,8 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -29,7 +29,7 @@ func (p *Plugin) BotInit() {
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleGuildMemberUpdate, eventsystem.EventGuildMemberUpdate)
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleMsgUpdate, eventsystem.EventMessageUpdate)
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleGuildMemberJoin, eventsystem.EventGuildMemberAdd)
-	//eventsystem.AddHandlerAsyncLastLegacy(p, p.handleVoiceStateUpdate, eventsystem.EventVoiceStateUpdate)
+	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleVoiceStateUpdate, eventsystem.EventVoiceStateUpdate)
 	//eventsystem.AddHandlerAsyncLastLegacy(p, p.handlePresenceUpdate, eventsystem.EventPresenceUpdate)
 
 	scheduledevents2.RegisterHandler("amod2_reset_channel_ratelimit", ResetChannelRatelimitData{}, handleResetChannelRatelimit)
@@ -206,7 +206,7 @@ func (p *Plugin) handleGuildMemberUpdate(evt *eventsystem.EventData) {
 	p.checkNickname(ms)
 }
 
-/*func (p *Plugin) handleVoiceStateUpdate(evt *eventsystem.EventData) {
+func (p *Plugin) handleVoiceStateUpdate(evt *eventsystem.EventData) {
 
 	evtData := evt.VoiceStateUpdate()
 	voiceState := evtData.VoiceState
@@ -237,6 +237,7 @@ func (p *Plugin) checkVoiceState(ms *dstate.MemberState, cID int64) { //, cs *ds
 	})
 }
 
+/*
 func (p *Plugin) handlePresenceUpdate(evt *eventsystem.EventData) {
 
 	evtData := evt.PresenceUpdate()

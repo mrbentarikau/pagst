@@ -8,8 +8,8 @@ import (
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEvtsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/rolecommands/models"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/tidwall/buntdb"
 	v3_qm "github.com/volatiletech/sqlboiler/queries/qm"
 )

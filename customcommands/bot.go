@@ -15,8 +15,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/mrbentarikau/pagst/analytics"
+	"github.com/mrbentarikau/pagst/lib/template"
 	"github.com/mrbentarikau/pagst/premium"
-	"github.com/jonas747/template"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -34,9 +34,9 @@ import (
 	"github.com/mrbentarikau/pagst/customcommands/models"
 	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 

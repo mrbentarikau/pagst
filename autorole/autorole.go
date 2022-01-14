@@ -3,7 +3,7 @@ package autorole
 import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
 var confDisableNonPremiumRetroActiveAssignment = config.RegisterOption("yagpdb.autorole.non_premium_retroactive_assignment", "Wether to enable retroactive assignemnt on non premium guilds", true)

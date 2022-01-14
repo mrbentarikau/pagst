@@ -16,7 +16,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/internalapi"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/dshardorchestrator/v3/orchestrator/rest"
+	"github.com/mrbentarikau/pagst/lib/dshardorchestrator/orchestrator/rest"
 	"goji.io"
 	"goji.io/pat"
 )

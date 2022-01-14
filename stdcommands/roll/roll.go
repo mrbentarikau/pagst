@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/dice"
+	"github.com/mrbentarikau/pagst/lib/dice"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
 )
 
 var Command = &commands.YAGCommand{

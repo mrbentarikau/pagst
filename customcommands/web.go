@@ -20,7 +20,7 @@ import (
 	yagtemplate "github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/customcommands/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"

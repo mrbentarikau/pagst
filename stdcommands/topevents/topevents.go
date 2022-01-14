@@ -8,7 +8,7 @@ import (
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
-	"github.com/jonas747/dcmd/v4"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
 )
 
 var Command = &commands.YAGCommand{

@@ -1,13 +1,15 @@
 package cah
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/jonas747/cardsagainstdiscord/v2"
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/cardsagainstdiscord"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/sirupsen/logrus"
 )
 
@@ -96,9 +98,17 @@ func (p *Plugin) AddCommands() {
 		RequiredArgs: 0,
 		Description:  "Lists all available packs.",
 		RunFunc: func(data *dcmd.Data) (interface{}, error) {
-			resp := "Available packs: \n\n"
-			for _, v := range cardsagainstdiscord.Packs {
-				resp += "`" + v.Name + "` - " + v.Description + "\n"
+			//sort the packs alphabetically
+			decks := cardsagainstdiscord.Packs
+			deckKeys := make([]string, 0, len(decks))
+			for k := range decks {
+				deckKeys = append(deckKeys, k)
+			}
+			sort.Strings(deckKeys)
+
+			resp := fmt.Sprintf("Available packs (%d):\n\n", len(decks))
+			for _, v := range deckKeys {
+				resp += "`" + decks[v].Name + "` - " + decks[v].Description + "\n"
 			}
 
 			return resp, nil

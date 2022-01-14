@@ -14,7 +14,7 @@ import (
 	"github.com/mrbentarikau/pagst/feeds"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/twitter/models"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/jonas747/go-twitter/twitter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/volatiletech/sqlboiler/boil"

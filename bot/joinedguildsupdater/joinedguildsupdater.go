@@ -8,7 +8,7 @@ import (
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/bot/models"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/volatiletech/sqlboiler/boil"
 )
 

@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
+	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
 var ErrTooManyCalls = errors.New("too many calls to this function")
@@ -627,6 +627,92 @@ func (c *Context) findRoleByName(name string) *discordgo.Role {
 	}
 
 	return nil
+}
+
+func (c *Context) tmplHasPermissions(needed int64) (bool, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return false, ErrTooManyAPICalls
+	}
+
+	if c.MS == nil {
+		return false, nil
+	}
+
+	if needed < 0 {
+		return false, nil
+	}
+
+	if needed == 0 {
+		return true, nil
+	}
+
+	return c.msHasPerms(c.MS, c.CurrentFrame.CS.ID, needed)
+}
+
+func (c *Context) tmplTargetHasPermissions(target interface{}, needed int64) (bool, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return false, ErrTooManyAPICalls
+	}
+
+	targetID := targetUserID(target)
+	if targetID == 0 {
+		return false, nil
+	}
+
+	if needed < 0 {
+		return false, nil
+	}
+
+	if needed == 0 {
+		return true, nil
+	}
+
+	ms, err := bot.GetMember(c.GS.ID, targetID)
+	if err != nil {
+		return false, err
+	}
+
+	return c.msHasPerms(ms, c.CurrentFrame.CS.ID, needed)
+}
+
+func (c *Context) tmplGetTargetPermissionsIn(target interface{}, channel interface{}) (int64, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return 0, ErrTooManyAPICalls
+	}
+
+	targetID := targetUserID(target)
+	if targetID == 0 {
+		return 0, nil
+	}
+
+	channelID := c.ChannelArgNoDM(channel)
+	if channelID == 0 {
+		return 0, nil
+	}
+
+	ms, err := bot.GetMember(c.GS.ID, targetID)
+	if err != nil {
+		return 0, err
+	}
+
+	return c.GS.GetMemberPermissions(channelID, ms.User.ID, ms.Member.Roles)
+}
+
+func (c *Context) msHasPerms(ms *dstate.MemberState, channelID int64, needed int64) (bool, error) {
+	perms, err := c.GS.GetMemberPermissions(channelID, ms.User.ID, ms.Member.Roles)
+	if err != nil {
+		return false, err
+	}
+
+	if perms&needed == needed {
+		return true, nil
+	}
+
+	if perms&discordgo.PermissionAdministrator != 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (c *Context) tmplDelResponse(args ...interface{}) string {

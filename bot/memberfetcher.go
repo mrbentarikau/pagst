@@ -3,7 +3,7 @@ package bot
 import (
 	"github.com/mrbentarikau/pagst/bot/shardmemberfetcher"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 )
 
 var (

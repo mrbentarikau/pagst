@@ -21,8 +21,8 @@ import (
 	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/verification/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )

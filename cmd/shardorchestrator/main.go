@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/jonas747/dshardorchestrator/v3"
-	"github.com/jonas747/dshardorchestrator/v3/orchestrator"
-	"github.com/jonas747/dshardorchestrator/v3/orchestrator/rest"
+	"github.com/mrbentarikau/pagst/lib/dshardorchestrator"
+	"github.com/mrbentarikau/pagst/lib/dshardorchestrator/orchestrator"
+	"github.com/mrbentarikau/pagst/lib/dshardorchestrator/orchestrator/rest"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/sirupsen/logrus"
 

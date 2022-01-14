@@ -17,7 +17,7 @@ import (
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/serverstats/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/karlseguin/rcache"
 	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"

@@ -11,8 +11,8 @@ import (
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 )
 
 var (

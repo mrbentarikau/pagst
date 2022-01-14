@@ -8,9 +8,9 @@ import (
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
-	"github.com/jonas747/cardsagainstdiscord/v2"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dshardorchestrator/v3"
+	"github.com/mrbentarikau/pagst/lib/cardsagainstdiscord"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dshardorchestrator"
 )
 
 const ShardMigrationEvtGame = 110

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mediocregopher/radix/v3"
 )
 

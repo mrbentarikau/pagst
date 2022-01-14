@@ -10,7 +10,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	"github.com/jinzhu/gorm"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/sirupsen/logrus"
 )
 

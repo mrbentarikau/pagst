@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
 var (

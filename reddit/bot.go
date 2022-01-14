@@ -8,9 +8,9 @@ import (
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/reddit/models"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
-	"github.com/jonas747/dcmd/v4"
 )
 
 var _ bot.RemoveGuildHandler = (*Plugin)(nil)
@@ -69,7 +69,6 @@ func (p *Plugin) AddCommands() {
 		}),
 	})
 }
-
 
 func (p *Plugin) Status() (string, string) {
 	numFeeds, err := models.RedditFeeds(models.RedditFeedWhere.Disabled.EQ(false)).CountG(context.Background())

@@ -2,7 +2,7 @@ package bot
 
 import (
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 )
 
 // GetMessages Gets messages from state if possible, if not then it retrieves from the discord api

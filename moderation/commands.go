@@ -16,9 +16,9 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	"github.com/jinzhu/gorm"
-	"github.com/jonas747/dcmd/v4"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 )
 
 func MBaseCmd(cmdData *dcmd.Data, targetID int64) (config *Config, targetUser *discordgo.User, err error) {
@@ -105,8 +105,8 @@ func checkHierarchy(cmdData *dcmd.Data, targetID int64) error {
 	if err != nil {
 		return nil
 	}
-	above := bot.IsMemberAbove(gs, botMember, targetMember)
 
+	above := bot.IsMemberAbove(gs, botMember, targetMember)
 	if !above {
 		cmdName := cmdData.Cmd.Trigger.Names[0]
 		return commands.NewUserErrorf("Can't use the **%s** command on members that are ranked higher than the bot.", cmdName)

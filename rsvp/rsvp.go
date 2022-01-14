@@ -6,11 +6,11 @@ import (
 	"sync"
 
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/lib/when"
+	"github.com/mrbentarikau/pagst/lib/when/rules"
+	wcommon "github.com/mrbentarikau/pagst/lib/when/rules/common"
+	"github.com/mrbentarikau/pagst/lib/when/rules/en"
 	"github.com/mrbentarikau/pagst/timezonecompanion/trules"
-	"github.com/jonas747/when"
-	"github.com/jonas747/when/rules"
-	wcommon "github.com/jonas747/when/rules/common"
-	"github.com/jonas747/when/rules/en"
 )
 
 var (

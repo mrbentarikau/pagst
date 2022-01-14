@@ -15,12 +15,12 @@ import (
 	"unicode/utf8"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo/v2"
-	"github.com/jonas747/dstate/v4"
-	"github.com/jonas747/template"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/lib/template"
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
 )
@@ -47,8 +47,8 @@ var (
 		"joinStr":     joinStrings,
 		"lower":       strings.ToLower,
 		"print":       withOutputLimit(fmt.Sprint, MaxStringLength),
-		"printf":      withOutputLimitf(fmt.Sprintf, MaxStringLength),
 		"println":     withOutputLimit(fmt.Sprintln, MaxStringLength),
+		"printf":      withOutputLimitf(fmt.Sprintf, MaxStringLength),
 		"slice":       slice,
 		"split":       strings.Split,
 		"upper":       strings.ToUpper,
@@ -83,14 +83,16 @@ var (
 		"tan":        tmplTan,
 
 		// bitwise functions
-		"bitwiseAnd":    tmplBitwiseAnd,
-		"bitwiseOr":     tmplBitwiseOr,
-		"bitwiseNot":    tmplBitwiseNot,
-		"bitwiseXor":    tmplBitwiseXor,
-		"bitwiseClear":  tmplBitwiseAndNot,
-		"bitwiseAndNot": tmplBitwiseAndNot,
-		"shiftLeft":     tmplBitwiseShiftLeft,
-		"shiftRight":    tmplBitwiseShiftRight,
+		"bitwiseAnd":        tmplBitwiseAnd,
+		"bitwiseOr":         tmplBitwiseOr,
+		"bitwiseNot":        tmplBitwiseNot,
+		"bitwiseXor":        tmplBitwiseXor,
+		"bitwiseClear":      tmplBitwiseAndNot,
+		"bitwiseAndNot":     tmplBitwiseAndNot,
+		"bitwiseLeftShift":  tmplBitwiseShiftLeft,
+		"bitwiseRightShift": tmplBitwiseShiftRight,
+		"shiftLeft":         tmplBitwiseShiftLeft,
+		"shiftRight":        tmplBitwiseShiftRight,
 
 		// misc
 		"adjective":          common.RandomAdjective,
@@ -264,6 +266,42 @@ func (c *Context) setupBaseData() {
 
 	//Math constants
 	c.Data["MathConst"] = map[string]float64{"E": math.E, "Pi": math.Pi, "Phi": math.Phi, "Ln2": math.Ln2, "Ln10": math.Ln10}
+
+	//Permissions
+	c.Data["Permissions"] = map[string]int64{
+
+		"ReadMessages":       discordgo.PermissionReadMessages,
+		"SendMessages":       discordgo.PermissionSendMessages,
+		"SendTTSMessages":    discordgo.PermissionSendTTSMessages,
+		"ManageMessages":     discordgo.PermissionManageMessages,
+		"EmbedLinks":         discordgo.PermissionEmbedLinks,
+		"AttachFiles":        discordgo.PermissionAttachFiles,
+		"ReadMessageHistory": discordgo.PermissionReadMessageHistory,
+		"MentionEveryone":    discordgo.PermissionMentionEveryone,
+		"UseExternalEmojis":  discordgo.PermissionUseExternalEmojis,
+
+		"VoiceConnect":       discordgo.PermissionVoiceConnect,
+		"VoiceSpeak":         discordgo.PermissionVoiceSpeak,
+		"VoiceMuteMembers":   discordgo.PermissionVoiceMuteMembers,
+		"VoiceDeafenMembers": discordgo.PermissionVoiceDeafenMembers,
+		"VoiceMoveMembers":   discordgo.PermissionVoiceMoveMembers,
+		"VoiceUseVAD":        discordgo.PermissionVoiceUseVAD,
+
+		"ChangeNickname":  discordgo.PermissionChangeNickname,
+		"ManageNicknames": discordgo.PermissionManageNicknames,
+		"ManageRoles":     discordgo.PermissionManageRoles,
+		"ManageWebhooks":  discordgo.PermissionManageWebhooks,
+		"ManageEmojis":    discordgo.PermissionManageEmojis,
+
+		"CreateInstantInvite": discordgo.PermissionCreateInstantInvite,
+		"KickMembers":         discordgo.PermissionKickMembers,
+		"BanMembers":          discordgo.PermissionBanMembers,
+		"Administrator":       discordgo.PermissionAdministrator,
+		"ManageChannels":      discordgo.PermissionManageChannels,
+		"ManageServer":        discordgo.PermissionManageServer,
+		"AddReactions":        discordgo.PermissionAddReactions,
+		"ViewAuditLogs":       discordgo.PermissionViewAuditLogs,
+	}
 }
 
 func (c *Context) Parse(source string) (*template.Template, error) {
@@ -580,6 +618,11 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("targetHasRole", c.tmplTargetHasRole)
 	c.addContextFunc("targetHasRoleID", c.tmplTargetHasRoleID)
 	c.addContextFunc("targetHasRoleName", c.tmplTargetHasRoleName)
+
+	// permission funcs
+	c.addContextFunc("hasPermissions", c.tmplHasPermissions)
+	c.addContextFunc("targetHasPermissions", c.tmplTargetHasPermissions)
+	c.addContextFunc("getTargetPermissionsIn", c.tmplGetTargetPermissionsIn)
 
 	//Varia
 	c.addContextFunc("deleteResponse", c.tmplDelResponse)

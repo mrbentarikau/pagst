@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/jonas747/discordgo/v2"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
 // QueuedElement represents a queued message

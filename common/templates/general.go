@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jonas747/discordgo/v2"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
 // dictionary creates a map[string]interface{} from the given parameters by

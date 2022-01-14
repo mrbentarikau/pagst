@@ -14,8 +14,8 @@ import (
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/backgroundworkers"
+	"github.com/mrbentarikau/pagst/lib/dca"
 	"github.com/mrbentarikau/pagst/soundboard/models"
-	"github.com/jonas747/dca/v2"
 	"goji.io/pat"
 )
 
