@@ -32,11 +32,11 @@ import (
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/customcommands/models"
-	"github.com/mrbentarikau/pagst/moderation"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/moderation"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 
@@ -780,8 +780,8 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 
 	tmplCtx.Name = "CC #" + strconv.Itoa(int(cmd.LocalID))
 	tmplCtx.Data["CCID"] = cmd.LocalID
-	tmplCtx.Data["CCTrigger"] = cmd.TextTrigger
 	tmplCtx.Data["CCRunCount"] = cmd.RunCount + 1
+	tmplCtx.Data["CCTrigger"] = cmd.TextTrigger
 
 	modConfig, _ := moderation.GetConfig(cmd.GuildID)
 	if modConfig.IntActionChannel() > 0 {

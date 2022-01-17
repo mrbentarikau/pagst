@@ -31,14 +31,14 @@ var (
 		"decodeStringToHex": DecodeStringToHex,
 		"hexToDecimal":      HexToDecimal,
 		"str":               ToString,
-		"toString":          ToString, // don't ask why we have 2 of these
+		"toByte":            ToByte,
+		"toDuration":        ToDuration,
+		"toFloat":           ToFloat64,
 		"toInt":             tmplToInt,
 		"toInt64":           ToInt64,
 		"toInt64Base16":     ToInt64Base16,
-		"toFloat":           ToFloat64,
-		"toDuration":        ToDuration,
 		"toRune":            ToRune,
-		"toByte":            ToByte,
+		"toString":          ToString, // don't ask why we have 2 of these
 		"toSHA256":          ToSHA256,
 
 		// string manipulation
@@ -51,10 +51,14 @@ var (
 		"printf":      withOutputLimitf(fmt.Sprintf, MaxStringLength),
 		"slice":       slice,
 		"split":       strings.Split,
+		"title":       strings.Title,
+		"trim":        trimString(""),
+		"trimLeft":    trimString("left"),
+		"trimRight":   trimString("right"),
+		"trimSpace":   strings.TrimSpace,
 		"upper":       strings.ToUpper,
 		"urlescape":   url.PathEscape,
 		"urlunescape": url.PathUnescape,
-		"title":       strings.Title,
 
 		// math
 		"abs":        tmplAbs,

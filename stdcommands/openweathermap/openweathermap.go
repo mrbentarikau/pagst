@@ -42,7 +42,7 @@ var Command = &commands.YAGCommand{
 		queryParam := "?q="
 
 		if data.Args[0].Value == nil && data.Switches["zip"].Value == nil {
-			return "Provide at least city name or use -zip flag...", nil
+			return "Provide at least a location name or use -zip flag...", nil
 		}
 
 		where := data.Args[0].Str()

@@ -1407,6 +1407,19 @@ func slice(item reflect.Value, indices ...reflect.Value) (reflect.Value, error) 
 	}
 }
 
+func trimString(trimWhere string) func(s, cutset interface{}) string {
+	return func(s, cutset interface{}) string {
+		switch trimWhere {
+		case "left":
+			return strings.TrimLeft(ToString(s), ToString(cutset))
+		case "right":
+			return strings.TrimRight(ToString(s), ToString(cutset))
+		default:
+			return strings.Trim(ToString(s), ToString(cutset))
+		}
+	}
+}
+
 func tmplCurrentTime() time.Time {
 	return time.Now().UTC()
 }

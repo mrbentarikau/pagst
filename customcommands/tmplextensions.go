@@ -16,10 +16,10 @@ import (
 	scheduledmodels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/customcommands/models"
-	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/premium"
 	"github.com/vmihailenco/msgpack"
 	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"
@@ -28,28 +28,29 @@ import (
 
 func init() {
 	templates.RegisterSetupFunc(func(ctx *templates.Context) {
-		ctx.ContextFuncs["parseArgs"] = tmplExpectArgs(ctx)
-		ctx.ContextFuncs["carg"] = tmplCArg
-		ctx.ContextFuncs["execCC"] = tmplRunCC(ctx)
-		ctx.ContextFuncs["scheduleUniqueCC"] = tmplScheduleUniqueCC(ctx)
 		ctx.ContextFuncs["cancelScheduledUniqueCC"] = tmplCancelUniqueCC(ctx)
+		ctx.ContextFuncs["carg"] = tmplCArg
 		ctx.ContextFuncs["editCCTriggerType"] = tmplEditCCTriggerType(ctx)
+		ctx.ContextFuncs["execCC"] = tmplRunCC(ctx)
+		ctx.ContextFuncs["parseArgs"] = tmplExpectArgs(ctx)
+		ctx.ContextFuncs["scheduleUniqueCC"] = tmplScheduleUniqueCC(ctx)
 
-		ctx.ContextFuncs["dbSet"] = tmplDBSet(ctx)
-		ctx.ContextFuncs["dbSetExpire"] = tmplDBSetExpire(ctx)
-		ctx.ContextFuncs["dbIncr"] = tmplDBIncr(ctx, false)
-		ctx.ContextFuncs["dbDecr"] = tmplDBIncr(ctx, true)
-		ctx.ContextFuncs["dbGet"] = tmplDBGet(ctx)
-		ctx.ContextFuncs["dbGetPattern"] = tmplDBGetPattern(ctx, false)
-		ctx.ContextFuncs["dbGetPatternReverse"] = tmplDBGetPattern(ctx, true)
-		ctx.ContextFuncs["dbDel"] = tmplDBDel(ctx)
-		ctx.ContextFuncs["dbDelById"] = tmplDBDelById(ctx)
-		ctx.ContextFuncs["dbDelByID"] = tmplDBDelById(ctx)
-		ctx.ContextFuncs["dbDelMultiple"] = tmplDBDelMultiple(ctx)
-		ctx.ContextFuncs["dbTopEntries"] = tmplDBTopEntries(ctx, false)
+		//template user database
 		ctx.ContextFuncs["dbBottomEntries"] = tmplDBTopEntries(ctx, true)
 		ctx.ContextFuncs["dbCount"] = tmplDBCount(ctx)
+		ctx.ContextFuncs["dbDecr"] = tmplDBIncr(ctx, true)
+		ctx.ContextFuncs["dbDel"] = tmplDBDel(ctx)
+		ctx.ContextFuncs["dbDelByID"] = tmplDBDelById(ctx)
+		ctx.ContextFuncs["dbDelById"] = tmplDBDelById(ctx)
+		ctx.ContextFuncs["dbDelMultiple"] = tmplDBDelMultiple(ctx)
+		ctx.ContextFuncs["dbGet"] = tmplDBGet(ctx)
+		ctx.ContextFuncs["dbGetPattern"] = tmplDBGetPattern(ctx, false)
+		ctx.ContextFuncs["dbIncr"] = tmplDBIncr(ctx, false)
 		ctx.ContextFuncs["dbRank"] = tmplDBRank(ctx)
+		ctx.ContextFuncs["dbSet"] = tmplDBSet(ctx)
+		ctx.ContextFuncs["dbSetExpire"] = tmplDBSetExpire(ctx)
+		ctx.ContextFuncs["dbGetPatternReverse"] = tmplDBGetPattern(ctx, true)
+		ctx.ContextFuncs["dbTopEntries"] = tmplDBTopEntries(ctx, false)
 	})
 }
 
