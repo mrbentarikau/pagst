@@ -600,6 +600,8 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("addRoleName", c.tmplAddRoleName)
 
 	c.addContextFunc("getRole", c.tmplGetRole)
+	c.addContextFunc("getRoleID", c.tmplGetRoleID)
+	c.addContextFunc("getRoleName", c.tmplGetRoleName)
 
 	c.addContextFunc("giveRole", c.tmplGiveRole)
 	c.addContextFunc("giveRoleID", c.tmplGiveRoleID)

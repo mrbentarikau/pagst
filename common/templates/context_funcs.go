@@ -14,8 +14,8 @@ import (
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
-	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 )
 
 var ErrTooManyCalls = errors.New("too many calls to this function")
@@ -1609,7 +1609,7 @@ func (c *Context) FindRole(role interface{}) *discordgo.Role {
 	}
 }
 
-func (c *Context) tmplGetRole(r interface{}) (*discordgo.Role, error) {
+func (c *Context) getRole(r interface{}) (*discordgo.Role, error) {
 	if c.IncreaseCheckStateLock() {
 		return nil, ErrTooManyCalls
 	}
@@ -1617,35 +1617,55 @@ func (c *Context) tmplGetRole(r interface{}) (*discordgo.Role, error) {
 	return c.FindRole(r), nil
 }
 
-func (c *Context) tmplMentionRole(roleInput interface{}) string {
+func (c *Context) tmplGetRole(roleInput interface{}) (*discordgo.Role, error) {
+	return c.getRole(roleInput)
+}
+
+func (c *Context) tmplGetRoleID(roleID interface{}) (*discordgo.Role, error) {
+	return c.getRole(roleID)
+}
+
+func (c *Context) tmplGetRoleName(roleName string) (*discordgo.Role, error) {
+	return c.getRole(roleName)
+}
+
+func (c *Context) mentionRole(roleInput interface{}) (string, error) {
 	if c.IncreaseCheckStateLock() {
-		return "(too many state locks)"
+		return "", ErrTooManyCalls
 	}
 
 	role := c.FindRole(roleInput)
 	if role == nil {
-		return "(role not found)"
+		return "", errors.New("role not found")
 	}
 
 	if common.ContainsInt64Slice(c.CurrentFrame.MentionRoles, role.ID) {
-		return role.Mention()
+		return role.Mention(), nil
 	}
 
 	c.CurrentFrame.MentionRoles = append(c.CurrentFrame.MentionRoles, role.ID)
-	return role.Mention()
+	return role.Mention(), nil
 }
 
-func (c *Context) tmplMentionRoleID(roleID interface{}) string {
-	return c.tmplMentionRole(roleID)
+func (c *Context) tmplMentionRole(roleInput interface{}) (string, error) {
+	return c.mentionRole(roleInput)
 }
 
-func (c *Context) tmplMentionRoleName(roleName string) string {
-	return c.tmplMentionRole(roleName)
+func (c *Context) tmplMentionRoleID(roleID interface{}) (string, error) {
+	return c.mentionRole(roleID)
+}
+
+func (c *Context) tmplMentionRoleName(roleName string) (string, error) {
+	return c.mentionRole(roleName)
 }
 
 func (c *Context) hasRole(roleInput interface{}) (bool, error) {
 	if c.IncreaseCheckStateLock() {
 		return false, ErrTooManyCalls
+	}
+
+	if c.MS == nil || c.MS.Member == nil {
+		return false, errors.New("Member is nil")
 	}
 
 	role := c.FindRole(roleInput)
@@ -1656,17 +1676,16 @@ func (c *Context) hasRole(roleInput interface{}) (bool, error) {
 	return common.ContainsInt64Slice(c.MS.Member.Roles, role.ID), nil
 }
 
-func (c *Context) tmplHasRole(roleInput interface{}) bool {
-	out, _ := c.hasRole(roleInput)
-	return out
+func (c *Context) tmplHasRole(roleInput interface{}) (bool, error) {
+	return c.hasRole(roleInput)
 }
 
-func (c *Context) tmplHasRoleID(roleID interface{}) bool {
-	return c.tmplHasRole(roleID)
+func (c *Context) tmplHasRoleID(roleID interface{}) (bool, error) {
+	return c.hasRole(roleID)
 }
 
-func (c *Context) tmplHasRoleName(roleName string) bool {
-	return c.tmplHasRole(roleName)
+func (c *Context) tmplHasRoleName(roleName string) (bool, error) {
+	return c.hasRole(roleName)
 }
 
 func (c *Context) targetHasRole(target interface{}, roleInput interface{}) (bool, error) {
@@ -1700,18 +1719,17 @@ func (c *Context) targetHasRole(target interface{}, roleInput interface{}) (bool
 	return common.ContainsInt64Slice(ms.Member.Roles, role.ID), nil
 }
 
-func (c *Context) tmplTargetHasRole(target interface{}, roleInput interface{}) bool {
-	out, _ := c.targetHasRole(target, roleInput)
-	return out
+func (c *Context) tmplTargetHasRole(target interface{}, roleInput interface{}) (bool, error) {
+	return c.targetHasRole(target, roleInput)
 }
 
-func (c *Context) tmplTargetHasRoleID(target interface{}, roleID interface{}) bool {
-	return c.tmplTargetHasRole(target, roleID)
+func (c *Context) tmplTargetHasRoleID(target interface{}, roleID interface{}) (bool, error) {
+	return c.targetHasRole(target, roleID)
 
 }
 
-func (c *Context) tmplTargetHasRoleName(target interface{}, roleName string) bool {
-	return c.tmplTargetHasRole(target, roleName)
+func (c *Context) tmplTargetHasRoleName(target interface{}, roleName string) (bool, error) {
+	return c.targetHasRole(target, roleName)
 }
 
 func (c *Context) giveRole(target interface{}, roleInput interface{}, optionalArgs ...interface{}) (string, error) {
@@ -1764,17 +1782,16 @@ func (c *Context) giveRole(target interface{}, roleInput interface{}, optionalAr
 	return "", nil
 }
 
-func (c *Context) tmplGiveRole(target interface{}, roleInput interface{}, optionalArgs ...interface{}) string {
-	out, _ := c.giveRole(target, roleInput, optionalArgs...)
-	return out
+func (c *Context) tmplGiveRole(target interface{}, roleInput interface{}, optionalArgs ...interface{}) (string, error) {
+	return c.giveRole(target, roleInput, optionalArgs...)
 }
 
-func (c *Context) tmplGiveRoleID(target interface{}, roleID interface{}, optionalArgs ...interface{}) string {
-	return c.tmplGiveRole(target, roleID, optionalArgs...)
+func (c *Context) tmplGiveRoleID(target interface{}, roleID interface{}, optionalArgs ...interface{}) (string, error) {
+	return c.giveRole(target, roleID, optionalArgs...)
 }
 
-func (c *Context) tmplGiveRoleName(target interface{}, roleName string, optionalArgs ...interface{}) string {
-	return c.tmplGiveRole(target, roleName, optionalArgs...)
+func (c *Context) tmplGiveRoleName(target interface{}, roleName string, optionalArgs ...interface{}) (string, error) {
+	return c.giveRole(target, roleName, optionalArgs...)
 }
 
 func (c *Context) addRole(roleInput interface{}, optionalArgs ...interface{}) (string, error) {
@@ -1820,11 +1837,11 @@ func (c *Context) tmplAddRole(roleInput interface{}, optionalArgs ...interface{}
 }
 
 func (c *Context) tmplAddRoleID(roleID interface{}, optionalArgs ...interface{}) (string, error) {
-	return c.tmplAddRole(roleID, optionalArgs...)
+	return c.addRole(roleID, optionalArgs...)
 }
 
 func (c *Context) tmplAddRoleName(roleName string, optionalArgs ...interface{}) (string, error) {
-	return c.tmplAddRole(roleName, optionalArgs...)
+	return c.addRole(roleName, optionalArgs...)
 }
 
 func (c *Context) takeRole(target interface{}, roleInput interface{}, optionalArgs ...interface{}) (string, error) {
@@ -1877,17 +1894,16 @@ func (c *Context) takeRole(target interface{}, roleInput interface{}, optionalAr
 	return "", nil
 }
 
-func (c *Context) tmplTakeRole(target interface{}, roleInput interface{}, optionalArgs ...interface{}) string {
-	out, _ := c.takeRole(target, roleInput, optionalArgs...)
-	return out
+func (c *Context) tmplTakeRole(target interface{}, roleInput interface{}, optionalArgs ...interface{}) (string, error) {
+	return c.takeRole(target, roleInput, optionalArgs...)
 }
 
-func (c *Context) tmplTakeRoleID(target interface{}, roleID interface{}, optionalArgs ...interface{}) string {
-	return c.tmplTakeRole(target, roleID, optionalArgs...)
+func (c *Context) tmplTakeRoleID(target interface{}, roleID interface{}, optionalArgs ...interface{}) (string, error) {
+	return c.takeRole(target, roleID, optionalArgs...)
 }
 
-func (c *Context) tmplTakeRoleName(target interface{}, roleName string, optionalArgs ...interface{}) string {
-	return c.tmplTakeRole(target, roleName, optionalArgs...)
+func (c *Context) tmplTakeRoleName(target interface{}, roleName string, optionalArgs ...interface{}) (string, error) {
+	return c.takeRole(target, roleName, optionalArgs...)
 }
 
 func (c *Context) removeRole(roleInput interface{}, optionalArgs ...interface{}) (string, error) {
@@ -1933,11 +1949,11 @@ func (c *Context) tmplRemoveRole(roleInput interface{}, optionalArgs ...interfac
 }
 
 func (c *Context) tmplRemoveRoleID(roleID interface{}, optionalArgs ...interface{}) (string, error) {
-	return c.tmplRemoveRole(roleID, optionalArgs...)
+	return c.removeRole(roleID, optionalArgs...)
 }
 
 func (c *Context) tmplRemoveRoleName(roleName string, optionalArgs ...interface{}) (string, error) {
-	return c.tmplRemoveRole(roleName, optionalArgs...)
+	return c.removeRole(roleName, optionalArgs...)
 }
 
 func (c *Context) validateDurationDelay(in interface{}) time.Duration {
