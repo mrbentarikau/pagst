@@ -15,10 +15,10 @@ import (
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/logs/models"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/logs/models"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -176,8 +176,28 @@ var cmdWhois = &commands.YAGCommand{
 			}
 		}
 
+		if member.User.ID == common.BotUser.ID {
+			//State does not have bot's own PresenceStatus
+
+			var idle string
+
+			err := common.RedisPool.Do(radix.Cmd(&idle, "GET", "status_idle"))
+			if err != nil {
+				fmt.Println((fmt.Errorf("failed retrieving bot state")).Error())
+			}
+
+			err = common.RedisPool.Do(radix.Cmd(&memberStatus, "GET", "status_name"))
+			if err != nil {
+				fmt.Println((fmt.Errorf("failed retrieving bot status name")).Error())
+			}
+
+			if idle == "enabled" {
+				onlineStatus = "Idle"
+			}
+		}
+
 		embed := &discordgo.MessageEmbed{
-			//Title: fmt.Sprintf("%s#%s%s (%s)", member.User.Username, member.User.Discriminator, nick, onlineStatus),
+			Title: fmt.Sprintf("%s#%s%s (%s)", member.User.Username, member.User.Discriminator, nick, onlineStatus),
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "ID",
@@ -219,23 +239,6 @@ var cmdWhois = &commands.YAGCommand{
 				URL: discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar),
 			},
 		}
-
-		if member.User.ID == common.BotUser.ID {
-			//State does not have bot's own PresenceStatus
-
-			var idle string
-
-			err := common.RedisPool.Do(radix.Cmd(&idle, "GET", "status_idle"))
-			if err != nil {
-				fmt.Println((fmt.Errorf("failed retrieving bot streaming status")).Error())
-			}
-
-			if idle == "enabled" {
-				onlineStatus = "Idle"
-			}
-		}
-
-		embed.Title = fmt.Sprintf("%s#%s%s (%s)", member.User.Username, member.User.Discriminator, nick, onlineStatus)
 
 		if config.UsernameLoggingEnabled.Bool {
 			usernames, err := GetUsernames(parsed.Context(), member.User.ID, 5, 0)
