@@ -24,14 +24,18 @@ CodeMirror.defineMode("go", function(config) {
     "float32":true, "float64":true, "int8":true, "int16":true, "int32":true,
     "int64":true, "string":true, "uint8":true, "uint16":true, "uint32":true,
     "uint64":true, "int":true, "uint":true, "uintptr":true, "error": true,
-    "rune":true
+    "rune":true,
+    "block":true, "define":true, "end":true, "template":true, "with":true
   };
 
   var atoms = {
     "true":true, "false":true, "iota":true, "nil":true, "append":true,
     "cap":true, "close":true, "complex":true, "copy":true, "delete":true, "imag":true,
     "len":true, "make":true, "new":true, "panic":true, "print":true,
-    "println":true, "real":true, "recover":true
+    "printf":true, "println":true, "real":true, "recover":true,
+    "and":true, "call":true, "html":true, "index":true, "slice":true, "js":true,
+    "len":true, "not":true, "or":true,"urlquery":true, "eq":true, "ne":true,
+    "lt":true, "le":true, "gt":true, "ge":true
   };
 
   var isOperatorChar = /[+\-*&^%:=<>!|\/]/;

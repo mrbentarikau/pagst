@@ -270,6 +270,7 @@
                                             <option>gruvbox-dark</option>
                                             <option>mbo</option>
                                             <option>monokai</option>
+                                            <option>nord</option>
                                             <option>panda-syntax</option>
                                             <option>vibrant-ink</option>
                                             <option>yonce</option>
@@ -480,6 +481,7 @@
 <link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
 
 <script src="/static/codemirror/addon/edit/closebrackets.js"></script>
+<script src="/static/codemirror/addon/edit/matchbrackets.js"></script>
 <script src="/static/codemirror/mode/go/go.js"></script>
 
 <link rel="stylesheet" href="/static/codemirror/theme/ayu-dark.css">
@@ -489,6 +491,7 @@
 <link rel="stylesheet" href="/static/codemirror/theme/gruvbox-dark.css">
 <link rel="stylesheet" href="/static/codemirror/theme/mbo.css">
 <link rel="stylesheet" href="/static/codemirror/theme/monokai.css">
+<link rel="stylesheet" href="/static/codemirror/theme/nord.css">
 <link rel="stylesheet" href="/static/codemirror/theme/panda-syntax.css">
 <link rel="stylesheet" href="/static/codemirror/theme/vibrant-ink.css">
 <link rel="stylesheet" href="/static/codemirror/theme/yonce.css">
@@ -619,9 +622,11 @@
         return
     }
     editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
-        mode: "go", 
+        mode: "text/x-go",
         //tabSize: 4,
         autoCloseBrackets: bracketsEnabled,
+        matchBrackets: true,
+        electricChars: false,
         theme: textAreaTheme,
         lineNumbers:true,
         lineWrapping:true,
