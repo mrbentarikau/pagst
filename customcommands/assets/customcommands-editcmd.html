@@ -275,7 +275,7 @@
                                             <option>vibrant-ink</option>
                                             <option>yonce</option>
                                         </select>
-                                        <span style="margin-left:5px">Auto-close brackets:<i style="position: relative; top: -0.5em; font-size: 75%;"class="fas fa-question-circle" title="If CodeMirror enabled"></i> &nbsp;<select onchange="selectBrackets()" id=bracketsSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;"><option selected>disabled</option><option>enabled</option></select></span><span style="margin-left:5px"><i>(alt+shift+s is quicksave)</i></span>
+                                        <span style="margin-left:5px">Auto-close brackets:<i style="position: relative; top: -0.5em; font-size: 75%;"class="fas fa-question-circle" title="If CodeMirror enabled"></i> &nbsp;<select onchange="selectBrackets()" id=bracketsSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;"><option selected>disabled</option><option>enabled</option></select></span><span style="margin-left:5px"><i>(alt+shift+s is quicksave, F11/ESC for fullscreen on/off)</i></span>
                                     </div>
                                     <label for="responses">Response (<span class="cc-length-counter">x</span>/20000)</label>
 
@@ -479,7 +479,9 @@
 
 <script src="/static/codemirror/lib/codemirror.js"></script>
 <link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="/static/codemirror/addon/display/fullscreen.css">
 
+<script src="/static/codemirror/addon/display/fullscreen.js"></script>
 <script src="/static/codemirror/addon/edit/closebrackets.js"></script>
 <script src="/static/codemirror/addon/edit/matchbrackets.js"></script>
 <script src="/static/codemirror/mode/go/go.js"></script>
@@ -630,7 +632,15 @@
         theme: textAreaTheme,
         lineNumbers:true,
         lineWrapping:true,
-        viewportMargin: Infinity
+        viewportMargin: Infinity,
+        extraKeys: {
+        "F11": function(cm) {
+          cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+        },
+        "Esc": function(cm) {
+          if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+        }
+      }
     });
     editor.setSize("100%",null);
     editor.on("focus",function() {onCCChanged(document.querySelector('.CodeMirror'),editor)});
