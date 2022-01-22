@@ -21,7 +21,13 @@ func CalcNextRunTime(cc *models.CustomCommand, now time.Time) time.Time {
 		return time.Time{}
 	}
 
-	tNext := cc.LastRun.Time.Add(time.Minute * time.Duration(cc.TimeTriggerInterval))
+	durationAdd := time.Minute * time.Duration(cc.TimeTriggerInterval)
+	if durationAdd < 0 {
+		// this can never be ran...
+		return time.Time{}
+	}
+
+	tNext := cc.LastRun.Time.Add(durationAdd)
 	// run it immedietely if this is the case
 	if tNext.Before(now) {
 		tNext = now
