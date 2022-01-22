@@ -287,23 +287,6 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 	dbModel.LocalID = cmd.ID
 	dbModel.TriggerType = int(triggerTypeFromForm(cmd.TriggerTypeForm))
 
-	// check max interval limits
-	var intvMax bool
-	durLimitHours := 2560000 // for 292 years
-	intvMult := 1
-	if cmd.TriggerTypeForm == "interval_hours" {
-		intvMult = 60
-		if cmd.TimeTriggerInterval/60 > durLimitHours {
-			intvMax = true
-		}
-	} else if cmd.TimeTriggerInterval > durLimitHours*60 {
-		intvMax = true
-	}
-
-	if time.Minute*time.Duration(cmd.TimeTriggerInterval*intvMult) < 0 || intvMax {
-		return templateData, web.NewPublicError(fmt.Sprintf("Interval %d goes beyond limits of negative or 292 years...", cmd.TimeTriggerInterval))
-	}
-
 	// check low interval limits
 	if dbModel.TriggerType == int(CommandTriggerInterval) && dbModel.TimeTriggerInterval <= 10 {
 		if dbModel.TimeTriggerInterval < 1 {

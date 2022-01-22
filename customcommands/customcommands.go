@@ -15,10 +15,10 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/customcommands/models"
-	"github.com/mrbentarikau/pagst/premium"
-	"github.com/mrbentarikau/pagst/web"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/premium"
+	"github.com/mrbentarikau/pagst/web"
 	"github.com/karlseguin/ccache"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/null"
@@ -184,6 +184,24 @@ func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
 
 	if cc.TriggerTypeForm == "interval_minutes" && cc.TimeTriggerInterval < 1 {
 		tmpl.AddAlerts(web.ErrorAlert("Minimum interval is 1 minute..."))
+		return false
+	}
+
+	// check max interval limits
+	var intvMax bool
+	durLimitHours := 2560000 // for 292 years
+	intvMult := 1
+	if cc.TriggerTypeForm == "interval_hours" {
+		intvMult = 60
+		if cc.TimeTriggerInterval/60 > durLimitHours {
+			intvMax = true
+		}
+	} else if cc.TimeTriggerInterval > durLimitHours*60 {
+		intvMax = true
+	}
+
+	if time.Minute*time.Duration(cc.TimeTriggerInterval*intvMult) < 0 || intvMax {
+		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Interval %d goes beyond limits of negative or 292 years...", cc.TimeTriggerInterval)))
 		return false
 	}
 
