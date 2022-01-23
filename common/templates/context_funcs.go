@@ -796,7 +796,7 @@ func (c *Context) tmplDelMessageReaction(values ...reflect.Value) (reflect.Value
 
 		for _, reaction := range args[3:] {
 
-			if c.IncreaseCheckCallCounter("del_reaction_message", 10) {
+			if c.IncreaseCheckCallCounter("del_reaction_message", 20) {
 				return reflect.Value{}, ErrTooManyCalls
 			}
 
@@ -834,7 +834,7 @@ func (c *Context) tmplDelAllMessageReactions(values ...reflect.Value) (reflect.V
 
 		if len(args) > 2 {
 			for _, emoji := range args[2:] {
-				if c.IncreaseCheckCallCounter("del_reaction_message", 10) {
+				if c.IncreaseCheckCallCounter("del_reaction_message", 20) {
 					return reflect.Value{}, ErrTooManyCalls
 				}
 

@@ -13,8 +13,7 @@
 
 CodeMirror.defineMode("go", function(config) {
   var indentUnit = config.indentUnit;
-  var largeRE = /\x2e[A-Z]/;
-  var idRE = /[a-z_A-Z0-9'\xa1-\uffff]/;
+  var methodRE = /[a-z_A-Z0-9'\xa1-\uffff]/;
 
   var keywords = {
     "break":true, "case":true, "chan":true, "const":true, "continue":true,
@@ -40,147 +39,6 @@ CodeMirror.defineMode("go", function(config) {
     "lt":true, "le":true, "gt":true, "ge":true
   };
 
-  var funcMap = {
-    // bitwise functions
-    "bitwiseAnd":true, "bitwiseOr":true, "bitwiseNot":true,
-    "bitwiseXor":true, "bitwiseClear":true, "bitwiseAndNot":true,
-    "bitwiseLeftShift":true, "bitwiseRightShift":true,
-    "shiftLeft":true, "shiftRight":true,
-    // conversion functions
-    "decodeStringToHex":true, "hexToDecimal":true, "str":true, "toByte":true,
-    "toDuration":true, "toFloat":true, "toInt":true, "toInt64":true,
-    "toInt64Base16":true, "toRune":true, "toString":true, "toSHA256":true,
-    // math
-    "abs":true, "add":true, "cbrt":true, "cos":true, "div":true,"divMod":true,
-    "exp":true, "exp2":true, "fdiv":true, "log":true, "mod":true, "max":true,
-    "min":true, "mult":true, "ordinalize": true, "pow":true, "round":true,
-    "roundCeil":true, "roundFloor":true, "roundEven":true, "sin":true,
-    "sqrt":true, "sub":true,"tan":true,
-    // misc
-    "adjective":true, "cembed":true, "complexMessage":true, "complexMessageEdit":true,
-    "cslice":true, "dict":true, "humanizeThousands":true, "in":true, "inFold":true,
-    "json":true, "kindOf":true, "noun":true, "randInt":true, "roleAbove":true,
-    "sdict":true, "seq":true, "structToSdict":true, "shuffle":true,
-    // string manipulation
-    "hasPrefix":true, "hasSuffix":true, "joinStr":true, "lower":true,
-    "print":true, "println":true, "printf":true, "slice":true, "split":true, "title":true,
-    "trim":true, "trimLeft":true, "trimRight":true, "trimSpace":true,
-    "upper":true, "urlescape":true, "urlunescape":true,
-    // time functions
-    "currentTime":true, "formatTime":true, "loadLocation":true,
-    "parseTime":true, "snowflakeToTime":true, "newDate":true,
-    "weekNumber":true,
-    "humanizeDurationHours":true,
-    "humanizeDurationMinutes":true,
-    "humanizeDurationSeconds":true,
-    "humanizeTimeSinceDays":true,
-    // context functions
-    "sendDM":true, 
-    "sendTargetDM":true,
-    "sendMessage":true,
-    "sendTemplate":true,
-    "sendTemplateDM":true,
-    "sendMessageRetID":true,
-    "sendMessageNoEscape":true,
-    "sendMessageNoEscapeRetID":true,
-    "editMessage":true,
-    "editMessageNoEscape":true,
-    "pinMessage":true,
-    "unpinMessage":true,
-    "lastMessages":true,
-    // Mentions
-    "mentionEveryone":true,
-    "mentionHere":true,
-    "mentionRole":true,
-    "mentionRoleName":true,
-    "mentionRoleID":true,
-    // Role functions
-    "addRole":true,
-    "addRoleID":true,
-    "addRoleName":true,
-    "getRole":true,
-    "getRoleID":true,
-    "getRoleName":true,
-    "giveRole":true,
-    "giveRoleID":true,
-    "giveRoleName":true,
-    "hasRole":true,
-    "hasRoleID":true,
-    "hasRoleName":true,
-    "removeRole":true,
-    "removeRoleID":true,
-    "removeRoleName":true,
-    "setRoles":true,
-    "takeRole":true,
-    "takeRoleID":true,
-    "takeRoleName":true,
-    "targetHasRole":true,
-    "targetHasRoleID":true,
-    "targetHasRoleName":true,
-    // permission funcs
-    "hasPermissions":true,
-    "targetHasPermissions":true,
-    "getTargetPermissionsIn":true,
-    //Varia
-    "deleteResponse":true,
-    "deleteTrigger":true,
-    "deleteMessage":true,
-    "deleteMessageReaction":true,
-    "deleteAllMessageReactions":true,
-    "getMessage":true,
-    "getAllMessageReactions":true,
-    "getMember":true,
-    "getChannel":true,
-    "getThread":true,
-    "getChannelOrThread":true,
-    "getPinCount":true,
-    "addReactions":true,
-    "addResponseReactions":true,
-    "addMessageReactions":true,
-    "currentUserCreated":true,
-    "currentUserAgeHuman":true,
-    "currentUserAgeMinutes":true,
-    "sleep":true,
-    "reFind":true,
-    "reFindAll":true,
-    "reFindAllSubmatches":true,
-    "reReplace":true,
-    "reSplit":true,
-    "editChannelTopic":true,
-    "editChannelName":true,
-    "onlineCount":true,
-    "onlineCountBots":true,
-    "editNickname":true,
-    "sort":true,
-    //templatextensions
-    "cancelScheduledUniqueCC":true,
-    "carg":true,
-    "editCCTriggerType":true,
-    "execCC":true,
-    "parseArgs":true,
-    "scheduleUniqueCC":true,
-    //template user database
-    "dbBottomEntries":true,
-    "dbCount":true,
-    "dbDecr":true,
-    "dbDel":true,
-    "dbDelByID":true,
-    "dbDelById":true,
-    "dbDelMultiple":true,
-    "dbGet":true,
-    "dbGetPattern":true,
-    "dbIncr":true,
-    "dbRank":true,
-    "dbSet":true,
-    "dbSetExpire":true,
-    "dbGetPatternReverse":true,
-    "dbTopEntries":true,
-    //templexec
-    "exec":true,
-    "execAdmin":true,
-    "userArg":true
-  };
-
   var isOperatorChar = /[+\-*&^%:=<>!|\/]/;
 
   var curPunc;
@@ -191,16 +49,9 @@ CodeMirror.defineMode("go", function(config) {
       state.tokenize = tokenString(ch);
       return state.tokenize(stream, state);
     }
-    /*if (ch == "." && /[A-Z]/.test(stream.next())) {
-      stream.eatWhile(idRE);
-      //if (stream.eat('.')) {
-      //  return "variable-3";
-      //}
-      return "variable-3";
-    }*/
     if (/[\d\.]/.test(ch)) {
         if (ch == "." && stream.match(/[A-Z]/)) {
-        stream.eatWhile(idRE);
+        stream.eatWhile(methodRE);
         return "variable-3";
       } else if (ch == ".") {
         stream.match(/^[0-9]+([eE][\-+]?[0-9]+)?/);
