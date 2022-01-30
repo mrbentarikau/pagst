@@ -394,7 +394,7 @@ var cmdPrefix = &YAGCommand{
 	},
 }
 
-func clearGlobalCommands() error {
+/*func clearGlobalCommands() error {
 	commands, err := common.BotSession.GetGlobalApplicationCommands(common.BotApplication.ID)
 	if err != nil {
 		return err
@@ -411,4 +411,4 @@ func clearGlobalCommands() error {
 
 	logger.Info("DONE")
 	return nil
-}
+}*/
