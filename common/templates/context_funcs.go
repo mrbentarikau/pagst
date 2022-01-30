@@ -876,6 +876,10 @@ func (c *Context) tmplGetMessage(channel, msgID interface{}) (*discordgo.Message
 			message.Member = member
 			message.Member.GuildID = message.GuildID
 		}
+
+		if message.ReferencedMessage != nil {
+			message.ReferencedMessage.GuildID = c.GS.ID
+		}
 	}
 
 	return message, nil

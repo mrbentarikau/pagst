@@ -146,7 +146,10 @@ func (m *Message) GetChannelID() int64 {
 }
 
 func (m *Message) Link() string {
-	return fmt.Sprintf("https://discord.com/channels/%v/%v/%v", m.GuildID, m.ChannelID, m.ID)
+	if m != nil {
+		return fmt.Sprintf("https://discord.com/channels/%v/%v/%v", m.GuildID, m.ChannelID, m.ID)
+	}
+	return "message not found"
 }
 
 // File stores info about files you e.g. send in messages.
