@@ -9,8 +9,8 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/models"
-	"github.com/mrbentarikau/pagst/web/discorddata"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/web/discorddata"
 	"github.com/mediocregopher/radix/v3"
 	"golang.org/x/oauth2"
 )
@@ -191,7 +191,7 @@ func CreateCookieSession(token *oauth2.Token) (cookie *http.Cookie, err error) {
 	// Either the cookie expires in 30 days, or however long the validity of the token is if that is smaller than 7 days
 	cookieExpirey := time.Hour * 24 * 30
 	expiresFromNow := time.Until(token.Expiry)
-	if expiresFromNow < time.Hour*24*14 {
+	if expiresFromNow < time.Hour*24*7 {
 		cookieExpirey = expiresFromNow
 	}
 
