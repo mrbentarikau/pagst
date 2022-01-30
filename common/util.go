@@ -15,8 +15,8 @@ import (
 	"emperror.dev/errors"
 
 	"github.com/mrbentarikau/pagst/lib/dcmd"
-	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/lib/pq"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/sirupsen/logrus"
