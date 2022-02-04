@@ -15,10 +15,10 @@ import (
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
-	"github.com/jinzhu/gorm"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/jinzhu/gorm"
 )
 
 func MBaseCmd(cmdData *dcmd.Data, targetID int64) (config *Config, targetUser *discordgo.User, err error) {
@@ -1379,6 +1379,10 @@ func PaginateWarnings(parsed *dcmd.Data) func(p *paginatedmessages.PaginatedMess
 		var err error
 		skip := (page - 1) * 6
 		userID := parsed.Args[0].Int64()
+		if userID == 0 {
+			userID = parsed.Author.ID
+		}
+
 		limit := 6
 
 		var result []*WarningModel
