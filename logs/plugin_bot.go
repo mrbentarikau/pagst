@@ -722,7 +722,7 @@ type UserGuildPair struct {
 	User    *discordgo.User
 }
 
-var confEnableUsernameTracking = config.RegisterOption("yagpdb.enable_username_tracking", "Enable username tracking", true)
+var confEnableUsernameTracking = config.RegisterOption("yagpdb.enable_username_tracking", "Enable username tracking", false)
 
 // Queue up all the events and process them one by one, because of limited connections
 func EvtProcesser() {
