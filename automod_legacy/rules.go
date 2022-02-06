@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mrbentarikau/pagst/antiphishing"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/safebrowsing"
@@ -449,8 +450,8 @@ func (w *WordsRule) CheckMessage(content string) (word string) {
 type SitesRule struct {
 	BaseRule `valid:"traverse"`
 
-	BuiltinBadSites           bool
 	GoogleSafeBrowsingEnabled bool
+	ScamLinkProtection        bool
 
 	BannedWebsites   string `valid:",10000"`
 	compiledWebsites []string
@@ -506,24 +507,26 @@ func (s *SitesRule) checkMessage(message string) (banned bool, item string, thre
 				return true, item, ""
 			}
 		}
+	}
 
+	if s.ScamLinkProtection {
+		scamLink, err := antiphishing.CheckMessageForPhishingDomains(message)
+		if err != nil {
+			logger.WithError(err).Error("Failed checking urls against antiphishing APIs")
+		} else if scamLink != "" {
+			return true, scamLink, ""
+		}
 	}
 
 	// Check safebrowsing
-	if !s.GoogleSafeBrowsingEnabled {
-		return false, "", ""
+	if s.GoogleSafeBrowsingEnabled {
+		threat, err := safebrowsing.CheckString(message)
+		if err != nil {
+			logger.WithError(err).Error("Failed checking urls against google safebrowser")
+		} else if threat != nil {
+			return true, threat.Pattern, threat.ThreatType.String()
+		}
 	}
-
-	threat, err := safebrowsing.CheckString(message)
-	if err != nil {
-		logger.WithError(err).Error("Failed checking urls against google safebrowser")
-		return false, "", ""
-	}
-
-	if threat != nil {
-		return true, threat.Pattern, threat.ThreatType.String()
-	}
-
 	return false, "", ""
 }
 

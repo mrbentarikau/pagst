@@ -8,13 +8,14 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/mrbentarikau/pagst/antiphishing"
 	"github.com/mrbentarikau/pagst/automod/models"
 	"github.com/mrbentarikau/pagst/automod_legacy"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/safebrowsing"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/safebrowsing"
 )
 
 var forwardSlashReplacer = strings.NewReplacer("\\", "")
@@ -542,7 +543,7 @@ func (g *AntiFishDetectorTrigger) Name() string {
 }
 
 func (g *AntiFishDetectorTrigger) Description() string {
-	return "Triggers on messages containing links that are flagged by Anti-Fish API as unsafe."
+	return "Triggers on messages containing links that are flagged by Anti-Fish API as unsafe. Older version of Flagged Scam links trigger."
 }
 
 func (g *AntiFishDetectorTrigger) UserSettings() []*SettingDef {
@@ -550,7 +551,7 @@ func (g *AntiFishDetectorTrigger) UserSettings() []*SettingDef {
 }
 
 func (g *AntiFishDetectorTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
-	if common.LinkRegex.MatchString(forwardSlashReplacer.Replace(m.Content)) {
+	if common.LinkRegexJonas.MatchString(forwardSlashReplacer.Replace(m.Content)) {
 		antiFish, err := common.AntiFishQuery(m.Content)
 		if err != nil {
 			logger.WithError(err).Error("Failed checking URLs from Anti-Fish API.")
@@ -561,7 +562,7 @@ func (g *AntiFishDetectorTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 			return true, nil
 		}
 
-		matches := common.LinkRegex.FindAllString(forwardSlashReplacer.Replace(m.Content), -1)
+		matches := common.LinkRegexJonas.FindAllString(forwardSlashReplacer.Replace(m.Content), -1)
 
 		for _, v := range matches {
 			trasparencyReport, err := common.TransparencyReportQuery(v)
@@ -582,6 +583,46 @@ func (g *AntiFishDetectorTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 
 func (g *AntiFishDetectorTrigger) MergeDuplicates(data []interface{}) interface{} {
 	return data[0] // no point in having duplicates of this
+}
+
+/////////////////////////////////////////////////////////////
+
+var _ MessageTrigger = (*AntiPhishingLinkTrigger)(nil)
+
+type AntiPhishingLinkTrigger struct{}
+
+func (a *AntiPhishingLinkTrigger) Kind() RulePartType {
+	return RulePartTrigger
+}
+
+func (a *AntiPhishingLinkTrigger) Name() string {
+	return "Flagged Scam links"
+}
+
+func (a *AntiPhishingLinkTrigger) DataType() interface{} {
+	return nil
+}
+
+func (a *AntiPhishingLinkTrigger) Description() string {
+	return "Triggers on messages that have scam links flagged by SinkingYachts and BitFlow AntiPhishing APIs"
+}
+
+func (a *AntiPhishingLinkTrigger) UserSettings() []*SettingDef {
+	return []*SettingDef{}
+}
+
+func (a *AntiPhishingLinkTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
+	badDomain, err := antiphishing.CheckMessageForPhishingDomains(forwardSlashReplacer.Replace(m.Content))
+	if err != nil {
+		logger.WithError(err).Error("Failed to check url ")
+		return false, nil
+	}
+
+	if badDomain != "" {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 /////////////////////////////////////////////////////////////

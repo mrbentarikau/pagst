@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/mrbentarikau/pagst/analytics"
+	"github.com/mrbentarikau/pagst/antiphishing"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/common/prom"
 	"github.com/mrbentarikau/pagst/common/run"
@@ -57,6 +58,7 @@ func main() {
 	// Setup plugins
 	analytics.RegisterPlugin()
 	safebrowsing.RegisterPlugin()
+	antiphishing.RegisterPlugin()
 	discordlogger.Register()
 	commands.RegisterPlugin()
 	stdcommands.RegisterPlugin()
