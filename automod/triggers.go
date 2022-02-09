@@ -905,15 +905,14 @@ func (mt *MultiMsgMentionTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 			break
 		}
 
-		if mt.ChannelBased || v.Author.ID == triggerCtx.MS.GuildID {
-			// we only care about unique mentions, e.g mentioning the same user a ton wont do anythin
+		if mt.ChannelBased || v.Author.ID == triggerCtx.MS.User.ID {
+			// we only care about unique mentions, e.g mentioning the same user a ton wont do anything
 			for _, msgMention := range v.Mentions {
 				if settings.CountDuplicates || !common.ContainsInt64Slice(mentions, msgMention.ID) {
 					mentions = append(mentions, msgMention.ID)
 				}
 			}
 		}
-
 		if len(mentions) >= settings.Treshold {
 			return true, nil
 		}

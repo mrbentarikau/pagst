@@ -76,6 +76,7 @@ var RulePartMap = map[int]RulePart{
 	212: &ChannelCategoriesCondition{Blacklist: false},
 	213: &MessageEditedCondition{NewMessage: true},
 	214: &MessageEditedCondition{NewMessage: false},
+	297: &DomainCondition{},
 	298: &VoiceChannelsCondition{Blacklist: true},
 	299: &VoiceChannelsCondition{Blacklist: false},
 

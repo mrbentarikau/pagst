@@ -233,7 +233,11 @@ func queryPhishingLinks(input []string) (string, error) {
 		return "", err
 	}
 	if bitflowAntifishResponse.Match {
-		return bitflowAntifishResponse.Matches[0].URL, err
+		matchedLink := bitflowAntifishResponse.Matches[0].URL
+		if matchedLink == "" {
+			matchedLink = bitflowAntifishResponse.Matches[0].Domain
+		}
+		return matchedLink, err
 	}
 
 	return "", nil
@@ -241,6 +245,7 @@ func queryPhishingLinks(input []string) (string, error) {
 
 func CheckMessageForPhishingDomains(input string) (string, error) {
 	matches := common.LinkRegex.FindAllString(input, -1)
+
 	if len(matches) < 1 {
 		return "", nil
 	}

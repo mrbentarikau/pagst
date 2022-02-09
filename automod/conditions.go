@@ -1,6 +1,8 @@
 package automod
 
 import (
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/mrbentarikau/pagst/bot"
@@ -651,4 +653,99 @@ func (mc *MessageEditedCondition) IsMet(data *TriggeredRuleData, settings interf
 
 func (mc *MessageEditedCondition) MergeDuplicates(data []interface{}) interface{} {
 	return data[0] // no point in having duplicates of this
+}
+
+/////////////////////////////////////////////////////////////////
+
+type DomainConditionData struct {
+	ListID int64
+}
+
+var _ Condition = (*DomainCondition)(nil)
+
+type DomainCondition struct {
+}
+
+func (dmc *DomainCondition) Kind() RulePartType {
+	return RulePartCondition
+}
+
+func (dmc *DomainCondition) DataType() interface{} {
+	return &DomainConditionData{}
+}
+
+func (dmc *DomainCondition) Name() string {
+	return "Domain whitelist"
+}
+
+func (dmc *DomainCondition) Description() string {
+	return "Ignores messages containing links to domains in the specified list"
+}
+
+func (dmc *DomainCondition) UserSettings() []*SettingDef {
+	return []*SettingDef{
+		&SettingDef{
+			Name: "List",
+			Key:  "ListID",
+			Kind: SettingTypeList,
+		},
+	}
+}
+
+func (dmc *DomainCondition) IsMet(data *TriggeredRuleData, settings interface{}) (bool, error) {
+	settingsCast := settings.(*DomainConditionData)
+	if data.CS == nil {
+		return true, nil
+	}
+
+	list, err := FindFetchGuildList(data.GS.ID, settingsCast.ListID)
+	if err != nil {
+		return false, nil
+	}
+
+	matches := common.LinkRegex.FindAllString(forwardSlashReplacer.Replace(data.Message.Content), -1)
+
+	for _, v := range matches {
+		if contains, _ := dmc.containsDomain(v, list.Content); contains {
+			return false, nil
+		}
+	}
+
+	// Not in a whitelisted domains list
+	return true, nil
+}
+
+func (dmc *DomainCondition) containsDomain(link string, list []string) (bool, string) {
+	if !strings.HasPrefix(link, "http://") && !strings.HasPrefix(link, "https://") && !strings.HasPrefix(link, "steam://") {
+		link = "http://" + link
+	}
+
+	parsed, err := url.ParseRequestURI(link)
+	if err != nil {
+		logger.WithError(err).WithField("url", link).Error("Failed parsing request url matched with regex")
+		return false, ""
+	}
+
+	host := parsed.Host
+	if index := strings.Index(host, ":"); index > -1 {
+		host = host[:index]
+	}
+
+	host = strings.ToLower(host)
+
+	for _, v := range list {
+		if strings.HasSuffix(host, "."+v) {
+			return true, v
+		}
+
+		if v == host {
+			return true, v
+		}
+	}
+
+	return false, ""
+}
+
+func (cd *DomainCondition) MergeDuplicates(data []interface{}) interface{} {
+	return data[0]
 }
