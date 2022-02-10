@@ -14,9 +14,9 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	seventsmodels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
-	"github.com/jinzhu/gorm"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/jinzhu/gorm"
 
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 )
@@ -41,7 +41,7 @@ var cmds = []*commands.YAGCommand{
 	{
 		CmdCategory:  commands.CategoryTool,
 		Name:         "Remindme",
-		Description:  "Schedules a reminder, example: 'remindme 1h30min are you alive still?'\nFlag -repeat will repeat the reminder starting with min duration of 1 hour.",
+		Description:  "Schedules a reminder, example: 'remindme 1h30min are you alive still?'\nSwitch -repeat will repeat the reminder starting with min duration of 1 hour.",
 		Aliases:      []string{"remind", "reminder"},
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
