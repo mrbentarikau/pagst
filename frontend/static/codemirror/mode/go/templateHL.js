@@ -64,6 +64,7 @@
     "json":true,
     "kindOf":true,
     "noun":true,
+    "randFloat":true,
     "randInt":true,
     "roleAbove":true,
     "sdict":true,
@@ -91,19 +92,19 @@
     "humanizeTimeSinceDays":true,
     
     // context functions
+    "editMessage":true,
+    "editMessageNoEscape":true,
+    "lastMessages":true,
+    "pinMessage":true,
     "sendDM":true, 
-    "sendTargetDM":true,
     "sendMessage":true,
-    "sendTemplate":true,
-    "sendTemplateDM":true,
     "sendMessageRetID":true,
     "sendMessageNoEscape":true,
     "sendMessageNoEscapeRetID":true,
-    "editMessage":true,
-    "editMessageNoEscape":true,
-    "pinMessage":true,
+    "sendTargetDM":true,
+    "sendTemplate":true,
+    "sendTemplateDM":true,
     "unpinMessage":true,
-    "lastMessages":true,
     
     // Mentions
     "mentionEveryone":true,
@@ -112,6 +113,57 @@
     "mentionRoleName":true,
     "mentionRoleID":true,
     
+    // permission funcs
+    "getTargetPermissionsIn":true,
+    "hasPermissions":true,
+    "targetHasPermissions":true,
+    
+    // Varia
+    "addMessageReactions":true,
+    "addResponseReactions":true,
+    "addReactions":true,
+    "ccCounters":true,
+    "currentUserCreated":true,
+    "currentUserAgeHuman":true,
+    "currentUserAgeMinutes":true,
+    "deleteAllMessageReactions":true,
+    "deleteMessage":true,
+    "deleteMessageReaction":true,
+    "deleteResponse":true,
+    "deleteTrigger":true,
+    "editChannelName":true,
+    "editChannelTopic":true,
+    "editNickname":true,
+    "getAllMessageReactions":true,
+    "getChannel":true,
+    "getChannelOrThread":true,
+    "getMember":true,
+    "getMessage":true,
+    "getPinCount":true,
+    "getThread":true,
+    "onlineCount":true,
+    "onlineCountBots":true,
+    "reFind":true,
+    "reFindAll":true,
+    "reFindAllSubmatches":true,
+    "reReplace":true,
+    "reSplit":true,
+    "sleep":true,
+    "sort":true,
+    
+    // templatextensions
+    "cancelScheduledUniqueCC":true,
+    "carg":true,
+    "editCCTriggerType":true,
+    "execCC":true,
+    "parseArgs":true,
+    "scheduleUniqueCC":true,
+    
+    // templexec
+    "exec":true,
+    "execAdmin":true,
+    "userArg":true,
+
     // Role functions
     "addRole":true,
     "addRoleID":true,
@@ -135,53 +187,8 @@
     "targetHasRole":true,
     "targetHasRoleID":true,
     "targetHasRoleName":true,
-    
-    // permission funcs
-    "hasPermissions":true,
-    "targetHasPermissions":true,
-    "getTargetPermissionsIn":true,
-    
-    //Varia
-    "deleteResponse":true,
-    "deleteTrigger":true,
-    "deleteMessage":true,
-    "deleteMessageReaction":true,
-    "deleteAllMessageReactions":true,
-    "getMessage":true,
-    "getAllMessageReactions":true,
-    "getMember":true,
-    "getChannel":true,
-    "getThread":true,
-    "getChannelOrThread":true,
-    "getPinCount":true,
-    "addReactions":true,
-    "addResponseReactions":true,
-    "addMessageReactions":true,
-    "currentUserCreated":true,
-    "currentUserAgeHuman":true,
-    "currentUserAgeMinutes":true,
-    "sleep":true,
-    "reFind":true,
-    "reFindAll":true,
-    "reFindAllSubmatches":true,
-    "reReplace":true,
-    "reSplit":true,
-    "editChannelTopic":true,
-    "editChannelName":true,
-    "onlineCount":true,
-    "onlineCountBots":true,
-    "editNickname":true,
-    "sort":true,
-    
-    //templatextensions
-    "cancelScheduledUniqueCC":true,
-    "carg":true,
-    "editCCTriggerType":true,
-    "execCC":true,
-    "parseArgs":true,
-    "scheduleUniqueCC":true,
-    
-    //template user database
+
+// template user database
     "dbBottomEntries":true,
     "dbCount":true,
     "dbDecr":true,
@@ -196,10 +203,48 @@
     "dbSet":true,
     "dbSetExpire":true,
     "dbGetPatternReverse":true,
-    "dbTopEntries":true,
-    
-    //templexec
-    "exec":true,
-    "execAdmin":true,
-    "userArg":true
+    "dbTopEntries":true
   };
+/*
+var funcMap2 = {
+// Role functions
+    "addRole":true,
+    "addRoleID":true,
+    "addRoleName":true,
+    "getRole":true,
+    "getRoleID":true,
+    "getRoleName":true,
+    "giveRole":true,
+    "giveRoleID":true,
+    "giveRoleName":true,
+    "hasRole":true,
+    "hasRoleID":true,
+    "hasRoleName":true,
+    "removeRole":true,
+    "removeRoleID":true,
+    "removeRoleName":true,
+    "setRoles":true,
+    "takeRole":true,
+    "takeRoleID":true,
+    "takeRoleName":true,
+    "targetHasRole":true,
+    "targetHasRoleID":true,
+    "targetHasRoleName":true,
+
+// template user database
+    "dbBottomEntries":true,
+    "dbCount":true,
+    "dbDecr":true,
+    "dbDel":true,
+    "dbDelByID":true,
+    "dbDelById":true,
+    "dbDelMultiple":true,
+    "dbGet":true,
+    "dbGetPattern":true,
+    "dbIncr":true,
+    "dbRank":true,
+    "dbSet":true,
+    "dbSetExpire":true,
+    "dbGetPatternReverse":true,
+    "dbTopEntries":true
+}*/
