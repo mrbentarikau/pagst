@@ -135,6 +135,14 @@ type Message struct {
 	Member *Member `json:"member"`
 
 	ReferencedMessage *Message `json:"referenced_message"`
+
+	// MessageReference contains reference data sent with crossposted or reply messages.
+	// This does not contain the reference *to* this message; this is for when *this* message references another.
+	// To generate a reference to this message, use (*Message).Reference().
+	MessageReference *MessageReference `json:"message_reference"`
+
+	// An array of Sticker objects, if any were sent.
+	StickerItems []*Sticker `json:"sticker_items"`
 }
 
 func (m *Message) GetGuildID() int64 {
@@ -159,13 +167,59 @@ type File struct {
 	Reader      io.Reader
 }
 
+// StickerFormat is the file format of the Sticker.
+type StickerFormat int
+
+// Defines all known Sticker types.
+const (
+	StickerFormatTypePNG    StickerFormat = 1
+	StickerFormatTypeAPNG   StickerFormat = 2
+	StickerFormatTypeLottie StickerFormat = 3
+)
+
+// StickerType is the type of sticker.
+type StickerType int
+
+// Defines Sticker types.
+const (
+	StickerTypeStandard StickerType = 1
+	StickerTypeGuild    StickerType = 2
+)
+
+// Sticker represents a sticker object that can be sent in a Message.
+type Sticker struct {
+	ID          int64         `json:"id,string"`
+	PackID      int64         `json:"pack_id,string"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Tags        string        `json:"tags"`
+	Type        StickerType   `json:"type"`
+	FormatType  StickerFormat `json:"format_type"`
+	Available   bool          `json:"available"`
+	GuildID     int64         `json:"guild_id,string"`
+	User        *User         `json:"user"`
+	SortValue   int           `json:"sort_value"`
+}
+
+// StickerPack represents a pack of standard stickers.
+type StickerPack struct {
+	ID             int64     `json:"id,string"`
+	Stickers       []Sticker `json:"stickers"`
+	Name           string    `json:"name"`
+	SKUID          int64     `json:"sku_id,string"`
+	CoverStickerID int64     `json:"cover_sticker_id,string"`
+	Description    string    `json:"description"`
+	BannerAssetID  int64     `json:"banner_asset_id,string"`
+}
+
 // MessageSend stores all parameters you can send with ChannelMessageSendComplex.
 type MessageSend struct {
-	Content         string          `json:"content,omitempty"`
-	Embed           *MessageEmbed   `json:"embed,omitempty"`
-	Tts             bool            `json:"tts"`
-	Files           []*File         `json:"-"`
-	AllowedMentions AllowedMentions `json:"allowed_mentions"`
+	Content         string            `json:"content,omitempty"`
+	Embed           *MessageEmbed     `json:"embed,omitempty"`
+	Tts             bool              `json:"tts"`
+	Files           []*File           `json:"-"`
+	AllowedMentions AllowedMentions   `json:"allowed_mentions"`
+	Reference       *MessageReference `json:"message_reference,omitempty"`
 
 	// TODO: Remove this when compatibility is not required.
 	File *File `json:"-"`
@@ -311,6 +365,22 @@ type MessageReactions struct {
 	Count int    `json:"count"`
 	Me    bool   `json:"me"`
 	Emoji *Emoji `json:"emoji"`
+}
+
+// MessageReference contains reference data sent with crossposted messages
+type MessageReference struct {
+	MessageID int64 `json:"message_id,string"`
+	ChannelID int64 `json:"channel_id,string"`
+	GuildID   int64 `json:"guild_id,string,omitempty"`
+}
+
+// Reference returns MessageReference of given message
+func (m *Message) Reference() *MessageReference {
+	return &MessageReference{
+		GuildID:   m.GuildID,
+		ChannelID: m.ChannelID,
+		MessageID: m.ID,
+	}
 }
 
 // ContentWithMentionsReplaced will replace all @<id> mentions with the

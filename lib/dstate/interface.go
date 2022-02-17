@@ -329,6 +329,7 @@ type MessageState struct {
 	Mentions     []discordgo.User
 	MentionRoles []int64
 	Attachments  []discordgo.MessageAttachment
+	StickerItems []discordgo.Sticker
 
 	ParsedCreatedAt time.Time
 	ParsedEditedAt  time.Time
