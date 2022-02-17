@@ -75,7 +75,6 @@ var (
 		"max":        tmplMax,
 		"min":        tmplMin,
 		"mult":       tmplMult,
-		"ordinalize": tmplOrdinalize,
 		"pow":        tmplPow,
 		"round":      tmplRound,
 		"roundCeil":  tmplRoundCeil,
@@ -111,6 +110,8 @@ var (
 		"json":               tmplJson,
 		"kindOf":             KindOf,
 		"noun":               common.RandomNoun,
+		"ordinalize":         tmplOrdinalize,
+		"randFloat":          randFloat,
 		"randInt":            randInt,
 		"roleAbove":          roleIsAbove,
 		"sdict":              StringKeyDictionary,
@@ -492,6 +493,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
 	if err != nil {
+		common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(fmt.Sprint(err)))
 		logger.WithError(err).Error("Failed sending message")
 	} else {
 		if c.CurrentFrame.DelResponse {
@@ -631,6 +633,7 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getTargetPermissionsIn", c.tmplGetTargetPermissionsIn)
 
 	//Varia
+	c.addContextFunc("ccCounters", c.tmplCounters)
 	c.addContextFunc("deleteResponse", c.tmplDelResponse)
 	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
 	c.addContextFunc("deleteMessage", c.tmplDelMessage)
@@ -955,4 +958,24 @@ func (s Slice) StringSlice(flag ...bool) interface{} {
 	}
 
 	return StringSlice
+}
+
+func withOutputLimit(f func(...interface{}) string, limit int) func(...interface{}) (string, error) {
+	return func(args ...interface{}) (string, error) {
+		out := f(args...)
+		if len(out) > limit {
+			return "", fmt.Errorf("string grew too long: %d (max %d)", len(out), limit)
+		}
+		return out, nil
+	}
+}
+
+func withOutputLimitf(f func(string, ...interface{}) string, limit int) func(string, ...interface{}) (string, error) {
+	return func(format string, args ...interface{}) (string, error) {
+		out := f(format, args...)
+		if len(out) > limit {
+			return "", fmt.Errorf("string grew too long: %d (max %d)", len(out), limit)
+		}
+		return out, nil
+	}
 }

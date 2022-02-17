@@ -404,6 +404,7 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 				Parse: parseMentions,
 			},
 		}
+
 		var err error
 
 		switch typedMsg := msg.(type) {
@@ -419,6 +420,11 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 			msgSend = typedMsg
 			if !filterSpecialMentions {
 				msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
+			}
+
+			if msgSend.Reference != nil {
+				cid = c.CurrentFrame.CS.ID
+				msgSend.Reference.ChannelID = cid
 			}
 
 			if isDM {
@@ -1974,4 +1980,16 @@ func (c *Context) validateDurationDelay(in interface{}) time.Duration {
 	default:
 		return ToDuration(t)
 	}
+}
+
+func (c *Context) tmplCounters() (map[string]int, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckStateLock() {
+		return nil, ErrTooManyCalls
+	}
+
+	return c.Counters, nil
 }

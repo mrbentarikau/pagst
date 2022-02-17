@@ -149,9 +149,9 @@ func StructToSdict(value interface{}) (SDict, error) {
 	fields := make(map[string]interface{})
 	for i := 0; i < val.NumField(); i++ {
 		curr := val.Field(i)
-		if curr.CanSet() {
-			fields[typeOfS.Field(i).Name] = curr.Interface()
-		}
+		//if curr.CanSet() {
+		fields[typeOfS.Field(i).Name] = curr.Interface()
+		//}
 	}
 	return SDict(fields), nil
 
@@ -223,11 +223,14 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 		},
 	}
 
+	// Default filename
+	filename := "attachment_" + time.Now().Format("2006-01-02_15-04-05")
+
 	for key, val := range messageSdict {
 
 		switch strings.ToLower(key) {
 		case "content":
-			msg.Content = fmt.Sprint(val)
+			msg.Content = ToString(val)
 		case "embed":
 			if val == nil {
 				continue
@@ -238,7 +241,7 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			}
 			msg.Embed = embed
 		case "file":
-			stringFile := fmt.Sprint(val)
+			stringFile := ToString(val)
 			if len(stringFile) > 256000 {
 				return nil, errors.New("file length for send message builder exceeded size limit")
 			}
@@ -246,11 +249,14 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			buf.WriteString(stringFile)
 
 			msg.File = &discordgo.File{
-				Name:        "attachment_" + time.Now().UTC().Format("20060102_150405") + ".txt",
+				//Name:        "attachment_" + time.Now().UTC().Format("20060102_150405") + ".txt",
 				ContentType: "text/plain",
 				Reader:      &buf,
 			}
-		case "allowedmentions":
+		case "filename":
+			// Cut the filename to a reasonable length if it's too long
+			filename = common.CutStringShort(ToString(val), 64)
+		case "allowedMentions":
 			if val == nil {
 				msg.AllowedMentions = discordgo.AllowedMentions{}
 				continue
@@ -260,8 +266,18 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 				return nil, err
 			}
 			msg.AllowedMentions = *parsed
+		case "reply":
+			reference := &discordgo.MessageReference{
+				MessageID: ToInt64(val),
+			}
+			msg.Reference = reference
 		default:
 			return nil, errors.New(`invalid key "` + key + `" passed to send message builder`)
+		}
+
+		if msg.File != nil {
+			// We hardcode the extension to .txt to prevent possible abuse via .bat or other possible harmful/easily corruptable file formats
+			msg.File.Name = filename + ".txt"
 		}
 
 	}
@@ -847,6 +863,24 @@ func roleIsAbove(a, b *discordgo.Role) bool {
 	return common.IsRoleAbove(a, b)
 }
 
+func randFloat(args ...interface{}) (float64, error) {
+	min := float64(0)
+	max := float64(10)
+	if len(args) >= 2 {
+		min = ToFloat64(args[0])
+		max = ToFloat64(args[1])
+	} else if len(args) == 1 {
+		max = ToFloat64(args[0])
+	}
+	diff := max - min
+	if diff <= 0 {
+		return 0, errors.New("start must be strictly less than stop")
+	}
+
+	r := rand.Float64()
+	return float64(r*diff + min), nil
+}
+
 func randInt(args ...interface{}) (int, error) {
 	min := int64(0)
 	max := int64(10)
@@ -959,26 +993,6 @@ func joinStrings(sep string, args ...interface{}) (string, error) {
 	}
 
 	return builder.String(), nil
-}
-
-func withOutputLimit(f func(...interface{}) string, limit int) func(...interface{}) (string, error) {
-	return func(args ...interface{}) (string, error) {
-		out := f(args...)
-		if len(out) > limit {
-			return "", fmt.Errorf("string grew too long: %d (max %d)", len(out), limit)
-		}
-		return out, nil
-	}
-}
-
-func withOutputLimitf(f func(string, ...interface{}) string, limit int) func(string, ...interface{}) (string, error) {
-	return func(format string, args ...interface{}) (string, error) {
-		out := f(format, args...)
-		if len(out) > limit {
-			return "", fmt.Errorf("string grew too long: %d (max %d)", len(out), limit)
-		}
-		return out, nil
-	}
 }
 
 func sequence(start, stop int) ([]int, error) {
