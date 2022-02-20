@@ -149,9 +149,9 @@ func StructToSdict(value interface{}) (SDict, error) {
 	fields := make(map[string]interface{})
 	for i := 0; i < val.NumField(); i++ {
 		curr := val.Field(i)
-		//if curr.CanSet() {
-		fields[typeOfS.Field(i).Name] = curr.Interface()
-		//}
+		if curr.CanInterface() {
+			fields[typeOfS.Field(i).Name] = curr.Interface()
+		}
 	}
 	return SDict(fields), nil
 
