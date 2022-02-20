@@ -16,7 +16,7 @@ CodeMirror.defineMode("go", function(config) {
   var methodRE = /[a-z_A-Z0-9'\xa1-\uffff]/;
 
   var keywords = {
-    "break":true, "case":true, "chan":true, "const":true, "continue":true,
+    /*"break":true, "case":true, "chan":true, "const":true, "continue":true,
     "default":true, "defer":true, "else":true, "fallthrough":true, "for":true,
     "func":true, "go":true, "goto":true, "if":true, "import":true,
     "interface":true, "map":true, "package":true, "range":true, "return":true,
@@ -25,15 +25,19 @@ CodeMirror.defineMode("go", function(config) {
     "float32":true, "float64":true, "int8":true, "int16":true, "int32":true,
     "int64":true, "string":true, "uint8":true, "uint16":true, "uint32":true,
     "uint64":true, "int":true, "uint":true, "uintptr":true, "error": true,
-    "rune":true,
-    "block":true, "define":true, "end":true, "template":true, "with":true
+    "rune":true,*/
+    "block":true, "define":true, "else":true, "end":true,
+    "if":true,"range":true, "template":true, "with":true
   };
 
   var atoms = {
-    "true":true, "false":true, "iota":true, "nil":true, "append":true,
+    /*"true":true, "false":true, "iota":true, "nil":true, "append":true,
     "cap":true, "close":true, "complex":true, "copy":true, "delete":true, "imag":true,
     "len":true, "make":true, "new":true, "panic":true, "print":true,
-    "printf":true, "println":true, "real":true, "recover":true,
+    "printf":true, "println":true, "real":true, "recover":true,*/
+
+    "true":true, "false":true, "nil":true,
+    "print":true, "printf":true, "println":true,
     "and":true, "call":true, "html":true, "index":true, "js":true,
     "len":true, "not":true, "or":true,"urlquery":true, "eq":true, "ne":true,
     "lt":true, "le":true, "gt":true, "ge":true
@@ -87,7 +91,8 @@ CodeMirror.defineMode("go", function(config) {
       return "keyword";
     }
     if (atoms.propertyIsEnumerable(cur)) return "atom";
-    if (funcMap.propertyIsEnumerable(cur)) return "variable-3";
+    if (funcMap.propertyIsEnumerable(cur)) return "variable-2";
+    //if (funcMap2.propertyIsEnumerable(cur)) return "variable-3";
     return "variable";
   }
 

@@ -360,7 +360,7 @@ func setupRoutes() *goji.Mux {
 	AddSidebarItem(SidebarCategoryCore, &SidebarItem{
 		Name: "Control panel logs",
 		URL:  "cplogs",
-		Icon: "fas fa-database",
+		Icon: "fas fa-copy",
 	})
 
 	for _, plugin := range common.Plugins {

@@ -14,9 +14,9 @@ import (
 	"github.com/mrbentarikau/pagst/bot/botrest"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/featureflags"
-	"github.com/mrbentarikau/pagst/reputation/models"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/reputation/models"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -134,7 +134,7 @@ func (b UserError) Error() string {
 
 var (
 	ErrMissingRequiredGiveRole    = UserError("You don't have any of the required roles to give points")
-	ErrMissingRequiredReceiveRole = UserError("Target don't have any of the required roles to receive points")
+	ErrMissingRequiredReceiveRole = UserError("Target does not have any of the required roles to receive points")
 
 	ErrBlacklistedGive    = UserError("Blacklisted from giving points")
 	ErrBlacklistedReceive = UserError("Blacklisted from receiving points")

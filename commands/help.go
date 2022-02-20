@@ -126,7 +126,7 @@ For more in depth help and information you should visit https://docs.yagpdb.xyz/
 		return embed, nil
 	})
 	if err != nil {
-		return "Something went wrong, make sure you don't have the bot blocked!", err
+		return "Something went wrong, make sure you don't have the bot blocked or your direct messages closed!", err
 
 	}
 
