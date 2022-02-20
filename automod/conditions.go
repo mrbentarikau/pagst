@@ -703,16 +703,20 @@ func (dmc *DomainCondition) IsMet(data *TriggeredRuleData, settings interface{})
 		return false, nil
 	}
 
-	matches := common.LinkRegex.FindAllString(forwardSlashReplacer.Replace(data.Message.Content), -1)
+	if data.Message != nil {
+		matches := common.LinkRegex.FindAllString(forwardSlashReplacer.Replace(data.Message.Content), -1)
 
-	for _, v := range matches {
-		if contains, _ := dmc.containsDomain(v, list.Content); contains {
-			return false, nil
+		for _, v := range matches {
+			if contains, _ := dmc.containsDomain(v, list.Content); contains {
+				return false, nil
+			}
 		}
+
+		// Not in a whitelisted domains list
+		return true, nil
 	}
 
-	// Not in a whitelisted domains list
-	return true, nil
+	return false, nil
 }
 
 func (dmc *DomainCondition) containsDomain(link string, list []string) (bool, string) {

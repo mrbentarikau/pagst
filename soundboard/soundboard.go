@@ -4,15 +4,19 @@ package soundboard
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/soundboard/models"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 	"golang.org/x/net/context"
-	"os"
 )
 
 type Plugin struct{}
+
+var confSoundBoardActive = config.RegisterOption("yagpdb.soundboard_active", "Soundboard active", true)
 
 func (p *Plugin) PluginInfo() *common.PluginInfo {
 	return &common.PluginInfo{
@@ -25,6 +29,11 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 var logger = common.GetPluginLogger(&Plugin{})
 
 func RegisterPlugin() {
+	if !confSoundBoardActive.GetBool() {
+		common.GetPluginLogger(&Plugin{}).Warn("Soundboard disabled, skipping plugin init...")
+		return
+	}
+
 	common.InitSchemas("soundboard", DBSchemas...)
 
 	p := &Plugin{}
