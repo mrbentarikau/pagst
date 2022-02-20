@@ -16,7 +16,7 @@ import (
 
 type Plugin struct{}
 
-var confSoundBoardActive = config.RegisterOption("yagpdb.soundboard_active", "Soundboard active", true)
+var confSoundBoardActive = config.RegisterOption("yagpdb.soundboard_active", "Soundboard active (needs ffmpeg installed)", false)
 
 func (p *Plugin) PluginInfo() *common.PluginInfo {
 	return &common.PluginInfo{
