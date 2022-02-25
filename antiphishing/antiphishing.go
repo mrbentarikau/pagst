@@ -46,6 +46,7 @@ var (
 )
 
 const RedisKeyPhishingDomains = "phishing_domains"
+const PhishingCheckTrustRatingThreshold = 0.5
 
 var logger = common.GetPluginLogger(&Plugin{})
 
@@ -232,13 +233,26 @@ func queryPhishingLinks(input []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	badDomains := make([]string, len(bitflowAntifishResponse.Matches))
 	if bitflowAntifishResponse.Match {
+		for _, match := range bitflowAntifishResponse.Matches {
+			// only flag domains which have a low trust rating, this varies between 0 and 1, 0 means high trust, 1 means no trust.
+			// we use 0.5 as cutoff to make sure false positives are ignored.
+			if match.TrustRating > PhishingCheckTrustRatingThreshold {
+				badDomains = append(badDomains, match.Domain)
+			}
+		}
+		return strings.Join(badDomains, ","), err
+	}
+
+	/*if bitflowAntifishResponse.Match {
 		matchedLink := bitflowAntifishResponse.Matches[0].URL
 		if matchedLink == "" {
 			matchedLink = bitflowAntifishResponse.Matches[0].Domain
 		}
 		return matchedLink, err
-	}
+	}*/
 
 	return "", nil
 }

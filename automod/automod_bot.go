@@ -199,6 +199,9 @@ func (p *Plugin) handleGuildMemberUpdate(evt *eventsystem.EventData) {
 	evtData := evt.GuildMemberUpdate()
 
 	ms := dstate.MemberStateFromMember(evtData.Member)
+
+	p.checkUsername(ms)
+
 	if ms.Member.Nick == "" {
 		return
 	}

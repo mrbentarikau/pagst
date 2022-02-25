@@ -53,13 +53,13 @@ var RulePartMap = map[int]RulePart{
 		9X:  &UserStatusWordlistTrigger{Blacklist: false},
 		9X:  &UserStatusWordlistTrigger{Blacklist: true},
 	*/
-	94:  &MessageLengthTrigger{},
-	95:  &MessageLengthTrigger{Inverted: true},
-	96:  &SlowmodeTrigger{ChannelBased: false, Links: true},
-	97:  &SlowmodeTrigger{ChannelBased: true, Links: true},
-	98:  &VoiceStateUpdateTrigger{UserJoin: true},
-	99:  &VoiceStateUpdateTrigger{UserJoin: false},
-	100: &AntiFishDetectorTrigger{},
+	94: &MessageLengthTrigger{},
+	95: &MessageLengthTrigger{Inverted: true},
+	96: &SlowmodeTrigger{ChannelBased: false, Links: true},
+	97: &SlowmodeTrigger{ChannelBased: true, Links: true},
+	98: &VoiceStateUpdateTrigger{UserJoin: true},
+	99: &VoiceStateUpdateTrigger{UserJoin: false},
+	//100: &AntiFishDetectorTrigger{},
 
 	// Conditions 2xx
 	200: &MemberRolesCondition{Blacklist: true},

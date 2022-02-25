@@ -73,7 +73,7 @@ func (mc *MentionsTrigger) Name() string {
 }
 
 func (mc *MentionsTrigger) Description() string {
-	return "Triggers when a message includes more than x unique mentions."
+	return "Triggers when a message includes x or more unique mentions."
 }
 
 func (mc *MentionsTrigger) UserSettings() []*SettingDef {
@@ -345,7 +345,7 @@ func (vt *ViolationsTrigger) Name() string {
 }
 
 func (vt *ViolationsTrigger) Description() string {
-	return "Triggers when a user has more than x violations within y minutes."
+	return "Triggers when a user has x or more violations within y minutes."
 }
 
 func (vt *ViolationsTrigger) UserSettings() []*SettingDef {
@@ -429,7 +429,7 @@ func (caps *AllCapsTrigger) Name() string {
 }
 
 func (caps *AllCapsTrigger) Description() string {
-	return "Triggers when a message contains more than x% of just capitalized letters"
+	return "Triggers when a message contains x% or more of just capitalized letters"
 }
 
 func (caps *AllCapsTrigger) UserSettings() []*SettingDef {
@@ -525,7 +525,7 @@ func (inv *ServerInviteTrigger) MergeDuplicates(data []interface{}) interface{} 
 }
 
 /////////////////////////////////////////////////////////////
-
+/*
 var _ MessageTrigger = (*AntiFishDetectorTrigger)(nil)
 
 type AntiFishDetectorTrigger struct{}
@@ -584,7 +584,7 @@ func (g *AntiFishDetectorTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 func (g *AntiFishDetectorTrigger) MergeDuplicates(data []interface{}) interface{} {
 	return data[0] // no point in having duplicates of this
 }
-
+*/
 /////////////////////////////////////////////////////////////
 
 var _ MessageTrigger = (*AntiPhishingLinkTrigger)(nil)
@@ -596,7 +596,7 @@ func (a *AntiPhishingLinkTrigger) Kind() RulePartType {
 }
 
 func (a *AntiPhishingLinkTrigger) Name() string {
-	return "Flagged Scam links"
+	return "Anti-Fish API flagged bad links"
 }
 
 func (a *AntiPhishingLinkTrigger) DataType() interface{} {
@@ -604,7 +604,7 @@ func (a *AntiPhishingLinkTrigger) DataType() interface{} {
 }
 
 func (a *AntiPhishingLinkTrigger) Description() string {
-	return "Triggers on messages that have scam links flagged by SinkingYachts and BitFlow AntiPhishing APIs"
+	return "Triggers on messages that have scam links flagged by SinkingYachts and BitFlow AntiPhishing APIs and uses Google's Transparency Report as last resort."
 }
 
 func (a *AntiPhishingLinkTrigger) UserSettings() []*SettingDef {
@@ -620,6 +620,21 @@ func (a *AntiPhishingLinkTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 
 	if badDomain != "" {
 		return true, nil
+	}
+
+	matches := common.LinkRegexJonas.FindAllString(forwardSlashReplacer.Replace(m.Content), -1)
+
+	for _, v := range matches {
+		trasparencyReport, err := common.TransparencyReportQuery(v)
+		if err != nil {
+			logger.WithError(err).Error("Failed checking URLs from Google's Transparency Report API.")
+			return false, nil
+		}
+
+		if trasparencyReport.UnsafeContent == 2 || trasparencyReport.ScoreTotal >= 2 {
+			return true, nil
+		}
+
 	}
 
 	return false, nil
@@ -719,25 +734,25 @@ func (s *SlowmodeTrigger) Name() string {
 func (s *SlowmodeTrigger) Description() string {
 	if s.ChannelBased {
 		if s.Attachments {
-			return "Triggers when a channel has more than x attachments within y seconds"
+			return "Triggers when a channel has x or more attachments within y seconds"
 		}
 
 		if s.Links {
-			return "Triggers when a channel has more than x links within y seconds"
+			return "Triggers when a channel has x or more links within y seconds"
 		}
 
-		return "Triggers when a channel has more than x messages in y seconds."
+		return "Triggers when a channel has x or more messages in y seconds."
 	}
 
 	if s.Attachments {
-		return "Triggers when a user has more than x attachments within y seconds in a single channel"
+		return "Triggers when a user has x or more attachments within y seconds in a single channel"
 	}
 
 	if s.Links {
-		return "Triggers when a user has more than x links within y seconds in a single channel"
+		return "Triggers when a user has x or more links within y seconds in a single channel"
 	}
 
-	return "Triggers when a user has more than x messages in y seconds in a single channel."
+	return "Triggers when a user has x or more messages in y seconds in a single channel."
 }
 
 func (s *SlowmodeTrigger) UserSettings() []*SettingDef {
@@ -854,10 +869,10 @@ func (mt *MultiMsgMentionTrigger) Name() string {
 
 func (mt *MultiMsgMentionTrigger) Description() string {
 	if mt.ChannelBased {
-		return "Triggers when a channel has more than x unique mentions in y seconds"
+		return "Triggers when a channel has x or more unique mentions in y seconds"
 	}
 
-	return "Triggers when a user has sent more than x unique mentions in y seconds in a single channel"
+	return "Triggers when a user has sent x or more unique mentions in y seconds in a single channel"
 }
 
 func (mt *MultiMsgMentionTrigger) UserSettings() []*SettingDef {
