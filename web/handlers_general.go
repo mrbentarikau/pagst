@@ -22,9 +22,9 @@ import (
 	"github.com/mrbentarikau/pagst/common/models"
 	"github.com/mrbentarikau/pagst/common/patreon"
 	"github.com/mrbentarikau/pagst/common/pubsub"
-	"github.com/mrbentarikau/pagst/web/discordblog"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/web/discordblog"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
 	"github.com/volatiletech/null"
@@ -135,7 +135,7 @@ func HandleSelectServer(w http.ResponseWriter, r *http.Request) interface{} {
 		}
 	}
 
-	posts := discordblog.GetNewestPosts(100)
+	posts := discordblog.GetNewestPosts(25)
 	tmpl["Posts"] = posts
 	tmpl["RedditQuotes"] = html.UnescapeString(redditQuote)
 
