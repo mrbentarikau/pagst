@@ -212,37 +212,6 @@
             </select>
         </div>
     </div>
-    <div class="form-row" style="margin-top:7px">
-        <hr />
-        <div class="form-group col-md-6">
-            <label><br/>Auto-delete trigger after (seconds)</label>
-            <div class="input-group mb-3">
-                <span class="input-group-prepend">
-                    <span class="input-group-text">
-                        <input type="checkbox" name="AutodeleteTrigger"
-                            {{if .Override.AutodeleteTrigger}}checked{{end}}>
-                    </span>
-                </span>
-                <input type="number" class="form-control" placeholder="Seconds..."
-                    value="{{if .Override}}{{.Override.AutodeleteTriggerDelay}}{{else}}10{{end}}"
-                    name="AutodeleteTriggerDelay">
-            </div>
-        </div>
-        <div class="form-group col-md-6">
-            <label>Auto-delete response after (seconds)<br/>does not apply to responses that are paginated</label>
-            <div class="input-group mb-3">
-                <span class="input-group-prepend">
-                    <span class="input-group-text">
-                        <input type="checkbox" name="AutodeleteResponse"
-                            {{if .Override.AutodeleteResponse}}checked{{end}}>
-                    </span>
-                </span>
-                <input type="number" class="form-control" placeholder="Seconds..."
-                    value="{{if .Override}}{{.Override.AutodeleteResponseDelay}}{{else}}10{{end}}"
-                    name="AutodeleteResponseDelay">
-            </div>
-        </div>
-    </div>
     <div class="form-row">
         {{$desc := "All commands enabled?"}}
         {{$commandsEnabled := true}}
@@ -258,6 +227,36 @@
                 <span class="ml-2 mb-2">{{$desc}}</span>
             </div>
         {{end}}
+        <hr />
+
+        <div class="form-group col-md-5 ml-2">
+            <label>Auto-delete trigger after (seconds)</label>
+            <div class="input-group mb-3">
+                <span class="input-group-prepend">
+                    <span class="input-group-text">
+                        <input type="checkbox" name="AutodeleteTrigger"
+                            {{if .Override.AutodeleteTrigger}}checked{{end}}>
+                    </span>
+                </span>
+                <input type="number" min="0" max="2678400" class="form-control" placeholder="Seconds..."
+                    value="{{if .Override}}{{.Override.AutodeleteTriggerDelay}}{{else}}10{{end}}"
+                    name="AutodeleteTriggerDelay">
+            </div>
+        </div>
+        <div class="form-group col-md-5">
+            <label>Autodelete response after (seconds); does not apply to responses that are paginated</label>
+            <div class="input-group mb-3">
+                <span class="input-group-prepend">
+                    <span class="input-group-text">
+                        <input type="checkbox" name="AutodeleteResponse"
+                            {{if .Override.AutodeleteResponse}}checked{{end}}>
+                    </span>
+                </span>
+                <input type="number" min="0" max="2678400" class="form-control" placeholder="Seconds..."
+                    value="{{if .Override}}{{.Override.AutodeleteResponseDelay}}{{else}}10{{end}}"
+                    name="AutodeleteResponseDelay">
+            </div>
+        </div>
     </div>
     {{if .Override}}
     <button type="submit" class="btn btn-success" value="Save" data-async-form-alertsonly>Save channel
@@ -358,7 +357,7 @@
                                         {{if .Override.AutodeleteTrigger}}checked{{end}}>
                                 </span>
                             </span>
-                            <input type="number" class="form-control" placeholder="Seconds..."
+                            <input type="number" min="0" max="2678400" class="form-control" placeholder="Seconds..."
                                 value="{{if .Override}}{{.Override.AutodeleteTriggerDelay}}{{else}}10{{end}}"
                                 name="AutodeleteTriggerDelay">
                         </div>
@@ -372,7 +371,7 @@
                                         {{if .Override.AutodeleteResponse}}checked{{end}}>
                                 </span>
                             </span>
-                            <input type="number" class="form-control" placeholder="Seconds..."
+                            <input type="number" min="0" max="2678400" class="form-control" placeholder="Seconds..."
                                 value="{{if .Override}}{{.Override.AutodeleteResponseDelay}}{{else}}10{{end}}"
                                 name="AutodeleteResponseDelay">
                         </div>

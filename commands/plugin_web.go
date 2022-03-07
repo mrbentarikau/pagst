@@ -17,10 +17,10 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/featureflags"
-	"github.com/mrbentarikau/pagst/web"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/web"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -39,8 +39,8 @@ type ChannelOverrideForm struct {
 	CommandsEnabled         bool
 	AutodeleteResponse      bool
 	AutodeleteTrigger       bool
-	AutodeleteResponseDelay int
-	AutodeleteTriggerDelay  int
+	AutodeleteResponseDelay int     `valid:"0,2678400"`
+	AutodeleteTriggerDelay  int     `valid:"0,2678400"`
 	RequireRoles            []int64 `valid:"role,true"`
 	IgnoreRoles             []int64 `valid:"role,true"`
 }
@@ -50,8 +50,8 @@ type CommandOverrideForm struct {
 	CommandsEnabled         bool
 	AutodeleteResponse      bool
 	AutodeleteTrigger       bool
-	AutodeleteResponseDelay int
-	AutodeleteTriggerDelay  int
+	AutodeleteResponseDelay int     `valid:"0,2678400"`
+	AutodeleteTriggerDelay  int     `valid:"0,2678400"`
 	RequireRoles            []int64 `valid:"role,true"`
 	IgnoreRoles             []int64 `valid:"role,true"`
 }
