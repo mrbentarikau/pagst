@@ -50,6 +50,7 @@ func getRedditQuote() string {
 	}
 
 	req.Header.Set("User-Agent", "PAGST/20.42.6702")
+	//req.Header.Set("Content-Type", "application/json")
 
 	resp, _ := http.DefaultClient.Do(req)
 	if err != nil {
@@ -65,7 +66,8 @@ func getRedditQuote() string {
 
 	queryErr := json.Unmarshal(body, &redditQuoteQuery)
 	if queryErr != nil {
-		return fmt.Sprint("Error: ", queryErr)
+		return ""
+		//return fmt.Sprint("Error: ", queryErr)
 	}
 
 	return redditQuoteQuery[0].Data.Children[0].Data.Selfttext
