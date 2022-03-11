@@ -224,16 +224,18 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 			},
 		}
 
-		if item.UseEmbeds {
-			var matureContentWarning string
-			if post.Over18 && item.FilterNSFW == FilterNSFWNone {
-				matureContentWarning = "**Mature Content Warning**\n\n"
+		var matureContentWarning string
+		if post.Over18 && item.FilterNSFW == FilterNSFWNone {
+			matureContentWarning = "**Mature Content Warning**\n\n"
+			if item.UseEmbeds {
 				embed.Color = 0xc51717
 			}
+		}
+		if item.UseEmbeds {
 			qm.MessageEmbed = embed
 			qm.MessageEmbed.Description = matureContentWarning + embed.Description
 		} else {
-			qm.MessageStr += message
+			qm.MessageStr += matureContentWarning + message
 		}
 
 		mqueue.QueueMessage(qm)
