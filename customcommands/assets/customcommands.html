@@ -170,7 +170,11 @@
                 {{else if eq .TriggerType 0}}
                     {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}
                 {{else if eq .TriggerType 5}}
-                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-interval-span">Every {{call $dot.GetCCInterval .}} {{if eq (call $dot.GetCCIntervalType .) 1}}hour(s)</span>{{else}}minute(s)</span>{{end}} Next run: <span class="cc-text-next-run-span">{{.NextRun.Time.UTC.Format "2006-01-02 15:04:05 MST"}}</span>&nbsp;&nbsp;Channel: <span class="cc-text-interval-span">{{if .ContextChannel}}{{call $dot.GetChannelName .}}{{else}}None{{end}}</span>
+                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-interval-span">Every {{call $dot.GetCCInterval .}} {{if eq (call $dot.GetCCIntervalType .) 1}}hour(s)</span>{{else}}minute(s)</span>{{end}} Next run: <span id="PAGST-CC-NEXT-RUN-{{.LocalID}}" class="cc-text-next-run-span" title="{{.NextRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
+                                        <script>
+                                            var date = new Date({{.NextRun.Time.UTC.Unix}} * 1000);
+                                            document.getElementById("PAGST-CC-NEXT-RUN-{{.LocalID}}").innerHTML = new Intl.DateTimeFormat(Intl.DateTimeFormat().resolvedOptions().locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
+                                        </script></span>&nbsp;&nbsp;Channel: <span class="cc-text-interval-span">{{if .ContextChannel}}{{call $dot.GetChannelName .}}{{else}}None{{end}}</span>
                 {{else if eq .TriggerType 6}}
                      {{template "cc_beginning" $dotSDict}}{{template "cc_restrictions" .}}
                 {{else}}
