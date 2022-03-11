@@ -65,6 +65,11 @@
                     <label for="new-subreddit-slow-{{.Slow}}">Subreddit</label>
                     <input type="text" class="form-control" id="new-subreddit-slow-{{.Slow}}" name="subreddit"
                         placeholder="discord_irl">
+                        {{$formatNewSlow := "disable-subreddit-search"}}
+                        {{if .Slow}}
+                             {{$formatNewSlow = "disable-subreddit-search-slow"}}
+                         {{end}}
+                        {{checkbox "disable_subreddit_search" $formatNewSlow `<small class="mb-1 mt-1 mr-1 modal-basic">Disable subreddit search</small>` false}}
                 </div>
                 <div class="form-group col">
                     <label for="new-channel-slow-{{.Slow}}">Server Channel</label>
@@ -88,6 +93,10 @@
                         <option value="2">Only post NSFW Posts</option>
                     </select>
                 </div>
+                {{if .Slow}}<div class="form-group col">
+                    <label>Minimum needed score</label>
+                    <input type="number" min="0" name="min_upvotes" value="5" class="form-control">
+                </div>{{end}}
             </div>
             <div class="form-row mb-2">
                 <div class="form-group col">
@@ -97,12 +106,6 @@
                 {{end}}
                 {{checkbox "use_embeds" (joinStr "" $formatNewSlow .Slow) `Use embeds<small class="ml-2">(Videos won't be attached, but just linked)</small>` true}}
                 </div>
-                {{if .Slow}}
-                <div class="form-group col">
-                    <label>Minimum needed score</label>
-                    <input type="number" name="min_upvotes" value="5" class="form-control">
-                </div>
-                {{end}}
             </div>
             <button type="submit" class="btn btn-success btn-block">Add</button>
         </form>
@@ -158,7 +161,7 @@
                 </div>
                 {{if .Slow}}<div class="form-group col">
                     <label>Minimum needed score</label>
-                    <input type="number" name="min_upvotes" value="{{.MinUpvotes}}" class="form-control">
+                    <input type="number" min="0" name="min_upvotes" value="{{.MinUpvotes}}" class="form-control">
                 </div>{{end}}
             </div>
         </div>

@@ -15,8 +15,8 @@ import (
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/feeds"
-	"github.com/mrbentarikau/pagst/reddit/models"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/reddit/models"
 	"github.com/jonas747/go-reddit"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -151,7 +151,7 @@ func (p *PostHandlerImpl) getConfigs(subreddit string) ([]*models.RedditFeed, er
 
 	config, err := models.RedditFeeds(qms...).AllG(context.Background())
 	if err != nil {
-		logger.WithError(err).Error("failed retrieving reddit feeds for subreddit")
+		logger.WithError(err).Error("failed retrieving Reddit feeds for subreddit")
 		return nil, err
 	}
 
@@ -167,7 +167,7 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 
 	config, err := p.getConfigs(strings.ToLower(post.Subreddit))
 	if err != nil {
-		logger.WithError(err).Error("failed retrieving reddit feeds for subreddit")
+		logger.WithError(err).Error("failed retrieving Reddit feeds for subreddit")
 		return err
 	}
 
@@ -193,7 +193,7 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 	logger.WithFields(logrus.Fields{
 		"num_channels": len(filteredItems),
 		"subreddit":    post.Subreddit,
-	}).Debug("Found matched reddit post")
+	}).Debug("Found matched Reddit post")
 
 	message, embed := CreatePostMessage(post)
 
@@ -225,7 +225,13 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 		}
 
 		if item.UseEmbeds {
+			var matureContentWarning string
+			if post.Over18 && item.FilterNSFW == FilterNSFWNone {
+				matureContentWarning = "**Mature Content Warning**\n\n"
+				embed.Color = 0xc51717
+			}
 			qm.MessageEmbed = embed
+			qm.MessageEmbed.Description = matureContentWarning + embed.Description
 		} else {
 			qm.MessageStr += message
 		}
@@ -317,19 +323,25 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
 			URL:  "https://reddit.com/u/" + post.Author,
-			Name: post.Author,
+			Name: fmt.Sprint("u/", post.Author),
 		},
 		Provider: &discordgo.MessageEmbedProvider{
 			Name: "Reddit",
 			URL:  "https://reddit.com",
 		},
-		Description: "**" + html.UnescapeString(post.Title) + "**\n",
+		//Description: "**" + html.UnescapeString(post.Title) + "**\n",
+		Description: "",
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "Type: ",
+		},
+		Timestamp: time.Unix(int64(post.CreatedUtc), 0).UTC().Format(time.RFC3339),
 	}
 	embed.URL = "https://redd.it/" + post.ID
 
 	if post.IsSelf {
 		//  Handle Self posts
-		embed.Title = "New self post"
+		embed.Title = html.UnescapeString(post.Title)
+		embed.Footer.Text += "new self post"
 		if post.Spoiler {
 			embed.Description += "|| " + common.CutStringShort(html.UnescapeString(post.Selftext), 250) + " ||"
 		} else {
@@ -339,7 +351,8 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		embed.Color = 0xc3fc7e
 	} else if post.CrosspostParent != "" && len(post.CrosspostParentList) > 0 {
 		//  Handle crossposts
-		embed.Title = "New Crosspost"
+		embed.Title = html.UnescapeString(post.Title)
+		embed.Footer.Text += "new crosspost"
 
 		parent := post.CrosspostParentList[0]
 		embed.Description += "**" + html.UnescapeString(parent.Title) + "**\n"
@@ -353,7 +366,7 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 			}
 		} else {
 			// cross post was a link most likely
-			embed.Color = 0x718aed
+			embed.Color = 0x88c0d0
 			embed.Description += parent.URL
 			if parent.Media.Type == "" && !parent.Spoiler && parent.PostHint == "image" {
 				embed.Image = &discordgo.MessageEmbedImage{
@@ -363,8 +376,9 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		}
 	} else {
 		//  Handle Link posts
-		embed.Color = 0x718aed
-		embed.Title = "New link post"
+		embed.Color = 0x88c0d0
+		embed.Title = html.UnescapeString(post.Title)
+		embed.Footer.Text += "new link post"
 		embed.Description += post.URL
 
 		if post.Media.Type == "" && !post.Spoiler && post.PostHint == "image" {
@@ -378,7 +392,6 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		embed.Title += " [spoiler]"
 	}
 
-	plainMessage = plainMessage
 	return plainMessage, embed
 }
 

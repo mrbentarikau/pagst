@@ -32,14 +32,15 @@ const (
 )
 
 type CreateForm struct {
-	Subreddit   string  `schema:"subreddit" valid:",1,100"`
-	Slow        bool    `schema:"slow"`
-	Channel     int64   `schema:"channel" valid:"channel,true"`
-	ID          int64   `schema:"id"`
-	UseEmbeds   bool    `schema:"use_embeds"`
-	NSFWMode    int     `schema:"nsfw_filter"`
-	MinUpvotes  int     `schema:"min_upvotes"`
-	MentionRole []int64 `schema:"mention_role" valid:"role,true"`
+	Subreddit              string  `schema:"subreddit" valid:",1,100"`
+	Slow                   bool    `schema:"slow"`
+	Channel                int64   `schema:"channel" valid:"channel,true"`
+	ID                     int64   `schema:"id"`
+	UseEmbeds              bool    `schema:"use_embeds"`
+	NSFWMode               int     `schema:"nsfw_filter"`
+	MinUpvotes             int     `schema:"min_upvotes"`
+	MentionRole            []int64 `schema:"mention_role" valid:"role,true"`
+	DisableSubredditSearch bool    `schema:"disable_subreddit_search"`
 }
 
 type UpdateForm struct {
@@ -125,6 +126,16 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 	templateData["RedditConfig"] = currentConfig
 
 	newElem := ctx.Value(common.ContextKeyParsedForm).(*CreateForm)
+
+	if !newElem.DisableSubredditSearch {
+		if ok, err := SearchSubreddits(newElem.Subreddit); !ok {
+			if err != nil {
+				return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Error quering Reddit %s", err)))
+			}
+			return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf(`No such subreddit r/%s<span class="ui-pnotify-text">Could be case-sensitive or try disabling the search...</span>`, newElem.Subreddit)))
+		}
+	}
+
 	ok := ctx.Value(common.ContextKeyFormOk).(bool)
 	if !ok {
 		return templateData
@@ -164,7 +175,7 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 	})
 
 	templateData["RedditConfig"] = currentConfig
-	templateData.AddAlerts(web.SucessAlert("Sucessfully added subreddit feed for /r/" + watchItem.Subreddit))
+	templateData.AddAlerts(web.SucessAlert("Successfully added subreddit feed for /r/" + watchItem.Subreddit))
 
 	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyAddedFeed, &cplogs.Param{Type: cplogs.ParamTypeString, Value: watchItem.Subreddit}))
 	go pubsub.Publish("reddit_clear_subreddit_cache", -1, PubSubSubredditEventData{
@@ -212,7 +223,7 @@ func HandleModify(w http.ResponseWriter, r *http.Request) interface{} {
 		return templateData
 	}
 
-	templateData.AddAlerts(web.SucessAlert("Sucessfully updated reddit feed! :D"))
+	templateData.AddAlerts(web.SucessAlert("Successfully updated reddit feed! :D"))
 
 	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyUpdatedFeed, &cplogs.Param{Type: cplogs.ParamTypeString, Value: item.Subreddit}))
 	go pubsub.Publish("reddit_clear_subreddit_cache", -1, PubSubSubredditEventData{
@@ -247,7 +258,7 @@ func HandleRemove(w http.ResponseWriter, r *http.Request) interface{} {
 		return templateData
 	}
 
-	templateData.AddAlerts(web.SucessAlert("Sucessfully removed subreddit feed for /r/" + item.Subreddit))
+	templateData.AddAlerts(web.SucessAlert("Successfully removed subreddit feed for /r/" + item.Subreddit))
 
 	// Remove it form the displayed list
 	for k, c := range currentConfig {

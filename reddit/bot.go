@@ -2,7 +2,10 @@ package reddit
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"emperror.dev/errors"
@@ -138,3 +141,41 @@ func (p *Plugin) Status() (string, string) {
 
 // 	return "Subs/Channels", fmt.Sprintf("%d/%d", subs, channels)
 // }
+
+func SearchSubreddits(data string) (bool, error) {
+	var redditStruct struct {
+		Data struct {
+			Dist     int `json:"dist"`
+			Children []struct {
+			}
+		} `json:"data"`
+	}
+
+	query := "https://api.reddit.com/subreddits/search.api?q=" + strings.ToLower(data)
+	req, err := http.NewRequest("GET", query, nil)
+	if err != nil {
+		return false, err
+	}
+
+	req.Header.Set("User-Agent", UserAgent())
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return false, err
+	}
+
+	queryErr := json.Unmarshal([]byte(body), &redditStruct)
+	if queryErr != nil {
+		return false, err
+	}
+
+	if redditStruct.Data.Dist == 0 || len(redditStruct.Data.Children) == 0 {
+		return false, nil
+	}
+	return true, nil
+}
