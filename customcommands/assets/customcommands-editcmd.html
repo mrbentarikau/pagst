@@ -67,18 +67,19 @@
                             {{if eq (call .GetCCIntervalType .CC) 1}}hour(s){{else}}minute(s){{end}}{{end}}
                             <a href="." title="Reload page"><i style="font-size: 0.5em" class="fas fa-sync fa-xs"></i></a>
                         </h2>
-                        <input type="text" class="hidden form-control" name="id" value="{{.CC.LocalID}}">
-                        {{if (eq .CC.TriggerType 5)}}<span>Next run: <span id="PAGST-CC-Next-Run" title="{{.CC.NextRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
+                      <input type="text" class="hidden form-control" name="id" value="{{.CC.LocalID}}">
+                        Last saved: {{if ne .CC.DateUpdated.Time.Year 1}}<span id="PAGST-CC-Last-Saved" title="{{.CC.DateUpdated.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
+                        <script>
+                            var date = new Date({{.CC.DateUpdated.Time.UTC.Unix}} * 1000);
+                                document.getElementById("PAGST-CC-Last-Saved").innerHTML = new Intl.DateTimeFormat(Intl.DateTimeFormat().resolvedOptions().locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
+                        </script></span>{{else}}N/A{{end}}<br/>
+                        {{if (eq .CC.TriggerType 5)}}Next run: <span id="PAGST-CC-Next-Run" title="{{.CC.NextRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
                                         <script>
                                             var date = new Date({{.CC.NextRun.Time.UTC.Unix}} * 1000);
                                                 document.getElementById("PAGST-CC-Next-Run").innerHTML = new Intl.DateTimeFormat(Intl.DateTimeFormat().resolvedOptions().locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
                                         </script>
                                     </span><br/>{{end}}
-                        Last saved: {{if ne .CC.DateUpdated.Time.Year 1}}<span id="PAGST-CC-Last-Saved" title="{{.CC.DateUpdated.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
-                        <script>
-                            var date = new Date({{.CC.DateUpdated.Time.UTC.Unix}} * 1000);
-                                document.getElementById("PAGST-CC-Last-Saved").innerHTML = new Intl.DateTimeFormat(Intl.DateTimeFormat().resolvedOptions().locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
-                        </script></span>{{else}}N/A{{end}}<br/><br/>
+                        Run count: {{humanizeThousands .CC.RunCount}}<br/><br/>
                         <div class="row">
                             <!-- Trigger -->
                             <div class="col-sm-4">
