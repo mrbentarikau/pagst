@@ -3,7 +3,8 @@ jobs: # basic units of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
-      - image: circleci/golang:1.17 #
+      # - image: circleci/golang:1.16 #
+      - image: cimg/go:1.16.5 #
 
     # directory where steps are run. Path must conform to the Go Workspace requirements
     working_directory: /go/src/github.com/mrbentarikau/pagst
@@ -16,7 +17,7 @@ jobs: # basic units of work in a run
       - restore_cache: # restores saved cache if no changes are detected since last run
       # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
           keys:
-            - v1-pkg-cache
+            - v2-pkg-cache
      
       - run: 
           name: main pagstdb binary build
@@ -33,8 +34,8 @@ jobs: # basic units of work in a run
       - save_cache: # Store cache in the /go/pkg directory
           key: v1-pkg-cache
           paths:
-            - "/go/pkg"
+            - "/home/circleci/go/pkg"
 
       - store_artifacts:
-          path: /go/bin/
+          path: /home/circleci/go/bin/
           destination: binaries
