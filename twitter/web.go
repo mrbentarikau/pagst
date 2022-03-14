@@ -31,13 +31,13 @@ const (
 
 type Form struct {
 	TwitterUser    string  `valid:",1,256"`
-	DiscordChannel int64   `valid:"channel,false"`
+	DiscordChannel int64   `valid:"channel,true"`
 	MentionRole    []int64 `valid:"role,true"`
 	ID             int64
 }
 
 type EditForm struct {
-	DiscordChannel  int64 `valid:"channel,false"`
+	DiscordChannel  int64 `valid:"channel,true"`
 	IncludeReplies  bool
 	IncludeRetweets bool
 	MentionRole     []int64 `valid:"role,true"`
@@ -148,6 +148,10 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 		Enabled:         true,
 	}
 
+	if form.DiscordChannel == 0 {
+		m.Enabled = false
+	}
+
 	err = m.InsertG(ctx, boil.Infer())
 	if err == nil {
 		go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyAddedFeed, &cplogs.Param{Type: cplogs.ParamTypeString, Value: user.ScreenName}))
@@ -197,6 +201,9 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 
 	sub.ChannelID = data.DiscordChannel
 	sub.Enabled = true
+	if data.DiscordChannel == 0 {
+		sub.Enabled = false
+	}
 	sub.IncludeRT = data.IncludeRetweets
 	sub.IncludeReplies = data.IncludeReplies
 	sub.MentionRole = data.MentionRole

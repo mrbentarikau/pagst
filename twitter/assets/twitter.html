@@ -25,6 +25,7 @@
                     <p><b>Note:</b> Added feeds may take up to 10 minutes before they start being used<br/>
                     <p>Twitter feeds are premium only atm, this is because of twitter API limitations for non-enterprise
                         users</p>
+                    <p><b>If Server Channel is set to "None" the added or already active Twitter feed will be disabled.</b></p>
                     <div class="form-group">
                         <label for="yt-channel-user">Twitter Username</label>
                         <div class="input-group input-group-sm">
@@ -35,7 +36,7 @@
                     <div class="form-group">
                         <label for="channel">Discord Channel</label>
                         <select id="channel" class="form-control" name="DiscordChannel" data-requireperms-send>
-                            {{textChannelOptions .ActiveGuild.Channels nil false ""}}
+                            {{textChannelOptions .ActiveGuild.Channels nil true "None"}}
                         </select>
                     </div>
                     <div class="form-group">
@@ -73,7 +74,7 @@
                         <div class="form-group col">
                             <label for="channel-feed-{{.ID}}">Server Channel</label>
                             <select id="channel-feed-{{.ID}}" class="form-control" name="DiscordChannel">
-                                {{textChannelOptions $Dot.ActiveGuild.Channels .ChannelID false ""}}
+                                {{textChannelOptions $Dot.ActiveGuild.Channels .ChannelID true "None"}}
                             </select>
                         </div>
                         <div class="form-group col">
