@@ -1,7 +1,14 @@
 {{define "cp_youtube"}}
 {{template "cp_head" .}}
+
+<style>
+    .feed-item-disabled {
+        background-color: #f003;
+    }
+</style>
+
 <header class="page-header">
-    <h2>Youtube upload feeds</h2>
+    <h2>YouTube upload feeds</h2>
 </header>
 {{template "cp_alerts" .}}
 <!-- /.row -->
@@ -12,16 +19,16 @@
                 <h2 class="card-title">New feed</h2>
             </header>
             <div class="card-body">
-                <!-- <p>The subreddit field is just the name of the subreddit (no /r/ in front of it), examples: "games", "multicopter" -->
                 <form class="" method="post" action="/manage/{{.ActiveGuild.ID}}/youtube">
                     <p><b>Provide either channel ID OR username.</b> Only one of them, not both.<br>
                         When you go to the channel page, if the address bar has for example
                         <code>youtube.com/user/idlevideos</code> then the username is idlevideos<br>
                         If it's <code>youtube.com/channel/UCt-ERbX-2yA6cAqfdKOlUwQ</code> then the id is
-                        <code>UCt-ERbX-2yA6cAqfdKOlUwQ</code><br>
-                        For any questions join the support server above</p>
+                        <code>UCt-ERbX-2yA6cAqfdKOlUwQ</code><br/>ProTip™: easiest way to get the channel ID is while video is open,<br/>clicking on username will
+                        bring you back to channel's home page, URL has channel ID in it.</p>
+                        <p><b>If Server Channel is set to "None" the added or already active YouTube feed will be disabled.</b></p>
                     <div class="form-group">
-                        <label for="yt-channel-id">Youtube Channel ID</label>
+                        <label for="yt-channel-id">YouTube Channel ID</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-prepend"><span
                                     class="input-group-text">youtube.com/channel/</span></span>
@@ -29,7 +36,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="yt-channel-user">Youtube Username</label>
+                        <label for="yt-channel-user">YouTube Username</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-prepend"><span
                                     class="input-group-text">youtube.com/user/</span></span>
@@ -40,7 +47,7 @@
                         <div class="form-group col mb-0">
                             <label for="channel">Discord Channel</label>
                             <select id="channel" class="form-control" name="DiscordChannel" data-requireperms-send>
-                                {{textChannelOptions .ActiveGuild.Channels nil false ""}}
+                                {{textChannelOptions .ActiveGuild.Channels nil true "None"}}
                             </select>
                         </div>
                         <div class="form-group col mb-0">
@@ -78,7 +85,7 @@
                     </thead>
                     <tbody>
                         {{range .Subs}}
-                        <tr>
+                        <tr class="{{if .Disabled}}feed-item-disabled{{end}}">
                             <td>
                                 <p class="form-control-static"><b>{{.YoutubeChannelName}}</b> -
                                     <code>{{.YoutubeChannelID}}</code></p>
@@ -86,7 +93,7 @@
                             <td>
                                 <select form="sub-item-{{.ID}}" id="channel" class="form-control" name="DiscordChannel"
                                     data-requireperms-embed>
-                                    {{textChannelOptions $dot.ActiveGuild.Channels .ChannelID false ""}}
+                                    {{textChannelOptions $dot.ActiveGuild.Channels .ChannelID true "None"}}
                                 </select>
                             </td>
                             <td>
@@ -99,8 +106,7 @@
                             </td>
                             <td>
                                 <button form="sub-item-{{.ID}}" type="submit" class="btn btn-success"
-                                    formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{.ID}}/update"
-                                    data-async-form-alertsonly>Save</button>
+                                    formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{.ID}}/update">Save</button>
                                 <button form="sub-item-{{.ID}}" type="submit" class="btn btn-danger"
                                     formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{.ID}}/delete">Delete</button>
                             </td>

@@ -15,7 +15,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 )
 
@@ -41,12 +41,13 @@ func (p *Plugin) StopFeed(wg *sync.WaitGroup) {
 }
 
 func (p *Plugin) SetupClient() error {
-	httpClient, err := google.DefaultClient(context.Background(), youtube.YoutubeScope)
+	/*httpClient, err := google.DefaultClient(context.Background(), youtube.YoutubeScope)
 	if err != nil {
 		return common.ErrWithCaller(err)
-	}
+	}*/
 
-	yt, err := youtube.New(httpClient)
+	//yt, err := youtube.New(httpClient)
+	yt, err := youtube.NewService(context.Background(), option.WithScopes(youtube.YoutubeScope))
 	if err != nil {
 		return common.ErrWithCaller(err)
 	}
@@ -100,7 +101,7 @@ func (p *Plugin) checkExpiringWebsubs() {
 
 func (p *Plugin) syncWebSubs() {
 	var activeChannels []string
-	err := common.SQLX.Select(&activeChannels, "SELECT DISTINCT(youtube_channel_id) FROM youtube_channel_subscriptions;")
+	err := common.SQLX.Select(&activeChannels, "SELECT DISTINCT(youtube_channel_id) FROM youtube_channel_subscriptions WHERE disabled = false;")
 	if err != nil {
 		logger.WithError(err).Error("Failed syncing websubs, failed retrieving subbed channels")
 		return
@@ -214,12 +215,13 @@ var (
 	ErrNoChannel = errors.New("No channel with that id found")
 )
 
-func (p *Plugin) AddFeed(guildID, discordChannelID int64, youtubeChannelID, youtubeUsername string, mentionEveryone bool, mentionRole int64) (*ChannelSubscription, error) {
+func (p *Plugin) AddFeed(guildID, discordChannelID int64, youtubeChannelID, youtubeUsername string, mentionEveryone bool, mentionRole int64, feedDisabled bool) (*ChannelSubscription, error) {
 	sub := &ChannelSubscription{
 		GuildID:         discordgo.StrID(guildID),
 		ChannelID:       discordgo.StrID(discordChannelID),
 		MentionEveryone: mentionEveryone,
 		MentionRole:     discordgo.StrID(mentionRole),
+		Disabled:        feedDisabled,
 	}
 
 	call := p.YTService.Channels.List([]string{"snippet"})
@@ -386,7 +388,9 @@ func (p *Plugin) postVideo(subs []*ChannelSubscription, publishedAt time.Time, v
 	}
 
 	for _, sub := range subs {
-		p.sendNewVidMessage(sub.GuildID, sub.ChannelID, video.Snippet.ChannelTitle, video.Id, sub.MentionEveryone, sub.MentionRole, video.Snippet.LiveBroadcastContent)
+		if sub.ChannelID != "0" {
+			p.sendNewVidMessage(sub.GuildID, sub.ChannelID, video.Snippet.ChannelTitle, video.Id, sub.MentionEveryone, sub.MentionRole, video.Snippet.LiveBroadcastContent)
+		}
 	}
 
 	return nil

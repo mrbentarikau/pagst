@@ -17,9 +17,9 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/web"
 	"github.com/jinzhu/gorm"
-	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mediocregopher/radix/v3"
 	"goji.io"
 	"goji.io/pat"
@@ -43,7 +43,7 @@ var (
 type Form struct {
 	YoutubeChannelID   string
 	YoutubeChannelUser string
-	DiscordChannel     int64 `valid:"channel,false"`
+	DiscordChannel     int64 `valid:"channel,true"`
 	ID                 uint
 	MentionEveryone    bool
 	MentionRole        int64 `valid:"role,true"`
@@ -118,7 +118,12 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 		return templateData.AddAlerts(web.ErrorAlert("Neither channelid or username specified.")), errors.New("ChannelID and username not specified")
 	}
 
-	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, data.YoutubeChannelID, data.YoutubeChannelUser, data.MentionEveryone, data.MentionRole)
+	var feedDisabled bool
+	if data.DiscordChannel == 0 {
+		feedDisabled = true
+	}
+
+	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, data.YoutubeChannelID, data.YoutubeChannelUser, data.MentionEveryone, data.MentionRole, feedDisabled)
 	//sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, cID, username, data.MentionEveryone)
 	if err != nil {
 		if err == ErrNoChannel {
@@ -186,6 +191,11 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 	sub.MentionEveryone = data.MentionEveryone
 	sub.ChannelID = discordgo.StrID(data.DiscordChannel)
 	sub.MentionRole = discordgo.StrID(data.MentionRole)
+	if data.DiscordChannel == 0 {
+		sub.Disabled = true
+	} else {
+		sub.Disabled = false
+	}
 
 	err = common.GORM.Save(sub).Error
 	if err == nil {

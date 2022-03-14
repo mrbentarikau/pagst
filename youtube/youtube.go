@@ -68,6 +68,7 @@ type ChannelSubscription struct {
 	YoutubeChannelName string
 	MentionEveryone    bool
 	MentionRole        string
+	Disabled           bool
 }
 
 func (c *ChannelSubscription) TableName() string {
