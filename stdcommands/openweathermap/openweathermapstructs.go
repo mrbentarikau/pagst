@@ -37,12 +37,12 @@ type windStruct struct {
 }
 
 type mainStruct struct {
-	Temp       float64
-	Feels_Like float64
-	Temp_Min   float64
-	Temp_Max   float64
-	Pressure   int64
-	Humidity   int64
+	Temp      float64
+	FeelsLike float64 `json:"feels_like"`
+	TempMin   float64 `json:"temp_min"`
+	TempMax   float64 `json:"temp_max"`
+	Pressure  int64
+	Humidity  int64
 }
 
 type sysStruct struct {
