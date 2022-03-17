@@ -31,6 +31,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/guildunavailable"
 	"github.com/mrbentarikau/pagst/stdcommands/howlongtobeat"
 	"github.com/mrbentarikau/pagst/stdcommands/info"
+	"github.com/mrbentarikau/pagst/stdcommands/inspire"
 	"github.com/mrbentarikau/pagst/stdcommands/invite"
 	"github.com/mrbentarikau/pagst/stdcommands/leaveserver"
 	"github.com/mrbentarikau/pagst/stdcommands/listflags"
@@ -100,6 +101,7 @@ func (p *Plugin) AddCommands() {
 		editrole.Command,
 		getiplocation.Command,
 		howlongtobeat.Command,
+		inspire.Command,
 		listroles.Command,
 		openweathermap.Command,
 		ping.Command,
