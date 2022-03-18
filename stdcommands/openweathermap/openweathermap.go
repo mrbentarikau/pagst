@@ -85,10 +85,10 @@ var Command = &commands.YAGCommand{
 			Fields: []*discordgo.MessageEmbedField{
 				{Name: fmt.Sprintf("%.0f%s%d%s", weather.Main.Temp, "°C (", int(float64(weather.Main.Temp)*1.8+32), "°F)"), Value: strings.Title(weather.Weather[0].Description), Inline: true},
 				{Name: "Wind:", Value: fmt.Sprintf("\\%s %.1f %s %s", windDir[windDirection], weather.Wind.Speed, "m/s", windDirection), Inline: true},
-				{Name: "Feels like:", Value: fmt.Sprintf("%.0f%s%d%s", weather.Main.FeelsLike, "°C (", int(float64(weather.Main.FeelsLike)*1.8+32), "°F)"), Inline: false},
+				{Name: "Feels like:", Value: fmt.Sprintf("%.0f%s%.0f%s", weather.Main.FeelsLike, "°C (", weather.Main.FeelsLike*1.8+32, "°F)"), Inline: false},
 				{Name: "Pressure", Value: fmt.Sprintf("%d%s", weather.Main.Pressure, "hPa"), Inline: true},
 				{Name: "Humidity", Value: fmt.Sprintf("%d%s", weather.Main.Humidity, "%"), Inline: true},
-				{Name: "Dew point", Value: fmt.Sprintf("%.0f%s%d%s", dewPoint(weather.Main.Humidity, weather.Main.Temp), "°C (", int(float64(weather.Main.Temp)*1.8+32), "°F)"), Inline: false},
+				{Name: "Dew point", Value: fmt.Sprintf("%.0f%s%.0f%s", dewPoint(weather.Main.Humidity, weather.Main.Temp), "°C (", weather.Main.Temp*1.8+32, "°F)"), Inline: false},
 				{Name: "Sunrise", Value: fmt.Sprintf("<t:%d:R>\n*%s*", weather.Sys.Sunrise, time.Unix(weather.Sys.Sunset, 0).UTC().Format(time.RFC822)), Inline: true},
 				{Name: "Sunset", Value: fmt.Sprintf("<t:%d:R>\n*%s*", weather.Sys.Sunset, time.Unix(weather.Sys.Sunset, 0).UTC().Format(time.RFC822)), Inline: true},
 			},
@@ -151,8 +151,8 @@ func createCompact(weather openWeatherMap, windDirection string) string {
 	queryData := []string{
 		"Weather report: " + weather.Name + ", " + weather.Sys.Country + fmt.Sprintf("%s%.2f %s%.2f", "\nlat:", weather.Coord["lat"], "lon:", weather.Coord["lon"]),
 		strings.Title(weather.Weather[0].Description),
-		fmt.Sprintf("%.0f%s%d%s", weather.Main.Temp, "°C (", int(float64(weather.Main.Temp)*1.8+32), "°F)"),
-		fmt.Sprintf("%s %.0f%s%d%s", "Feels like:", weather.Main.FeelsLike, "°C (", int(float64(weather.Main.FeelsLike)*1.8+32), "°F)"),
+		fmt.Sprintf("%.0f%s%.0f%s", weather.Main.Temp, "°C (", weather.Main.Temp*1.8+32, "°F)"),
+		fmt.Sprintf("%s %.0f%s%.0f%s", "Feels like:", weather.Main.FeelsLike, "°C (", weather.Main.FeelsLike*1.8+32, "°F)"),
 		fmt.Sprintf("%s %s %.1f %s %s", "Wind:", windDir[windDirection], weather.Wind.Speed, "m/s", windDirection),
 		fmt.Sprintf("%s %d%s %d %s", "Humidity:", weather.Main.Humidity, "% // Pressure:", weather.Main.Pressure, "hPa"),
 		fmt.Sprintf("%s %s %s %s", "Sunrise:", time.Unix(weather.Sys.Sunrise, 0).Format(time.UnixDate), "\nSunset: ", time.Unix(weather.Sys.Sunset, 0).Format(time.UnixDate)),
