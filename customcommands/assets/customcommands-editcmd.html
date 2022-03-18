@@ -610,7 +610,11 @@
 
     function selectTheme() {
         textAreaTheme = input.options[input.selectedIndex].textContent;
-        location.hash = "#" + textAreaTheme;
+        if (textAreaTheme == "no CodeMirror") {
+            location.hash = "";
+        } else {
+            location.hash = "#" + textAreaTheme;
+        }
     }
 
     function selectBrackets() {
