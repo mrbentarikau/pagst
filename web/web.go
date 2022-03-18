@@ -213,7 +213,7 @@ func IsAcceptingRequests() bool {
 
 func runServers(mainMuxer *goji.Mux) {
 	if !https {
-		logger.Info("Starting yagpdb web server http:", ListenAddressHTTP)
+		logger.Info("Starting PAGSTDB web server http:", ListenAddressHTTP)
 
 		server := &http.Server{
 			Addr:        ListenAddressHTTP,
@@ -226,7 +226,7 @@ func runServers(mainMuxer *goji.Mux) {
 			logger.Error("Failed http ListenAndServe:", err)
 		}
 	} else {
-		logger.Info("Starting yagpdb web server http:", ListenAddressHTTP, ", and https:", ListenAddressHTTPS)
+		logger.Info("Starting PAGSTDB web server http:", ListenAddressHTTP, ", and https:", ListenAddressHTTPS)
 
 		cache := autocert.DirCache("cert")
 
