@@ -70,9 +70,10 @@ func EventHandler(evt *eventsystem.EventData) (retry bool, err error) {
 		//From master code
 		//msg = fmt.Sprintf(":x: Left guild **%s** :(", common.ReplaceServerInvites(guildData.Name, 0, "[removed-server-invite]"))
 	case eventsystem.EventNewGuild:
-		msg = fmt.Sprintf(":white_check_mark: Joined guild **%s** :D", common.ReplaceServerInvites(evt.GuildCreate().Guild.Name, 0, "[removed-server-invite]"))
+		guild := evt.GuildCreate().Guild
+		msg = fmt.Sprintf(":white_check_mark: Joined guild **%s** :D", common.ReplaceServerInvites(guild.Name, 0, "[removed-server-invite]"))
+		msg += fmt.Sprintf(" owned by %s", (bot.State.GetMember(guild.ID, guild.OwnerID)).User.Username)
 	}
-
 	msg += fmt.Sprintf(" (now connected to %d servers)", count)
 	_, err = common.BotSession.ChannelMessageSend(int64(confBotLeavesJoins.GetInt()), msg)
 	return bot.CheckDiscordErrRetry(err), errors.WithStackIf(err)
