@@ -38,7 +38,7 @@ type CreateForm struct {
 	ID                     int64   `schema:"id"`
 	UseEmbeds              bool    `schema:"use_embeds"`
 	NSFWMode               int     `schema:"nsfw_filter"`
-	MinUpvotes             int     `schema:"min_upvotes"`
+	MinUpvotes             int     `schema:"min_upvotes" valid:"0,"`
 	MentionRole            []int64 `schema:"mention_role" valid:"role,true"`
 	DisableSubredditSearch bool    `schema:"disable_subreddit_search"`
 }
@@ -48,7 +48,7 @@ type UpdateForm struct {
 	ID          int64   `schema:"id"`
 	UseEmbeds   bool    `schema:"use_embeds"`
 	NSFWMode    int     `schema:"nsfw_filter"`
-	MinUpvotes  int     `schema:"min_upvotes"`
+	MinUpvotes  int     `schema:"min_upvotes" valid:"0,"`
 	MentionRole []int64 `schema:"mention_role" valid:"role,true"`
 }
 

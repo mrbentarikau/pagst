@@ -420,10 +420,12 @@ func handleDuplicateCommand(w http.ResponseWriter, r *http.Request) (web.Templat
 		TimeTriggerExcludingDays:  []int64{},
 		TimeTriggerExcludingHours: []int64{},
 
-		Responses:                cmd.Responses,
-		TextTriggerCaseSensitive: cmd.TextTriggerCaseSensitive,
-		TextTrigger:              "duplicate_" + cmd.TextTrigger,
-		TriggerType:              cmd.TriggerType,
+		Responses:                 cmd.Responses,
+		RegexTrigger:              "duplicate_" + cmd.RegexTrigger,
+		RegexTriggerCaseSensitive: cmd.RegexTriggerCaseSensitive,
+		TextTrigger:               "duplicate_" + cmd.TextTrigger,
+		TextTriggerCaseSensitive:  cmd.TextTriggerCaseSensitive,
+		TriggerType:               cmd.TriggerType,
 	}
 
 	err = dbModel.InsertG(ctx, boil.Blacklist("last_run", "next_run", "last_error", "last_error_time", "run_count"))

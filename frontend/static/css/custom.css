@@ -212,9 +212,11 @@ html.sidebar-left-collapsed #nav-footer {
 	transform: translate3d(0px, 0px, 0px) !important;
 }
 
-.multiselect-container {
+/*Master removed
+  .multiselect-container {
 	top: 125px !important;
-}
+
+}*/
 
 /*Proper Design, Jonas is angry at bootstrap*/
 

@@ -1,6 +1,8 @@
 package discordgo
 
 import (
+	"encoding/json"
+
 	"github.com/jonas747/gojay"
 	"github.com/pkg/errors"
 )
@@ -435,8 +437,25 @@ type InviteDelete struct {
 	Code      string `json:"code"`
 }
 
+type IntegrationCreate struct {
+	*Integration
+}
+
+type IntegrationUpdate struct {
+	*Integration
+}
+
+type IntegrationDelete struct {
+	*Integration
+}
+
 type InteractionCreate struct {
 	Interaction
+}
+
+// UnmarshalJSON is a helper function to unmarshal Interaction object.
+func (i *InteractionCreate) UnmarshalJSON(b []byte) error {
+	return json.Unmarshal(b, &i.Interaction)
 }
 
 // new Slash Command was created

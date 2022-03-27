@@ -30,21 +30,23 @@ func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend
 
 	switch t := s[0].(type) {
 	case *discordgo.MessageEmbed:
-		msgSend.Embed = t
+		msgSend.Embeds = []*discordgo.MessageEmbed{t}
 	case *discordgo.MessageSend:
 		msgSend = t
 		if (strings.TrimSpace(msgSend.Content) == "") && (msgSend.File == nil) {
 			return nil
 		}
 	default:
-		msgSend.Content = fmt.Sprintf("%s", fmt.Sprint(s...))
+		msgSend.Content = fmt.Sprint(s...)
 	}
 
 	if !bot.IsSpecialGuild(c.GS.GuildState.ID) {
 		info := fmt.Sprintf("DM from server: %s", gName)
-		if msgSend.Embed != nil {
-			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
-				Text: info,
+		if len(msgSend.Embeds) > 0 {
+			for _, e := range msgSend.Embeds {
+				e.Footer = &discordgo.MessageEmbedFooter{
+					Text: info,
+				}
 			}
 		} else {
 			info := fmt.Sprintf("DM from server: **%s**", gName)
@@ -55,9 +57,9 @@ func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend
 	return msgSend
 }
 
-func (c *Context) tmplSendDM(s ...interface{}) string {
+func (c *Context) tmplSendDM(s ...interface{}) (string, error) {
 	if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 1) || c.IncreaseCheckGenericAPICall() || c.MS == nil || c.IsExecedByLeaveMessage {
-		return ""
+		return "", nil
 	}
 
 	gIcon := discordgo.EndpointGuildIcon(c.GS.ID, c.GS.Icon)
@@ -76,18 +78,20 @@ func (c *Context) tmplSendDM(s ...interface{}) string {
 			Text:    embedInfo,
 			IconURL: gIcon,
 		}
-		msgSend.Embed = t
+		msgSend.Embeds = []*discordgo.MessageEmbed{t}
 	case *discordgo.MessageSend:
 		msgSend = t
-		if msgSend.Embed != nil {
-			msgSend.Embed.Footer = &discordgo.MessageEmbedFooter{
-				Text:    embedInfo,
-				IconURL: gIcon,
+
+		if len(msgSend.Embeds) > 0 {
+			for _, e := range msgSend.Embeds {
+				e.Footer = &discordgo.MessageEmbedFooter{
+					Text: embedInfo,
+				}
 			}
 			break
 		}
 		if (strings.TrimSpace(msgSend.Content) == "") && (msgSend.File == nil) {
-			return ""
+			return "", nil
 		}
 		msgSend.Content = info + "\n" + msgSend.Content
 	default:
@@ -96,10 +100,13 @@ func (c *Context) tmplSendDM(s ...interface{}) string {
 
 	channel, err := common.BotSession.UserChannelCreate(c.MS.User.ID)
 	if err != nil {
-		return ""
+		return "", err
 	}
-	_, _ = common.BotSession.ChannelMessageSendComplex(channel.ID, msgSend)
-	return ""
+	_, err = common.BotSession.ChannelMessageSendComplex(channel.ID, msgSend)
+	if err != nil {
+		return "", err
+	}
+	return "", nil
 }
 
 func (c *Context) tmplSendTargetDM(target interface{}, s ...interface{}) string {
@@ -196,7 +203,7 @@ func (c *Context) ChannelArgNoDMNoThread(v interface{}) int64 {
 
 func (c *Context) tmplSendTemplateDM(name string, data ...interface{}) (interface{}, error) {
 	if c.IsExecedByLeaveMessage {
-		return "", errors.New("Can't use sendTemplateDM on leave msg")
+		return "", errors.New("can't use sendTemplateDM on leave msg")
 	}
 
 	return c.sendNestedTemplate(nil, true, name, data...)
@@ -415,9 +422,10 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 					IconURL: icon,
 				}
 			}
-			msgSend.Embed = typedMsg
+			msgSend.Embeds = []*discordgo.MessageEmbed{typedMsg}
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
+
 			if !filterSpecialMentions {
 				msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
 			}
@@ -428,10 +436,12 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 			}
 
 			if isDM {
-				if typedMsg.Embed != nil {
-					typedMsg.Embed.Footer = &discordgo.MessageEmbedFooter{
-						Text:    embedInfo,
-						IconURL: icon,
+				if len(typedMsg.Embeds) > 0 {
+					for _, e := range msgSend.Embeds {
+						e.Footer = &discordgo.MessageEmbedFooter{
+							Text:    embedInfo,
+							IconURL: icon,
+						}
 					}
 				} else {
 					typedMsg.Content = info + "\n" + typedMsg.Content
@@ -446,6 +456,9 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		}
 
 		m, err = common.BotSession.ChannelMessageSendComplex(cid, msgSend)
+		if err != nil {
+			return err
+		}
 
 		if err == nil && returnID {
 			return m.ID
@@ -476,14 +489,31 @@ func (c *Context) tmplEditMessage(filterSpecialMentions bool) func(channel inter
 		switch typedMsg := msg.(type) {
 
 		case *discordgo.MessageEmbed:
-			msgEdit.Embed = typedMsg
+			msgEdit.Embeds = []*discordgo.MessageEmbed{typedMsg}
 		case *discordgo.MessageEdit:
-			//If both Embed and string are explicitly set as null, give an error message.
-			if typedMsg.Content != nil && strings.TrimSpace(*typedMsg.Content) == "" && typedMsg.Embed != nil && typedMsg.Embed.GetMarshalNil() {
-				return "", errors.New("both content and embed cannot be null")
+			embeds := make([]*discordgo.MessageEmbed, 0, len(typedMsg.Embeds))
+
+			if typedMsg.Content != nil && strings.TrimSpace(*typedMsg.Content) == "" {
+				if len(typedMsg.Embeds) == 0 {
+					return "", errors.New("both content and embed cannot be null")
+				}
+
+				for _, e := range typedMsg.Embeds {
+					if e == nil || e.GetMarshalNil() {
+						continue
+					}
+
+					embeds = append(embeds, e)
+					break
+				}
+
+				if len(embeds) == 0 {
+					return "", errors.New("both content and embed cannot be null")
+				}
 			}
+
 			msgEdit.Content = typedMsg.Content
-			msgEdit.Embed = typedMsg.Embed
+			msgEdit.Embeds = typedMsg.Embeds
 			msgEdit.AllowedMentions = typedMsg.AllowedMentions
 		default:
 			temp := fmt.Sprint(msg)
@@ -626,6 +656,12 @@ func (c *Context) tmplSetRoles(target interface{}, input interface{}) (string, e
 }
 
 func (c *Context) findRoleByName(name string) *discordgo.Role {
+	for _, r := range c.GS.Roles {
+		if r.Name == name {
+			return &r
+		}
+	}
+
 	for _, r := range c.GS.Roles {
 		if strings.EqualFold(r.Name, name) {
 			return &r
@@ -1333,6 +1369,33 @@ func (c *Context) tmplEditNickname(Nickname string) (string, error) {
 	}
 
 	err := common.BotSession.GuildMemberNickname(c.GS.ID, c.MS.User.ID, Nickname)
+	if err != nil {
+		return "", err
+	}
+
+	return "", nil
+}
+
+func (c *Context) tmplSetMemberTimeout(target interface{}, optionalArgs ...interface{}) (string, error) {
+
+	if c.IncreaseCheckCallCounter("add_timeout", 2) {
+		return "", ErrTooManyCalls
+	}
+
+	mID := targetUserID(target)
+	if mID == 0 {
+		return "", nil
+	}
+
+	delay := 60 * time.Second
+	var until time.Time
+	if len(optionalArgs) > 0 {
+		delay = c.validateDurationDelay(optionalArgs[0])
+	}
+
+	until = time.Now().Add(delay)
+
+	err := common.BotSession.GuildMemberTimeout(c.GS.ID, mID, &until)
 	if err != nil {
 		return "", err
 	}

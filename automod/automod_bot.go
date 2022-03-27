@@ -159,7 +159,7 @@ func (p *Plugin) checkViolationTriggers(ctxData *TriggeredRuleData, violationNam
 			d1 := activatedTriggers[i].ParsedSettings.(*ViolationsTriggerData)
 			d2 := activatedTriggers[j].ParsedSettings.(*ViolationsTriggerData)
 
-			return d1.Treshold > d2.Treshold
+			return d1.Threshold > d2.Threshold
 		})
 
 		// do a second pass with the triggers sorted, incase only the highest should be triggered
@@ -200,13 +200,7 @@ func (p *Plugin) handleGuildMemberUpdate(evt *eventsystem.EventData) {
 
 	ms := dstate.MemberStateFromMember(evtData.Member)
 
-	p.checkUsername(ms)
-
-	if ms.Member.Nick == "" {
-		return
-	}
-
-	p.checkNickname(ms)
+	p.checkName(ms)
 }
 
 func (p *Plugin) handleVoiceStateUpdate(evt *eventsystem.EventData) {
@@ -285,19 +279,19 @@ func (p *Plugin) handleGuildMemberJoin(evt *eventsystem.EventData) {
 	p.checkUsername(ms)
 }
 
-func (p *Plugin) checkNickname(ms *dstate.MemberState) {
+func (p *Plugin) checkName(ms *dstate.MemberState) {
 	gs := bot.State.GetGuild(ms.GuildID)
 	if gs == nil {
 		return
 	}
 
 	p.CheckTriggers(nil, gs, ms, nil, nil, func(trig *ParsedPart) (activated bool, err error) {
-		cast, ok := trig.Part.(NicknameListener)
+		cast, ok := trig.Part.(NameListener)
 		if !ok {
 			return false, nil
 		}
 
-		return cast.CheckNickname(&TriggerContext{GS: gs, MS: ms, Data: trig.ParsedSettings})
+		return cast.CheckName(&TriggerContext{GS: gs, MS: ms, Data: trig.ParsedSettings})
 	})
 }
 

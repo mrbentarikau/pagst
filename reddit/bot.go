@@ -151,7 +151,7 @@ func SearchSubreddits(data string) (bool, error) {
 		} `json:"data"`
 	}
 
-	query := "https://api.reddit.com/subreddits/search.api?q=" + strings.ToLower(data)
+	query := "https://old.reddit.com/subreddits/search.api?q=" + strings.ToLower(data)
 	req, err := http.NewRequest("GET", query, nil)
 	if err != nil {
 		return false, err

@@ -10,6 +10,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/premium"
 )
 
 var Command = &commands.YAGCommand{
@@ -52,41 +53,42 @@ var Command = &commands.YAGCommand{
 			}
 		}
 
-		resp := "Up to 10 last deleted messages (last hour or 12 hours for premium): \n\n"
+		numAllowed := 20
 		numFound := 0
+		resp := fmt.Sprintf("Up to %d last deleted messages (last hour or %.0f hours for premium): \n\n", numAllowed, premium.PremiumStateMaxMessageAge.Hours())
 
 		messages := bot.State.GetMessages(data.GuildData.GS.ID, channel.ID, &dstate.MessagesQuery{Limit: 100, IncludeDeleted: true})
 		for _, msg := range messages {
-			if !msg.Deleted {
-				continue
-			}
-
-			if !allUsers && msg.Author.ID != data.Author.ID && targetUser == 0 {
-				continue
-			}
-
-			if targetUser != 0 && msg.Author.ID != targetUser {
-				continue
-			}
-
-			precision := common.DurationPrecisionHours
-			if time.Since(msg.ParsedCreatedAt) < time.Hour {
-				precision = common.DurationPrecisionMinutes
-				if time.Since(msg.ParsedCreatedAt) < time.Minute {
-					precision = common.DurationPrecisionSeconds
+			if numFound < numAllowed {
+				if !msg.Deleted {
+					continue
 				}
+
+				if !allUsers && msg.Author.ID != data.Author.ID && targetUser == 0 {
+					continue
+				}
+
+				if targetUser != 0 && msg.Author.ID != targetUser {
+					continue
+				}
+
+				precision := common.DurationPrecisionHours
+				if time.Since(msg.ParsedCreatedAt) < time.Hour {
+					precision = common.DurationPrecisionMinutes
+					if time.Since(msg.ParsedCreatedAt) < time.Minute {
+						precision = common.DurationPrecisionSeconds
+					}
+				}
+
+				// Match found!
+				timeSince := common.HumanizeDuration(precision, time.Since(msg.ParsedCreatedAt))
+
+				resp += fmt.Sprintf("`%s ago (%s)` **%s**#%s (ID %d): %s\n\n", timeSince, msg.ParsedCreatedAt.UTC().Format(time.ANSIC), msg.Author.Username, msg.Author.Discriminator, msg.Author.ID, msg.ContentWithMentionsReplaced())
+				numFound++
 			}
-
-			// Match found!
-			timeSince := common.HumanizeDuration(precision, time.Since(msg.ParsedCreatedAt))
-
-			resp += fmt.Sprintf("`%s ago (%s)` **%s**#%s (ID %d): %s\n\n", timeSince, msg.ParsedCreatedAt.UTC().Format(time.ANSIC), msg.Author.Username, msg.Author.Discriminator, msg.Author.ID, msg.ContentWithMentionsReplaced())
-			numFound++
 		}
 
-		if numFound == 0 {
-			resp += "none..."
-		}
+		resp += fmt.Sprintf("Found messages: %d", numFound)
 
 		return resp, nil
 	},

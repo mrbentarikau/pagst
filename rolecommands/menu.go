@@ -16,11 +16,11 @@ import (
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
-	"github.com/mrbentarikau/pagst/premium"
-	"github.com/mrbentarikau/pagst/rolecommands/models"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/premium"
+	"github.com/mrbentarikau/pagst/rolecommands/models"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -275,7 +275,7 @@ func updateCustomMessage(ctx context.Context, rm *models.RoleMenu) error {
 		if err != nil {
 			logger.WithError(err).WithField("message_id", rm.MessageID).Error("failed decoding rolemenu embed")
 		} else {
-			edit.Embed = &decoded
+			edit.Embeds = []*discordgo.MessageEmbed{&decoded}
 		}
 	}
 

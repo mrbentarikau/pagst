@@ -11,9 +11,9 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/featureflags"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/reputation/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 	"goji.io"
@@ -29,10 +29,10 @@ var PageHTMLSettings string
 type PostConfigForm struct {
 	Enabled                     bool
 	EnableThanksDetection       bool
-	PointsName                  string `valid:",50"`
-	Cooldown                    int    `valid:"0,86401"` // One day
-	MaxGiveAmount               int64
-	MaxRemoveAmount             int64
+	PointsName                  string  `valid:",50"`
+	Cooldown                    int     `valid:"0,86401"` // One day
+	MaxGiveAmount               int64   `valid:"0,"`
+	MaxRemoveAmount             int64   `valid:"0,"`
 	RequiredGiveRoles           []int64 `valid:"role,true"`
 	RequiredReceiveRoles        []int64 `valid:"role,true"`
 	BlacklistedGiveRoles        []int64 `valid:"role,true"`

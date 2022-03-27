@@ -128,11 +128,13 @@ type CustomCommand struct {
 	TriggerType     CommandTriggerType `json:"trigger_type"`
 	TriggerTypeForm string             `json:"-" schema:"type"`
 	Trigger         string             `json:"trigger" schema:"trigger" valid:",0,1000"`
+	RegexTrigger    string             `json:"regex_trigger" schema:"regex_trigger" valid:",0,1000"`
 	// TODO: Retire the legacy Response field.
-	Response      string   `json:"response,omitempty" schema:"response" valid:"template,20000"`
-	Responses     []string `json:"responses" schema:"responses" valid:"template,20000"`
-	CaseSensitive bool     `json:"case_sensitive" schema:"case_sensitive"`
-	ID            int64    `json:"id"`
+	Response           string   `json:"response,omitempty" schema:"response" valid:"template,20000"`
+	Responses          []string `json:"responses" schema:"responses" valid:"template,20000"`
+	CaseSensitive      bool     `json:"case_sensitive" schema:"case_sensitive"`
+	RegexCaseSensitive bool     `json:"regex_case_sensitive" schema:"regex_case_sensitive"`
+	ID                 int64    `json:"id"`
 
 	ContextChannel int64 `schema:"context_channel" valid:"channel,true"`
 
@@ -202,7 +204,7 @@ func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
 	}
 
 	if cc.TriggerTypeForm == "interval_hours" && (cc.TimeTriggerInterval < MinIntervalTriggerDurationHours || cc.TimeTriggerInterval > MaxIntervalTriggerDurationHours) {
-		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Hour interval can be between %v and %v", MinIntervalTriggerDurationHours, MaxIntervalTriggerDurationHours)))
+		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Hourly interval can be between %v and %v", MinIntervalTriggerDurationHours, MaxIntervalTriggerDurationHours)))
 		return false
 	}
 	*/
@@ -230,9 +232,11 @@ func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
 
 func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 	pqCommand := &models.CustomCommand{
-		TriggerType:              int(cc.TriggerType),
-		TextTrigger:              cc.Trigger,
-		TextTriggerCaseSensitive: cc.CaseSensitive,
+		TriggerType:               int(cc.TriggerType),
+		RegexTrigger:              cc.RegexTrigger,
+		RegexTriggerCaseSensitive: cc.RegexCaseSensitive,
+		TextTrigger:               cc.Trigger,
+		TextTriggerCaseSensitive:  cc.CaseSensitive,
 
 		Categories:              cc.Categories,
 		CategoriesWhitelistMode: cc.RequireCategories,
@@ -291,22 +295,12 @@ func CmdRunsInCategory(cc *models.CustomCommand, channel int64) bool {
 	// check command specifc restrictions
 	for _, v := range cc.Categories {
 		if v == channel {
-			if cc.CategoriesWhitelistMode {
-				return true
-			}
-
-			// Ignore the channel
-			return false
+			return cc.CategoriesWhitelistMode
 		}
 	}
 
 	// Not found
-	if cc.CategoriesWhitelistMode {
-		return false
-	}
-
-	// Not in ignore list
-	return true
+	return !cc.CategoriesWhitelistMode
 }
 
 func CmdRunsInChannel(cc *models.CustomCommand, channel int64) bool {
@@ -326,22 +320,12 @@ func CmdRunsInChannel(cc *models.CustomCommand, channel int64) bool {
 	// check command specifc restrictions
 	for _, v := range cc.Channels {
 		if v == channel {
-			if cc.ChannelsWhitelistMode {
-				return true
-			}
-
-			// Ignore the channel
-			return false
+			return cc.ChannelsWhitelistMode
 		}
 	}
 
 	// Not found
-	if cc.ChannelsWhitelistMode {
-		return false
-	}
-
-	// Not in ignore list
-	return true
+	return !cc.ChannelsWhitelistMode
 }
 
 func CmdRunsForUser(cc *models.CustomCommand, ms *dstate.MemberState) bool {
@@ -359,29 +343,17 @@ func CmdRunsForUser(cc *models.CustomCommand, ms *dstate.MemberState) bool {
 	// check command specific restrictions
 	if len(cc.Roles) == 0 {
 		// Fast path
-		if cc.RolesWhitelistMode {
-			return false
-		}
-
-		return true
+		return !cc.RolesWhitelistMode
 	}
 
 	for _, v := range cc.Roles {
 		if common.ContainsInt64Slice(ms.Member.Roles, v) {
-			if cc.RolesWhitelistMode {
-				return true
-			}
-
-			return false
+			return cc.RolesWhitelistMode
 		}
 	}
 
 	// Not found
-	if cc.RolesWhitelistMode {
-		return false
-	}
-
-	return true
+	return !cc.RolesWhitelistMode
 }
 
 // Migrate modifies a CustomCommand to remove legacy fields.

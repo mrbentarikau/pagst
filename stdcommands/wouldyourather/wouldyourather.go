@@ -7,6 +7,7 @@ import (
 
 	"emperror.dev/errors"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
@@ -49,7 +50,11 @@ var Command = &commands.YAGCommand{
 			return nil, err
 		}
 
-		return nil, nil
+		pm := &paginatedmessages.PaginatedMessage{
+			MessageID: msg.ID,
+		}
+
+		return pm, nil
 	},
 }
 

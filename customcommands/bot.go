@@ -178,7 +178,7 @@ var cmdListCommands = &commands.YAGCommand{
 			if raw {
 				return title + list, nil
 			}
-			_, err := paginatedmessages.CreatePaginatedMessage(
+			pm, err := paginatedmessages.CreatePaginatedMessage(
 				data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(ccs))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					i := page - 1
 					paginatedEmbed := embedCreator(ccs, i, maxLength, title, groupMap)
@@ -188,7 +188,7 @@ var cmdListCommands = &commands.YAGCommand{
 				return "Something went wrong", nil
 			}
 
-			return nil, nil
+			return pm, nil
 		}
 
 		if len(foundCCS) > 1 {
@@ -241,7 +241,16 @@ var cmdListCommands = &commands.YAGCommand{
 			if len(cc.TextTrigger) == 0 {
 				cc.TextTrigger = "None"
 			}
-			caseSensitiveTrigger = fmt.Sprintf(": `%s` - Case sensitive trigger: `%t`", cc.TextTrigger, cc.TextTriggerCaseSensitive)
+
+			if len(cc.RegexTrigger) == 0 {
+				cc.RegexTrigger = "None"
+			}
+
+			if cc.TriggerType > 0 {
+				caseSensitiveTrigger = fmt.Sprintf(": `%s` - Case sensitive trigger: `%t`", cc.RegexTrigger, cc.RegexTriggerCaseSensitive)
+			} else {
+				caseSensitiveTrigger = fmt.Sprintf(": `%s` - Case sensitive trigger: `%t`", cc.TextTrigger, cc.TextTriggerCaseSensitive)
+			}
 		}
 
 		if ccFile != nil {
@@ -280,7 +289,7 @@ func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap m
 	description := fmt.Sprintf("%s\n```%5s|%10s|%27s\n", title, "ccID", "Group", "Trigger")
 	description += "--------------------------------------------\n"
 	for k, v := range ccs[i*ml:] {
-		var group, textTrigger string
+		var group, textTrigger, regexTrigger, finalTrigger string
 		group = gMap[v.GroupID.Int64]
 		if group == "Ungrouped" {
 			group = "uG"
@@ -291,8 +300,19 @@ func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap m
 		if textTrigger = v.TextTrigger; len([]rune(textTrigger)) > 21 {
 			textTrigger = string([]rune(textTrigger)[:21]) + "_"
 		}
+
+		if regexTrigger = v.RegexTrigger; len([]rune(regexTrigger)) > 21 {
+			regexTrigger = string([]rune(regexTrigger)[:21]) + "_"
+		}
+
+		if v.TriggerType == 0 {
+			finalTrigger = textTrigger
+		} else {
+			finalTrigger = regexTrigger
+		}
+
 		if k <= ml-1 {
-			description += fmt.Sprintf("#%4d|%10s|%-3s:%22s\n", v.LocalID, group, CommandTriggerType(v.TriggerType).EmbedString(), textTrigger)
+			description += fmt.Sprintf("#%4d|%10s|%-3s:%22s\n", v.LocalID, group, CommandTriggerType(v.TriggerType).EmbedString(), finalTrigger)
 		}
 	}
 	description += "\nNumber of custom commands:" + fmt.Sprintf("%d", len(ccs)) + "```"
@@ -318,7 +338,7 @@ func FindCommands(ccs []*models.CustomCommand, data *dcmd.Data) (foundCCS []*mod
 		// Find by name
 		name := data.Args[1].Str()
 		for _, v := range ccs {
-			if strings.EqualFold(name, v.TextTrigger) {
+			if strings.EqualFold(name, v.TextTrigger) || strings.EqualFold(name, v.RegexTrigger) {
 				foundCCS = append(foundCCS, v)
 			}
 		}
@@ -335,6 +355,11 @@ func StringCommands(ccs []*models.CustomCommand, gMap map[int64]string) string {
 		switch {
 		case cc.TriggerType >= 5:
 			out += fmt.Sprintf("`#%3d:` %s - Group: `%s`\n", cc.LocalID, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
+		case cc.TriggerType > 0:
+			if len(cc.RegexTrigger) == 0 {
+				cc.RegexTrigger = "None"
+			}
+			out += fmt.Sprintf("`#%3d:` `%s`: %s - Group: `%s`\n", cc.LocalID, cc.RegexTrigger, CommandTriggerType(cc.TriggerType).String(), gMap[cc.GroupID.Int64])
 		default:
 			if len(cc.TextTrigger) == 0 {
 				cc.TextTrigger = "None"
@@ -781,7 +806,11 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	tmplCtx.Name = "CC #" + strconv.Itoa(int(cmd.LocalID))
 	tmplCtx.Data["CCID"] = cmd.LocalID
 	tmplCtx.Data["CCRunCount"] = cmd.RunCount + 1
-	tmplCtx.Data["CCTrigger"] = cmd.TextTrigger
+	if cmd.TriggerType > 0 && cmd.TriggerType < 5 {
+		tmplCtx.Data["CCTrigger"] = cmd.RegexTrigger
+	} else {
+		tmplCtx.Data["CCTrigger"] = cmd.TextTrigger
+	}
 
 	modConfig, _ := moderation.GetConfig(cmd.GuildID)
 	if modConfig.IntActionChannel() > 0 {
@@ -794,10 +823,11 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 
 	csCop := tmplCtx.CurrentFrame.CS
 	f := logger.WithFields(logrus.Fields{
-		"trigger":      cmd.TextTrigger,
-		"trigger_type": CommandTriggerType(cmd.TriggerType).String(),
-		"guild":        csCop.GuildID,
-		"channel_name": csCop.Name,
+		"trigger":       cmd.TextTrigger,
+		"regex_trigger": cmd.RegexTrigger,
+		"trigger_type":  CommandTriggerType(cmd.TriggerType).String(),
+		"guild":         csCop.GuildID,
+		"channel_name":  csCop.Name,
 	})
 
 	// do not allow concurrent executions of the same custom command, to prevent most common kinds of abuse
@@ -1031,7 +1061,7 @@ func onExecPanic(cmd *models.CustomCommand, err error, tmplCtx *templates.Contex
 }
 
 func updatePostCommandRan(cmd *models.CustomCommand, runErr error) {
-	const qNoErr = "UPDATE custom_commands SET run_count = run_count + 1 WHERE guild_id=$1 AND local_id=$2"
+	const qNoErr = "UPDATE custom_commands SET run_count = run_count + 1, last_run=now() WHERE guild_id=$1 AND local_id=$2"
 	const qErr = "UPDATE custom_commands SET run_count = run_count + 1, last_error=$3, last_error_time=now() WHERE guild_id=$1 AND local_id=$2"
 
 	var err error
@@ -1058,9 +1088,16 @@ func updatePostCommandRan(cmd *models.CustomCommand, runErr error) {
 // the trigger).
 func CheckMatch(globalPrefix string, cmd *models.CustomCommand, msg string) (match bool, stripped string, args []string) {
 	trigger := cmd.TextTrigger
+	regexTrigger := cmd.RegexTrigger
+	if len(regexTrigger) == 0 {
+		regexTrigger = trigger
+	}
 
 	cmdMatch := "(?m)"
 	if !cmd.TextTriggerCaseSensitive {
+		cmdMatch += "(?i)"
+	}
+	if !cmd.RegexTriggerCaseSensitive {
 		cmdMatch += "(?i)"
 	}
 
@@ -1070,13 +1107,13 @@ func CheckMatch(globalPrefix string, cmd *models.CustomCommand, msg string) (mat
 		// \A(<@!?bot_id> ?|server_cmd_prefix)trigger(\z|[[:space:]])
 		cmdMatch += `\A(<@!?` + discordgo.StrID(common.BotUser.ID) + "> ?|" + regexp.QuoteMeta(globalPrefix) + ")" + regexp.QuoteMeta(trigger) + `(\z|[[:space:]])`
 	case CommandTriggerStartsWith:
-		cmdMatch += `\A` + regexp.QuoteMeta(trigger)
+		cmdMatch += `\A` + regexp.QuoteMeta(regexTrigger)
 	case CommandTriggerContains:
-		cmdMatch += `\A.*` + regexp.QuoteMeta(trigger)
+		cmdMatch += `\A.*` + regexp.QuoteMeta(regexTrigger)
 	case CommandTriggerRegex:
-		cmdMatch += trigger
+		cmdMatch += regexTrigger
 	case CommandTriggerExact:
-		cmdMatch += `\A` + regexp.QuoteMeta(trigger) + `\z`
+		cmdMatch += `\A` + regexp.QuoteMeta(regexTrigger) + `\z`
 	default:
 		return false, "", nil
 	}
@@ -1109,9 +1146,9 @@ func CheckMatch(globalPrefix string, cmd *models.CustomCommand, msg string) (mat
 	}
 
 	// The following simply matches the legacy behavior as I'm not sure if anyone is relying on it.
-	if !cmd.TextTriggerCaseSensitive && cmd.TriggerType != int(CommandTriggerRegex) {
+	/*if !cmd.TextTriggerCaseSensitive && cmd.TriggerType != int(CommandTriggerRegex) {
 		stripped = strings.ToLower(msg)
-	}
+	}*/
 
 	stripped = msg[idx[1]:]
 	match = true

@@ -390,6 +390,9 @@ func tmplEditCCTriggerType(ctx *templates.Context) interface{} {
 			cmd.TimeTriggerInterval *= 60
 		}
 		_, err = cmd.UpdateG(context.Background(), boil.Whitelist("trigger_type", "time_trigger_interval"))
+		if err != nil {
+			return "", err
+		}
 		return "", nil
 	}
 }

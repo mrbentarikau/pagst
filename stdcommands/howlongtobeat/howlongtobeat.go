@@ -89,8 +89,9 @@ var Command = &commands.YAGCommand{
 
 		hltbEmbed := embedCreator(hltbQuery, 0, paginatedView)
 
+		var pm *paginatedmessages.PaginatedMessage
 		if paginatedView {
-			_, err := paginatedmessages.CreatePaginatedMessage(
+			pm, err = paginatedmessages.CreatePaginatedMessage(
 				data.GuildData.GS.ID, data.ChannelID, 1, len(hltbQuery), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					i := page - 1
 					sort.SliceStable(hltbQuery, func(i, j int) bool {
@@ -106,7 +107,7 @@ var Command = &commands.YAGCommand{
 			return hltbEmbed, nil
 		}
 
-		return nil, nil
+		return pm, nil
 	},
 }
 

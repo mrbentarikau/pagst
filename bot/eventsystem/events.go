@@ -80,6 +80,9 @@ const (
 	EventVoiceServerUpdate          Event = 65
 	EventVoiceStateUpdate           Event = 66
 	EventWebhooksUpdate             Event = 67
+	EventIntegrationCreate          Event = 68
+	EventIntegrationUpdate          Event = 69
+	EventIntegrationDelete          Event = 70
 )
 
 var EventNames = []string{
@@ -151,6 +154,9 @@ var EventNames = []string{
 	"VoiceServerUpdate",
 	"VoiceStateUpdate",
 	"WebhooksUpdate",
+	"EventIntegrationCreate",
+	"EventIntegrationUpdate",
+	"EventIntegrationDelete",
 }
 
 func (e Event) String() string {
@@ -218,6 +224,9 @@ var AllDiscordEvents = []Event{
 	EventVoiceServerUpdate,
 	EventVoiceStateUpdate,
 	EventWebhooksUpdate,
+	EventIntegrationCreate,
+	EventIntegrationUpdate,
+	EventIntegrationDelete,
 }
 
 var AllEvents = []Event{
@@ -289,9 +298,12 @@ var AllEvents = []Event{
 	EventVoiceServerUpdate,
 	EventVoiceStateUpdate,
 	EventWebhooksUpdate,
+	EventIntegrationCreate,
+	EventIntegrationUpdate,
+	EventIntegrationDelete,
 }
 
-var handlers = make([][][]*Handler, 68)
+var handlers = make([][][]*Handler, 71)
 
 func (data *EventData) ApplicationCommandCreate() *discordgo.ApplicationCommandCreate {
 	return data.EvtInterface.(*discordgo.ApplicationCommandCreate)
@@ -473,6 +485,15 @@ func (data *EventData) VoiceStateUpdate() *discordgo.VoiceStateUpdate {
 func (data *EventData) WebhooksUpdate() *discordgo.WebhooksUpdate {
 	return data.EvtInterface.(*discordgo.WebhooksUpdate)
 }
+func (data *EventData) IntegrationCreate() *discordgo.IntegrationCreate {
+	return data.EvtInterface.(*discordgo.IntegrationCreate)
+}
+func (data *EventData) IntegrationUpdate() *discordgo.IntegrationUpdate {
+	return data.EvtInterface.(*discordgo.IntegrationUpdate)
+}
+func (data *EventData) IntegrationDelete() *discordgo.IntegrationDelete {
+	return data.EvtInterface.(*discordgo.IntegrationDelete)
+}
 
 func fillEvent(evtData *EventData) {
 
@@ -597,9 +618,13 @@ func fillEvent(evtData *EventData) {
 		evtData.Type = Event(66)
 	case *discordgo.WebhooksUpdate:
 		evtData.Type = Event(67)
+	case *discordgo.IntegrationCreate:
+		evtData.Type = Event(68)
+	case *discordgo.IntegrationUpdate:
+		evtData.Type = Event(69)
+	case *discordgo.IntegrationDelete:
+		evtData.Type = Event(70)
 	default:
 		return
 	}
-
-	return
 }

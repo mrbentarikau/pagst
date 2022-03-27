@@ -15,9 +15,9 @@ import (
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	schEvtsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/rolecommands/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/volatiletech/null/v8"
 	v3_qm "github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -57,8 +57,8 @@ type FormGroup struct {
 
 	Mode int
 
-	MultipleMax int
-	MultipleMin int
+	MultipleMax int `valid:"0,250"`
+	MultipleMin int `valid:"0,250"`
 
 	SingleAutoToggleOff   bool
 	SingleRequireOne      bool

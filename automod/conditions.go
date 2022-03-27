@@ -54,7 +54,7 @@ func (mrc *MemberRolesCondition) Description() string {
 
 func (mrc *MemberRolesCondition) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Roles",
 			Key:  "Roles",
 			Kind: SettingTypeMultiRole,
@@ -143,7 +143,7 @@ func (cd *ChannelsCondition) Description() string {
 
 func (cd *ChannelsCondition) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Channels",
 			Key:  "Channels",
 			Kind: SettingTypeMultiChannel,
@@ -234,7 +234,7 @@ func (cd *VoiceChannelsCondition) Description() string {
 
 func (cd *VoiceChannelsCondition) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Channels",
 			Key:  "Channels",
 			Kind: SettingTypeMultiVoiceChannel,
@@ -325,7 +325,7 @@ func (cd *ChannelCategoriesCondition) Description() string {
 
 func (cd *ChannelCategoriesCondition) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Categories",
 			Key:  "Categories",
 			Kind: SettingTypeMultiChannelCategories,
@@ -392,7 +392,7 @@ func (cd *ChannelCategoriesCondition) MergeDuplicates(data []interface{}) interf
 /////////////////////////////////////////////////////////////////
 
 type AccountAgeConditionData struct {
-	Treshold int
+	Threshold int
 }
 
 var _ Condition = (*AccountAgeCondition)(nil)
@@ -427,9 +427,9 @@ func (ac *AccountAgeCondition) Description() string {
 
 func (ac *AccountAgeCondition) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Age in minutes",
-			Key:  "Treshold",
+			Key:  "Threshold",
 			Kind: SettingTypeInt,
 		},
 	}
@@ -440,7 +440,7 @@ func (ac *AccountAgeCondition) IsMet(data *TriggeredRuleData, settings interface
 
 	created := bot.SnowflakeToTime(data.MS.User.ID)
 	minutes := int(time.Since(created).Minutes())
-	if minutes <= settingsCast.Treshold {
+	if minutes <= settingsCast.Threshold {
 		// account were made within threshold
 		if ac.Below {
 			return true, nil
@@ -464,7 +464,7 @@ func (ac *AccountAgeCondition) MergeDuplicates(data []interface{}) interface{} {
 /////////////////////////////////////////////////////////////////
 
 type MemberAgeConditionData struct {
-	Treshold int
+	Threshold int
 }
 
 var _ Condition = (*MemberAgecondition)(nil)
@@ -499,9 +499,9 @@ func (mc *MemberAgecondition) Description() string {
 
 func (mc *MemberAgecondition) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Age in minutes",
-			Key:  "Treshold",
+			Key:  "Threshold",
 			Kind: SettingTypeInt,
 		},
 	}
@@ -528,7 +528,7 @@ func (mc *MemberAgecondition) IsMet(data *TriggeredRuleData, settings interface{
 
 	minutes := int(time.Since(joinedAt).Minutes())
 
-	if minutes <= settingsCast.Treshold {
+	if minutes <= settingsCast.Threshold {
 		// joined within threshold
 		if mc.Below {
 			return true, nil
@@ -684,7 +684,7 @@ func (dmc *DomainCondition) Description() string {
 
 func (dmc *DomainCondition) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "List",
 			Key:  "ListID",
 			Kind: SettingTypeList,

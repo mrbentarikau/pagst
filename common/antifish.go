@@ -43,11 +43,9 @@ var (
 
 	antiFishScheme   = "https"
 	antiFishHost     = "anti-fish.bitflow.dev"
-	antiFishURL      = fmt.Sprintf("%s://%s/", antiFishScheme, antiFishHost)
 	antiFishHostPath = "check"
 
 	transparencyReportHost     = "transparencyreport.google.com"
-	transparencyReportURL      = fmt.Sprintf("%s://%s/", antiFishScheme, transparencyReportHost)
 	transparencyReportHostPath = "transparencyreport/api/v3/safebrowsing/status"
 )
 
@@ -85,7 +83,7 @@ func AntiFishQuery(phishingQuery string) (*AntiFish, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		respError := fmt.Errorf("Unable to fetch data from AntiFish API, status-code %d", resp.StatusCode)
+		respError := fmt.Errorf("unable to fetch data from AntiFish API, status-code %d", resp.StatusCode)
 		return nil, respError
 	}
 

@@ -38,8 +38,8 @@ var (
 		"toInt64":           ToInt64,
 		"toInt64Base16":     ToInt64Base16,
 		"toRune":            ToRune,
-		"toString":          ToString, // don't ask why we have 2 of these
 		"toSHA256":          ToSHA256,
+		"toString":          ToString, // don't ask why we have 2 of these
 
 		// string manipulation
 		"hasPrefix":   strings.HasPrefix,
@@ -483,7 +483,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 	}
 
 	if strings.TrimSpace(content) == "" || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
-		// no point in sending the response if it gets deleted immedietely
+		// no point in sending the response if it gets deleted immediately
 		return nil, nil
 	}
 
@@ -493,6 +493,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
 	if err != nil {
+		/*KRAAKA that error printout!!!*/
 		common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(fmt.Sprint(err)))
 		logger.WithError(err).Error("Failed sending message")
 	} else {
@@ -575,26 +576,26 @@ func (c *Context) addContextFunc(name string, f interface{}) {
 
 func baseContextFuncs(c *Context) {
 	// message functions
-	c.addContextFunc("sendDM", c.tmplSendDM)
-	c.addContextFunc("sendTargetDM", c.tmplSendTargetDM)
-	c.addContextFunc("sendMessage", c.tmplSendMessage(true, false))
-	c.addContextFunc("sendTemplate", c.tmplSendTemplate)
-	c.addContextFunc("sendTemplateDM", c.tmplSendTemplateDM)
-	c.addContextFunc("sendMessageRetID", c.tmplSendMessage(true, true))
-	c.addContextFunc("sendMessageNoEscape", c.tmplSendMessage(false, false))
-	c.addContextFunc("sendMessageNoEscapeRetID", c.tmplSendMessage(false, true))
 	c.addContextFunc("editMessage", c.tmplEditMessage(true))
 	c.addContextFunc("editMessageNoEscape", c.tmplEditMessage(false))
-	c.addContextFunc("pinMessage", c.tmplPinMessage(false))
-	c.addContextFunc("unpinMessage", c.tmplPinMessage(true))
 	c.addContextFunc("lastMessages", c.tmplLastMessages)
+	c.addContextFunc("pinMessage", c.tmplPinMessage(false))
+	c.addContextFunc("sendDM", c.tmplSendDM)
+	c.addContextFunc("sendMessage", c.tmplSendMessage(true, false))
+	c.addContextFunc("sendMessageNoEscape", c.tmplSendMessage(false, false))
+	c.addContextFunc("sendMessageNoEscapeRetID", c.tmplSendMessage(false, true))
+	c.addContextFunc("sendMessageRetID", c.tmplSendMessage(true, true))
+	c.addContextFunc("sendTargetDM", c.tmplSendTargetDM)
+	c.addContextFunc("sendTemplate", c.tmplSendTemplate)
+	c.addContextFunc("sendTemplateDM", c.tmplSendTemplateDM)
+	c.addContextFunc("unpinMessage", c.tmplPinMessage(true))
 
 	// Mentions
 	c.addContextFunc("mentionEveryone", c.tmplMentionEveryone)
 	c.addContextFunc("mentionHere", c.tmplMentionHere)
 	c.addContextFunc("mentionRole", c.tmplMentionRole)
-	c.addContextFunc("mentionRoleName", c.tmplMentionRoleName)
 	c.addContextFunc("mentionRoleID", c.tmplMentionRoleID)
+	c.addContextFunc("mentionRoleName", c.tmplMentionRoleName)
 
 	// Role functions
 	c.addContextFunc("addRole", c.tmplAddRole)
@@ -628,43 +629,44 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("targetHasRoleName", c.tmplTargetHasRoleName)
 
 	// permission funcs
+	c.addContextFunc("getTargetPermissionsIn", c.tmplGetTargetPermissionsIn)
 	c.addContextFunc("hasPermissions", c.tmplHasPermissions)
 	c.addContextFunc("targetHasPermissions", c.tmplTargetHasPermissions)
-	c.addContextFunc("getTargetPermissionsIn", c.tmplGetTargetPermissionsIn)
 
-	//Varia
-	c.addContextFunc("ccCounters", c.tmplCounters)
-	c.addContextFunc("deleteResponse", c.tmplDelResponse)
-	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
-	c.addContextFunc("deleteMessage", c.tmplDelMessage)
-	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction)
-	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions)
-	c.addContextFunc("getMessage", c.tmplGetMessage)
-	c.addContextFunc("getAllMessageReactions", c.tmplGetAllMessageReactions)
-	c.addContextFunc("getMember", c.tmplGetMember)
-	c.addContextFunc("getChannel", c.tmplGetChannel)
-	c.addContextFunc("getThread", c.tmplGetThread)
-	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
-	c.addContextFunc("getPinCount", c.tmplGetChannelPinCount)
+	// Varia
+	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions)
 	c.addContextFunc("addReactions", c.tmplAddReactions)
 	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)
-	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions)
+	c.addContextFunc("ccCounters", c.tmplCounters)
+	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions)
+	c.addContextFunc("deleteMessage", c.tmplDelMessage)
+	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction)
+	c.addContextFunc("deleteResponse", c.tmplDelResponse)
+	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
+	c.addContextFunc("getAllMessageReactions", c.tmplGetAllMessageReactions)
+	c.addContextFunc("getChannel", c.tmplGetChannel)
+	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
+	c.addContextFunc("getMember", c.tmplGetMember)
+	c.addContextFunc("getMessage", c.tmplGetMessage)
+	c.addContextFunc("getThread", c.tmplGetThread)
+	c.addContextFunc("getPinCount", c.tmplGetChannelPinCount)
+	c.addContextFunc("setMemberTimeout", c.tmplSetMemberTimeout)
 
 	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
 	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman)
 	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes)
-	c.addContextFunc("sleep", c.tmplSleep)
 	c.addContextFunc("reFind", c.reFind)
 	c.addContextFunc("reFindAll", c.reFindAll)
 	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches)
 	c.addContextFunc("reReplace", c.reReplace)
 	c.addContextFunc("reSplit", c.reSplit)
+	c.addContextFunc("sleep", c.tmplSleep)
 
-	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
 	c.addContextFunc("editChannelName", c.tmplEditChannelName)
+	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
+	c.addContextFunc("editNickname", c.tmplEditNickname)
 	c.addContextFunc("onlineCount", c.tmplOnlineCount)
 	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots)
-	c.addContextFunc("editNickname", c.tmplEditNickname)
 
 	c.addContextFunc("sort", c.tmplSort)
 }

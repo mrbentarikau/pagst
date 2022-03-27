@@ -338,11 +338,16 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		},
 		Timestamp: time.Unix(int64(post.CreatedUtc), 0).UTC().Format(time.RFC3339),
 	}
+
+	if post.Spoiler {
+		embed.Title = " [spoiler]\n"
+	}
+
+	embed.Title += common.CutStringShort(html.UnescapeString(post.Title), 240)
 	embed.URL = "https://redd.it/" + post.ID
 
 	if post.IsSelf {
 		//  Handle Self posts
-		embed.Title = html.UnescapeString(post.Title)
 		embed.Footer.Text += "new self post"
 		if post.Spoiler {
 			embed.Description += "|| " + common.CutStringShort(html.UnescapeString(post.Selftext), 250) + " ||"
@@ -353,7 +358,6 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		embed.Color = 0xc3fc7e
 	} else if post.CrosspostParent != "" && len(post.CrosspostParentList) > 0 {
 		//  Handle crossposts
-		embed.Title = html.UnescapeString(post.Title)
 		embed.Footer.Text += "new crosspost"
 
 		parent := post.CrosspostParentList[0]
@@ -379,7 +383,6 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 	} else {
 		//  Handle Link posts
 		embed.Color = 0x88c0d0
-		embed.Title = html.UnescapeString(post.Title)
 		embed.Footer.Text += "new link post"
 		embed.Description += post.URL
 
@@ -388,10 +391,6 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 				URL: post.URL,
 			}
 		}
-	}
-
-	if post.Spoiler {
-		embed.Title += " [spoiler]"
 	}
 
 	return plainMessage, embed

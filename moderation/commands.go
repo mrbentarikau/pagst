@@ -570,7 +570,7 @@ var ModerationCommands = []*commands.YAGCommand{
 
 			send := &discordgo.MessageSend{
 				Content: topContent,
-				Embed:   embed,
+				Embeds:  []*discordgo.MessageEmbed{embed},
 				AllowedMentions: discordgo.AllowedMentions{
 					Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
 				},
@@ -916,8 +916,8 @@ var ModerationCommands = []*commands.YAGCommand{
 			if parsed.Context().Value(paginatedmessages.CtxKeyNoPagination) != nil {
 				return PaginateWarnings(parsed)(nil, page)
 			}
-			_, err = paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, page, 0, PaginateWarnings(parsed))
-			return nil, err
+			pm, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, page, 0, PaginateWarnings(parsed))
+			return pm, err
 		},
 	},
 	{

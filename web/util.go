@@ -40,7 +40,7 @@ var panelLogKeyCore = cplogs.RegisterActionFormat(&cplogs.ActionFormat{
 
 func getRedditQuote() string {
 	var redditQuoteQuery []redditQuoteStruct
-	var RedditHost = "https://api.reddit.com/"
+	var RedditHost = "https://old.reddit.com/"
 	var RedditJSON = "r/caubert/random.json"
 
 	queryURL := RedditHost + RedditJSON
@@ -49,7 +49,7 @@ func getRedditQuote() string {
 		return fmt.Sprint("Error: ", err)
 	}
 
-	req.Header.Set("User-Agent", "PAGST/20.42.6702")
+	req.Header.Set("User-Agent", "PAGST/20.42.6702 /u/caubert")
 	//req.Header.Set("Content-Type", "application/json")
 
 	resp, _ := http.DefaultClient.Do(req)
@@ -65,6 +65,7 @@ func getRedditQuote() string {
 	}
 
 	queryErr := json.Unmarshal(body, &redditQuoteQuery)
+
 	if queryErr != nil {
 		return ""
 		//return fmt.Sprint("Error: ", queryErr)

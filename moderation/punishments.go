@@ -13,10 +13,10 @@ import (
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	seventsmodels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/common/templates"
-	"github.com/mrbentarikau/pagst/logs"
-	"github.com/jinzhu/gorm"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/logs"
+	"github.com/jinzhu/gorm"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
@@ -170,13 +170,14 @@ func sendPunishDM(config *Config, dmMsg string, action ModlogAction, gs *dstate.
 
 	executed, err := ctx.Execute(dmMsg)
 	if err != nil {
-		logger.WithError(err).WithField("guild", gs.ID).Warn("Failed executing pusnishment DM")
+		logger.WithError(err).WithField("guild", gs.ID).Warn("Failed executing punishment DM")
 		executed = "Failed executing template."
 	}
 
 	if strings.TrimSpace(executed) != "" {
 		err = bot.SendDM(member.User.ID, "**"+gs.Name+":** "+executed)
 		if err != nil {
+			//common.BotSession.ChannelMessageSendComplex(ctx.CurrentFrame.CS.ID, ctx.MessageSend(fmt.Sprint(err)))
 			logger.WithError(err).Error("failed sending punish DM")
 		}
 	}

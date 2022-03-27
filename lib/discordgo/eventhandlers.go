@@ -32,6 +32,9 @@ const (
 	guildRoleUpdateEventType            = "GUILD_ROLE_UPDATE"
 	guildStickersUpdateEventType        = "GUILD_STICKERS_UPDATE"
 	guildUpdateEventType                = "GUILD_UPDATE"
+	integrationCreateEventType          = "INTEGRATION_CREATE"
+	integrationUpdateEventType          = "INTEGRATION_UPDATE"
+	integrationDeleteEventType          = "INTEGRATION_DELETE"
 	interactionCreateEventType          = "INTERACTION_CREATE"
 	inviteCreateEventType               = "INVITE_CREATE"
 	inviteDeleteEventType               = "INVITE_DELETE"
@@ -1270,6 +1273,55 @@ func (eh webhooksUpdateEventHandler) Handle(s *Session, i interface{}) {
 	}
 }
 
+// Integration Events
+type integrationCreateEventHandler func(*Session, *IntegrationCreate)
+
+func (eh integrationCreateEventHandler) Type() string {
+	return integrationCreateEventType
+}
+
+func (eh integrationCreateEventHandler) New() interface{} {
+	return &IntegrationCreate{}
+}
+
+func (eh integrationCreateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*IntegrationCreate); ok {
+		eh(s, t)
+	}
+}
+
+type integrationUpdateEventHandler func(*Session, *IntegrationUpdate)
+
+func (eh integrationUpdateEventHandler) Type() string {
+	return integrationUpdateEventType
+}
+
+func (eh integrationUpdateEventHandler) New() interface{} {
+	return &IntegrationUpdate{}
+}
+
+func (eh integrationUpdateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*IntegrationUpdate); ok {
+		eh(s, t)
+	}
+}
+
+type integrationDeleteEventHandler func(*Session, *IntegrationDelete)
+
+func (eh integrationDeleteEventHandler) Type() string {
+	return integrationDeleteEventType
+}
+
+func (eh integrationDeleteEventHandler) New() interface{} {
+	return &IntegrationDelete{}
+}
+
+func (eh integrationDeleteEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*IntegrationDelete); ok {
+		eh(s, t)
+	}
+}
+
 func handlerForInterface(handler interface{}) EventHandler {
 	switch v := handler.(type) {
 	case func(*Session, interface{}):
@@ -1396,6 +1448,12 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return voiceStateUpdateEventHandler(v)
 	case func(*Session, *WebhooksUpdate):
 		return webhooksUpdateEventHandler(v)
+	case func(*Session, *IntegrationCreate):
+		return integrationCreateEventHandler(v)
+	case func(*Session, *IntegrationUpdate):
+		return integrationUpdateEventHandler(v)
+	case func(*Session, *IntegrationDelete):
+		return integrationDeleteEventHandler(v)
 	}
 
 	return nil
@@ -1424,6 +1482,9 @@ func init() {
 	registerInterfaceProvider(guildRoleUpdateEventHandler(nil))
 	registerInterfaceProvider(guildStickersUpdateEventHandler(nil))
 	registerInterfaceProvider(guildUpdateEventHandler(nil))
+	registerInterfaceProvider(integrationCreateEventHandler(nil))
+	registerInterfaceProvider(integrationUpdateEventHandler(nil))
+	registerInterfaceProvider(integrationDeleteEventHandler(nil))
 	registerInterfaceProvider(interactionCreateEventHandler(nil))
 	registerInterfaceProvider(inviteCreateEventHandler(nil))
 	registerInterfaceProvider(inviteDeleteEventHandler(nil))

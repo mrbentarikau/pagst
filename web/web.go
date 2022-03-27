@@ -120,7 +120,8 @@ func loadTemplates() {
 	coreTemplates := []string{
 		"templates/index.html", "templates/cp_main.html",
 		"templates/cp_nav.html", "templates/cp_selectserver.html", "templates/cp_logs.html",
-		"templates/status.html", "templates/cp_server_home.html", "templates/cp_core_settings.html", "templates/error404.html",
+		"templates/status.html", "templates/cp_server_home.html", "templates/cp_core_settings.html",
+		"templates/error404.html", "templates/privacy_policy.html", "templates/chat.html",
 	}
 
 	for _, v := range coreTemplates {
@@ -302,6 +303,8 @@ func setupRoutes() *goji.Mux {
 	RootMux.Handle(pat.Get("/manage/"), SelectServerHomePageHandler)
 	RootMux.Handle(pat.Get("/status"), ControllerHandler(HandleStatusHTML, "cp_status"))
 	RootMux.Handle(pat.Get("/status/"), ControllerHandler(HandleStatusHTML, "cp_status"))
+	RootMux.Handle(pat.Get("/privacy_policy"), ControllerHandler(HandleStatusHTML, "cp_privacy_policy"))
+	RootMux.Handle(pat.Get("/privacy_policy/"), ControllerHandler(HandleStatusHTML, "cp_privacy_policy"))
 	RootMux.Handle(pat.Get("/status.json"), APIHandler(HandleStatusJSON))
 	RootMux.Handle(pat.Get("/error404"), RenderHandler(HandleError404, "error404"))
 	RootMux.Handle(pat.Get("/error404/"), RenderHandler(HandleError404, "error404"))
@@ -425,6 +428,7 @@ func setupRootMux() {
 
 	// General handlers
 	mux.Handle(pat.Get("/"), ControllerHandler(HandleLandingPage, "index"))
+	mux.Handle(pat.Get("/chat"), ControllerHandler(HandleLandingPage, "chat"))
 	mux.HandleFunc(pat.Get("/login"), HandleLogin)
 	mux.HandleFunc(pat.Get("/confirm_login"), HandleConfirmLogin)
 	mux.HandleFunc(pat.Get("/logout"), HandleLogout)

@@ -135,7 +135,6 @@ func KindOf(input interface{}, flag ...bool) (string, error) { //flag used only 
 }
 
 func StructToSdict(value interface{}) (SDict, error) {
-
 	val, isNil := indirect(reflect.ValueOf(value))
 	typeOfS := val.Type()
 	if isNil || value == nil {
@@ -218,16 +217,16 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 	}
 
 	msg := &discordgo.MessageSend{
-		AllowedMentions: discordgo.AllowedMentions{
-			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
-		},
+		AllowedMentions: discordgo.AllowedMentions{},
 	}
 
 	// Default filename
 	filename := "attachment_" + time.Now().Format("2006-01-02_15-04-05")
+	// Embed defaults
+	embedSlice := []*discordgo.MessageEmbed{}
+	numEmbeds := 10
 
 	for key, val := range messageSdict {
-
 		switch strings.ToLower(key) {
 		case "content":
 			msg.Content = ToString(val)
@@ -235,11 +234,24 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			if val == nil {
 				continue
 			}
-			embed, err := CreateEmbed(val)
-			if err != nil {
-				return nil, err
+			switch val.(type) {
+			case Slice, []*discordgo.MessageEmbed:
+				rv, _ := indirect(reflect.ValueOf(val))
+				for i := 0; i < rv.Len() && i < numEmbeds; i++ {
+					embed, err := CreateEmbed(rv.Index(i).Interface())
+					if err != nil {
+						return nil, err
+					}
+					embedSlice = append(embedSlice, embed)
+				}
+				msg.Embeds = embedSlice
+			default:
+				embed, err := CreateEmbed(val)
+				if err != nil {
+					return nil, err
+				}
+				msg.Embeds = []*discordgo.MessageEmbed{embed}
 			}
-			msg.Embed = embed
 		case "file":
 			stringFile := ToString(val)
 			if len(stringFile) > 256000 {
@@ -249,7 +261,6 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			buf.WriteString(stringFile)
 
 			msg.File = &discordgo.File{
-				//Name:        "attachment_" + time.Now().UTC().Format("20060102_150405") + ".txt",
 				ContentType: "text/plain",
 				Reader:      &buf,
 			}
@@ -281,6 +292,10 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 		}
 
 	}
+	if msg.File != nil {
+		// We hardcode the extension to .txt to prevent possible abuse via .bat or other possible harmful/easily corruptable file formats
+		msg.File.Name = filename + ".txt"
+	}
 
 	return msg, nil
 }
@@ -297,7 +312,10 @@ func CreateMessageEdit(values ...interface{}) (*discordgo.MessageEdit, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	msg := &discordgo.MessageEdit{}
+	embedSlice := []*discordgo.MessageEmbed{}
+	numEmbeds := 10
 
 	for key, val := range messageSdict {
 
@@ -307,18 +325,29 @@ func CreateMessageEdit(values ...interface{}) (*discordgo.MessageEdit, error) {
 			msg.Content = &temp
 		case "embed":
 			if val == nil {
-				msg.Embed = (&discordgo.MessageEmbed{}).MarshalNil(true)
 				continue
 			}
-			embed, err := CreateEmbed(val)
-			if err != nil {
-				return nil, err
+			switch val.(type) {
+			case Slice, []*discordgo.MessageEmbed:
+				rv, _ := indirect(reflect.ValueOf(val))
+				for i := 0; i < rv.Len() && i < numEmbeds; i++ {
+					embed, err := CreateEmbed(rv.Index(i).Interface())
+					if err != nil {
+						return nil, err
+					}
+					embedSlice = append(embedSlice, embed)
+				}
+				msg.Embeds = embedSlice
+			default:
+				embed, err := CreateEmbed(val)
+				if err != nil {
+					return nil, err
+				}
+				msg.Embeds = []*discordgo.MessageEmbed{embed}
 			}
-			msg.Embed = embed
 		default:
 			return nil, errors.New(`invalid key "` + key + `" passed to message edit builder`)
 		}
-
 	}
 
 	return msg, nil
@@ -1289,27 +1318,6 @@ func DecodeStringToHex(from interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return decoded, nil
-}
-
-func tmplKindOf(input interface{}, flag ...bool) (string, error) {
-
-	switch len(flag) {
-
-	case 0:
-		return reflect.ValueOf(input).Kind().String(), nil
-	case 1:
-		if flag[0] {
-			val, isNil := indirect(reflect.ValueOf(input))
-			if isNil || input == nil {
-				return "invalid", nil
-			}
-			return val.Kind().String(), nil
-		}
-		return reflect.ValueOf(input).Kind().String(), nil
-	default:
-		return "", errors.New("Too many flags")
-	}
-
 }
 
 func tmplJson(v interface{}) (string, error) {

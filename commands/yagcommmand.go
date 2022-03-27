@@ -11,6 +11,7 @@ import (
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands/models"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
@@ -330,7 +331,7 @@ func (yc *YAGCommand) PostCommandExecuted(settings *CommandSettings, cmdData *dc
 	// send a alternative message in case of embeds in channels with no embeds perms
 	if cmdData.GuildData != nil && cmdData.TriggerType != dcmd.TriggerTypeSlashCommands {
 		switch resp.(type) {
-		case *discordgo.MessageEmbed, []*discordgo.MessageEmbed:
+		case *discordgo.MessageEmbed, []*discordgo.MessageEmbed, *paginatedmessages.PaginatedMessage:
 			if hasPerms, _ := bot.BotHasPermissionGS(cmdData.GuildData.GS, cmdData.ChannelID, discordgo.PermissionEmbedLinks); !hasPerms {
 				resp = "This command returned an embed but the bot does not have embed links permissions in this channel, cannot send the response."
 			}
@@ -342,9 +343,22 @@ func (yc *YAGCommand) PostCommandExecuted(settings *CommandSettings, cmdData *dc
 	if resp == nil && cmdData.TriggerType == dcmd.TriggerTypeSlashCommands {
 		common.BotSession.DeleteInteractionResponse(common.BotApplication.ID, cmdData.SlashCommandTriggerData.Interaction.Token)
 	} else if resp != nil {
-		replies, err = dcmd.SendResponseInterface(cmdData, resp, true)
-		if err != nil {
-			logger.WithError(err).Error("failed sending command response")
+		switch t := resp.(type) {
+		case *paginatedmessages.PaginatedMessage:
+			if cmdData.TriggerType == dcmd.TriggerTypeSlashCommands {
+				common.BotSession.DeleteInteractionResponse(common.BotApplication.ID, cmdData.SlashCommandTriggerData.Interaction.Token)
+			}
+
+			paginatedReply := &discordgo.Message{
+				ID: t.MessageID,
+			}
+
+			replies = append(replies, paginatedReply)
+		default:
+			replies, err = dcmd.SendResponseInterface(cmdData, resp, true)
+			if err != nil {
+				logger.WithError(err).Error("failed sending command response")
+			}
 		}
 	}
 

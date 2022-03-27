@@ -83,7 +83,7 @@ var Command = &commands.YAGCommand{
 
 		if raw {
 			outFinal = fmt.Sprintf("Total role count: %d\n", counter)
-			outFinal += fmt.Sprintf("%s", "(ME = mention everyone perms)\n")
+			outFinal += "(ME = mention everyone perms)\n"
 			outFinal += out
 
 			return outFinal, nil
@@ -91,7 +91,7 @@ var Command = &commands.YAGCommand{
 		}
 		//outSlice := strings.Split((strings.Replace(out, "`", "", -1)), "\n")
 		outSlice := strings.Split(out, "\n")
-		_, err := paginatedmessages.CreatePaginatedMessage(
+		pm, err := paginatedmessages.CreatePaginatedMessage(
 			data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(outSlice))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 				i := page - 1
 				paginatedEmbed := embedCreator(outSlice, i, maxLength, counter)
@@ -100,7 +100,7 @@ var Command = &commands.YAGCommand{
 		if err != nil {
 			return fmt.Sprintf("Something went wrong: %s", err), nil
 		}
-		return nil, nil
+		return pm, nil
 	},
 }
 

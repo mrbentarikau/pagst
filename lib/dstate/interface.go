@@ -237,10 +237,11 @@ type MemberState struct {
 }
 
 type MemberFields struct {
-	JoinedAt discordgo.Timestamp
-	Roles    []int64
-	Nick     string
-	Avatar   string
+	JoinedAt                   discordgo.Timestamp
+	Roles                      []int64
+	Nick                       string
+	Avatar                     string
+	CommunicationDisabledUntil *time.Time
 }
 
 type PresenceStatus int32
@@ -280,10 +281,11 @@ func MemberStateFromMember(member *discordgo.Member) *MemberState {
 		GuildID: member.GuildID,
 
 		Member: &MemberFields{
-			JoinedAt: member.JoinedAt,
-			Roles:    member.Roles,
-			Nick:     member.Nick,
-			Avatar:   member.Avatar,
+			JoinedAt:                   member.JoinedAt,
+			Roles:                      member.Roles,
+			Nick:                       member.Nick,
+			Avatar:                     member.Avatar,
+			CommunicationDisabledUntil: member.CommunicationDisabledUntil,
 		},
 		Presence: nil,
 	}
@@ -297,12 +299,13 @@ func (ms *MemberState) DgoMember() *discordgo.Member {
 	}
 
 	m := &discordgo.Member{
-		GuildID:  ms.GuildID,
-		JoinedAt: ms.Member.JoinedAt,
-		Nick:     ms.Member.Nick,
-		Avatar:   ms.Member.Avatar,
-		Roles:    ms.Member.Roles,
-		User:     &ms.User,
+		GuildID:                    ms.GuildID,
+		JoinedAt:                   ms.Member.JoinedAt,
+		Nick:                       ms.Member.Nick,
+		Avatar:                     ms.Member.Avatar,
+		Roles:                      ms.Member.Roles,
+		CommunicationDisabledUntil: ms.Member.CommunicationDisabledUntil,
+		User:                       &ms.User,
 	}
 
 	if ms.Member != nil {

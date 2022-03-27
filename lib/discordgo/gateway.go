@@ -34,82 +34,142 @@ import (
 )
 
 var (
-	ErrAlreadyOpen = errors.New("Connection already open")
+	ErrAlreadyOpen = errors.New("connection already open")
 )
 
+// Intent is the type of a Gateway Intent
+// https://discord.com/developers/docs/topics/gateway#gateway-intents
 type GatewayIntent int
 
 const (
-	GatewayIntentGuilds GatewayIntent = 1 << 0
-	// - GUILD_CREATE
-	// - GUILD_UPDATE
-	// - GUILD_DELETE
-	// - GUILD_ROLE_CREATE
-	// - GUILD_ROLE_UPDATE
-	// - GUILD_ROLE_DELETE
-	// - CHANNEL_CREATE
-	// - CHANNEL_UPDATE
-	// - CHANNEL_DELETE
-	// - CHANNEL_PINS_UPDATE
-
-	GatewayIntentGuildMembers GatewayIntent = 1 << 1
-	// - GUILD_MEMBER_ADD
-	// - GUILD_MEMBER_UPDATE
-	// - GUILD_MEMBER_REMOVE
-
-	GatewayIntentGuildBans GatewayIntent = 1 << 2
-	// - GUILD_BAN_ADD
-	// - GUILD_BAN_REMOVE
-
-	GatewayIntentGuildEmojis GatewayIntent = 1 << 3
-	// - GUILD_EMOJIS_UPDATE
-
-	GatewayIntentGuildIntegrations GatewayIntent = 1 << 4
-	// - GUILD_INTEGRATIONS_UPDATE
-
-	GatewayIntentGuildWebhooks GatewayIntent = 1 << 5
-	// - WEBHOOKS_UPDATE
-
-	GatewayIntentGuildInvites GatewayIntent = 1 << 6
-	// - INVITE_CREATE
-	// - INVITE_DELETE
-
-	GatewayIntentGuildVoiceStates GatewayIntent = 1 << 7
-	// - VOICE_STATE_UPDATE
-
-	GatewayIntentGuildPresences GatewayIntent = 1 << 8
-	// - PRESENCE_UPDATE
-
-	GatewayIntentGuildMessages GatewayIntent = 1 << 9
-	// - MESSAGE_CREATE
-	// - MESSAGE_UPDATE
-	// - MESSAGE_DELETE
-	// - MESSAGE_DELETE_BULK
-
-	GatewayIntentGuildMessageReactions GatewayIntent = 1 << 10
-	// - MESSAGE_REACTION_ADD
-	// - MESSAGE_REACTION_REMOVE
-	// - MESSAGE_REACTION_REMOVE_ALL
-	// - MESSAGE_REACTION_REMOVE_EMOJI
-
-	GatewayIntentGuildMessageTyping GatewayIntent = 1 << 11
-	// - TYPING_START
-
-	GatewayIntentDirectMessages GatewayIntent = 1 << 12
-	// - CHANNEL_CREATE
-	// - MESSAGE_CREATE
-	// - MESSAGE_UPDATE
-	// - MESSAGE_DELETE
-	// - CHANNEL_PINS_UPDATE
-
+	GatewayIntentGuilds                 GatewayIntent = 1 << 0
+	GatewayIntentGuildMembers           GatewayIntent = 1 << 1
+	GatewayIntentGuildBans              GatewayIntent = 1 << 2
+	GatewayIntentGuildEmojis            GatewayIntent = 1 << 3
+	GatewayIntentGuildIntegrations      GatewayIntent = 1 << 4
+	GatewayIntentGuildWebhooks          GatewayIntent = 1 << 5
+	GatewayIntentGuildInvites           GatewayIntent = 1 << 6
+	GatewayIntentGuildVoiceStates       GatewayIntent = 1 << 7
+	GatewayIntentGuildPresences         GatewayIntent = 1 << 8
+	GatewayIntentGuildMessages          GatewayIntent = 1 << 9
+	GatewayIntentGuildMessageReactions  GatewayIntent = 1 << 10
+	GatewayIntentGuildMessageTyping     GatewayIntent = 1 << 11
+	GatewayIntentDirectMessages         GatewayIntent = 1 << 12
 	GatewayIntentDirectMessageReactions GatewayIntent = 1 << 13
-	// - MESSAGE_REACTION_ADD
-	// - MESSAGE_REACTION_REMOVE
-	// - MESSAGE_REACTION_REMOVE_ALL
-	// - MESSAGE_REACTION_REMOVE_EMOJI
+	GatewayIntentDirectMessageTyping    GatewayIntent = 1 << 14
+	GatewayIntentMessageContent         GatewayIntent = 1 << 15
+	GatewayIntentGuildScheduledEvents   GatewayIntent = 1 << 16
+	/*
+		GatewayIntentsGuilds                 GatewayIntent = 1 << 0
+		GatewayIntentsGuildMembers           GatewayIntent = 1 << 1
+		GatewayIntentsGuildBans              GatewayIntent = 1 << 2
+		GatewayIntentsGuildEmojis            GatewayIntent = 1 << 3
+		GatewayIntentsGuildIntegrations      GatewayIntent = 1 << 4
+		GatewayIntentsGuildWebhooks          GatewayIntent = 1 << 5
+		GatewayIntentsGuildInvites           GatewayIntent = 1 << 6
+		GatewayIntentsGuildVoiceStates       GatewayIntent = 1 << 7
+		GatewayIntentsGuildPresences         GatewayIntent = 1 << 8
+		GatewayIntentsGuildMessages          GatewayIntent = 1 << 9
+		GatewayIntentsGuildMessageReactions  GatewayIntent = 1 << 10
+		GatewayIntentsGuildMessageTyping     GatewayIntent = 1 << 11
+		GatewayIntentsDirectMessages         GatewayIntent = 1 << 12
+		GatewayIntentsDirectMessageReactions GatewayIntent = 1 << 13
+		GatewayIntentsDirectMessageTyping    GatewayIntent = 1 << 14
+		GatewayIntentsMessageContent         GatewayIntent = 1 << 15
+		GatewayIntentsGuildScheduledEvents   GatewayIntent = 1 << 16
+	*/
+	GatewayIntentsAllWithoutPrivileged = GatewayIntentGuilds |
+		GatewayIntentGuildBans |
+		GatewayIntentGuildEmojis |
+		GatewayIntentGuildIntegrations |
+		GatewayIntentGuildWebhooks |
+		GatewayIntentGuildInvites |
+		GatewayIntentGuildVoiceStates |
+		GatewayIntentGuildMessages |
+		GatewayIntentGuildMessageReactions |
+		GatewayIntentGuildMessageTyping |
+		GatewayIntentDirectMessages |
+		GatewayIntentDirectMessageReactions |
+		GatewayIntentDirectMessageTyping |
+		GatewayIntentGuildScheduledEvents
 
-	GatewayIntentDirectMessageTyping GatewayIntent = 1 << 14
-	// - TYPING_START
+	GatewayIntentsAll = GatewayIntentsAllWithoutPrivileged |
+		GatewayIntentGuildMembers |
+		GatewayIntentGuildPresences |
+		GatewayIntentMessageContent
+
+	GatewayIntentsNone GatewayIntent = 0
+	/*
+		GatewayIntentGuilds GatewayIntent = 1 << 0
+		// - GUILD_CREATE
+		// - GUILD_UPDATE
+		// - GUILD_DELETE
+		// - GUILD_ROLE_CREATE
+		// - GUILD_ROLE_UPDATE
+		// - GUILD_ROLE_DELETE
+		// - CHANNEL_CREATE
+		// - CHANNEL_UPDATE
+		// - CHANNEL_DELETE
+		// - CHANNEL_PINS_UPDATE
+
+		GatewayIntentGuildMembers GatewayIntent = 1 << 1
+		// - GUILD_MEMBER_ADD
+		// - GUILD_MEMBER_UPDATE
+		// - GUILD_MEMBER_REMOVE
+
+		GatewayIntentGuildBans GatewayIntent = 1 << 2
+		// - GUILD_BAN_ADD
+		// - GUILD_BAN_REMOVE
+
+		GatewayIntentGuildEmojis GatewayIntent = 1 << 3
+		// - GUILD_EMOJIS_UPDATE
+
+		GatewayIntentGuildIntegrations GatewayIntent = 1 << 4
+		// - GUILD_INTEGRATIONS_UPDATE
+
+		GatewayIntentGuildWebhooks GatewayIntent = 1 << 5
+		// - WEBHOOKS_UPDATE
+
+		GatewayIntentGuildInvites GatewayIntent = 1 << 6
+		// - INVITE_CREATE
+		// - INVITE_DELETE
+
+		GatewayIntentGuildVoiceStates GatewayIntent = 1 << 7
+		// - VOICE_STATE_UPDATE
+
+		GatewayIntentGuildPresences GatewayIntent = 1 << 8
+		// - PRESENCE_UPDATE
+
+		GatewayIntentGuildMessages GatewayIntent = 1 << 9
+		// - MESSAGE_CREATE
+		// - MESSAGE_UPDATE
+		// - MESSAGE_DELETE
+		// - MESSAGE_DELETE_BULK
+
+		GatewayIntentGuildMessageReactions GatewayIntent = 1 << 10
+		// - MESSAGE_REACTION_ADD
+		// - MESSAGE_REACTION_REMOVE
+		// - MESSAGE_REACTION_REMOVE_ALL
+		// - MESSAGE_REACTION_REMOVE_EMOJI
+
+		GatewayIntentGuildMessageTyping GatewayIntent = 1 << 11
+		// - TYPING_START
+
+		GatewayIntentDirectMessages GatewayIntent = 1 << 12
+		// - CHANNEL_CREATE
+		// - MESSAGE_CREATE
+		// - MESSAGE_UPDATE
+		// - MESSAGE_DELETE
+		// - CHANNEL_PINS_UPDATE
+
+		GatewayIntentDirectMessageReactions GatewayIntent = 1 << 13
+		// - MESSAGE_REACTION_ADD
+		// - MESSAGE_REACTION_REMOVE
+		// - MESSAGE_REACTION_REMOVE_ALL
+		// - MESSAGE_REACTION_REMOVE_EMOJI
+
+		GatewayIntentDirectMessageTyping GatewayIntent = 1 << 14
+		// - TYPING_START*/
 )
 
 // max size of buffers before they're discarded (e.g after a big incmoing event)

@@ -44,6 +44,19 @@ table{
     /*table-layout: fixed;*/
 }
 
+.cc-collapsibleDown:before{
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    content: "\f107";
+    margin-right: 10px;
+}
+
+.cc-collapsibleUp:before{
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    content: '\f106';
+    margin-right: 10px;
+}
 </style>
 <script>
     function pagstamV2Sort(select){
@@ -229,9 +242,10 @@ table{
                     <div class="pull-right">
                         <button type="submit" class="btn btn-danger" formaction="/manage/{{$dot.ActiveGuild.ID}}/automod/ruleset/{{$dot.CurrentRuleset.ID}}/rule/{{.ID}}/delete">Delete</button>
                     </div>
-                    <h2 class="card-title">Rule #{{$i}}: <span contenteditable="true" data-content-editable-form="Name" class="content-editable-form">{{or .Name "Un-named"}}</span></h2>
+                    <h2 class="card-title">
+                    <a style="text-decoration: none;color:#a1a1a1!important;display:block;font-size:16px!important" data-toggle="collapse" href="#collapse_cmd{{$i}}" aria-expanded="false" aria-controls="collapse_cmd{{$i}}" class="cc-collapsibleUp"><span style="color:#89aa00!important">Rule #{{$i}}:</span> <span contenteditable="true" data-content-editable-form="Name" class="content-editable-form" style="color:#89aa00!important">{{or .Name "Un-named"}}</span></a></h2>
                 </header>
-                <div class="card-body">
+                <div class="card-body collapse show" id="collapse_cmd{{$i}}">
                     <div class="automod-rule-part-table" data-automod-part-type=0>
                         <b>Triggers</b>
                         <table class="table table-sm mb-0">
@@ -595,7 +609,11 @@ $(function(){
     })
 })
 </script>
-
+<script>
+    $('.collapse').on('shown.bs.collapse', function(){
+    $(this).parent().find('.cc-collapsibleDown').removeClass('cc-collapsibleDown').addClass('cc-collapsibleUp');}).on('hidden.bs.collapse',function(){
+        $(this).parent().find('.cc-collapsibleUp').removeClass('cc-collapsibleUp').addClass('cc-collapsibleDown');});
+</script>
 {{template "cp_footer" .}}
 {{end}}
 

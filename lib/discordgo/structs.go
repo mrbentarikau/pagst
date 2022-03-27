@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -95,24 +96,50 @@ type UserConnection struct {
 
 // Integration stores integration information
 type Integration struct {
-	ID                string             `json:"id"`
-	Name              string             `json:"name"`
-	Type              string             `json:"type"`
-	Enabled           bool               `json:"enabled"`
-	Syncing           bool               `json:"syncing"`
-	RoleID            string             `json:"role_id"`
-	ExpireBehavior    int                `json:"expire_behavior"`
-	ExpireGracePeriod int                `json:"expire_grace_period"`
-	User              *User              `json:"user"`
-	Account           IntegrationAccount `json:"account"`
-	SyncedAt          Timestamp          `json:"synced_at"`
+	ID                string                  `json:"id"`
+	Name              string                  `json:"name"`
+	Type              string                  `json:"type"`
+	Enabled           bool                    `json:"enabled"`
+	Syncing           bool                    `json:"syncing"`
+	RoleID            string                  `json:"role_id"`
+	EnableEmoticons   bool                    `json:"enable_emoticons"`
+	ExpireBehavior    ExpireBehavior          `json:"expire_behavior"`
+	ExpireGracePeriod int                     `json:"expire_grace_period"`
+	User              *User                   `json:"user"`
+	Account           IntegrationAccount      `json:"account"`
+	SyncedAt          time.Time               `json:"synced_at"`
+	SubscriberCount   int                     `json:"subscriber_count"`
+	Revoked           bool                    `json:"revoked"`
+	Application       *IntegrationApplication `json:"application"`
+
+	GuildID int64 `json:"guild_id,string,omitempty"` // Sent in the Integration events
 }
+
+// ExpireBehavior of Integration
+// https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors
+type ExpireBehavior int
+
+// Block of valid ExpireBehaviors
+const (
+	ExpireBehaviorRemoveRole ExpireBehavior = iota
+	ExpireBehaviorKick
+)
 
 // IntegrationAccount is integration account information
 // sent by the UserConnections endpoint
 type IntegrationAccount struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+// IntegrationApplication https://discord.com/developers/docs/resources/guild#integration-application-object
+type IntegrationApplication struct {
+	ID          int64  `json:"id,string"`
+	Name        string `json:"name"`
+	Icon        string `json:"icon"`
+	Description string `json:"description"`
+	Summary     string `json:"summary"`
+	Bot         *User  `json:"bot"`
 }
 
 // A VoiceRegion stores data for a specific voice region server.
@@ -290,6 +317,11 @@ type Emoji struct {
 	RequireColons bool    `json:"require_colons"`
 	Animated      bool    `json:"animated"`
 }
+
+// EmojiRegex is the regex used to find and identify emojis in messages
+var (
+	EmojiRegex = regexp.MustCompile(`<(a|):[A-z0-9_~]+:[0-9]{18}>`)
+)
 
 // MessageFormat returns a correctly formatted Emoji for use in Message content and embeds
 func (e *Emoji) MessageFormat() string {
@@ -535,6 +567,9 @@ type Role struct {
 
 // Mention returns a string which mentions the role
 func (r *Role) Mention() string {
+	if r == nil {
+		return "No such role"
+	}
 	return fmt.Sprintf("<@&%d>", r.ID)
 }
 
@@ -764,6 +799,10 @@ type Member struct {
 
 	// A list of IDs of the roles which are possessed by the member.
 	Roles IDSlice `json:"roles,string"`
+
+	// The time at which the member's timeout will expire.
+	// Time in the past or nil if the user is not timed out.
+	CommunicationDisabledUntil *time.Time `json:"communication_disabled_until"`
 }
 
 func (m *Member) GetGuildID() int64 {
@@ -1183,7 +1222,7 @@ type Interaction struct {
 	Token         string          `json:"token"`                 // a continuation token for responding to the interaction
 	Version       int             `json:"version"`               // read-only property, always
 
-	DataCommand *ApplicationCommandInteractionData
+	DataCommand *ApplicationCommandInteractionData `json:"data"`
 }
 
 type interactionTemp struct {
@@ -1395,7 +1434,10 @@ type MessageInteraction struct {
 	ID   int64           `json:"id,string"` // id of the interaction
 	Kind InteractionType `json:"type"`      // the type of interaction
 	Name string          `json:"name"`      // the name of the ApplicationCommand
-	User User            `json:"user"`      // object the user who invoked the interaction
+	User *User           `json:"user"`      // object the user who invoked the interaction
+
+	// Member is only present when the interaction is from a guild.
+	Member *Member `json:"member"`
 }
 
 type ThreadMetadata struct {

@@ -65,6 +65,10 @@ ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS categories BIGINT[];
 `, `
 ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS categories_whitelist_mode BOOL NOT NULL DEFAULT false;
 `, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS regex_trigger TEXT NOT NULL DEFAULT '';
+`, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS regex_trigger_case_sensitive BOOL NOT NULL DEFAULT false;
+`, `
 ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS ignore_categories BIGINT[];
 `, `
 ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS whitelist_categories BIGINT[];

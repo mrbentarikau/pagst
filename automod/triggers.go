@@ -40,7 +40,7 @@ func (r BaseRegexTrigger) DataType() interface{} {
 
 func (r BaseRegexTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Regex",
 			Key:  "Regex",
 			Kind: SettingTypeString,
@@ -53,7 +53,7 @@ func (r BaseRegexTrigger) UserSettings() []*SettingDef {
 //////////////
 
 type MentionsTriggerData struct {
-	Treshold int
+	Threshold int
 }
 
 var _ MessageTrigger = (*MentionsTrigger)(nil)
@@ -78,9 +78,9 @@ func (mc *MentionsTrigger) Description() string {
 
 func (mc *MentionsTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Threshold",
-			Key:     "Treshold",
+			Key:     "Threshold",
 			Kind:    SettingTypeInt,
 			Default: 4,
 		},
@@ -89,7 +89,7 @@ func (mc *MentionsTrigger) UserSettings() []*SettingDef {
 
 func (mc *MentionsTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
 	dataCast := triggerCtx.Data.(*MentionsTriggerData)
-	if len(m.Mentions) >= dataCast.Treshold {
+	if len(m.Mentions) >= dataCast.Threshold {
 		return true, nil
 	}
 
@@ -175,7 +175,7 @@ func (wl *WordListTrigger) Description() (description string) {
 
 func (wl *WordListTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "List",
 			Key:  "ListID",
 			Kind: SettingTypeList,
@@ -254,7 +254,7 @@ func (dt *DomainTrigger) Description() (description string) {
 
 func (dt *DomainTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "List",
 			Key:  "ListID",
 			Kind: SettingTypeList,
@@ -323,7 +323,7 @@ func (dt *DomainTrigger) containsDomain(link string, list []string) (bool, strin
 
 type ViolationsTriggerData struct {
 	Name           string `valid:",1,100,trimspace"`
-	Treshold       int
+	Threshold      int
 	Interval       int
 	IgnoreIfLesser bool
 }
@@ -350,7 +350,7 @@ func (vt *ViolationsTrigger) Description() string {
 
 func (vt *ViolationsTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Violation name",
 			Key:     "Name",
 			Kind:    SettingTypeString,
@@ -358,19 +358,19 @@ func (vt *ViolationsTrigger) UserSettings() []*SettingDef {
 			Min:     1,
 			Max:     50,
 		},
-		&SettingDef{
+		{
 			Name:    "Number of violations",
-			Key:     "Treshold",
+			Key:     "Threshold",
 			Kind:    SettingTypeInt,
 			Default: 4,
 		},
-		&SettingDef{
+		{
 			Name:    "Within (minutes)",
 			Key:     "Interval",
 			Kind:    SettingTypeInt,
 			Default: 60,
 		},
-		&SettingDef{
+		{
 			Name:    "Ignore if a higher violation trigger of this name was activated",
 			Key:     "IgnoreIfLesser",
 			Kind:    SettingTypeBool,
@@ -398,7 +398,7 @@ func (vt *ViolationsTrigger) CheckUser(ctxData *TriggeredRuleData, violations []
 		numRecent++
 	}
 
-	if numRecent >= settingsCast.Treshold {
+	if numRecent >= settingsCast.Threshold {
 		return true, nil
 	}
 
@@ -434,13 +434,13 @@ func (caps *AllCapsTrigger) Description() string {
 
 func (caps *AllCapsTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Min number of all caps",
 			Key:     "MinLength",
 			Kind:    SettingTypeInt,
 			Default: 3,
 		},
-		&SettingDef{
+		{
 			Name:    "Percentage of all caps",
 			Key:     "Percentage",
 			Kind:    SettingTypeInt,
@@ -687,8 +687,8 @@ func (g *GoogleSafeBrowsingTrigger) MergeDuplicates(data []interface{}) interfac
 /////////////////////////////////////////////////////////////
 
 type SlowmodeTriggerData struct {
-	Treshold int
-	Interval int
+	Threshold int
+	Interval  int
 }
 
 var _ MessageTrigger = (*SlowmodeTrigger)(nil)
@@ -697,6 +697,7 @@ type SlowmodeTrigger struct {
 	ChannelBased bool
 	Attachments  bool // whether this trigger checks any messages or just attachments
 	Links        bool // whether this trigger checks any messages or just links
+	Stickers     bool
 }
 
 func (s *SlowmodeTrigger) Kind() RulePartType {
@@ -717,6 +718,10 @@ func (s *SlowmodeTrigger) Name() string {
 			return "x channel links in y seconds"
 		}
 
+		if s.Stickers {
+			return "x channel stickers in y seconds"
+		}
+
 		return "x channel messages in y seconds"
 	}
 
@@ -726,6 +731,10 @@ func (s *SlowmodeTrigger) Name() string {
 
 	if s.Links {
 		return "x user links in y seconds"
+	}
+
+	if s.Stickers {
+		return "x user stickers in y seconds"
 	}
 
 	return "x user messages in y seconds"
@@ -741,6 +750,10 @@ func (s *SlowmodeTrigger) Description() string {
 			return "Triggers when a channel has x or more links within y seconds"
 		}
 
+		if s.Stickers {
+			return "Triggers when a channel has x or more stickers within y seconds"
+		}
+
 		return "Triggers when a channel has x or more messages in y seconds."
 	}
 
@@ -750,6 +763,10 @@ func (s *SlowmodeTrigger) Description() string {
 
 	if s.Links {
 		return "Triggers when a user has x or more links within y seconds in a single channel"
+	}
+
+	if s.Stickers {
+		return "Triggers when a user has x or more stickers within y seconds"
 	}
 
 	return "Triggers when a user has x or more messages in y seconds in a single channel."
@@ -765,13 +782,13 @@ func (s *SlowmodeTrigger) UserSettings() []*SettingDef {
 	}
 
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Messages",
-			Key:     "Treshold",
+			Key:     "Threshold",
 			Kind:    SettingTypeInt,
 			Default: defaultMessages,
 		},
-		&SettingDef{
+		{
 			Name:    "Within (seconds)",
 			Key:     "Interval",
 			Kind:    SettingTypeInt,
@@ -786,6 +803,10 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 	}
 
 	if s.Links && !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(m.Content)) {
+		return false, nil
+	}
+
+	if s.Stickers && len(m.StickerItems) < 1 {
 		return false, nil
 	}
 
@@ -823,10 +844,14 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 			continue // were only checking messages with links
 		}
 
+		if s.Stickers && len(v.StickerItems) < 1 {
+			continue // were only checking messages with stickers
+		}
+
 		amount++
 	}
 
-	if amount >= settings.Treshold {
+	if amount >= settings.Threshold {
 		return true, nil
 	}
 
@@ -840,7 +865,7 @@ func (s *SlowmodeTrigger) MergeDuplicates(data []interface{}) interface{} {
 /////////////////////////////////////////////////////////////
 
 type MultiMsgMentionTriggerData struct {
-	Treshold        int
+	Threshold       int
 	Interval        int
 	CountDuplicates bool
 }
@@ -877,19 +902,19 @@ func (mt *MultiMsgMentionTrigger) Description() string {
 
 func (mt *MultiMsgMentionTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Mentions",
-			Key:     "Treshold",
+			Key:     "Threshold",
 			Kind:    SettingTypeInt,
 			Default: 20,
 		},
-		&SettingDef{
+		{
 			Name:    "Within (seconds)",
 			Key:     "Interval",
 			Kind:    SettingTypeInt,
 			Default: 10,
 		},
-		&SettingDef{
+		{
 			Name: "Count multiple mentions to the same user",
 			Key:  "CountDuplicates",
 			Kind: SettingTypeBool,
@@ -928,12 +953,12 @@ func (mt *MultiMsgMentionTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 				}
 			}
 		}
-		if len(mentions) >= settings.Treshold {
+		if len(mentions) >= settings.Threshold {
 			return true, nil
 		}
 	}
 
-	if len(mentions) >= settings.Treshold {
+	if len(mentions) >= settings.Threshold {
 		return true, nil
 	}
 
@@ -1002,7 +1027,7 @@ func (r *MessageRegexTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstat
 /////////////////////////////////////////////////////////////
 
 type SpamTriggerData struct {
-	Treshold  int
+	Threshold int
 	TimeLimit int
 }
 
@@ -1028,15 +1053,15 @@ func (spam *SpamTrigger) Description() string {
 
 func (spam *SpamTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Threshold",
-			Key:     "Treshold",
+			Key:     "Threshold",
 			Kind:    SettingTypeInt,
 			Min:     1,
 			Max:     250,
 			Default: 4,
 		},
-		&SettingDef{
+		{
 			Name:    "Within seconds (0 = infinity)",
 			Key:     "TimeLimit",
 			Kind:    SettingTypeInt,
@@ -1086,7 +1111,7 @@ func (spam *SpamTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Cha
 		}
 	}
 
-	if count >= settingsCast.Treshold {
+	if count >= settingsCast.Threshold {
 		return true, nil
 	}
 
@@ -1095,30 +1120,61 @@ func (spam *SpamTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Cha
 
 /////////////////////////////////////////////////////////////
 
-var _ NicknameListener = (*NicknameRegexTrigger)(nil)
+var _ NameListener = (*NameRegexTrigger)(nil)
 
-type NicknameRegexTrigger struct {
-	BaseRegexTrigger
+type NameRegexTrigger struct {
+	Inverse bool
 }
 
-func (r *NicknameRegexTrigger) Name() string {
-	if r.BaseRegexTrigger.Inverse {
-		return "Nickname not matching regex"
+type NameRegexTriggerData struct {
+	Regex           string `valid:",1,250"`
+	ExcludeUsername bool
+}
+
+func (nr NameRegexTrigger) Kind() RulePartType {
+	return RulePartTrigger
+}
+
+func (nr NameRegexTrigger) DataType() interface{} {
+	return &NameRegexTriggerData{}
+}
+
+func (nr *NameRegexTrigger) Name() string {
+	if nr.Inverse {
+		return "Name/Nick not matching regex"
 	}
 
-	return "Nickname matches regex"
+	return "Name/Nick matches regex"
 }
 
-func (r *NicknameRegexTrigger) Description() string {
-	if r.BaseRegexTrigger.Inverse {
-		return "Triggers when a members nickname does not match the provided regex"
+func (nr *NameRegexTrigger) Description() string {
+	if nr.Inverse {
+		return "Triggers when a member's name does not match the provided regex"
 	}
 
-	return "Triggers when a members nickname matches the provided regex"
+	return "Triggers when a member's name matches the provided regex"
 }
 
-func (r *NicknameRegexTrigger) CheckNickname(t *TriggerContext) (bool, error) {
-	dataCast := t.Data.(*BaseRegexTriggerData)
+func (nr *NameRegexTrigger) UserSettings() []*SettingDef {
+	return []*SettingDef{
+		{
+			Name: "Regex",
+			Key:  "Regex",
+			Kind: SettingTypeString,
+			Min:  1,
+			Max:  250,
+		},
+		{
+			Name:    "Exclude username",
+			Key:     "ExcludeUsername",
+			Kind:    SettingTypeBool,
+			Default: false,
+		},
+	}
+}
+
+func (nr *NameRegexTrigger) CheckName(t *TriggerContext) (bool, error) {
+	dataCast := t.Data.(*NameRegexTriggerData)
 
 	item, err := RegexCache.Fetch(dataCast.Regex, time.Minute*10, func() (interface{}, error) {
 		re, err := regexp.Compile(dataCast.Regex)
@@ -1133,15 +1189,22 @@ func (r *NicknameRegexTrigger) CheckNickname(t *TriggerContext) (bool, error) {
 		return false, nil
 	}
 
+	username := t.MS.User.Username
+	nickname := t.MS.Member.Nick
+
+	if dataCast.ExcludeUsername {
+		username = ""
+	}
+
 	re := item.Value().(*regexp.Regexp)
-	if re.MatchString(t.MS.Member.Nick) {
-		if r.BaseRegexTrigger.Inverse {
+	if re.MatchString(username) || re.MatchString(nickname) {
+		if nr.Inverse {
 			return false, nil
 		}
 		return true, nil
 	}
 
-	if r.BaseRegexTrigger.Inverse {
+	if nr.Inverse {
 		return true, nil
 	}
 
@@ -1150,61 +1213,75 @@ func (r *NicknameRegexTrigger) CheckNickname(t *TriggerContext) (bool, error) {
 
 /////////////////////////////////////////////////////////////
 
-var _ NicknameListener = (*NicknameWordlistTrigger)(nil)
+var _ NameListener = (*NameWordlistTrigger)(nil)
 
-type NicknameWordlistTrigger struct {
+type NameWordlistTrigger struct {
 	Blacklist bool
 }
-type NicknameWordlistTriggerData struct {
-	ListID int64
+type NameWordlistTriggerData struct {
+	ListID          int64
+	ExcludeUsername bool
 }
 
-func (nwl *NicknameWordlistTrigger) Kind() RulePartType {
+func (nwl *NameWordlistTrigger) Kind() RulePartType {
 	return RulePartTrigger
 }
 
-func (nwl *NicknameWordlistTrigger) DataType() interface{} {
-	return &NicknameWordlistTriggerData{}
+func (nwl *NameWordlistTrigger) DataType() interface{} {
+	return &NameWordlistTriggerData{}
 }
 
-func (nwl *NicknameWordlistTrigger) Name() (name string) {
+func (nwl *NameWordlistTrigger) Name() (name string) {
 	if nwl.Blacklist {
-		return "Nickname word blacklist"
+		return "Name/Nick word blacklist"
 	}
 
-	return "Nickname word whitelist"
+	return "Name/Nick word whitelist"
 }
 
-func (nwl *NicknameWordlistTrigger) Description() (description string) {
+func (nwl *NameWordlistTrigger) Description() (description string) {
 	if nwl.Blacklist {
-		return "Triggers when a member has a nickname containing words in the specified list, this is currently very easy to circumvent atm, and will likely be improved in the future."
+		return "Triggers when a member has a name containing words in the specified list, this is currently very easy to circumvent atm, and will likely be improved in the future."
 	}
 
-	return "Triggers when a member has a nickname containing words not in the specified list, this is currently very easy to circumvent atm, and will likely be improved in the future."
+	return "Triggers when a member has a name containing words not in the specified list, this is currently very easy to circumvent atm, and will likely be improved in the future."
 }
 
-func (nwl *NicknameWordlistTrigger) UserSettings() []*SettingDef {
+func (nwl *NameWordlistTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "List",
 			Key:  "ListID",
 			Kind: SettingTypeList,
 		},
+		{
+			Name:    "Exclude username",
+			Key:     "ExcludeUsername",
+			Kind:    SettingTypeBool,
+			Default: false,
+		},
 	}
 }
 
-func (nwl *NicknameWordlistTrigger) CheckNickname(t *TriggerContext) (bool, error) {
-	dataCast := t.Data.(*NicknameWordlistTriggerData)
+func (nwl *NameWordlistTrigger) CheckName(t *TriggerContext) (bool, error) {
+	dataCast := t.Data.(*NameWordlistTriggerData)
 
 	list, err := FindFetchGuildList(t.GS.ID, dataCast.ListID)
 	if err != nil {
 		return false, nil
 	}
 
-	fields := strings.Fields(PrepareMessageForWordCheck(t.MS.Member.Nick))
+	uNameFields := strings.Fields(PrepareMessageForWordCheck(t.MS.User.Username))
+	nNameFields := strings.Fields(PrepareMessageForWordCheck(t.MS.Member.Nick))
 
+	if dataCast.ExcludeUsername {
+		uNameFields = []string{}
+	}
+
+	fields := append(nNameFields, uNameFields...)
+
+	var contained bool
 	for _, mf := range fields {
-		contained := false
 		for _, w := range list.Content {
 			if strings.EqualFold(mf, w) {
 				if nwl.Blacklist {
@@ -1216,152 +1293,16 @@ func (nwl *NicknameWordlistTrigger) CheckNickname(t *TriggerContext) (bool, erro
 				}
 			}
 		}
-
-		if !nwl.Blacklist && !contained {
-			// word not whitelisted, trigger
-			return true, nil
-		}
 	}
 
-	return false, nil
-}
-
-/////////////////////////////////////////////////////////////
-/*
-var _ UserStatusListener = (*UserStatusRegexTrigger)(nil)
-
-type UserStatusRegexTrigger struct {
-	BaseRegexTrigger
-}
-
-func (r *UserStatusRegexTrigger) Name() string {
-	if r.BaseRegexTrigger.Inverse {
-		return "UserStatus not matching regex"
-	}
-
-	return "UserStatus matches regex"
-}
-
-func (r *UserStatusRegexTrigger) Description() string {
-	if r.BaseRegexTrigger.Inverse {
-		return "Triggers when a members UserStatus does not match the provided regex"
-	}
-
-	return "Triggers when a members UserStatus matches the provided regex"
-}
-
-func (r *UserStatusRegexTrigger) CheckUserStatus(t *TriggerContext) (bool, error) {
-	dataCast := t.Data.(*BaseRegexTriggerData)
-
-	item, err := RegexCache.Fetch(dataCast.Regex, time.Minute*10, func() (interface{}, error) {
-		re, err := regexp.Compile(dataCast.Regex)
-		if err != nil {
-			return nil, err
-		}
-
-		return re, nil
-	})
-
-	if err != nil {
-		return false, nil
-	}
-
-	re := item.Value().(*regexp.Regexp)
-
-	if t.MS.Presence.Game != nil {
-		if re.MatchString(t.MS.Presence.Game.State) {
-			if r.BaseRegexTrigger.Inverse {
-				return false, nil
-			}
-			return true, nil
-		}
-	}
-
-	if r.BaseRegexTrigger.Inverse {
+	if !nwl.Blacklist && !contained {
+		// word not whitelisted, trigger
 		return true, nil
 	}
 
 	return false, nil
 }
 
-/////////////////////////////////////////////////////////////
-
-var _ UserStatusListener = (*UserStatusWordlistTrigger)(nil)
-
-type UserStatusWordlistTrigger struct {
-	Blacklist bool
-}
-type UserStatusWordlistTriggerData struct {
-	ListID int64
-}
-
-func (nwl *UserStatusWordlistTrigger) Kind() RulePartType {
-	return RulePartTrigger
-}
-
-func (nwl *UserStatusWordlistTrigger) DataType() interface{} {
-	return &UserStatusWordlistTriggerData{}
-}
-
-func (nwl *UserStatusWordlistTrigger) Name() (name string) {
-	if nwl.Blacklist {
-		return "UserStatus word blacklist"
-	}
-
-	return "UserStatus word whitelist"
-}
-
-func (nwl *UserStatusWordlistTrigger) Description() (description string) {
-	if nwl.Blacklist {
-		return "Triggers when a member has a UserStatus containing words in the specified list, this is currently very easy to circumvent atm, and will likely be improved in the future."
-	}
-
-	return "Triggers when a member has a UserStatus containing words not in the specified list, this is currently very easy to circumvent atm, and will likely be improved in the future."
-}
-
-func (nwl *UserStatusWordlistTrigger) UserSettings() []*SettingDef {
-	return []*SettingDef{
-		&SettingDef{
-			Name: "List",
-			Key:  "ListID",
-			Kind: SettingTypeList,
-		},
-	}
-}
-
-func (nwl *UserStatusWordlistTrigger) CheckUserStatus(t *TriggerContext) (bool, error) {
-	dataCast := t.Data.(*UserStatusWordlistTriggerData)
-
-	list, err := FindFetchGuildList(t.MS.GuildID, dataCast.ListID)
-	if err != nil {
-		return false, nil
-	}
-
-	fields := strings.Fields(PrepareMessageForWordCheck(t.MS.Presence.Game.State))
-
-	for _, mf := range fields {
-		contained := false
-		for _, w := range list.Content {
-			if strings.EqualFold(mf, w) {
-				if nwl.Blacklist {
-					// contains a blacklisted word, trigger
-					return true, nil
-				} else {
-					contained = true
-					break
-				}
-			}
-		}
-
-		if !nwl.Blacklist && !contained {
-			// word not whitelisted, trigger
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-*/
 /////////////////////////////////////////////////////////////
 
 var _ UsernameListener = (*UsernameRegexTrigger)(nil)
@@ -1454,7 +1395,7 @@ func (uwl *UsernameWordlistTrigger) Description() (description string) {
 
 func (uwl *UsernameWordlistTrigger) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "List",
 			Key:  "ListID",
 			Kind: SettingTypeList,
@@ -1772,3 +1713,140 @@ func (ml *MessageLengthTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dst
 
 	return utf8.RuneCountInString(m.Content) > dataCast.Length, nil
 }
+
+/////////////////////////////////////////////////////////////
+/*
+var _ UserStatusListener = (*UserStatusRegexTrigger)(nil)
+
+type UserStatusRegexTrigger struct {
+	BaseRegexTrigger
+}
+
+func (r *UserStatusRegexTrigger) Name() string {
+	if r.BaseRegexTrigger.Inverse {
+		return "UserStatus not matching regex"
+	}
+
+	return "UserStatus matches regex"
+}
+
+func (r *UserStatusRegexTrigger) Description() string {
+	if r.BaseRegexTrigger.Inverse {
+		return "Triggers when a members UserStatus does not match the provided regex"
+	}
+
+	return "Triggers when a members UserStatus matches the provided regex"
+}
+
+func (r *UserStatusRegexTrigger) CheckUserStatus(t *TriggerContext) (bool, error) {
+	dataCast := t.Data.(*BaseRegexTriggerData)
+
+	item, err := RegexCache.Fetch(dataCast.Regex, time.Minute*10, func() (interface{}, error) {
+		re, err := regexp.Compile(dataCast.Regex)
+		if err != nil {
+			return nil, err
+		}
+
+		return re, nil
+	})
+
+	if err != nil {
+		return false, nil
+	}
+
+	re := item.Value().(*regexp.Regexp)
+
+	if t.MS.Presence.Game != nil {
+		if re.MatchString(t.MS.Presence.Game.State) {
+			if r.BaseRegexTrigger.Inverse {
+				return false, nil
+			}
+			return true, nil
+		}
+	}
+
+	if r.BaseRegexTrigger.Inverse {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+/////////////////////////////////////////////////////////////
+
+var _ UserStatusListener = (*UserStatusWordlistTrigger)(nil)
+
+type UserStatusWordlistTrigger struct {
+	Blacklist bool
+}
+type UserStatusWordlistTriggerData struct {
+	ListID int64
+}
+
+func (nwl *UserStatusWordlistTrigger) Kind() RulePartType {
+	return RulePartTrigger
+}
+
+func (nwl *UserStatusWordlistTrigger) DataType() interface{} {
+	return &UserStatusWordlistTriggerData{}
+}
+
+func (nwl *UserStatusWordlistTrigger) Name() (name string) {
+	if nwl.Blacklist {
+		return "UserStatus word blacklist"
+	}
+
+	return "UserStatus word whitelist"
+}
+
+func (nwl *UserStatusWordlistTrigger) Description() (description string) {
+	if nwl.Blacklist {
+		return "Triggers when a member has a UserStatus containing words in the specified list, this is currently very easy to circumvent atm, and will likely be improved in the future."
+	}
+
+	return "Triggers when a member has a UserStatus containing words not in the specified list, this is currently very easy to circumvent atm, and will likely be improved in the future."
+}
+
+func (nwl *UserStatusWordlistTrigger) UserSettings() []*SettingDef {
+	return []*SettingDef{
+		&SettingDef{
+			Name: "List",
+			Key:  "ListID",
+			Kind: SettingTypeList,
+		},
+	}
+}
+
+func (nwl *UserStatusWordlistTrigger) CheckUserStatus(t *TriggerContext) (bool, error) {
+	dataCast := t.Data.(*UserStatusWordlistTriggerData)
+
+	list, err := FindFetchGuildList(t.MS.GuildID, dataCast.ListID)
+	if err != nil {
+		return false, nil
+	}
+
+	fields := strings.Fields(PrepareMessageForWordCheck(t.MS.Presence.Game.State))
+
+	for _, mf := range fields {
+		contained := false
+		for _, w := range list.Content {
+			if strings.EqualFold(mf, w) {
+				if nwl.Blacklist {
+					// contains a blacklisted word, trigger
+					return true, nil
+				} else {
+					contained = true
+					break
+				}
+			}
+		}
+
+		if !nwl.Blacklist && !contained {
+			// word not whitelisted, trigger
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+*/

@@ -163,8 +163,9 @@ var Command = &commands.YAGCommand{
 			pagination = false
 		}
 
+		var pm *paginatedmessages.PaginatedMessage
 		if pagination {
-			_, err := paginatedmessages.CreatePaginatedMessage(
+			pm, err = paginatedmessages.CreatePaginatedMessage(
 				data.GuildData.GS.ID, data.ChannelID, pageInit, len(cConts)-1, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					embed = embedCreator(cConts, queryType, whatDay, page-1)
 					return embed, nil
@@ -176,7 +177,7 @@ var Command = &commands.YAGCommand{
 			return embed, nil
 		}
 
-		return nil, nil
+		return pm, nil
 	},
 }
 

@@ -52,6 +52,10 @@ type T struct {
 	MI8S     map[int8]string
 	MUI8S    map[uint8]string
 	SMSI     []map[string]int
+	// Pointers to empty values
+	PtrEmptyMap   *map[string]int
+	PtrEmptySlice *[]int
+	PtrEmptyArray *[0]int
 	// Empty interfaces; used to see if we can dig inside one.
 	Empty0 interface{} // nil
 	Empty1 interface{}
@@ -145,6 +149,9 @@ var tVal = &T{
 		{"one": 1, "two": 2},
 		{"eleven": 11, "twelve": 12},
 	},
+	PtrEmptyMap:               &map[string]int{},
+	PtrEmptySlice:             &[]int{},
+	PtrEmptyArray:             &[0]int{},
 	Empty1:                    3,
 	Empty2:                    "empty2",
 	Empty3:                    []int{7, 8},
@@ -433,6 +440,9 @@ var execTests = []execTest{
 	{"if string", "{{if `notempty`}}NON-EMPTY{{else}}EMPTY{{end}}", "NON-EMPTY", tVal, true},
 	{"if emptyslice", "{{if .SIEmpty}}NON-EMPTY{{else}}EMPTY{{end}}", "EMPTY", tVal, true},
 	{"if slice", "{{if .SI}}NON-EMPTY{{else}}EMPTY{{end}}", "NON-EMPTY", tVal, true},
+	{"if ptr emptymap", "{{if .PtrEmptyMap}}NON-EMPTY{{else}}EMPTY{{end}}", "EMPTY", tVal, true},
+	{"if ptr emptyslice", "{{if .PtrEmptySlice}}NON-EMPTY{{else}}EMPTY{{end}}", "EMPTY", tVal, true},
+	{"if ptr emptyarray", "{{if .PtrEmptyArray}}NON-EMPTY{{else}}EMPTY{{end}}", "EMPTY", tVal, true},
 	{"if emptymap", "{{if .MSIEmpty}}NON-EMPTY{{else}}EMPTY{{end}}", "EMPTY", tVal, true},
 	{"if map", "{{if .MSI}}NON-EMPTY{{else}}EMPTY{{end}}", "NON-EMPTY", tVal, true},
 	{"if map unset", "{{if .MXI.none}}NON-ZERO{{else}}ZERO{{end}}", "ZERO", tVal, true},

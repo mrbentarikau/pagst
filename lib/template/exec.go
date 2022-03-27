@@ -290,7 +290,6 @@ func (s *state) walk(dot reflect.Value, node parse.Node) controlFlowSignal {
 		}
 	case *parse.RangeNode:
 		return s.walkRange(dot, node)
-		s.walkRange(dot, node)
 	case *parse.ReturnNode:
 		s.returnValue = s.evalPipeline(dot, node.Pipe)
 		return controlFlowReturnValue
@@ -337,17 +336,17 @@ func (s *state) walkTry(dot reflect.Value, list, catchList *parse.ListNode) {
 // are identical in behavior except that 'with' sets dot.
 func (s *state) walkIfOrWith(typ parse.NodeType, dot reflect.Value, pipe *parse.PipeNode, list, elseList *parse.ListNode) controlFlowSignal {
 	defer s.pop(s.mark())
-	val := s.evalPipeline(dot, pipe)
-	truth, ok := isTrue(indirectInterface(val))
+	val, _ := indirect(s.evalPipeline(dot, pipe))
+	truth, ok := isTrue(val)
 	if !ok {
 		s.errorf("if/with can't use %v", val)
 	}
 	if truth {
 		if typ == parse.NodeWith {
 			return s.walk(val, list)
-		} else {
-			return s.walk(dot, list)
 		}
+		return s.walk(dot, list)
+
 	} else if elseList != nil {
 		return s.walk(dot, elseList)
 	}
@@ -848,7 +847,7 @@ func (s *state) evalCall(dot, fun reflect.Value, node parse.Node, name string, a
 		}
 		argv[i] = s.validateType(final, t)
 	}
-	v, err, didPanic := safeCall(fun, argv)
+	v, didPanic, err := safeCall(fun, argv)
 	// If we have an error that is not nil, stop execution and return that
 	// error to the caller.
 	if err != nil {

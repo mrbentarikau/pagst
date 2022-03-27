@@ -116,6 +116,7 @@
     // permission funcs
     "getTargetPermissionsIn":true,
     "hasPermissions":true,
+    "setMemberTimeout":true,
     "targetHasPermissions":true,
     
     // Varia

@@ -47,7 +47,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/buntdb v1.2.8
-	github.com/tkuchiki/go-timezone v0.1.5-0.20200504234801-f58f9e3b062f
+	github.com/tkuchiki/go-timezone v0.2.2
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/volatiletech/null v8.0.0+incompatible
 	github.com/volatiletech/null/v8 v8.1.2

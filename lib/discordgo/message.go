@@ -134,12 +134,22 @@ type Message struct {
 
 	Member *Member `json:"member"`
 
-	ReferencedMessage *Message `json:"referenced_message"`
-
 	// MessageReference contains reference data sent with crossposted or reply messages.
 	// This does not contain the reference *to* this message; this is for when *this* message references another.
 	// To generate a reference to this message, use (*Message).Reference().
 	MessageReference *MessageReference `json:"message_reference"`
+
+	// The message associated with the message_reference
+	// NOTE: This field is only returned for messages with a type of 19 (REPLY) or 21 (THREAD_STARTER_MESSAGE).
+	// If the message is a reply but the referenced_message field is not present,
+	// the backend did not attempt to fetch the message that was being replied to, so its state is unknown.
+	// If the field exists but is null, the referenced message was deleted.
+	ReferencedMessage *Message `json:"referenced_message"`
+
+	// Is sent when the message is a response to an Interaction, without an existing message.
+	// This means responses to message component interactions do not include this property,
+	// instead including a MessageReference, as components exist on preexisting messages.
+	Interaction *MessageInteraction `json:"interaction"`
 
 	// An array of Sticker objects, if any were sent.
 	StickerItems []*Sticker `json:"sticker_items"`
@@ -158,6 +168,25 @@ func (m *Message) Link() string {
 		return fmt.Sprintf("https://discord.com/channels/%v/%v/%v", m.GuildID, m.ChannelID, m.ID)
 	}
 	return "message not found"
+}
+
+// GetCustomEmojis pulls out all the custom (Non-unicode) emojis from a message and returns a Slice of the Emoji struct.
+func (m *Message) GetCustomEmojis() []*Emoji {
+	var toReturn []*Emoji
+	emojis := EmojiRegex.FindAllString(m.Content, -1)
+	if len(emojis) < 1 {
+		return toReturn
+	}
+	for _, em := range emojis {
+		parts := strings.Split(em, ":")
+		intID, _ := strconv.ParseInt(parts[2][:len(parts[2])-1], 10, 64)
+		toReturn = append(toReturn, &Emoji{
+			ID:       intID,
+			Name:     parts[1],
+			Animated: strings.HasPrefix(em, "<a:"),
+		})
+	}
+	return toReturn
 }
 
 // File stores info about files you e.g. send in messages.
@@ -214,8 +243,9 @@ type StickerPack struct {
 
 // MessageSend stores all parameters you can send with ChannelMessageSendComplex.
 type MessageSend struct {
-	Content         string            `json:"content,omitempty"`
-	Embed           *MessageEmbed     `json:"embed,omitempty"`
+	Content string `json:"content,omitempty"`
+	//v10 upd change > Embed           *MessageEmbed     `json:"embed,omitempty"`
+	Embeds          []*MessageEmbed   `json:"embeds,omitempty"`
 	Tts             bool              `json:"tts"`
 	Files           []*File           `json:"-"`
 	AllowedMentions AllowedMentions   `json:"allowed_mentions"`
@@ -228,8 +258,9 @@ type MessageSend struct {
 // MessageEdit is used to chain parameters via ChannelMessageEditComplex, which
 // is also where you should get the instance from.
 type MessageEdit struct {
-	Content         *string          `json:"content,omitempty"`
-	Embed           *MessageEmbed    `json:"embed,omitempty"`
+	Content *string `json:"content,omitempty"`
+	//v10 upd change > Embed           *MessageEmbed    `json:"embed,omitempty"`
+	Embeds          []*MessageEmbed  `json:"embeds,omitempty"`
 	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"`
 
 	ID      int64
@@ -254,8 +285,11 @@ func (m *MessageEdit) SetContent(str string) *MessageEdit {
 
 // SetEmbed is a convenience function for setting the embed,
 // so you can chain commands.
+/*v10 upd change
 func (m *MessageEdit) SetEmbed(embed *MessageEmbed) *MessageEdit {
-	m.Embed = embed
+	m.Embed = embed*/
+func (m *MessageEdit) SetEmbeds(embeds []*MessageEmbed) *MessageEdit {
+	m.Embeds = embeds
 	return m
 }
 
@@ -353,7 +387,8 @@ func (e *MessageEmbed) GetMarshalNil() bool {
 }
 
 func (e *MessageEmbed) MarshalJSON() ([]byte, error) {
-	if e.marshalnil == true {
+	//v10 upd change > if e.marshalnil == true {
+	if e.marshalnil {
 		return json.Marshal(nil)
 	}
 	type EmbedAlias MessageEmbed

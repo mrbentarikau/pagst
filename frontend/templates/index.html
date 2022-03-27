@@ -50,7 +50,7 @@
     </button>
     <div class="collapse navbar-collapse poppins" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
-        {{ if not (ge .JoinedServers 99) }}
+        {{ if not (ge .JoinedServers 199) }}
         <li class="nav-item active">
 		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827767&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
 			         
@@ -84,7 +84,7 @@
                 <br/>PAGSTDB</h1>
                 <div style="background-color: rgba(26,26,26,0.7);border:1px solid #a1a1a1;border-radius:5px;margin-top:25px">
                   <p style="margin: 7px;line-height:1.25em;font-size: 2.2em!important" class="intro_headline">People Against Generally Shitty Things Discord Bot</p>
-                  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">Internalization {{ printf "%.2f%%" (mult (fdiv .JoinedServers 99) 100) }} by {{.JoinedServers}} joined intransigent servers</span>
+                  <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">Internalization {{ printf "%.2f%%" (mult (fdiv .JoinedServers 199) 100) }} by {{.JoinedServers}} joined intransigent servers</span>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> Commands ran today: {{.Commands}}</span>
 		              <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 0px;color:#c1c1c1!important">>> CCs executed today: {{humanizeThousands .CCs}}</span>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">>> AMv2 launches today: {{humanizeThousands .AMV2s}}</span>
@@ -141,8 +141,8 @@ Your browser does not support the audio element.
             <b>YAGPDB</b> created by
             <a class="pagst" href="https://github.com/jonas747" rel="noopener" target="_blank">Jonas747</a> |
             <b>PAGSTDB</b> fork <a class="pagst" href="https://github.com/mrbentarikau/" rel="noopener" target="_blank">caubert</a> |
-            <b>PAGST</b> is referenced from <a class="pagst" href="https://www.paradigmadventure.com/" rel="noopener" target="_blank">PARADIGM</a>
-            <!--<br/><span style="line-height: normal!important;vertical-align:sub!important;font-size:0.8em!important">Avatar is cropped version from a Gynoid by <a class="pagst" href="http://sorayama.jp/" rel="noopener" target="_blank">Hajime Sorayama</a>, Sex Matter (2020) <a class="pagst" href="https://nug.jp/en" rel="noopener" target="_blank">Nanzuka Gallery</a> © Billy Fischer</span>-->
+            <b>PAGST</b> is referenced from <a class="pagst" href="https://www.paradigmadventure.com/" rel="noopener" target="_blank">PARADIGM</a> |
+            <b>PAGSTDB</b> <a class="pagst" href="../privacy_policy" rel="noopener">Privacy Policy</a>
           </p>
         </div>
       </div>

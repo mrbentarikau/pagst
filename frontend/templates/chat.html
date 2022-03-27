@@ -1,0 +1,113 @@
+{{define "chat"}}
+<!-- <!doctype html> -->
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="cache-control" content="max-age=2592000000">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png?v=6">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png?v=6">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16x16.png?v=6">
+<link rel="manifest" href="/static/icons/site.webmanifest?v=6">
+<link rel="mask-icon" href="/static/icons/safari-pinned-tab.svg?v=6" color="#5bbad5">
+<link rel="shortcut icon" href="/static/icons/favicon.ico?v=6">
+<meta name="msapplication-TileColor" content="#2b5797">
+<meta name="msapplication-config" content="/static/icons/browserconfig.xml?v=6">
+<meta name="theme-color" content="#ffffff">
+
+  <meta property="og:title" content="PAGSTDB" />
+  <meta property="og:description" content="People Against Generally Shitty Things Discord Bot" />
+  <!-- For Social Media -->
+  <meta property="description" content="People Against Generally Shitty Things Discord Bot" />
+  <!-- For search engines -->
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
+    crossorigin="anonymous">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/landing-page-min.css">
+  <link rel="stylesheet" href="/static/css/custom.css">
+  <!-- Custom Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Lato:300,400,500,700|Poppins:500,700" rel="stylesheet">
+  <title>PAGSTDB</title>
+<style>
+::-webkit-scrollbar {width: 7px !important; height: 5px !important}
+::-webkit-scrollbar-thumb {background: #a1a1a1 !important;}
+::-webkit-scrollbar-thumb:hover {background:#aa8900 !important;}
+</style>
+</head>
+
+<body style="line-height: 1.6">
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark bg-dark navbar-expand-sm fixed-top">
+    <a class="navbar-brand" href="/#">
+      <img src="/static/img/logo_y_small.png" width="50" height="50" class="d-inline-block align-top" alt="">
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+      aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse poppins" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        {{ if not (ge .JoinedServers 199) }}
+        <li class="nav-item active">
+		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=bot&permissions=2146827767&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
+			         
+	      </li>
+        {{ end }}
+        <li class="nav-item active">
+          <a class="nav-link" href="https://lbry.tv/@caubert:c47/pagst-yagpdb-install-on-archlinux:4">Bot Install Tutorial</a>
+        </li>
+        <li class="nav-item active">
+      		<a class="nav-link" href="https://caubert.xyz">Foxes Collection</a>
+      	</li>
+      </ul>
+      <form class="form-inline my-2 my-lg-0 mr-2">
+        <a class="btn btn-outline-danger my-2 my-sm-0" href="/manage" style="border-color:#a1a1a1!important">Control Panel</a>
+      </form>
+      {{if .User}}
+      <form class="form-inline my-2 my-lg-0">
+        <a class="btn btn-outline-danger my-2 my-sm-0" href="/logout" style="border-color:#a1a1a1!important">Logout</a>
+      </form>
+      {{end}}
+    </div>
+  </nav>
+  <!-- Intro -->
+  <div id="tscene" class="centered" style="padding-top:5%">
+    <iframe id="pagstIframe" src="about:blank" title="PAGST Libera Chat" frameborder="0" scrolling="no"  style="overflow:hidden;height:100%;width:100%" /></iframe><script>
+      var source = "https://web.libera.chat/gamja/?nick=pagster"+Math.floor(Math.random() * 99)+"#pagst";
+      document.getElementById('pagstIframe').src = source;
+    </script>
+  </div>
+  <!-- jQuery, Popper.Js, Bootstrap and Parallax -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"></script>
+    <script src="/static/vendorr/bootstrap/js/bootstrap.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/parallax/3.1.0/parallax.min.js"></script>
+    <!-- Javascript for moving background (parallax) -->
+    <script>
+      var scene = document.getElementById('tscene');
+      var parallaxInstance = new Parallax(tscene, {
+        relativeInput: true,
+        hoverOnly: true,
+        pointerEvents: true
+      });
+    </script>
+     {{template "googleAnalytics" .}}
+</body>
+</html>
+
+
+{{end}} {{define "googleAnalytics"}}{{if and (not .Testing) .GAID}}
+<script>
+  (function (i, s, o, g, r, a, m) {
+    i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+      (i[r].q = i[r].q || []).push(arguments)
+    }, i[r].l = 1 * new Date(); a = s.createElement(o),
+      m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+  })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+  ga('create', '{{.GAID}}', 'auto');
+  ga('send', 'pageview');
+</script>{{end}}{{end}}

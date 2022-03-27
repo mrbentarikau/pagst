@@ -9,9 +9,9 @@ import (
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/dpatrie/urbandictionary"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/dpatrie/urbandictionary"
 )
 
 var Command = &commands.YAGCommand{
@@ -43,8 +43,9 @@ var Command = &commands.YAGCommand{
 			return "No result :(", nil
 		}
 
+		var pm *paginatedmessages.PaginatedMessage
 		if paginatedView {
-			_, err := paginatedmessages.CreatePaginatedMessage(
+			pm, err = paginatedmessages.CreatePaginatedMessage(
 				data.GuildData.GS.ID, data.ChannelID, 1, len(qResp.Results), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					i := page - 1
 
@@ -64,7 +65,7 @@ var Command = &commands.YAGCommand{
 			return cmdResp, nil
 		}
 
-		return nil, nil
+		return pm, nil
 	},
 }
 

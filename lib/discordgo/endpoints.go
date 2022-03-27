@@ -14,7 +14,7 @@ package discordgo
 import "strconv"
 
 // APIVersion is the Discord API version used for the REST and Websocket API.
-var APIVersion = "9"
+var APIVersion = "10"
 
 // Known Discord API Endpoints.
 var (
@@ -181,6 +181,16 @@ var (
 	EndpointInteractionCallback = func(interactionID int64, token string) string {
 		return ""
 	}
+
+	EndpointInteraction = func(aID, iToken string) string {
+		return EndpointAPI + "interactions/" + aID + "/" + iToken
+	}
+	EndpointInteractionResponse = func(iID, iToken string) string {
+		return EndpointInteraction(iID, iToken) + "/callback"
+	}
+	/*EndpointInteractionResponseActions = func(aID, iToken string) string {
+		return EndpointWebhookMessage(aID, iToken, "@original")
+	}*/
 	EndpointWebhookInteraction = func(applicationID int64, token string) string {
 		return ""
 	}

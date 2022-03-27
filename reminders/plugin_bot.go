@@ -142,7 +142,7 @@ var cmds = []*commands.YAGCommand{
 				return out, nil
 			}
 
-			_, err = paginatedmessages.CreatePaginatedMessage(
+			pm, err := paginatedmessages.CreatePaginatedMessage(
 				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					i := page - 1
 					paginatedEmbed := embedCreator(currentReminders, i, maxLength, 0, parsed)
@@ -152,7 +152,7 @@ var cmds = []*commands.YAGCommand{
 				return fmt.Sprintf("Something went wrong: %s", err), nil
 			}
 
-			return nil, nil
+			return pm, nil
 		},
 	},
 	{
@@ -193,7 +193,7 @@ var cmds = []*commands.YAGCommand{
 				return out, nil
 			}
 
-			_, err = paginatedmessages.CreatePaginatedMessage(
+			pm, err := paginatedmessages.CreatePaginatedMessage(
 				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					i := page - 1
 					paginatedEmbed := embedCreator(currentReminders, i, maxLength, 1, parsed)
@@ -203,7 +203,7 @@ var cmds = []*commands.YAGCommand{
 				return fmt.Sprintf("Something went wrong: %s", err), nil
 			}
 
-			return nil, nil
+			return pm, nil
 		},
 	},
 	{

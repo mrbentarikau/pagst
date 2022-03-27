@@ -2,9 +2,14 @@ package throw
 
 import (
 	"math/rand"
+
+	"github.com/mrbentarikau/pagst/common"
 )
 
 func randomThing() string {
+	if rand.Intn(2) > 0 {
+		return common.RandomNoun()
+	}
 	return throwThings[rand.Intn(len(throwThings))]
 }
 
@@ -115,4 +120,6 @@ var throwThings = []string{
 	"doors",
 	"pie",
 	"squares",
+	"a duck",
+	"lily from at&t",
 }

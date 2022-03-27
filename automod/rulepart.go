@@ -31,10 +31,10 @@ var RulePartMap = map[int]RulePart{
 	15: &MessageRegexTrigger{},
 	16: &MessageRegexTrigger{BaseRegexTrigger: BaseRegexTrigger{Inverse: true}},
 	17: &SpamTrigger{},
-	18: &NicknameRegexTrigger{BaseRegexTrigger: BaseRegexTrigger{Inverse: false}},
-	19: &NicknameRegexTrigger{BaseRegexTrigger: BaseRegexTrigger{Inverse: true}},
-	20: &NicknameWordlistTrigger{Blacklist: false},
-	21: &NicknameWordlistTrigger{Blacklist: true},
+	18: &NameRegexTrigger{Inverse: false},
+	19: &NameRegexTrigger{Inverse: true},
+	20: &NameWordlistTrigger{Blacklist: false},
+	21: &NameWordlistTrigger{Blacklist: true},
 	22: &SlowmodeTrigger{Attachments: true, ChannelBased: false},
 	23: &SlowmodeTrigger{Attachments: true, ChannelBased: true},
 	24: &UsernameWordlistTrigger{Blacklist: false},
@@ -53,6 +53,8 @@ var RulePartMap = map[int]RulePart{
 		9X:  &UserStatusWordlistTrigger{Blacklist: false},
 		9X:  &UserStatusWordlistTrigger{Blacklist: true},
 	*/
+	92: &SlowmodeTrigger{ChannelBased: false, Links: true, Stickers: true},
+	93: &SlowmodeTrigger{ChannelBased: true, Links: false, Stickers: true},
 	94: &MessageLengthTrigger{},
 	95: &MessageLengthTrigger{Inverted: true},
 	96: &SlowmodeTrigger{ChannelBased: false, Links: true},
@@ -249,10 +251,10 @@ type ViolationListener interface {
 }
 
 // NicknameListener is a trigger that gets triggered on a nickname change
-type NicknameListener interface {
+type NameListener interface {
 	RulePart
 
-	CheckNickname(triggerCtx *TriggerContext) (isAffected bool, err error)
+	CheckName(triggerCtx *TriggerContext) (isAffected bool, err error)
 }
 
 // UserStatusListener is a trigger that gets triggered on a specific userStatus

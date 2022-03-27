@@ -46,22 +46,30 @@ var (
 	usingFixedSharding bool
 	fixedShardingID    int
 
-	// Note yags is using priviledged intents
+	// Note PAGST is using privileged intents
 	gatewayIntentsUsed = []discordgo.GatewayIntent{
 		discordgo.GatewayIntentGuilds,
 		discordgo.GatewayIntentGuildMembers,
 		discordgo.GatewayIntentGuildBans,
+		discordgo.GatewayIntentGuildEmojis,
+		discordgo.GatewayIntentGuildIntegrations,
+		discordgo.GatewayIntentGuildWebhooks,
+		discordgo.GatewayIntentGuildInvites,
 		discordgo.GatewayIntentGuildVoiceStates,
 		discordgo.GatewayIntentGuildPresences,
 		discordgo.GatewayIntentGuildMessages,
 		discordgo.GatewayIntentGuildMessageReactions,
+		discordgo.GatewayIntentGuildMessageTyping,
 		discordgo.GatewayIntentDirectMessages,
 		discordgo.GatewayIntentDirectMessageReactions,
+		discordgo.GatewayIntentDirectMessageTyping,
+		discordgo.GatewayIntentMessageContent,
+		discordgo.GatewayIntentGuildScheduledEvents,
 	}
 )
 
 var (
-	// the total amount of shards this bot is set to use across all processes
+	// The total amount of shards this bot is set to use across all processes
 	totalShardCount int
 )
 

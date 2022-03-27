@@ -2,6 +2,7 @@ package poll
 
 import (
 	"emperror.dev/errors"
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
@@ -81,5 +82,9 @@ func createPoll(data *dcmd.Data) (interface{}, error) {
 	for i := range options {
 		common.BotSession.MessageReactionAdd(pollMsg.ChannelID, pollMsg.ID, pollReactions[i])
 	}
-	return nil, nil
+
+	pm := &paginatedmessages.PaginatedMessage{
+		MessageID: pollMsg.ID,
+	}
+	return pm, nil
 }

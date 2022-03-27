@@ -10,9 +10,9 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
-	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/volatiletech/null"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -91,7 +91,7 @@ func (del *DeleteMessagesEffect) Description() (description string) {
 
 func (del *DeleteMessagesEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Number of messages",
 			Key:     "NumMessages",
 			Kind:    SettingTypeInt,
@@ -99,7 +99,7 @@ func (del *DeleteMessagesEffect) UserSettings() []*SettingDef {
 			Max:     100,
 			Default: 3,
 		},
-		&SettingDef{
+		{
 			Name:    "Max age (seconds)",
 			Key:     "TimeLimit",
 			Kind:    SettingTypeInt,
@@ -148,7 +148,7 @@ func (del *DeleteMessagesEffect) Apply(ctxData *TriggeredRuleData, settings inte
 		}
 	}
 
-	if len(deleteMessages) < 0 {
+	if len(deleteMessages) < 1 {
 		return nil
 	}
 
@@ -191,7 +191,7 @@ func (vio *AddViolationEffect) Description() (description string) {
 
 func (vio *AddViolationEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Name",
 			Key:     "Name",
 			Kind:    SettingTypeString,
@@ -252,7 +252,7 @@ func (kick *KickUserEffect) Description() (description string) {
 
 func (kick *KickUserEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Custom message (empty for default)",
 			Key:  "CustomReason",
 			Min:  0,
@@ -308,20 +308,20 @@ func (ban *BanUserEffect) Description() (description string) {
 
 func (ban *BanUserEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Duration (minutes, 0 for permanent)",
 			Key:     "Duration",
 			Kind:    SettingTypeInt,
 			Default: 0,
 		},
-		&SettingDef{
+		{
 			Name: "Custom message (empty for default)",
 			Key:  "CustomReason",
 			Min:  0,
 			Max:  150,
 			Kind: SettingTypeString,
 		},
-		&SettingDef{
+		{
 			Name:    "Number of days of messages to delete (0 to 7)",
 			Key:     "MessageDeleteDays",
 			Kind:    SettingTypeInt,
@@ -370,14 +370,14 @@ func (mute *MuteUserEffect) DataType() interface{} {
 
 func (mute *MuteUserEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Duration (minutes, 0 for permanent)",
 			Key:     "Duration",
 			Min:     0,
 			Kind:    SettingTypeInt,
 			Default: 10,
 		},
-		&SettingDef{
+		{
 			Name: "Custom message (empty for default)",
 			Key:  "CustomReason",
 			Min:  0,
@@ -431,7 +431,7 @@ func (warn *WarnUserEffect) DataType() interface{} {
 
 func (warn *WarnUserEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Custom message (empty for default)",
 			Key:  "CustomReason",
 			Min:  0,
@@ -485,7 +485,7 @@ func (sn *SetNicknameEffect) DataType() interface{} {
 
 func (sn *SetNicknameEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name: "New Nickname (empty for removal)",
 			Key:  "NewName",
 			Min:  0,
@@ -538,7 +538,7 @@ func (rv *ResetViolationsEffect) DataType() interface{} {
 
 func (rv *ResetViolationsEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Name",
 			Key:     "Name",
 			Default: "name",
@@ -582,15 +582,15 @@ func (gf *GiveRoleEffect) DataType() interface{} {
 
 func (gf *GiveRoleEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
-			Name:    "Duration in seconds, 0 for permanent",
+		{
+			Name:    "Duration in seconds, less than 10 defaults to 10, 0 is for permanent",
 			Key:     "Duration",
 			Default: 0,
 			Min:     0,
 			Max:     604800,
 			Kind:    SettingTypeInt,
 		},
-		&SettingDef{
+		{
 			Name: "Role",
 			Key:  "Role",
 			Kind: SettingTypeRole,
@@ -619,7 +619,11 @@ func (gf *GiveRoleEffect) Apply(ctxData *TriggeredRuleData, settings interface{}
 	}
 
 	if settingsCast.Duration > 0 {
-		err := scheduledevents2.ScheduleRemoveRole(context.Background(), ctxData.GS.ID, ctxData.MS.User.ID, settingsCast.Role, time.Now().Add(time.Second*time.Duration(settingsCast.Duration)))
+		duration := settingsCast.Duration
+		if duration < 10 {
+			duration = 10
+		}
+		err := scheduledevents2.ScheduleRemoveRole(context.Background(), ctxData.GS.ID, ctxData.MS.User.ID, settingsCast.Role, time.Now().Add(time.Second*time.Duration(duration)))
 		if err != nil {
 			return err
 		}
@@ -647,7 +651,7 @@ func (rf *RemoveRoleEffect) DataType() interface{} {
 
 func (rf *RemoveRoleEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Duration in seconds, 0 for permanent",
 			Key:     "Duration",
 			Default: 0,
@@ -655,7 +659,7 @@ func (rf *RemoveRoleEffect) UserSettings() []*SettingDef {
 			Max:     604800,
 			Kind:    SettingTypeInt,
 		},
-		&SettingDef{
+		{
 			Name: "Role",
 			Key:  "Role",
 			Kind: SettingTypeRole,
@@ -815,7 +819,7 @@ func (slow *EnableChannelSlowmodeEffect) DataType() interface{} {
 
 func (slow *EnableChannelSlowmodeEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Duration in seconds, 0 for permanent",
 			Key:     "Duration",
 			Default: 0,
@@ -823,7 +827,7 @@ func (slow *EnableChannelSlowmodeEffect) UserSettings() []*SettingDef {
 			Max:     604800,
 			Kind:    SettingTypeInt,
 		},
-		&SettingDef{
+		{
 			Name:    "Ratelimit in seconds between messages per user",
 			Key:     "Ratelimit",
 			Default: 0,

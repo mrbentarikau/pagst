@@ -14,9 +14,9 @@ import (
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/timezonecompanion/models"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/timezonecompanion/models"
 	"github.com/volatiletech/sqlboiler/boil"
 )
 
@@ -88,13 +88,13 @@ func (p *Plugin) AddCommands() {
 			}
 
 			if len(zones) > 1 {
-				if len(zones) > 10 {
+				if len(zones) > 5 {
 					if parsed.Context().Value(paginatedmessages.CtxKeyNoPagination) != nil {
 						return paginatedTimezones(zones)(nil, 1)
 					}
-					_, err := paginatedmessages.CreatePaginatedMessage(
+					pm, err := paginatedmessages.CreatePaginatedMessage(
 						parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(zones))/10)), paginatedTimezones(zones))
-					return nil, err
+					return pm, err
 				}
 
 				out = "More than 1 result, reuse the command for fine tuning with a one of the following:\n"

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/timezonecompanion"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/timezonecompanion"
 	"github.com/tkuchiki/go-timezone"
 )
 
@@ -29,7 +29,7 @@ func cmdFuncCurrentTime(data *dcmd.Data) (interface{}, error) {
 	now := time.Now().UTC()
 	if data.Args[0].Value != nil {
 		tzName := data.Args[0].Str()
-		names, err := timezone.GetTimezones(strings.ToUpper(data.Args[0].Str()))
+		names, err := timezone.New().GetTimezones(strings.ToUpper(data.Args[0].Str()))
 		if err == nil && len(names) > 0 {
 			tzName = names[0]
 		}
