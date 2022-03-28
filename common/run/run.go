@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/botrest"
 	"github.com/mrbentarikau/pagst/commands"
@@ -23,7 +24,6 @@ import (
 	"github.com/mrbentarikau/pagst/common/sentryhook"
 	"github.com/mrbentarikau/pagst/feeds"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/getsentry/sentry-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -86,7 +86,7 @@ func Init() {
 	common.SetLogFormatter(&log.TextFormatter{
 		//DisableTimestamp: !common.Testing,
 		FullTimestamp:   true,
-		TimestampFormat: "06-01-02 15:04:05",
+		TimestampFormat: "2006-01-02 15:04:05",
 		ForceColors:     common.Testing,
 		SortingFunc:     logrusSortingFunc,
 	})
