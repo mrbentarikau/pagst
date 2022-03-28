@@ -1,9 +1,10 @@
 package serverstats
 
 import (
-	"github.com/mrbentarikau/pagst/common/testutils"
 	"testing"
 	"time"
+
+	"github.com/mrbentarikau/pagst/common/testutils"
 )
 
 func TestDailyStatsMessages(t *testing.T) {

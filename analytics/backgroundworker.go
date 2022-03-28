@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/backgroundworkers"
-	"github.com/mediocregopher/radix/v3"
 )
 
 var _ backgroundworkers.BackgroundWorkerPlugin = (*Plugin)(nil)

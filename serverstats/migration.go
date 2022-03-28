@@ -1,10 +1,11 @@
 package serverstats
 
 import (
+	"time"
+
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/premium"
-	"time"
 )
 
 func StartMigrationToV2Format() error {

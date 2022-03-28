@@ -2,9 +2,10 @@ package logs
 
 import (
 	"context"
+	"time"
+
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/common/templates"
-	"time"
 )
 
 func init() {

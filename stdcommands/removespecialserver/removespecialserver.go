@@ -1,11 +1,11 @@
 package removespecialserver
 
 import (
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
-	"github.com/mediocregopher/radix/v3"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 var Command = &commands.YAGCommand{

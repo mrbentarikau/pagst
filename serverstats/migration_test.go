@@ -2,9 +2,10 @@ package serverstats
 
 import (
 	"context"
-	"github.com/mrbentarikau/pagst/common/testutils"
 	"testing"
 	"time"
+
+	"github.com/mrbentarikau/pagst/common/testutils"
 )
 
 func TestMigrationToV2FormatMsgs(t *testing.T) {

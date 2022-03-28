@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )

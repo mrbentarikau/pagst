@@ -3,9 +3,10 @@ package serverstats
 import (
 	"database/sql"
 	"fmt"
-	"github.com/mrbentarikau/pagst/common"
 	"os"
 	"testing"
+
+	"github.com/mrbentarikau/pagst/common"
 
 	"github.com/mrbentarikau/pagst/common/testutils"
 )
