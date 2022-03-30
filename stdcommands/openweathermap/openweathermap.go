@@ -92,6 +92,7 @@ var Command = &commands.YAGCommand{
 				{Name: "Sunrise", Value: fmt.Sprintf("<t:%d:R>\n*%s*", weather.Sys.Sunrise, time.Unix(weather.Sys.Sunrise, 0).UTC().Format(time.RFC822)), Inline: true},
 				{Name: "Sunset", Value: fmt.Sprintf("<t:%d:R>\n*%s*", weather.Sys.Sunset, time.Unix(weather.Sys.Sunset, 0).UTC().Format(time.RFC822)), Inline: true},
 			},
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
 		}
 
 		return embed, nil
