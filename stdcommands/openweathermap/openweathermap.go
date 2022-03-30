@@ -89,7 +89,7 @@ var Command = &commands.YAGCommand{
 				{Name: "Pressure", Value: fmt.Sprintf("%d%s", weather.Main.Pressure, "hPa"), Inline: true},
 				{Name: "Humidity", Value: fmt.Sprintf("%d%s", weather.Main.Humidity, "%"), Inline: true},
 				{Name: "Dew point", Value: fmt.Sprintf("%.0f%s%.0f%s", dewPoint(weather.Main.Humidity, weather.Main.Temp), "°C (", weather.Main.Temp*1.8+32, "°F)"), Inline: false},
-				{Name: "Sunrise", Value: fmt.Sprintf("<t:%d:R>\n*%s*", weather.Sys.Sunrise, time.Unix(weather.Sys.Sunset, 0).UTC().Format(time.RFC822)), Inline: true},
+				{Name: "Sunrise", Value: fmt.Sprintf("<t:%d:R>\n*%s*", weather.Sys.Sunrise, time.Unix(weather.Sys.Sunrise, 0).UTC().Format(time.RFC822)), Inline: true},
 				{Name: "Sunset", Value: fmt.Sprintf("<t:%d:R>\n*%s*", weather.Sys.Sunset, time.Unix(weather.Sys.Sunset, 0).UTC().Format(time.RFC822)), Inline: true},
 			},
 		}
