@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/bot"
@@ -170,6 +171,8 @@ func execCmd(tmplCtx *templates.Context, dryRun bool, m *discordgo.MessageCreate
 		case discordgo.User:
 			cmdLine += "<@" + strconv.FormatInt(t.ID, 10) + ">"
 			fakeMsg.Mentions = append(fakeMsg.Mentions, &t)
+		case time.Duration:
+			cmdLine += t.String()
 		case []string:
 			for i, str := range t {
 				if i != 0 {
