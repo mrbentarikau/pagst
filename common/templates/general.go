@@ -158,9 +158,11 @@ func StructToSdict(value interface{}) (SDict, error) {
 
 func CreateSlice(values ...interface{}) (Slice, error) {
 	slice := make([]interface{}, len(values))
-	for i := 0; i < len(values); i++ {
+	/*for i := 0; i < len(values); i++ {
 		slice[i] = values[i]
-	}
+	}*/
+
+	copy(slice, values)
 
 	return Slice(slice), nil
 }
@@ -534,6 +536,57 @@ func add(args ...interface{}) interface{} {
 		}
 		return sumI
 	}
+}
+
+var mathConstantsMap = map[string]float64{
+	//base
+	"e":   math.E,
+	"pi":  math.Pi,
+	"phi": math.Pi,
+
+	// square roots
+	"sqrt2":   math.Sqrt2,
+	"sqrte":   math.SqrtE,
+	"sqrtpi":  math.SqrtPi,
+	"sqrtphi": math.SqrtPhi,
+
+	// logarithms
+	"ln2":    math.Ln2,
+	"log2e":  math.Log2E,
+	"ln10":   math.Ln10,
+	"log10e": math.Log10E,
+
+	// floating-point limit values
+	"maxfloat32":             math.MaxFloat32,
+	"smallestnonzerofloat32": math.SmallestNonzeroFloat32,
+	"maxfloat64":             math.MaxFloat64,
+	"smallestnonzerofloat64": math.SmallestNonzeroFloat64,
+
+	// integer limit values
+	"maxint":    math.MaxInt,
+	"minint":    math.MinInt,
+	"maxint8":   math.MaxInt8,
+	"minint8":   math.MinInt8,
+	"maxint16":  math.MaxInt16,
+	"minint16":  math.MinInt16,
+	"maxint32":  math.MaxInt32,
+	"minint32":  math.MinInt32,
+	"maxint64":  math.MaxInt64,
+	"minint64":  math.MinInt64,
+	"maxuint":   math.MaxUint,
+	"maxuint8":  math.MaxUint8,
+	"maxuint16": math.MaxUint16,
+	"maxuint32": math.MaxUint32,
+	"maxuint64": math.MaxUint64,
+}
+
+func tmplMathConstant(arg string) float64 {
+	constant := mathConstantsMap[strings.ToLower(arg)]
+	if constant == 0 {
+		return math.NaN()
+	}
+
+	return constant
 }
 
 func tmplSub(args ...interface{}) interface{} {

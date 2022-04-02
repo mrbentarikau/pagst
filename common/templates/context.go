@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -72,6 +71,7 @@ var (
 		"fdiv":       tmplFDiv,
 		"log":        tmplLog,
 		"mod":        tmplMod,
+		"mathConst":  tmplMathConstant,
 		"max":        tmplMax,
 		"min":        tmplMin,
 		"mult":       tmplMult,
@@ -268,9 +268,6 @@ func (c *Context) setupBaseData() {
 	c.Data["DiscordEpoch"] = time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC)
 	c.Data["GuildEpoch"] = bot.SnowflakeToTime(c.GS.ID).UTC()
 	c.Data["IsPremium"] = c.IsPremium
-
-	//Math constants
-	c.Data["MathConst"] = map[string]float64{"E": math.E, "Pi": math.Pi, "Phi": math.Phi, "Ln2": math.Ln2, "Ln10": math.Ln10}
 
 	//Permissions
 	c.Data["Permissions"] = map[string]int64{
