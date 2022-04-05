@@ -542,7 +542,7 @@ var mathConstantsMap = map[string]float64{
 	//base
 	"e":   math.E,
 	"pi":  math.Pi,
-	"phi": math.Pi,
+	"phi": math.Phi,
 
 	// square roots
 	"sqrt2":   math.Sqrt2,
@@ -1157,6 +1157,8 @@ func tmplToInt(from interface{}) int {
 		return int(t)
 	case time.Month:
 		return int(t)
+	case time.Weekday:
+		return int(t)
 	default:
 		return 0
 	}
@@ -1188,6 +1190,8 @@ func ToInt64(from interface{}) int64 {
 	case time.Duration:
 		return int64(t)
 	case time.Month:
+		return int64(t)
+	case time.Weekday:
 		return int64(t)
 	default:
 		return 0
@@ -1291,6 +1295,10 @@ func ToFloat64(from interface{}) float64 {
 		parsed, _ := strconv.ParseFloat(t, 64)
 		return parsed
 	case time.Duration:
+		return float64(t)
+	case time.Month:
+		return float64(t)
+	case time.Weekday:
 		return float64(t)
 	default:
 		return 0

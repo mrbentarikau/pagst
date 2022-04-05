@@ -261,47 +261,47 @@ func (c *Context) setupBaseData() {
 	}
 
 	c.Data["BotUser"] = common.BotUser
-	c.Data["TimeSecond"] = time.Second
-	c.Data["TimeMinute"] = time.Minute
-	c.Data["TimeHour"] = time.Hour
-	c.Data["UnixEpoch"] = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 	c.Data["DiscordEpoch"] = time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC)
 	c.Data["GuildEpoch"] = bot.SnowflakeToTime(c.GS.ID).UTC()
 	c.Data["IsPremium"] = c.IsPremium
+	c.Data["TimeHour"] = time.Hour
+	c.Data["TimeMinute"] = time.Minute
+	c.Data["TimeSecond"] = time.Second
+	c.Data["UnixEpoch"] = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	//Permissions
 	c.Data["Permissions"] = map[string]int64{
 
+		"AttachFiles":        discordgo.PermissionAttachFiles,
+		"EmbedLinks":         discordgo.PermissionEmbedLinks,
+		"ManageMessages":     discordgo.PermissionManageMessages,
+		"MentionEveryone":    discordgo.PermissionMentionEveryone,
 		"ReadMessages":       discordgo.PermissionReadMessages,
+		"ReadMessageHistory": discordgo.PermissionReadMessageHistory,
 		"SendMessages":       discordgo.PermissionSendMessages,
 		"SendTTSMessages":    discordgo.PermissionSendTTSMessages,
-		"ManageMessages":     discordgo.PermissionManageMessages,
-		"EmbedLinks":         discordgo.PermissionEmbedLinks,
-		"AttachFiles":        discordgo.PermissionAttachFiles,
-		"ReadMessageHistory": discordgo.PermissionReadMessageHistory,
-		"MentionEveryone":    discordgo.PermissionMentionEveryone,
 		"UseExternalEmojis":  discordgo.PermissionUseExternalEmojis,
 
 		"VoiceConnect":       discordgo.PermissionVoiceConnect,
-		"VoiceSpeak":         discordgo.PermissionVoiceSpeak,
-		"VoiceMuteMembers":   discordgo.PermissionVoiceMuteMembers,
 		"VoiceDeafenMembers": discordgo.PermissionVoiceDeafenMembers,
 		"VoiceMoveMembers":   discordgo.PermissionVoiceMoveMembers,
+		"VoiceMuteMembers":   discordgo.PermissionVoiceMuteMembers,
+		"VoiceSpeak":         discordgo.PermissionVoiceSpeak,
 		"VoiceUseVAD":        discordgo.PermissionVoiceUseVAD,
 
 		"ChangeNickname":  discordgo.PermissionChangeNickname,
+		"ManageEmojis":    discordgo.PermissionManageEmojis,
 		"ManageNicknames": discordgo.PermissionManageNicknames,
 		"ManageRoles":     discordgo.PermissionManageRoles,
 		"ManageWebhooks":  discordgo.PermissionManageWebhooks,
-		"ManageEmojis":    discordgo.PermissionManageEmojis,
 
+		"AddReactions":        discordgo.PermissionAddReactions,
+		"Administrator":       discordgo.PermissionAdministrator,
+		"BanMembers":          discordgo.PermissionBanMembers,
 		"CreateInstantInvite": discordgo.PermissionCreateInstantInvite,
 		"KickMembers":         discordgo.PermissionKickMembers,
-		"BanMembers":          discordgo.PermissionBanMembers,
-		"Administrator":       discordgo.PermissionAdministrator,
 		"ManageChannels":      discordgo.PermissionManageChannels,
 		"ManageServer":        discordgo.PermissionManageServer,
-		"AddReactions":        discordgo.PermissionAddReactions,
 		"ViewAuditLogs":       discordgo.PermissionViewAuditLogs,
 	}
 }

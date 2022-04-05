@@ -993,14 +993,13 @@ func (c *Context) tmplGetMember(target interface{}) (*discordgo.Member, error) {
 }
 
 func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
-
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
 	}
 
 	cID := c.ChannelArg(channel)
 	if cID == 0 {
-		return nil, nil //dont send an error , a nil output would indicate invalid/unknown channel
+		return nil, errors.New("invalid channel") //don't send an error , a nil output would indicate invalid/unknown channel
 	}
 
 	cstate := c.GS.GetChannel(cID)
