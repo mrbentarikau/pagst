@@ -241,6 +241,7 @@ type MemberFields struct {
 	Roles                      []int64
 	Nick                       string
 	Avatar                     string
+	Pending                    bool
 	CommunicationDisabledUntil *time.Time
 }
 
@@ -256,7 +257,7 @@ const (
 )
 
 type PresenceFields struct {
-	// Acitvity here
+	// Activity here
 	Game   *LightGame
 	Status PresenceStatus
 }
@@ -285,8 +286,10 @@ func MemberStateFromMember(member *discordgo.Member) *MemberState {
 			Roles:                      member.Roles,
 			Nick:                       member.Nick,
 			Avatar:                     member.Avatar,
+			Pending:                    member.Pending,
 			CommunicationDisabledUntil: member.CommunicationDisabledUntil,
 		},
+
 		Presence: nil,
 	}
 }
@@ -306,6 +309,7 @@ func (ms *MemberState) DgoMember() *discordgo.Member {
 		Roles:                      ms.Member.Roles,
 		CommunicationDisabledUntil: ms.Member.CommunicationDisabledUntil,
 		User:                       &ms.User,
+		Pending:                    ms.Member.Pending,
 	}
 
 	if ms.Member != nil {

@@ -798,7 +798,10 @@ type Member struct {
 	User *User `json:"user"`
 
 	// A list of IDs of the roles which are possessed by the member.
-	Roles IDSlice `json:"roles,string"`
+	Roles IDSlice `json:"roles"`
+
+	// Is true while the member hasn't accepted the membership screen.
+	Pending bool `json:"pending"`
 
 	// The time at which the member's timeout will expire.
 	// Time in the past or nil if the user is not timed out.
