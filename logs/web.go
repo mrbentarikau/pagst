@@ -226,7 +226,7 @@ func HandleLogsCPDeleteAll(w http.ResponseWriter, r *http.Request) (web.Template
 func CheckCanAccessLogs(w http.ResponseWriter, r *http.Request, config *models.GuildLoggingConfig) bool {
 	_, tmpl := web.GetBaseCPContextData(r.Context())
 
-	isAdmin, _ := web.IsAdminRequest(r.Context(), r)
+	isAdmin, _, _ := web.IsAdminRequest(r.Context(), r)
 
 	// check if were allowed access to logs on this server
 	if isAdmin || config.AccessMode == AccessModeEveryone {
@@ -316,7 +316,7 @@ func HandleLogsHTML(w http.ResponseWriter, r *http.Request) interface{} {
 	config := r.Context().Value(ctxKeyConfig).(*models.GuildLoggingConfig)
 
 	// check if were allowed to view deleted messages
-	isAdmin, _ := web.IsAdminRequest(r.Context(), r)
+	isAdmin, _, _ := web.IsAdminRequest(r.Context(), r)
 
 	var canViewDeleted = false
 	if isAdmin && !web.GetIsReadOnly(r.Context()) {

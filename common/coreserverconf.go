@@ -19,8 +19,10 @@ CREATE TABLE IF NOT EXISTS core_configs (
 
 	allow_all_members_read_only BOOLEAN NOT NULL,
 	allow_non_members_read_only BOOLEAN NOT NULL
-)
+)`
 
+const AlterCoreServerConfDBSchema = `
+ALTER TABLE core_configs ADD COLUMN IF NOT EXISTS server_owner_only BOOLEAN NOT NULL DEFAULT false;
 `
 
 var CoreServerConfigCache = rcache.NewInt(coreServerConfigCacheFetcher, time.Minute)

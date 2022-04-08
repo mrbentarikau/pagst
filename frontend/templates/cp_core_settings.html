@@ -23,10 +23,11 @@
                             multiple="multiple">
                             {{roleOptionsMulti .ActiveGuild.Roles nil .CoreConfig.AllowedReadOnlyRoles}}
                         </select>
-                        <p class="help-block">Members with <code>Manage Server</code> perms can always access the
-                            control panel</p>
+                        <p class="help-block">If server owner has not restricted their access fully,<br/>members with <code>Manage Server</code> perms can always access the control panel.</p>
                     </div>
-
+                    {{if .GuildOwner}}
+                    {{checkbox "ServerOwnerOnly" "ServerOwnerOnly" "Restrict all access to server owner only? (Default includes users with <code>manage server</code> permissions)" .CoreConfig.ServerOwnerOnly}}
+                    <br/>{{end}}
                     {{checkbox "AllowAllMembersReadOnly" "AllowAllMembersReadOnly" "Allow all members of your server read only access" .CoreConfig.AllowAllMembersReadOnly}}
                     {{checkbox "AllowNonMembersReadOnly" "AllowNonMembersReadOnly" "Allow users not part of your server, including users not logged in, read only access" .CoreConfig.AllowNonMembersReadOnly}}
 

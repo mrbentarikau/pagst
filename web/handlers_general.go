@@ -514,10 +514,11 @@ func (p *ControlPanelPlugin) LoadServerHomeWidget(w http.ResponseWriter, r *http
 	const format = `<ul>
 	<li>Read-only roles: <code>%d</code></li>
 	<li>Write roles: <code>%d</code></li>
+	<li>Owner only access: <code>%s</code></li>
 	<li>All members read-only: %s</li>
 	<li>Allow absolutely everyone read-only access: %s</li>
 </ul>`
-	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, len(config.AllowedReadOnlyRoles), len(config.AllowedWriteRoles), EnabledDisabledSpanStatus(config.AllowAllMembersReadOnly), EnabledDisabledSpanStatus(config.AllowNonMembersReadOnly)))
+	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, len(config.AllowedReadOnlyRoles), len(config.AllowedWriteRoles), EnabledDisabledSpanStatus(config.ServerOwnerOnly), EnabledDisabledSpanStatus(config.AllowAllMembersReadOnly), EnabledDisabledSpanStatus(config.AllowNonMembersReadOnly)))
 
 	return templateData, nil
 }
@@ -531,6 +532,7 @@ type CoreConfigPostForm struct {
 	AllowedWriteRoles       []int64 `valid:"role,true"`
 	AllowAllMembersReadOnly bool
 	AllowNonMembersReadOnly bool
+	ServerOwnerOnly         bool
 }
 
 func HandlePostCoreSettings(w http.ResponseWriter, r *http.Request) (TemplateData, error) {
@@ -545,6 +547,7 @@ func HandlePostCoreSettings(w http.ResponseWriter, r *http.Request) (TemplateDat
 
 		AllowAllMembersReadOnly: form.AllowAllMembersReadOnly,
 		AllowNonMembersReadOnly: form.AllowNonMembersReadOnly,
+		ServerOwnerOnly:         form.ServerOwnerOnly,
 	}
 
 	err := common.CoreConfigSave(r.Context(), m)

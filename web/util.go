@@ -232,7 +232,7 @@ func CheckErr(t TemplateData, err error, errMsg string, logger func(...interface
 }
 
 // Checks the context if there is a logged in user and if so if he's and admin or not
-func IsAdminRequest(ctx context.Context, r *http.Request) (read bool, write bool) {
+func IsAdminRequest(ctx context.Context, r *http.Request) (read bool, write bool, gOwner bool) {
 
 	isReadOnlyReq := strings.EqualFold(r.Method, "GET") || strings.EqualFold(r.Method, "OPTIONS")
 
@@ -262,12 +262,17 @@ func IsAdminRequest(ctx context.Context, r *http.Request) (read bool, write bool
 		}
 
 		hasRead, hasWrite := GetUserAccessLevel(userID, gWithConnected, coreConf, StaticRoleProvider(roles))
+
+		if gWithConnected.Owner {
+			return true, true, true
+		}
+
 		if hasWrite {
-			return true, true
+			return true, true, false
 		}
 
 		if hasRead && isReadOnlyReq {
-			return true, false
+			return true, false, false
 		}
 	}
 
@@ -276,18 +281,18 @@ func IsAdminRequest(ctx context.Context, r *http.Request) (read bool, write bool
 
 		cast := user.(*discordgo.User)
 		if common.IsOwner(cast.ID) {
-			return true, true
+			return true, true, true
 		}
 
 		if isReadOnlyReq {
 			// allow special read only acces for GET and OPTIONS requests, simple and works well
 			if hasAcces, err := bot.HasReadOnlyAccess(cast.ID); hasAcces && err == nil {
-				return true, false
+				return true, false, false
 			}
 		}
 	}
 
-	return false, false
+	return false, false, false
 }
 
 func NewLogEntryFromContext(ctx context.Context, action string, params ...*cplogs.Param) *cplogs.LogEntry {

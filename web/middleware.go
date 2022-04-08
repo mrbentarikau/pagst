@@ -16,10 +16,10 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/cplogs"
-	"github.com/mrbentarikau/pagst/web/discorddata"
-	"github.com/gorilla/schema"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/web/discorddata"
+	"github.com/gorilla/schema"
 	"github.com/miolini/datacounter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -776,8 +776,8 @@ func SetGuildMemberMiddleware(inner http.Handler) http.Handler {
 			}
 		}
 
-		read, write := IsAdminRequest(ctx, r)
-		ctx = SetContextTemplateData(ctx, map[string]interface{}{"IsAdmin": read || write})
+		read, write, guildOwner := IsAdminRequest(ctx, r)
+		ctx = SetContextTemplateData(ctx, map[string]interface{}{"IsAdmin": read || write, "GuildOwner": guildOwner})
 		ctx = context.WithValue(ctx, common.ContextKeyIsAdmin, read || write)
 
 		if read && !write {
