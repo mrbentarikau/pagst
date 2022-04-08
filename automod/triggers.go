@@ -806,7 +806,7 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 		return false, nil
 	}
 
-	if s.Stickers && len(m.StickerItems) < 1 {
+	if s.Stickers && len(m.Stickers) < 1 {
 		return false, nil
 	}
 
@@ -844,7 +844,7 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 			continue // were only checking messages with links
 		}
 
-		if s.Stickers && len(v.StickerItems) < 1 {
+		if s.Stickers && len(v.Stickers) < 1 {
 			continue // were only checking messages with stickers
 		}
 

@@ -846,8 +846,8 @@ type Settings struct {
 	ConvertEmoticons       bool               `json:"convert_emoticons"`
 	Locale                 string             `json:"locale"`
 	Theme                  string             `json:"theme"`
-	GuildPositions         IDSlice            `json:"guild_positions,string"`
-	RestrictedGuilds       IDSlice            `json:"restricted_guilds,string"`
+	GuildPositions         IDSlice            `json:"guild_positions"`
+	RestrictedGuilds       IDSlice            `json:"restricted_guilds"`
 	FriendSourceFlags      *FriendSourceFlags `json:"friend_source_flags"`
 	Status                 Status             `json:"status"`
 	DetectPlatformAccounts bool               `json:"detect_platform_accounts"`

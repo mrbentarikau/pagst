@@ -152,7 +152,7 @@ type Message struct {
 	Interaction *MessageInteraction `json:"interaction"`
 
 	// An array of Sticker objects, if any were sent.
-	StickerItems []*Sticker `json:"sticker_items"`
+	Stickers []*Sticker `json:"sticker_items"`
 }
 
 func (m *Message) GetGuildID() int64 {
