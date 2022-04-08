@@ -238,12 +238,12 @@ type MemberState struct {
 }
 
 type MemberFields struct {
-	JoinedAt                   discordgo.Timestamp
-	Roles                      []int64
-	Nick                       string
-	Avatar                     string
-	Pending                    bool
-	CommunicationDisabledUntil *time.Time
+	JoinedAt       discordgo.Timestamp
+	Roles          []int64
+	Nick           string
+	Avatar         string
+	Pending        bool
+	TimeOutExpires *time.Time
 }
 
 type PresenceStatus int32
@@ -283,12 +283,12 @@ func MemberStateFromMember(member *discordgo.Member) *MemberState {
 		GuildID: member.GuildID,
 
 		Member: &MemberFields{
-			JoinedAt:                   member.JoinedAt,
-			Roles:                      member.Roles,
-			Nick:                       member.Nick,
-			Avatar:                     member.Avatar,
-			Pending:                    member.Pending,
-			CommunicationDisabledUntil: member.CommunicationDisabledUntil,
+			JoinedAt:       member.JoinedAt,
+			Roles:          member.Roles,
+			Nick:           member.Nick,
+			Avatar:         member.Avatar,
+			Pending:        member.Pending,
+			TimeOutExpires: member.TimeOutExpires,
 		},
 		Pending:  member.Pending,
 		Presence: nil,
@@ -303,14 +303,14 @@ func (ms *MemberState) DgoMember() *discordgo.Member {
 	}
 
 	m := &discordgo.Member{
-		GuildID:                    ms.GuildID,
-		JoinedAt:                   ms.Member.JoinedAt,
-		Nick:                       ms.Member.Nick,
-		Avatar:                     ms.Member.Avatar,
-		Roles:                      ms.Member.Roles,
-		CommunicationDisabledUntil: ms.Member.CommunicationDisabledUntil,
-		User:                       &ms.User,
-		Pending:                    ms.Member.Pending,
+		GuildID:        ms.GuildID,
+		JoinedAt:       ms.Member.JoinedAt,
+		Nick:           ms.Member.Nick,
+		Avatar:         ms.Member.Avatar,
+		Roles:          ms.Member.Roles,
+		TimeOutExpires: ms.Member.TimeOutExpires,
+		User:           &ms.User,
+		Pending:        ms.Member.Pending,
 	}
 
 	if ms.Member != nil {
