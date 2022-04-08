@@ -317,10 +317,6 @@ func (ms *MemberState) DgoMember() *discordgo.Member {
 		m.JoinedAt = ms.Member.JoinedAt
 	}
 
-	if m.Avatar == "" {
-		m.Avatar = m.User.Avatar
-	}
-
 	return m
 }
 
