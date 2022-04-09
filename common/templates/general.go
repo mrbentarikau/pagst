@@ -1329,6 +1329,8 @@ func ToRune(from interface{}) []rune {
 	switch t := from.(type) {
 	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
 		return []rune(ToString(t))
+	case fmt.Stringer:
+		return []rune(t.String())
 	case string:
 		return []rune(t)
 	default:
@@ -1340,6 +1342,8 @@ func ToByte(from interface{}) []byte {
 	switch t := from.(type) {
 	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
 		return []byte(ToString(t))
+	case fmt.Stringer:
+		return []byte(t.String())
 	case string:
 		return []byte(t)
 	default:
@@ -1348,8 +1352,11 @@ func ToByte(from interface{}) []byte {
 }
 
 func ToSHA256(from interface{}) string {
-	sum := sha256.Sum256(ToByte(from))
-	return fmt.Sprintf("%x", sum)
+	bytes := ToByte(from)
+	if len(bytes) > 0 {
+		return fmt.Sprintf("%x", sha256.Sum256(bytes))
+	}
+	return ""
 }
 
 func HexToDecimal(from interface{}) (int, error) {
@@ -1357,10 +1364,7 @@ func HexToDecimal(from interface{}) (int, error) {
 	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
 		return tmplToInt(t), nil
 	default:
-		raw := ToString(t)
-		if strings.HasPrefix(raw, "#") {
-			raw = raw[1:]
-		}
+		raw := strings.TrimPrefix(ToString(t), "#")
 
 		parsed, err := strconv.ParseInt(raw, 16, 32)
 		if err != nil {
