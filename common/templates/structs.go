@@ -24,6 +24,7 @@ type CtxChannel struct {
 	Bitrate              int                              `json:"bitrate"`
 	PermissionOverwrites []*discordgo.PermissionOverwrite `json:"permission_overwrites"`
 	ParentID             int64                            `json:"parent_id"`
+	RateLimitPerUser     int                              `json:"rate_limit_per_user"`
 }
 
 /* PAGST previous vers
@@ -61,6 +62,7 @@ func CtxChannelFromCS(cs *dstate.ChannelState) *CtxChannel {
 		Bitrate:              cs.Bitrate,
 		PermissionOverwrites: cop,
 		ParentID:             cs.ParentID,
+		RateLimitPerUser:     cs.RateLimitPerUser,
 	}
 
 	return ctxChannel
