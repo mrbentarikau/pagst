@@ -1201,37 +1201,40 @@ func ToInt64(from interface{}) int64 {
 func ToInt64Base16(from interface{}) int64 {
 	switch t := from.(type) {
 	case int:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case int32:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case int64:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case float32:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 10), 16, 64)
 		return parsed
 	case float64:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 10), 16, 64)
 		return parsed
 	case uint:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case uint8:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case uint32:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case uint64:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case string:
 		parsed, _ := strconv.ParseInt(t, 16, 64)
 		return parsed
 	case time.Duration:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 16), 16, 64)
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 10), 16, 64)
+		return parsed
+	case time.Month:
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 10), 16, 64)
 		return parsed
 	default:
 		return 0
