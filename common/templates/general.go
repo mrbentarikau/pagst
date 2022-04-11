@@ -269,7 +269,7 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 		case "filename":
 			// Cut the filename to a reasonable length if it's too long
 			filename = common.CutStringShort(ToString(val), 64)
-		case "allowedMentions":
+		case "allowed_mentions":
 			if val == nil {
 				msg.AllowedMentions = discordgo.AllowedMentions{}
 				continue
@@ -1375,7 +1375,7 @@ func HexToDecimal(from interface{}) (int, error) {
 }
 
 func DecodeStringToHex(from interface{}) ([]byte, error) {
-	s := ToString(from)
+	s := strings.TrimPrefix(ToString(from), "#")
 	r := regexp.MustCompile("0x")
 	if r.MatchString(s) {
 		s = strings.Replace(s, "0x", "", -1)
