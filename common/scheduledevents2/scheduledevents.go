@@ -160,7 +160,7 @@ func (se *ScheduledEvents) check() {
 	defer se.currentlyProcessingMU.Unlock()
 
 	var pairs []string
-	err := common.RedisPool.Do(radix.FlatCmd(&pairs, "ZRANGEBYSCORE", "scheduled_events_soon", "-inf", time.Now().UTC().Unix()))
+	err := common.RedisPool.Do(radix.FlatCmd(&pairs, "ZRANGEBYSCORE", "scheduled_events_soon", "-inf", time.Now().UTC().UnixMicro()))
 	if err != nil {
 		logger.WithError(err).Error("failed checking for scheduled events to process")
 		return
@@ -171,7 +171,7 @@ func (se *ScheduledEvents) check() {
 	for _, pair := range pairs {
 		id, guildID, err := parseIDGuildIDPair(pair)
 		if err != nil {
-			logger.WithError(err).Error("failed parsing id guildId pair")
+			logger.WithError(err).Error("failed parsing id guildID pair")
 			continue
 		}
 

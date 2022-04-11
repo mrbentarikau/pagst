@@ -233,7 +233,6 @@ type MemberState struct {
 
 	// These are not always available and all usages should be checked
 	Member   *MemberFields
-	Pending  bool
 	Presence *PresenceFields
 }
 
