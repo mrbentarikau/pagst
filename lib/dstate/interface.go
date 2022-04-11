@@ -290,7 +290,6 @@ func MemberStateFromMember(member *discordgo.Member) *MemberState {
 			Pending:        member.Pending,
 			TimeOutExpires: member.TimeOutExpires,
 		},
-		Pending:  member.Pending,
 		Presence: nil,
 	}
 }
