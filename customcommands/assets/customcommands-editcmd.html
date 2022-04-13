@@ -165,9 +165,9 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="form-group">
-                                            <label>Trigger</label>
-                                            <input type="text" class="form-control" name="trigger" placeholder="fun"
-                                                value="{{.CC.TextTrigger}}">
+                                            <label>Trigger (<span class="trigger-length-counter">x</span>/256)</label>
+                                            <input type="text" class="pagst-trigger form-control" name="trigger" placeholder="fun"
+                                                value="{{.CC.TextTrigger}}" oninput="onTriggerChanged(this)">
 
                                             {{checkbox "case_sensitive" "case_sensitive" "Case Sensitive?" .CC.TextTriggerCaseSensitive}}
 
@@ -184,9 +184,9 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="form-group">
-                                            <label>Trigger</label>
-                                            <input type="text" class="form-control" name="regex_trigger" placeholder="fun"
-                                                value="{{or .CC.RegexTrigger .CC.TextTrigger}}">
+                                            <label>Trigger (<span class="trigger-length-counter">x</span>/256)</label>
+                                            <input type="text" class="pagst-trigger form-control" name="regex_trigger" placeholder="fun"
+                                                value="{{or .CC.RegexTrigger .CC.TextTrigger}}" oninput="onTriggerChanged(this)">
 
                                             {{checkbox "regex_case_sensitive" "regex_case_sensitive" "Case Sensitive?" .CC.RegexTriggerCaseSensitive}}
 
@@ -462,7 +462,7 @@
                         <div class="row mt-4" id="interval-cc-run-now">
                             <div class="col">
                                 <button type="submit" class="btn btn-secondary btn-block" title="This will trigger this custom command immediately"
-                                    formaction="/manage/{{$guild}}/customcommands/commands/{{.CC.LocalID}}/run_now">Run now</button>
+                                    formaction="/manage/{{$guild}}/customcommands/commands/{{.CC.LocalID}}/update_and_run">Run now</button>
                             </div>
                         </div>
                     </form>
@@ -554,6 +554,22 @@
     }
 
     function triggerTypeChanged() {
+        const existingCategoriesWarning =$("#require-no-categories-warning");
+        const existingChannelsWarning = $("#require-no-channels-warning");
+        const existingRolesWarning =$("#require-no-roles-warning");
+
+        if (existingCategoriesWarning.length > 0) {
+            existingCategoriesWarning.attr("hidden",false);
+        }
+
+        if (existingChannelsWarning.length > 0) {
+            existingChannelsWarning.attr("hidden",false);
+        }
+
+        if (existingRolesWarning.length > 0) {
+            existingRolesWarning.attr("hidden",false);
+        }
+
         var dropdown = $("#trigger-type-dropdown")
         console.log("PAGST is awesome!", dropdown.val());
         if (dropdown.val() === "interval_hours" || dropdown.val() === "interval_minutes") {
@@ -648,10 +664,10 @@
 
     $(function () {
         triggerTypeChanged();
-        handleTimeTriggerChannelChange();
         handleRestrictionChange($("#require-role-mode").prop("checked"), $("#command-roles"), "require-no-roles-warning", requireNoRolesWarning);
         handleRestrictionChange($("#require-channel-mode").prop("checked"), $("#command-channels"), "require-no-channels-warning", requireNoChannelsWarning);
-        handleRestrictionChange($("#require-categories-mode").prop("checked"), $("#command-categories"), "require-no-categories-warning", requireNoCategoriesWarning);
+        handleRestrictionChange($("#require-category-mode").prop("checked"), $("#command-categories"), "require-no-categories-warning", requireNoCategoriesWarning);
+        handleTimeTriggerChannelChange();
     })
     
     var textAreaTheme = "no CodeMirror"
@@ -743,6 +759,28 @@
         }
     }
 
+    function onTriggerChanged(input) {
+        var inputs = input.parentElement.parentElement.parentElement.querySelectorAll('input.pagst-trigger');
+        var combinedLength = 0;
+
+        inputs.forEach(function (elem) {
+             // The data received on the backend contains "\r\n" while it is simply "\n" on the JS side.
+            // Adjust for this discrepancy by double-counting newline characters.
+            const newlines = elem.value.match(/\n/g);
+            if (newlines) combinedLength += newlines.length;
+            combinedLength += elem.value.length;
+        })
+
+        var display = input.parentElement.parentElement.parentElement.querySelector(".trigger-length-counter")
+        display.textContent = combinedLength
+
+        if (combinedLength > 256) {
+            display.classList.add("text-danger");
+        } else {
+            display.classList.remove("text-danger");
+        }
+    }
+
     var idGen = 0
 
     $("#time-trigger-channel").change(handleTimeTriggerChannelChange);
@@ -755,6 +793,24 @@
         const isChannelSelected = Boolean($("#time-trigger-channel").val());
         
         const existingWarning = $("#time-trigger-no-channel-warning");
+
+        // to remove other command-type warnings
+        const existingCategoriesWarning =$("#require-no-categories-warning");
+        const existingChannelsWarning =$("#require-no-channels-warning");
+        const existingRolesWarning =$("#require-no-roles-warning");
+
+        if (existingChannelsWarning.length > 0) {
+            existingChannelsWarning.attr("hidden",true);
+        }
+
+        if (existingCategoriesWarning.length > 0) {
+            existingCategoriesWarning.attr("hidden",true);
+        }
+
+        if (existingRolesWarning.length > 0) {
+            existingRolesWarning.attr("hidden",true);
+        }
+
         if (existingWarning.length > 0 && isChannelSelected) {
             // remove existing warning if a channel is selected
             existingWarning.remove();
