@@ -432,7 +432,7 @@ func (p *Plugin) RulesetRulesTriggered(ctxData *TriggeredRuleData, checkedCondit
 
 	filteredRules := make([]*ParsedRule, 0, len(ctxData.TriggeredRules))
 
-	// Check the rule specific conditins
+	// Check the rule specific conditions
 	for _, rule := range ctxData.TriggeredRules {
 		ctxData.CurrentRule = rule
 
