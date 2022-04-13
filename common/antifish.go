@@ -45,6 +45,10 @@ var (
 	antiFishHost     = "anti-fish.bitflow.dev"
 	antiFishHostPath = "check"
 
+	sinkingYachtsScheme   = "https"
+	sinkingYachtsHost     = "phish.sinking.yachts"
+	sinkingYachtsHostPath = "/v2/check"
+
 	transparencyReportHost     = "transparencyreport.google.com"
 	transparencyReportHostPath = "transparencyreport/api/v3/safebrowsing/status"
 )
@@ -70,7 +74,7 @@ func AntiFishQuery(phishingQuery string) (*AntiFish, error) {
 	r.Header.Add("Content-Type", "application/json")
 	r.Header.Add("Accept", "*/*")
 	r.Header.Add("Content-Length", strconv.Itoa(len(queryString)))
-	r.Header.Add("User-Agent", "Mozilla-PAGST1.12")
+	r.Header.Add("User-Agent", "PAGSTDB/20.42.6702")
 
 	resp, err := client.Do(r)
 	if err != nil {
@@ -101,6 +105,55 @@ func AntiFishQuery(phishingQuery string) (*AntiFish, error) {
 	}
 
 	return &antiFish, nil
+}
+
+func SinkingYachtsQuery(phishingQuery string) (bool, error) {
+	var antiFish bool
+	phishingQuery = strings.Replace(phishingQuery, "\n", " ", -1)
+
+	u := &url.URL{
+		Scheme: sinkingYachtsScheme,
+		Host:   sinkingYachtsHost,
+		Path:   sinkingYachtsHostPath,
+	}
+
+	urlStr := u.String() + "/" + phishingQuery
+	client := &http.Client{}
+
+	r, err := http.NewRequest("GET", urlStr, nil)
+	if err != nil {
+		return false, err
+	}
+
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("User-Agent", "PAGSTDB/20.42.6702")
+
+	resp, err := client.Do(r)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.StatusCode == 404 {
+		return antiFish, nil
+	}
+
+	if resp.StatusCode != 200 {
+		respError := fmt.Errorf("unable to fetch data from SinkingYachts API, status-code %d", resp.StatusCode)
+		return false, respError
+	}
+	defer resp.Body.Close()
+
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, err
+	}
+
+	stringBody := json.Unmarshal(bytes, &antiFish)
+	if stringBody != nil {
+		return false, stringBody
+	}
+
+	return antiFish, nil
 }
 
 /*This one is really based on maybes, there's no official google documentation how this works : ) */

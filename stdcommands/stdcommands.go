@@ -8,6 +8,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/addspecialserver"
 	"github.com/mrbentarikau/pagst/stdcommands/advice"
 	"github.com/mrbentarikau/pagst/stdcommands/allocstat"
+	"github.com/mrbentarikau/pagst/stdcommands/antifish"
 	"github.com/mrbentarikau/pagst/stdcommands/banserver"
 	"github.com/mrbentarikau/pagst/stdcommands/banserverowner"
 	"github.com/mrbentarikau/pagst/stdcommands/bashquotes"
@@ -120,6 +121,7 @@ func (p *Plugin) AddCommands() {
 		xkcd.Command,
 
 		// Maintenance
+		antifish.Command,
 		addspecialserver.Command,
 		allocstat.Command,
 		banserver.Command,
