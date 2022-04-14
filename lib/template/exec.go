@@ -321,7 +321,7 @@ func (s *state) walkTry(dot reflect.Value, list, catchList *parse.ListNode) {
 		if r := recover(); r != nil {
 			switch err := r.(type) {
 			case FuncCallError:
-				s.walk(reflect.ValueOf(err.Err), catchList)
+				s.walk(reflect.ValueOf(err.Err.Error()), catchList)
 			default:
 				panic(err)
 			}
