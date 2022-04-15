@@ -6,6 +6,7 @@ package template
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -127,10 +128,37 @@ func (e ExecError) Error() string {
 	return e.Err.Error()
 }
 
-// FuncCallError is the custom error type returned when execution of a list in a
-// try action resulted in an error being returned from a function call.
-type FuncCallError struct {
+// PassthroughError wraps err in such a way that it will not be stripped of
+// information when handled by a try action.
+func PassthroughError(err error) error {
+	return passthroughError{err}
+}
+
+// passthroughError is a wrapper type indicating that the wrapped error should
+// not be stripped of additional information if handled by a try action.
+type passthroughError struct {
 	Err error
+}
+
+func (p passthroughError) Error() string {
+	return p.Err.Error()
+}
+
+// funcCallError is the wrapper type used internally when execution of a a try
+// action resulted in an error being returned from a function call.
+type funcCallError struct {
+	Err error // Original error.
+}
+
+// Strip removes additional fields and methods from the wrapped error so as to
+// not expose sensitive information. If the wrapped error is of type
+// passthroughError, Strip simply digs down to the wrapped error without
+// performing further sanitization.
+func (f funcCallError) Strip() error {
+	if p, ok := f.Err.(passthroughError); ok {
+		return p.Err
+	}
+	return errors.New(f.Err.Error())
 }
 
 // errorf records an ExecError and terminates processing.
@@ -320,8 +348,8 @@ func (s *state) walkTry(dot reflect.Value, list, catchList *parse.ListNode) {
 		s.tryDepth--
 		if r := recover(); r != nil {
 			switch err := r.(type) {
-			case FuncCallError:
-				s.walk(reflect.ValueOf(err.Err.Error()), catchList)
+			case funcCallError:
+				s.walk(reflect.ValueOf(err.Strip()), catchList)
 			default:
 				panic(err)
 			}
@@ -857,7 +885,7 @@ func (s *state) evalCall(dot, fun reflect.Value, node parse.Node, name string, a
 			s.at(node)
 			s.errorf("error calling %s: %v", name, err)
 		}
-		panic(FuncCallError{err})
+		panic(funcCallError{err})
 	}
 	if v.Type() == reflectValueType {
 		v = v.Interface().(reflect.Value)
