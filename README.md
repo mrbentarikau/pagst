@@ -18,7 +18,7 @@ This version does not provide docker components like YAGPDB has, but this is sti
 ## Various
 What's there to say.
 Before license change and branching out caubert forked it and 
-original code is in Jonas747's git > [GitHub](https://github.com/mrbentarikau/pagst) - I still call it master.
+original code is in Jonas747's git > [GitHub](https://github.com/jonas747/yagpdb) - I still call it master.
 
 some of the code here. not merged to master branch yet, has been made by YAGPDB contributors:  
 [jo3-l](https://github.com/jo3-l)  
