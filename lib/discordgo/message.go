@@ -243,8 +243,7 @@ type StickerPack struct {
 
 // MessageSend stores all parameters you can send with ChannelMessageSendComplex.
 type MessageSend struct {
-	Content string `json:"content,omitempty"`
-	//v10 upd change > Embed           *MessageEmbed     `json:"embed,omitempty"`
+	Content         string            `json:"content,omitempty"`
 	Embeds          []*MessageEmbed   `json:"embeds,omitempty"`
 	Tts             bool              `json:"tts"`
 	Files           []*File           `json:"-"`
@@ -253,6 +252,8 @@ type MessageSend struct {
 
 	// TODO: Remove this when compatibility is not required.
 	File *File `json:"-"`
+	// TODO: Remove this when compatibility is not required. >
+	Embed *MessageEmbed `json:"embed,omitempty"`
 }
 
 // MessageEdit is used to chain parameters via ChannelMessageEditComplex, which

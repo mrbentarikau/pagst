@@ -256,6 +256,9 @@ type Channel struct {
 
 	RateLimitPerUser int `json:"rate_limit_per_user"`
 
+	// ID of the creator of the group DM or thread
+	OwnerID int64 `json:"owner_id,string"`
+
 	ThreadMetadata *ThreadMetadata `json:"thread_metadata"`
 }
 
