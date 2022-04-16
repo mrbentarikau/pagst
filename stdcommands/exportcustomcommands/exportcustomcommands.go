@@ -59,14 +59,15 @@ var Command = &commands.YAGCommand{
 		if result != nil {
 			send := &discordgo.MessageSend{Content: "Custom Commands Export"}
 			if exportCSV {
-				in := fmt.Sprintln("GuildID\tCCID\tGroupName\tTriggerType\tTextTrigger\tResponses")
+				var in strings.Builder
+				in.WriteString("GuildID\tCCID\tGroupName\tTriggerType\tTextTrigger\tResponses")
 				for _, r := range result {
-					in += fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", r.GuildID, r.CCID, r.GroupName, r.TriggerType, r.TextTrigger, strings.ReplaceAll(strings.ReplaceAll(r.Responses, "\r\n", " "), "\t", " "))
+					in.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", r.GuildID, r.CCID, r.GroupName, r.TriggerType, r.TextTrigger, strings.ReplaceAll(strings.ReplaceAll(r.Responses, "\r\n", " "), "\t", " ")))
 				}
 				send.File = &discordgo.File{
 					ContentType: "text/csv",
 					Name:        fmt.Sprintf("custom_commands_%d.csv", data.GuildData.GS.ID),
-					Reader:      strings.NewReader(in),
+					Reader:      strings.NewReader(in.String()),
 				}
 			} else {
 				buf, _ := json.Marshal(result)

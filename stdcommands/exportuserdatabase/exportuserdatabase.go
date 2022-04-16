@@ -26,7 +26,7 @@ var Command = &commands.YAGCommand{
 	Name:                 "exportuserdatabase",
 	Aliases:              []string{"exportud", "extud"},
 	RequireDiscordPerms:  []int64{discordgo.PermissionAdministrator},
-	Description:          "Exports all your custom database id,userID, key entries as JSON,\nuser has to be serverAdmin.\nServerID argument is for the owner of the bot...",
+	Description:          "Exports all your custom database id, userID, key entries as JSON,\nuser has to be serverAdmin.\nServerID argument is for the owner of the bot...",
 	HideFromHelp:         true,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "ServerID", Type: dcmd.Int},
@@ -56,14 +56,15 @@ var Command = &commands.YAGCommand{
 		if result != nil {
 			send := &discordgo.MessageSend{Content: "User Database Export"}
 			if exportCSV {
-				in := fmt.Sprintln("EntryID\tUserID\tKey")
+				var in strings.Builder
+				in.WriteString("EntryID\tUserID\tKey")
 				for _, r := range result {
-					in += fmt.Sprintf("%s\t%s\t%s\n", r.EntryID, r.UserID, r.Key)
+					in.WriteString(fmt.Sprintf("%s\t%s\t%s\n", r.EntryID, r.UserID, r.Key))
 				}
 				send.File = &discordgo.File{
 					ContentType: "text/csv",
 					Name:        fmt.Sprintf("database_entries_%d.csv", data.GuildData.GS.ID),
-					Reader:      strings.NewReader(in),
+					Reader:      strings.NewReader(in.String()),
 				}
 			} else {
 				buf, _ := json.Marshal(result)
