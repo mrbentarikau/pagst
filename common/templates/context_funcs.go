@@ -904,12 +904,12 @@ func (c *Context) tmplGetMessage(channel, msgID interface{}) (*discordgo.Message
 
 	cID := c.ChannelArgNoDM(channel)
 	if cID == 0 {
-		return nil, nil
+		return nil, errors.New("non-existing channel")
 	}
 
 	mID := ToInt64(msgID)
 
-	message, _ := common.BotSession.ChannelMessage(cID, mID)
+	message, err := common.BotSession.ChannelMessage(cID, mID)
 	if message != nil {
 		message.GuildID = c.GS.ID
 
@@ -922,6 +922,8 @@ func (c *Context) tmplGetMessage(channel, msgID interface{}) (*discordgo.Message
 		if message.ReferencedMessage != nil {
 			message.ReferencedMessage.GuildID = c.GS.ID
 		}
+	} else if err != nil {
+		return nil, err
 	}
 
 	return message, nil
@@ -1671,6 +1673,8 @@ func (c *Context) FindRole(role interface{}) *discordgo.Role {
 
 		// It's a name after all
 		return c.findRoleByName(t)
+	case *discordgo.Role:
+		return t
 	default:
 		int64Role := ToInt64(t)
 		if int64Role == 0 {
