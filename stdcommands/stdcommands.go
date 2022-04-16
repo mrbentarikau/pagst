@@ -26,6 +26,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/editchannelpermissions"
 	"github.com/mrbentarikau/pagst/stdcommands/editrole"
 	"github.com/mrbentarikau/pagst/stdcommands/exportcustomcommands"
+	"github.com/mrbentarikau/pagst/stdcommands/exportuserdatabase"
 	"github.com/mrbentarikau/pagst/stdcommands/findserver"
 	"github.com/mrbentarikau/pagst/stdcommands/getiplocation"
 	"github.com/mrbentarikau/pagst/stdcommands/globalrl"
@@ -131,6 +132,7 @@ func (p *Plugin) AddCommands() {
 		currentshard.Command,
 		dcallvoice.Command,
 		exportcustomcommands.Command,
+		exportuserdatabase.Command,
 		findserver.Command,
 		globalrl.Command,
 		guildunavailable.Command,

@@ -81,7 +81,7 @@ var Command = &commands.YAGCommand{
 			return nil, err
 		}
 
-		return fmt.Sprintf("No CCs found."), err
+		return "No CCs found...", err
 	},
 }
 
