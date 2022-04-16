@@ -2,6 +2,7 @@ package reputation
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,11 +15,9 @@ import (
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/reputation/models"
-	"github.com/mrbentarikau/pagst/web"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/mrbentarikau/pagst/web"
 )
 
 var _ bot.BotInitHandler = (*Plugin)(nil)
@@ -209,15 +208,33 @@ var cmds = []*commands.YAGCommand{
 		CmdCategory:         commands.CategoryFun,
 		Name:                "RepLog",
 		Aliases:             []string{"replogs"},
-		Description:         "Shows the rep log for the specified user.",
-		RequiredArgs:        1,
+		Description:         "Shows the rep log for the specified user. Times are in UTC.",
+		RequiredArgs:        0,
 		SlashCommandEnabled: true,
 		DefaultEnabled:      false,
 		Arguments: []*dcmd.ArgDef{
 			{Name: "User", Type: dcmd.UserID},
-			{Name: "Page", Type: dcmd.Int, Default: 1},
+		},
+		ArgSwitches: []*dcmd.ArgDef{
+			{Name: "raw", Help: "Raw output"},
+			{Name: "p", Type: dcmd.Int, Help: "Page number", Default: 0},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			var paginatedView, pageBool bool
+			var err error
+			limiter := 20
+			pageNum := 1
+			paginatedView = true
+
+			if parsed.Switches["raw"].Value != nil && parsed.Switches["raw"].Value.(bool) {
+				paginatedView = false
+			}
+
+			if parsed.Switch("p").Int() > 0 {
+				pageBool = true
+				pageNum = parsed.Switch("p").Int()
+			}
+
 			conf, err := GetConfig(parsed.Context(), parsed.GuildData.GS.ID)
 			if err != nil {
 				return "An error occurred while finding the server config", err
@@ -227,85 +244,65 @@ var cmds = []*commands.YAGCommand{
 				return "You're not an reputation admin. (no manage servers perms and no rep admin role)", nil
 			}
 
-			targetID := parsed.Args[0].Int64()
+			targetID := parsed.Author.ID
+			if parsed.Args[0].Value != nil {
+				targetID = parsed.Args[0].Int64()
+			}
 
-			const entriesPerPage = 20
-			offset := (parsed.Args[1].Int() - 1) * entriesPerPage
+			guildID := parsed.GuildData.GS.ID
 
-			logEntries, err := models.ReputationLogs(qm.Where("guild_id = ? AND (receiver_id = ? OR sender_id = ?)", parsed.GuildData.GS.ID, targetID, targetID), qm.OrderBy("id desc"), qm.Limit(entriesPerPage), qm.Offset(offset)).AllG(parsed.Context())
+			var targetUsername string
+			target, err := bot.GetMember(guildID, targetID)
 			if err != nil {
-				return nil, err
+				targetUsername = strconv.FormatInt(targetID, 10)
+			} else {
+				targetUsername = target.User.String()
+			}
+
+			var logEntries []*RepLogEntry
+			if pageBool || !paginatedView {
+				logEntries, err = RepLog(guildID, targetID, paginatedView, pageNum, limiter)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				logEntries, err = RepLog(guildID, targetID, paginatedView)
+				if err != nil {
+					return nil, err
+				}
 			}
 
 			if len(logEntries) < 1 {
-				return "No entries", nil
+				return "No entries...", nil
 			}
 
-			// grab the up to date info on as many users as we can
-			membersToGrab := make([]int64, 1, len(logEntries))
-			membersToGrab[0] = targetID
+			var pm *paginatedmessages.PaginatedMessage
+			if paginatedView {
+				pm, err = paginatedmessages.CreatePaginatedMessage(
+					parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(logEntries))/float64(limiter))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+						i := page - 1
 
-		OUTER:
-			for _, entry := range logEntries {
-				for _, v := range membersToGrab {
-					if entry.ReceiverID == targetID {
-						if v == entry.SenderID {
-							continue OUTER
+						out := fmt.Sprint("Starting from page ", pageNum)
+						out += (repLogCreator(logEntries, guildID, targetID, limiter, i, paginatedView)).String()
+						paginatedEmbed := &discordgo.MessageEmbed{
+							Title:       "Reputation Log for " + targetUsername,
+							Description: out,
 						}
-					} else {
-						if v == entry.ReceiverID {
-							continue OUTER
-						}
-					}
+						return paginatedEmbed, nil
+					})
+				if err != nil {
+					return "Something went wrong...", err
 				}
-
-				if entry.ReceiverID == targetID {
-					membersToGrab = append(membersToGrab, entry.SenderID)
-				} else {
-					membersToGrab = append(membersToGrab, entry.ReceiverID)
-				}
+			} else {
+				out := repLogCreator(logEntries, guildID, targetID, limiter, pageNum-1, paginatedView)
+				out.WriteString(fmt.Sprint("Page ", pageNum))
+				return out.String(), nil
 			}
 
-			members, _ := bot.GetMembers(parsed.GuildData.GS.ID, membersToGrab...)
-
-			// finally display the results
-			var out strings.Builder
-			out.WriteString("```\n")
-			for i, entry := range logEntries {
-				receiver := entry.ReceiverUsername
-				sender := entry.SenderUsername
-
-				for _, v := range members {
-					if v.User.ID == entry.ReceiverID {
-						receiver = v.User.Username + "#" + v.User.Discriminator
-					}
-					if v.User.ID == entry.SenderID {
-						sender = v.User.Username + "#" + v.User.Discriminator
-					}
-				}
-
-				if receiver == "" {
-					receiver = discordgo.StrID(entry.ReceiverID)
-				}
-
-				if sender == "" {
-					sender = discordgo.StrID(entry.SenderID)
-				}
-
-				f := "#%2d: %-15s: %s gave %s: %d points"
-				if entry.SetFixedAmount {
-					f = "#%2d: %-15s: %s set %s points to: %d"
-				}
-				out.WriteString(fmt.Sprintf(f, i+offset+1, entry.CreatedAt.UTC().Format("02 Jan 06 15:04"), sender, receiver, entry.Amount))
-				out.WriteRune('\n')
-			}
-
-			out.WriteString("```\n")
-			out.WriteString(fmt.Sprint("Page ", parsed.Args[1].Int()))
-
-			return out.String(), nil
+			return pm, nil
 		},
 	},
+
 	{
 		CmdCategory: commands.CategoryFun,
 		Name:        "Rep",
@@ -351,7 +348,7 @@ var cmds = []*commands.YAGCommand{
 	{
 		CmdCategory: commands.CategoryFun,
 		Name:        "TopRep",
-		Description: "Shows rep leaderboard on the server",
+		Description: "Shows rep leader-board on the server",
 		Arguments: []*dcmd.ArgDef{
 			{Name: "Page", Type: dcmd.Int, Default: 0},
 		},
@@ -374,7 +371,7 @@ var cmds = []*commands.YAGCommand{
 			}
 
 			embed := &discordgo.MessageEmbed{
-				Title: "Reputation leaderboard",
+				Title: "Reputation leader-board",
 			}
 
 			leaderboardURL := web.BaseURL() + "/public/" + discordgo.StrID(parsed.GuildData.GS.ID) + "/reputation/leaderboard"
@@ -386,7 +383,8 @@ var cmds = []*commands.YAGCommand{
 				}
 				out += fmt.Sprintf("#%02d: %6d - %s\n", v.Rank, v.Points, user)
 			}
-			out += "```\n" + "Full leaderboard: <" + leaderboardURL + ">"
+
+			out += "```\n" + "Full leader-board: <" + leaderboardURL + ">"
 
 			embed.Description = out
 
@@ -394,6 +392,81 @@ var cmds = []*commands.YAGCommand{
 
 		}),
 	},
+}
+
+func repLogCreator(logEntries []*RepLogEntry, guildID, targetID int64, limiter, page int, paginatedView bool) *strings.Builder {
+	offset := page * limiter
+	scope := offset
+	if !paginatedView {
+		scope = 0
+	}
+	// grab the up to date info on as many users as we can
+	membersToGrab := make([]int64, 1, len(logEntries))
+	membersToGrab[0] = targetID
+
+OUTER:
+	for i, entry := range logEntries[scope:] {
+		if i < limiter {
+			for _, v := range membersToGrab {
+				if entry.ReceiverID == targetID {
+					if v == entry.SenderID {
+						continue OUTER
+					}
+				} else {
+					if v == entry.ReceiverID {
+						continue OUTER
+					}
+				}
+			}
+
+			if entry.ReceiverID == targetID {
+				membersToGrab = append(membersToGrab, entry.SenderID)
+			} else {
+				membersToGrab = append(membersToGrab, entry.ReceiverID)
+			}
+		}
+	}
+
+	members, _ := bot.GetMembers(guildID, membersToGrab...)
+
+	// finally display the results
+	var out strings.Builder
+	out.WriteString("```\n")
+
+	for i, entry := range logEntries[scope:] {
+		if i < limiter {
+			receiver := entry.ReceiverUsername
+			sender := entry.SenderUsername
+
+			for _, v := range members {
+				if v.User.ID == entry.ReceiverID {
+					receiver = v.User.Username + "#" + v.User.Discriminator
+				}
+				if v.User.ID == entry.SenderID {
+					sender = v.User.Username + "#" + v.User.Discriminator
+				}
+			}
+
+			if receiver == "" {
+				receiver = discordgo.StrID(entry.ReceiverID)
+			}
+
+			if sender == "" {
+				sender = discordgo.StrID(entry.SenderID)
+			}
+
+			f := "#%2d: %-15s: %s gave %s: %d points"
+			if entry.SetFixedAmount {
+				f = "#%2d: %-15s: %s set %s points to: %d"
+			}
+			out.WriteString(fmt.Sprintf(f, i+offset+1, entry.CreatedAt.UTC().Format("02 Jan 06 15:04"), sender, receiver, entry.Amount))
+			out.WriteRune('\n')
+		}
+	}
+
+	out.WriteString("```")
+
+	return &out
 }
 
 func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {

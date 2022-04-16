@@ -81,6 +81,72 @@ WHERE user_id = $2`
 	return
 }
 
+type RepLogEntry struct {
+	Amount           int64     `json:"amount"`
+	CreatedAt        time.Time `json:"created_at"`
+	ReceiverID       int64     `json:"receiver_id"`
+	ReceiverUsername string    `json:"receiver_username"`
+	SenderID         int64     `json:"sender_id"`
+	SenderUsername   string    `json:"sender_username"`
+	SetFixedAmount   bool      `json:"set_fixed_amount"`
+}
+
+func RepLog(guildID, userID int64, paginatedView bool, args ...int) ([]*RepLogEntry, error) {
+	var query = `
+		SELECT
+			created_at, receiver_id, receiver_username, sender_id, sender_username, set_fixed_amount, amount
+		FROM reputation_log
+		WHERE guild_id = $1
+		AND (receiver_id=$2 OR sender_id=$2)
+		ORDER BY id DESC
+		`
+	if len(args) > 0 {
+		limiter := args[1]
+		page := args[0]
+		offset := (page - 1) * limiter
+
+		if paginatedView {
+			query += "LIMIT NULL "
+		} else {
+			query += fmt.Sprintf("LIMIT %d ", limiter)
+		}
+		query += fmt.Sprintf("OFFSET %d", offset)
+	}
+
+	rows, err := common.PQ.Query(query, guildID, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return []*RepLogEntry{}, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := []*RepLogEntry{}
+	for rows.Next() {
+		var createdAt time.Time
+		var receiverID, senderID, amount int64
+		var receiverUsername, senderUsername string
+		var setFixedAmount bool
+
+		err = rows.Scan(&createdAt, &receiverID, &receiverUsername, &senderID, &senderUsername, &setFixedAmount, &amount)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &RepLogEntry{
+			Amount:           amount,
+			CreatedAt:        createdAt,
+			ReceiverID:       receiverID,
+			ReceiverUsername: receiverUsername,
+			SenderID:         senderID,
+			SenderUsername:   senderUsername,
+			SetFixedAmount:   setFixedAmount,
+		})
+	}
+
+	return result, nil
+}
+
 type RankEntry struct {
 	Rank   int   `json:"rank"`
 	UserID int64 `json:"user_id"`
