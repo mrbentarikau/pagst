@@ -1673,6 +1673,8 @@ func (c *Context) FindRole(role interface{}) *discordgo.Role {
 
 		// It's a name after all
 		return c.findRoleByName(t)
+	case discordgo.Role:
+		return &t
 	case *discordgo.Role:
 		return t
 	default:
