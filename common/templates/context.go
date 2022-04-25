@@ -45,7 +45,6 @@ var (
 		"hasPrefix":   strings.HasPrefix,
 		"hasSuffix":   strings.HasSuffix,
 		"joinStr":     joinStrings,
-		"linkRegex":   tmplLinkRegex,
 		"lower":       strings.ToLower,
 		"print":       withOutputLimit(fmt.Sprint, MaxStringLength),
 		"println":     withOutputLimit(fmt.Sprintln, MaxStringLength),
@@ -266,8 +265,10 @@ func (c *Context) setupBaseData() {
 
 	c.Data["BotUser"] = common.BotUser
 	c.Data["DiscordEpoch"] = time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC)
+	c.Data["DomainRegex"] = common.DomainFinderRegex.String()
 	c.Data["GuildEpoch"] = bot.SnowflakeToTime(c.GS.ID).UTC()
 	c.Data["IsPremium"] = c.IsPremium
+	c.Data["LinkRegex"] = common.LinkRegex.String()
 	c.Data["TimeHour"] = time.Hour
 	c.Data["TimeMinute"] = time.Minute
 	c.Data["TimeSecond"] = time.Second
