@@ -517,6 +517,16 @@ func inFold(l interface{}, v string) bool {
 	return false
 }
 
+func tmplLinkRegex(args ...bool) string {
+	if len(args) > 0 {
+		if !args[0] {
+			return common.DomainFinderRegex.String()
+		}
+	}
+
+	return common.LinkRegex.String()
+}
+
 func add(args ...interface{}) interface{} {
 	if len(args) < 1 {
 		return 0

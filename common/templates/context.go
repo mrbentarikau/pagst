@@ -45,6 +45,7 @@ var (
 		"hasPrefix":   strings.HasPrefix,
 		"hasSuffix":   strings.HasSuffix,
 		"joinStr":     joinStrings,
+		"linkRegex":   tmplLinkRegex,
 		"lower":       strings.ToLower,
 		"print":       withOutputLimit(fmt.Sprint, MaxStringLength),
 		"println":     withOutputLimit(fmt.Sprintln, MaxStringLength),
