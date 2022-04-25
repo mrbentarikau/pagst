@@ -21,10 +21,10 @@ Before license change and branching out caubert forked it and
 original code is in Jonas747's git > [GitHub](https://github.com/jonas747/yagpdb) - I still call it master.
 
 some of the code here. not merged to master branch yet, has been made by YAGPDB contributors:  
-[jo3-l](https://github.com/jo3-l)  
-[LemmeCry](https://github.com/LemmeCry/)  
-[l-zeuch](https://github.com/l-zeuch)  
-[Pedro-Pessoa](https://github.com/Pedro-Pessoa)  
+[jo3-l](https://github.com/jo3-l)
+[LemmeCry](https://github.com/lemm-e/)
+[l-zeuch](https://github.com/l-zeuch)
+[Pedro-Pessoa](https://github.com/Pedro-Pessoa)
 [Satty9361](https://github.com/Satty9361)
 
 Go away now : )
