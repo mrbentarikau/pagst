@@ -45,6 +45,14 @@ type GeneralConfig struct {
 	AssignRoleAfterScreening bool
 }
 
+const (
+	FullScanStarted int = iota + 1
+	FullScanIterating
+	FullScanIterationDone
+	FullScanAssigningRole
+	FullScanCancelled
+)
+
 func GetGeneralConfig(guildID int64) (*GeneralConfig, error) {
 	conf := &GeneralConfig{}
 	err := common.GetRedisJson(KeyGeneral(guildID), conf)
