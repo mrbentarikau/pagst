@@ -1412,7 +1412,7 @@ func (c *Context) tmplPinMessage(unpin bool) func(channel, message interface{}) 
 
 		cID := c.ChannelArgNoDM(channel)
 		if cID == 0 {
-			return "", errors.New("Unknown channel")
+			return "", errors.New("unknown channel")
 		}
 
 		mID := ToInt64(message)
@@ -1457,7 +1457,7 @@ func (c *Context) tmplLastMessages(channel interface{}, num ...int) ([]*dstate.M
 
 	cID := c.ChannelArg(channel)
 	if cID == 0 {
-		return nil, errors.New("Unknown channel")
+		return nil, errors.New("unknown channel")
 	}
 
 	msg, err := bot.GetMessages(c.GS.ID, cID, fetchNum, false)
@@ -1483,7 +1483,7 @@ func (c *Context) tmplSort(input interface{}, sortargs ...interface{}) (interfac
 	case reflect.Slice, reflect.Array:
 		// valid
 	default:
-		return "", fmt.Errorf("Can not use type %s as input to the sort func", inputSlice.Type().String())
+		return "", fmt.Errorf("can not use type %s as input to the sort func", inputSlice.Type().String())
 	}
 
 	var dict SDict
@@ -1743,12 +1743,12 @@ func (c *Context) hasRole(roleInput interface{}) (bool, error) {
 	}
 
 	if c.MS == nil || c.MS.Member == nil {
-		return false, errors.New("Member is nil")
+		return false, errors.New("member is nil")
 	}
 
 	role := c.FindRole(roleInput)
 	if role == nil {
-		return false, fmt.Errorf("Role %v not found", roleInput)
+		return false, fmt.Errorf("role %v not found", roleInput)
 	}
 
 	return common.ContainsInt64Slice(c.MS.Member.Roles, role.ID), nil
@@ -1777,7 +1777,7 @@ func (c *Context) targetHasRole(target interface{}, roleInput interface{}) (bool
 
 	targetID := targetUserID(target)
 	if targetID == 0 {
-		return false, fmt.Errorf("Target %v not found", target)
+		return false, fmt.Errorf("target %v not found", target)
 	}
 
 	ms, err := bot.GetMember(c.GS.ID, targetID)
@@ -1786,12 +1786,12 @@ func (c *Context) targetHasRole(target interface{}, roleInput interface{}) (bool
 	}
 
 	if ms == nil {
-		return false, errors.New("MemberState not found")
+		return false, errors.New("memberState not found")
 	}
 
 	role := c.FindRole(roleInput)
 	if role == nil {
-		return false, fmt.Errorf("Role %v not found", roleInput)
+		return false, fmt.Errorf("role %v not found", roleInput)
 	}
 
 	return common.ContainsInt64Slice(ms.Member.Roles, role.ID), nil
@@ -1826,12 +1826,12 @@ func (c *Context) giveRole(target interface{}, roleInput interface{}, optionalAr
 
 	targetID := targetUserID(target)
 	if targetID == 0 {
-		return "", fmt.Errorf("Target %v not found", target)
+		return "", fmt.Errorf("target %v not found", target)
 	}
 
 	role := c.FindRole(roleInput)
 	if role == nil {
-		return "", fmt.Errorf("Role %v not found", roleInput)
+		return "", fmt.Errorf("role %v not found", roleInput)
 	}
 
 	if delay > time.Second {
@@ -1892,7 +1892,7 @@ func (c *Context) addRole(roleInput interface{}, optionalArgs ...interface{}) (s
 
 	role := c.FindRole(roleInput)
 	if role == nil {
-		return "", fmt.Errorf("Role %v not found", roleInput)
+		return "", fmt.Errorf("role %v not found", roleInput)
 	}
 
 	if delay > time.Second {
@@ -1938,12 +1938,12 @@ func (c *Context) takeRole(target interface{}, roleInput interface{}, optionalAr
 
 	targetID := targetUserID(target)
 	if targetID == 0 {
-		return "", fmt.Errorf("Target %v not found", target)
+		return "", fmt.Errorf("target %v not found", target)
 	}
 
 	role := c.FindRole(roleInput)
 	if role == nil {
-		return "", fmt.Errorf("Role %v not found", roleInput)
+		return "", fmt.Errorf("role %v not found", roleInput)
 	}
 
 	if delay > time.Second {
@@ -2004,7 +2004,7 @@ func (c *Context) removeRole(roleInput interface{}, optionalArgs ...interface{})
 
 	role := c.FindRole(roleInput)
 	if role == nil {
-		return "", fmt.Errorf("Role %v not found", roleInput)
+		return "", fmt.Errorf("role %v not found", roleInput)
 	}
 
 	if delay > time.Second {
