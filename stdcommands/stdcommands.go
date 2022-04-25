@@ -20,6 +20,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/currentshard"
 	"github.com/mrbentarikau/pagst/stdcommands/currenttime"
 	"github.com/mrbentarikau/pagst/stdcommands/customembed"
+	"github.com/mrbentarikau/pagst/stdcommands/dadjoke"
 	"github.com/mrbentarikau/pagst/stdcommands/dcallvoice"
 	"github.com/mrbentarikau/pagst/stdcommands/define"
 	"github.com/mrbentarikau/pagst/stdcommands/dogfact"
@@ -97,6 +98,7 @@ func (p *Plugin) AddCommands() {
 		covidstats.Command,
 		currenttime.Command,
 		customembed.Command,
+		dadjoke.Command,
 		define.Command,
 		dogfact.Command,
 		editchannelpermissions.Command,

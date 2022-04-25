@@ -119,6 +119,8 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 		}
 	}
 
+	enabled := settings != nil && settings.Enabled
+
 	templateData["WidgetTitle"] = "Tickets"
 	templateData["SettingsPath"] = "/tickets/settings"
 
@@ -132,7 +134,7 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 	<li>Tickets enabled: %s</li>
  </ul>`
 
-	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, web.EnabledDisabledSpanStatus(settings.Enabled)))
+	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, web.EnabledDisabledSpanStatus(enabled)))
 
 	return templateData, nil
 }
