@@ -16,6 +16,7 @@ import (
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/prefix"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
@@ -238,8 +239,10 @@ func (c *Context) setupBaseData() {
 
 	if c.GS != nil {
 		c.Data["Guild"] = c.GS
+		c.Data["GuildPrefix"] = prefix.GetPrefixIgnoreError(c.GS.ID)
 		c.Data["Server"] = c.GS
 		c.Data["server"] = c.GS
+		c.Data["ServerPrefix"] = prefix.GetPrefixIgnoreError(c.GS.ID)
 	}
 
 	if c.CurrentFrame.CS != nil {

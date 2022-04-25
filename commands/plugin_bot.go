@@ -13,6 +13,7 @@ import (
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/common"
+	prfx "github.com/mrbentarikau/pagst/common/prefix"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
@@ -298,10 +299,10 @@ func handleMsgCreate(evt *eventsystem.EventData) {
 		return
 	}
 
-	prefix := defaultCommandPrefix()
+	prefix := prfx.DefaultCommandPrefix()
 	if evt.GS != nil && evt.HasFeatureFlag(featureFlagHasCustomPrefix) {
 		var err error
-		prefix, err = GetCommandPrefixRedis(evt.GS.ID)
+		prefix, err = prfx.GetCommandPrefixRedis(evt.GS.ID)
 		if err != nil {
 			logger.WithError(err).WithField("guild", evt.GS.ID).Error("failed fetching command prefix")
 		}
@@ -312,10 +313,10 @@ func handleMsgCreate(evt *eventsystem.EventData) {
 }
 
 func GetCommandPrefixBotEvt(evt *eventsystem.EventData) (string, error) {
-	prefix := defaultCommandPrefix()
+	prefix := prfx.DefaultCommandPrefix()
 	if evt.GS != nil && evt.HasFeatureFlag(featureFlagHasCustomPrefix) {
 		var err error
-		prefix, err = GetCommandPrefixRedis(evt.GS.ID)
+		prefix, err = prfx.GetCommandPrefixRedis(evt.GS.ID)
 		return prefix, err
 	}
 
@@ -327,7 +328,7 @@ func (p *Plugin) Prefix(data *dcmd.Data) string {
 		return "-"
 	}
 
-	prefix, err := GetCommandPrefixRedis(data.GuildData.GS.ID)
+	prefix, err := prfx.GetCommandPrefixRedis(data.GuildData.GS.ID)
 	if err != nil {
 		logger.WithError(err).Error("Failed retrieving commands prefix")
 	}
@@ -362,6 +363,7 @@ func ensureEmbedLimits(embed *discordgo.MessageEmbed) {
 	embed.Description = firstField.Value
 }
 
+/* Pedro's prefix change
 func defaultCommandPrefix() string {
 	defaultPrefix := "-"
 	if common.Testing {
@@ -369,7 +371,7 @@ func defaultCommandPrefix() string {
 	}
 
 	return defaultPrefix
-}
+}*/
 
 var cmdPrefix = &YAGCommand{
 	Name:        "Prefix",
@@ -385,7 +387,7 @@ var cmdPrefix = &YAGCommand{
 			targetGuildID = data.GuildData.GS.ID
 		}
 
-		prefix, err := GetCommandPrefixRedis(targetGuildID)
+		prefix, err := prfx.GetCommandPrefixRedis(targetGuildID)
 		if err != nil {
 			return nil, err
 		}

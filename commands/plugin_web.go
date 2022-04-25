@@ -17,6 +17,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/featureflags"
+	prfx "github.com/mrbentarikau/pagst/common/prefix"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
@@ -177,7 +178,7 @@ func HandleCommands(w http.ResponseWriter, r *http.Request) (web.TemplateData, e
 	templateData["GlobalCommandSettings"] = global
 	templateData["ChannelOverrides"] = channelOverrides
 
-	prefix, _ := GetCommandPrefixRedis(activeGuild.ID)
+	prefix, _ := prfx.GetCommandPrefixRedis(activeGuild.ID)
 
 	templateData["CommandPrefix"] = prefix
 
@@ -450,7 +451,7 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 	templateData["SettingsPath"] = "/commands/settings"
 	templateData["WidgetEnabled"] = true
 
-	prefix, err := GetCommandPrefixRedis(ag.ID)
+	prefix, err := prfx.GetCommandPrefixRedis(ag.ID)
 	if err != nil {
 		return templateData, err
 	}

@@ -11,9 +11,9 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/featureflags"
+	prfx "github.com/mrbentarikau/pagst/common/prefix"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
 
@@ -88,6 +88,7 @@ func InitCommands() {
 	}
 }
 
+/* Pedro's prefix change
 func GetCommandPrefixRedis(guild int64) (string, error) {
 	var prefix string
 	err := common.RedisPool.Do(radix.Cmd(&prefix, "GET", "command_prefix:"+discordgo.StrID(guild)))
@@ -96,6 +97,7 @@ func GetCommandPrefixRedis(guild int64) (string, error) {
 	}
 	return prefix, err
 }
+*/
 
 var _ featureflags.PluginWithFeatureFlags = (*Plugin)(nil)
 
@@ -106,13 +108,13 @@ const (
 
 func (p *Plugin) UpdateFeatureFlags(guildID int64) ([]string, error) {
 
-	prefix, err := GetCommandPrefixRedis(guildID)
+	prefix, err := prfx.GetCommandPrefixRedis(guildID)
 	if err != nil {
 		return nil, err
 	}
 
 	var flags []string
-	if defaultCommandPrefix() != prefix {
+	if prfx.DefaultCommandPrefix() != prefix {
 		flags = append(flags, featureFlagHasCustomPrefix)
 	}
 
