@@ -26,7 +26,7 @@ var logger = common.GetPluginLogger(&Plugin{})
 func RegisterPlugin() {
 
 	if confGoogleReCAPTCHASecret.GetString() == "" || confGoogleReCAPTCHASiteKey.GetString() == "" {
-		logger.Warn("no YAGPDB_GOOGLE_RECAPTCHA_SECRET and/or YAGPDB_GOOGLE_RECAPTCHA_SITE_KEY provided, not enabling verification plugin")
+		logger.Warn("no PAGSTDB_GOOGLE_RECAPTCHA_SECRET and/or PAGSTDB_GOOGLE_RECAPTCHA_SITE_KEY provided, not enabling verification plugin")
 		return
 	}
 

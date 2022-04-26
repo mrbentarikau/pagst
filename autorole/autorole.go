@@ -2,11 +2,8 @@ package autorole
 
 import (
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
-
-var confDisableNonPremiumRetroActiveAssignment = config.RegisterOption("yagpdb.autorole.non_premium_retroactive_assignment", "Wether to enable retroactive assignemnt on non premium guilds", true)
 
 var configCache = common.CacheSet.RegisterSlot("autorole_config", func(key interface{}) (interface{}, error) {
 	config, err := GetGeneralConfig(key.(int64))
@@ -39,10 +36,9 @@ type GeneralConfig struct {
 	Role             int64 `json:",string" valid:"role,true"`
 	RequiredDuration int   `valid:"0,"`
 
-	RequiredRoles            []int64 `valid:"role,true"`
-	IgnoreRoles              []int64 `valid:"role,true"`
-	OnlyOnJoin               bool
-	AssignRoleAfterScreening bool
+	RequiredRoles []int64 `valid:"role,true"`
+	IgnoreRoles   []int64 `valid:"role,true"`
+	OnlyOnJoin    bool
 }
 
 const (
