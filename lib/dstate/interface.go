@@ -54,6 +54,7 @@ type GuildSet struct {
 	Roles       []discordgo.Role
 	Emojis      []discordgo.Emoji
 	VoiceStates []discordgo.VoiceState
+	Prefix      string
 }
 
 func (gs *GuildSet) GetMemberPermissions(channelID int64, memberID int64, roles []int64) (perms int64, err error) {

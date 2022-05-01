@@ -238,17 +238,16 @@ func (c *Context) setupContextFuncs() {
 func (c *Context) setupBaseData() {
 
 	if c.GS != nil {
+		c.GS.Prefix = prefix.GetPrefixIgnoreError(c.GS.ID)
 		c.Data["Guild"] = c.GS
-		c.Data["GuildPrefix"] = prefix.GetPrefixIgnoreError(c.GS.ID)
+		c.Data["GuildPrefix"] = c.GS.Prefix
 		c.Data["Server"] = c.GS
-		c.Data["server"] = c.GS
-		c.Data["ServerPrefix"] = prefix.GetPrefixIgnoreError(c.GS.ID)
+		c.Data["ServerPrefix"] = c.GS.Prefix
 	}
 
 	if c.CurrentFrame.CS != nil {
 		channel := CtxChannelFromCS(c.CurrentFrame.CS)
 		c.Data["Channel"] = channel
-		c.Data["channel"] = channel
 
 		if parentID := common.ChannelOrThreadParentID(c.CurrentFrame.CS); parentID != c.CurrentFrame.CS.ID {
 			c.Data["ChannelOrThreadParent"] = CtxChannelFromCS(c.GS.GetChannelOrThread(parentID))
@@ -260,7 +259,6 @@ func (c *Context) setupBaseData() {
 	if c.MS != nil {
 		c.Data["Member"] = c.MS.DgoMember()
 		c.Data["User"] = &c.MS.User
-		c.Data["user"] = c.Data["User"]
 	}
 
 	c.Data["BotUser"] = common.BotUser
