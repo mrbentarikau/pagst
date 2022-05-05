@@ -267,6 +267,7 @@ func (c *Context) setupBaseData() {
 	c.Data["GuildEpoch"] = bot.SnowflakeToTime(c.GS.ID).UTC()
 	c.Data["IsPremium"] = c.IsPremium
 	c.Data["LinkRegex"] = common.LinkRegex.String()
+	c.Data["ThanksRegex"] = common.ThanksRegex.String()
 	c.Data["TimeHour"] = time.Hour
 	c.Data["TimeMinute"] = time.Minute
 	c.Data["TimeSecond"] = time.Second
