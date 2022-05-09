@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jonas747/gojay"
+	"github.com/mrbentarikau/pagst/lib/gojay"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null"
 )

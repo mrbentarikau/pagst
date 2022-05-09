@@ -3,13 +3,14 @@ package twitter
 //go:generate sqlboiler --no-hooks psql
 
 import (
+	"sync"
+
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/mqueue"
+	"github.com/mrbentarikau/pagst/lib/go-twitter/twitter"
 	"github.com/mrbentarikau/pagst/twitter/models"
 	"github.com/dghubble/oauth1"
-	"github.com/jonas747/go-twitter/twitter"
-	"sync"
 )
 
 var (

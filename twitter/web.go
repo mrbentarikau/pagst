@@ -10,10 +10,10 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
+	"github.com/mrbentarikau/pagst/lib/go-twitter/twitter"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/twitter/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jonas747/go-twitter/twitter"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 	"goji.io"

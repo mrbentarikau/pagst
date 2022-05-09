@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mrbentarikau/pagst/lib/gojay"
 	"github.com/gorilla/websocket"
-	"github.com/jonas747/gojay"
 	"golang.org/x/crypto/nacl/secretbox"
 )
 

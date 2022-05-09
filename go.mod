@@ -10,29 +10,34 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/alfredxing/calc v0.0.0-20180827002445-77daf576f976
+	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/cenkalti/backoff v2.1.1+incompatible
 	github.com/dghubble/oauth1 v0.6.0
+	github.com/dghubble/sling v1.3.0
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dpatrie/urbandictionary v0.0.0-20151214192647-3b38cbf4cb81
 	github.com/fatih/structs v1.1.0
+	github.com/francoispqt/gojay v1.2.13
 	github.com/friendsofgo/errors v0.9.2
 	github.com/getsentry/sentry-go v0.7.0
 	github.com/gin-gonic/gin v1.7.4
+	github.com/go-errors/errors v1.0.1
 	github.com/gobwas/ws v1.1.0
 	github.com/google/safebrowsing v0.0.0-20190624211811-bbf0d20d26b3
 	github.com/gorilla/schema v1.1.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-cleanhttp v0.5.2
+	github.com/jarcoal/httpmock v1.0.4
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/jinzhu/gorm v1.9.10
 	github.com/jmoiron/sqlx v1.2.0
-	github.com/jonas747/go-reddit v0.1.2
-	github.com/jonas747/go-twitter v0.0.0-20200706234916-1d17060b92bc
-	github.com/jonas747/gojay v0.0.0-20190906102056-b3bd5c8fcd50
+	github.com/json-iterator/go v1.1.9
 	github.com/karlseguin/ccache v2.0.3+incompatible
 	github.com/karlseguin/rcache v1.0.1
 	github.com/lib/pq v1.2.1-0.20191011153232-f91d3411e481
 	github.com/lunixbochs/vtclean v1.0.0
+	github.com/mailru/easyjson v0.0.0-20190312143242-1de009706dbe
 	github.com/mediocregopher/radix/v3 v3.7.0
 	github.com/microcosm-cc/bluemonday v1.0.16
 	github.com/miolini/datacounter v0.0.0-20190724021726-aa48df3a02c1
@@ -48,6 +53,8 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/buntdb v1.2.8
 	github.com/tkuchiki/go-timezone v0.2.2
+	github.com/viant/assertly v0.4.8
+	github.com/viant/toolbox v0.24.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/volatiletech/null v8.0.0+incompatible
 	github.com/volatiletech/null/v8 v8.1.2
@@ -76,13 +83,10 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dghubble/sling v1.3.0 // indirect
 	github.com/ericlagergren/decimal v0.0.0-20190729173012-f05d33913e5a // indirect
 	github.com/fatih/color v1.7.0 // indirect
-	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-openapi/errors v0.19.8 // indirect
@@ -104,9 +108,7 @@ require (
 	github.com/hashicorp/go-multierror v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
-	github.com/jarcoal/httpmock v1.0.4 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/karlseguin/expect v1.0.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect

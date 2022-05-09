@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonas747/gojay"
+	"github.com/mrbentarikau/pagst/lib/gojay"
 )
 
 // Timestamp stores a timestamp, as sent by the Discord API.
