@@ -127,8 +127,8 @@ func (t CommandTriggerType) EmbedString() string {
 type CustomCommand struct {
 	TriggerType     CommandTriggerType `json:"trigger_type"`
 	TriggerTypeForm string             `json:"-" schema:"type"`
-	Trigger         string             `json:"trigger" schema:"trigger" valid:",0,1000"`
-	RegexTrigger    string             `json:"regex_trigger" schema:"regex_trigger" valid:",0,1000"`
+	Trigger         string             `json:"trigger" schema:"trigger" valid:",0,256"`
+	RegexTrigger    string             `json:"regex_trigger" schema:"regex_trigger" valid:",0,256"`
 	// TODO: Retire the legacy Response field.
 	Response           string   `json:"response,omitempty" schema:"response" valid:"template,20000"`
 	Responses          []string `json:"responses" schema:"responses" valid:"template,20000"`

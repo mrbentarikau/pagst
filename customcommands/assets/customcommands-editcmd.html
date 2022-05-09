@@ -130,12 +130,8 @@
                                             commands
                                         </p>
                                         <p id="trigger-desc-cmd">
-                                            <b>Command Trigger</b>: Works the same way as normal commands by using the
-                                            command
-                                            prefix or bot mention followed by the trigger.<br />
-                                            For example: If you set the trigger to <code>hello</code> then you can type
-                                            <code>-hello</code> or <code>@pagstdb hello</code> to trigger it (assuming
-                                            default settings)
+                                            CC trigger works the same way as normal commands by using the
+                                            command prefix or bot mention followed by the trigger.
                                         </p>
                                         <p id="trigger-desc-prefix">
                                             Any message that starts with the trigger will run the command.
@@ -165,10 +161,14 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="form-group">
-                                            <label>Trigger (<span class="trigger-length-counter">x</span>/256)</label>
-                                            <input type="text" class="pagst-trigger form-control" name="trigger" placeholder="fun"
+                                            <label>Trigger (<span class="trigger-length-counter">{{len .CC.TextTrigger}}</span>/256)</label>
+                                             <div class="input-group mb-2">
+                                                <div class="input-group-prepend" id="command-trigger-prepended-prefix">
+                                                    <div class="input-group-text">{{.CommandPrefix}}</div>
+                                                </div>
+                                                <input type="text" class="pagst-trigger form-control" name="trigger" placeholder="fun"
                                                 value="{{.CC.TextTrigger}}" oninput="onTriggerChanged(this)">
-
+                                            </div>
                                             {{checkbox "case_sensitive" "case_sensitive" "Case Sensitive?" .CC.TextTriggerCaseSensitive}}
 
                                             <!-- <div class="checkbox">
@@ -184,7 +184,7 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="form-group">
-                                            <label>Trigger (<span class="trigger-length-counter">x</span>/256)</label>
+                                            <label>Trigger (<span class="trigger-length-counter">{{or (len .CC.RegexTrigger) (len .CC.TextTrigger)}}</span>/256)</label>
                                             <input type="text" class="pagst-trigger form-control" name="regex_trigger" placeholder="fun"
                                                 value="{{or .CC.RegexTrigger .CC.TextTrigger}}" oninput="onTriggerChanged(this)">
 
@@ -312,7 +312,12 @@
                                         </select>
                                         <span style="margin-left:5px">Auto-close brackets:<i style="position: relative; top: -0.5em; font-size: 75%;"class="fas fa-question-circle" title="If CodeMirror enabled"></i> &nbsp;<select onchange="selectBrackets()" id=bracketsSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;"><option selected>disabled</option><option>enabled</option></select></span><span style="margin-left:5px"><i>(alt+shift+s is quicksave, F11/ESC for fullscreen on/off)</i></span>
                                     </div>
-                                    <label for="responses">Response (<span class="cc-length-counter">x</span>/20000)</label>
+                                    <label for="responses">Response (<span class="cc-length-counter">
+                                    {{- $responseLen := 0}}
+                                    {{- range .CC.Responses}}
+                                        {{- $responseLen = add $responseLen (len .)}}
+                                    {{- end -}}
+                                    {{$responseLen}}</span>/20000)</label>
 
                                     <!-- Use .btn-add for simplicity and let the page loader adjust. -->
                                     
@@ -520,6 +525,12 @@
 <script src="/static/vendorr/tln/tln.min.js"></script>
 <link rel="stylesheet" href="/static/vendorr/tln/tln.min.css">
 
+<style>
+    html.dark .input-group-prepend > .input-group-text {
+        background-color: #1f1f1f!important;
+    }
+</style>
+
 <script src="/static/codemirror/lib/codemirror.js"></script>
 <link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
 <link rel="stylesheet" href="/static/codemirror/addon/display/fullscreen.css">
@@ -654,6 +665,8 @@
             $("#time-trigger-no-channel-warning").addClass("hidden");
         };
 
+        if (dropdown.val() === "cmd") $("#command-trigger-prepended-prefix").show();
+        else $("#command-trigger-prepended-prefix").hide();
 
         $("#trigger-help").children().each(function (i, v) {
             $(v).attr("hidden", true);
