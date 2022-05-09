@@ -68,6 +68,7 @@ type Config struct {
 	CCErrorChannel string `valid:"channel,true"`
 	LogUnbans      bool
 	LogBans        bool
+	LogKicks       bool `gorm:"default:true"`
 
 	GiveRoleCmdEnabled bool
 	GiveRoleCmdModlog  bool

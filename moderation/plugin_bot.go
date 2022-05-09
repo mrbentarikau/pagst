@@ -16,10 +16,10 @@ import (
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	seventsmodels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
-	"github.com/jinzhu/gorm"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dshardorchestrator"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/jinzhu/gorm"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
@@ -387,6 +387,11 @@ func checkAuditLogMemberRemoved(config *Config, data *discordgo.GuildMemberRemov
 
 	if author.ID == common.BotUser.ID {
 		// Bot performed the kick, don't make duplicate modlog entries
+		return
+	}
+
+	if !config.LogKicks {
+		// User doesn't want us to log kicks not made through yag
 		return
 	}
 
