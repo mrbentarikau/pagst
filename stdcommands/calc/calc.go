@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/alfredxing/calc/compute"
+	"github.com/ei14/calc/compute"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 )

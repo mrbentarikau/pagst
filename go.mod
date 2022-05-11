@@ -9,7 +9,6 @@ require (
 	github.com/Masterminds/go-fileserver v0.0.0-20150404113552-04d61ae6d130
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.5.0
-	github.com/alfredxing/calc v0.0.0-20180827002445-77daf576f976
 	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cenkalti/backoff v2.1.1+incompatible
@@ -17,6 +16,7 @@ require (
 	github.com/dghubble/sling v1.3.0
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dpatrie/urbandictionary v0.0.0-20151214192647-3b38cbf4cb81
+	github.com/ei14/calc v0.0.0-20220307072502-adbe43bdf801
 	github.com/fatih/structs v1.1.0
 	github.com/francoispqt/gojay v1.2.13
 	github.com/friendsofgo/errors v0.9.2
