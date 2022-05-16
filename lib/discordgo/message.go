@@ -259,8 +259,7 @@ type MessageSend struct {
 // MessageEdit is used to chain parameters via ChannelMessageEditComplex, which
 // is also where you should get the instance from.
 type MessageEdit struct {
-	Content *string `json:"content,omitempty"`
-	//v10 upd change > Embed           *MessageEmbed    `json:"embed,omitempty"`
+	Content         *string          `json:"content,omitempty"`
 	Embeds          []*MessageEmbed  `json:"embeds,omitempty"`
 	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"`
 
@@ -286,9 +285,6 @@ func (m *MessageEdit) SetContent(str string) *MessageEdit {
 
 // SetEmbed is a convenience function for setting the embed,
 // so you can chain commands.
-/*v10 upd change
-func (m *MessageEdit) SetEmbed(embed *MessageEmbed) *MessageEdit {
-	m.Embed = embed*/
 func (m *MessageEdit) SetEmbeds(embeds []*MessageEmbed) *MessageEdit {
 	m.Embeds = embeds
 	return m
@@ -388,7 +384,6 @@ func (e *MessageEmbed) GetMarshalNil() bool {
 }
 
 func (e *MessageEmbed) MarshalJSON() ([]byte, error) {
-	//v10 upd change > if e.marshalnil == true {
 	if e.marshalnil {
 		return json.Marshal(nil)
 	}
