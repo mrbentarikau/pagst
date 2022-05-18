@@ -19,17 +19,19 @@ jobs: # basic units of work in a run
           keys:
             - v2-pkg-cache
      
+      - run: sudo apt-get update
+      - run: sudo apt-get install ffmpeg
       - run: 
           name: main pagstdb binary build
           command: |
             VERSION=$(git describe --tags)
             cd cmd/pagst
-            go install -i -ldflags "-X github.com/mrbentarikau/pagst/common.VERSION=${VERSION}"
+            go install -ldflags "-X github.com/mrbentarikau/pagst/common.VERSION=${VERSION}"
             cd -
       - run: cd cmd/shardorchestrator && go install -i && cd -
       - run: cd cmd/capturepanics && go install -i && cd -
 
-      - run: go test -v ./...
+      - run: go test ./...
 
       - save_cache: # Store cache in the /go/pkg directory
           key: v1-pkg-cache
