@@ -603,14 +603,14 @@ var ModerationCommands = []*commands.YAGCommand{
 		CustomEnabled:   true,
 		CmdCategory:     commands.CategoryModeration,
 		Name:            "Clean",
-		Description:     "Delete the last number of messages from chat, optionally filtering by user, max age and regex or ignoring pinned messages.\n⚠️ **Warning:** Using `clean <userId> <amount>` does not work. This is because the user ID is interpreted as the amount. As it is over the limit of 100, it is treated as invalid. You can use `clean <amount> <userId>` instead or mention the user.",
+		Description:     "Delete the last number of messages from chat, optionally filtering by user, max age and regex or ignoring pinned messages.",
 		LongDescription: "Specify a regex with \"-r regex_here\" and max age with \"-ma 1h10m\"\nYou can invert the regex match (i.e. only clear messages that do not match the given regex) by supplying the `-im` flag\nNote: Will only look in the last 1k messages",
 		Aliases:         []string{"clear", "cl"},
 		RequiredArgs:    1,
 		Arguments: []*dcmd.ArgDef{
 			{Name: "Num", Type: &dcmd.IntArg{Min: 1, Max: 100}},
 			{Name: "User", Type: dcmd.UserID, Default: 0},
-			{Name: "UserMention", Type: dcmd.User, Default: 0},
+			//{Name: "UserMention", Type: dcmd.User, Default: 0},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "r", Help: "Regex", Type: dcmd.String},
@@ -628,7 +628,7 @@ var ModerationCommands = []*commands.YAGCommand{
 		},
 		RequiredDiscordPermsHelp: "(ManageMessages)",
 		RequireBotPerms:          [][]int64{{discordgo.PermissionAdministrator}, {discordgo.PermissionManageServer}, {discordgo.PermissionManageMessages}},
-		ArgumentCombos:           [][]int{{0}, {0, 1}, {2, 0}},
+		ArgumentCombos:           [][]int{{0}, {0, 1}, {1, 0}},
 		SlashCommandEnabled:      true,
 		DefaultEnabled:           false,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
@@ -655,16 +655,10 @@ var ModerationCommands = []*commands.YAGCommand{
 			userFilter := parsed.Args[1].Int64()
 
 			num := parsed.Args[0].Int()
-			/*if (userFilter == 0 || userFilter == parsed.Author.ID) && parsed.Source != 0 {
-				num++ // Automatically include our own message if not triggeded by exec/execAdmin
-			}*/
 
 			var triggerID int64
-
-			delTrigger := (userFilter == 0 || userFilter == parsed.Author.ID) &&
-				parsed.Source != dcmd.TriggerSourceDM &&
-				parsed.Context().Value(commands.CtxKeyExecutedByCC) == nil
-			if delTrigger {
+			ignoreTrigger := parsed.Source != dcmd.TriggerSourceDM && parsed.Context().Value(commands.CtxKeyExecutedByCC) == nil
+			if ignoreTrigger {
 				if parsed.TriggerType == dcmd.TriggerTypeSlashCommands {
 					m, err := common.BotSession.GetOriginalInteractionResponse(common.BotApplication.ID, parsed.SlashCommandTriggerData.Interaction.Token)
 					if err != nil {
@@ -768,7 +762,7 @@ var ModerationCommands = []*commands.YAGCommand{
 				limitFetch = num * 50 // Maybe just change to full fetch?
 			}
 
-			if delTrigger {
+			if ignoreTrigger {
 				limitFetch++
 			}
 
@@ -779,12 +773,8 @@ var ModerationCommands = []*commands.YAGCommand{
 			// Wait a second so the client dosen't gltich out
 			time.Sleep(time.Second)
 
-			//numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, userFilter, re, invertRegexMatch, toID, ma, minAge, pe, attachments, num, limitFetch)
 			numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, triggerID, userFilter, re, invertRegexMatch, toID, ma, minAge, pe, onlyBots, onlyNotBots, ignoreUser, attachments, messagesOnly, num, limitFetch)
-			/*deleteMessageWord := "messages"
-			if numDeleted == 1 {
-				deleteMessageWord = "message"
-			}*/
+
 			return dcmd.NewTemporaryResponse(time.Second*5, fmt.Sprintf("Deleted %d message(s)! :')", numDeleted), true), err
 		},
 	},
@@ -1234,7 +1224,6 @@ var ModerationCommands = []*commands.YAGCommand{
 	},
 }
 
-//func AdvancedDeleteMessages(guildID, channelID int64, filterUser int64, regex string, invertRegexMatch bool, toID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable bool, attachmentFilterEnable bool, deleteNum, fetchNum int) (int, error) {
 func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUser int64, regex string, invertRegexMatch bool, toID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable, onlyBotsFilterEnable, onlyNotBotsFilterEnable, ignoreUserFilterEnabled, attachmentFilterEnable, messageFilterEnable bool, deleteNum, fetchNum int) (int, error) {
 	var compiledRegex *regexp.Regexp
 	if regex != "" {
@@ -1268,10 +1257,12 @@ func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUse
 	now := time.Now()
 	for i := 0; i < len(msgs); i++ {
 		if msgs[i].ID == triggerID {
-			toDelete = append(toDelete, msgs[i].ID)
-			deleteNum++ // we want the message we just added to the slice to delete to not actually count toward the total
 			continue
 		}
+
+		/*if filterUser != 0 && msgs[i].Author.ID != filterUser {
+			continue
+		}*/
 
 		if ignoreUserFilterEnabled && msgs[i].Author.ID == filterUser {
 			continue

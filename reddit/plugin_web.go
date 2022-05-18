@@ -50,6 +50,7 @@ type UpdateForm struct {
 	NSFWMode    int     `schema:"nsfw_filter"`
 	MinUpvotes  int     `schema:"min_upvotes" valid:"0,"`
 	MentionRole []int64 `schema:"mention_role" valid:"role,true"`
+	FeedEnabled bool    `schema:"feed_enabled"`
 }
 
 var (
@@ -165,6 +166,7 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 	if watchItem.ChannelID == 0 {
 		watchItem.Disabled = true
 	}
+
 	err := watchItem.InsertG(ctx, boil.Infer())
 	if web.CheckErr(templateData, err, "Failed saving item :'(", web.CtxLogger(ctx).Error) {
 		return templateData
@@ -208,7 +210,7 @@ func HandleModify(w http.ResponseWriter, r *http.Request) interface{} {
 	item.UseEmbeds = updated.UseEmbeds
 	item.FilterNSFW = updated.NSFWMode
 	item.MentionRole = updated.MentionRole
-	item.Disabled = false
+	item.Disabled = !updated.FeedEnabled
 	if item.Slow {
 		item.MinUpvotes = updated.MinUpvotes
 		item.MentionRole = updated.MentionRole

@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/soundboard/models"
 	"github.com/volatiletech/sqlboiler/queries/qm"
@@ -15,8 +14,6 @@ import (
 )
 
 type Plugin struct{}
-
-var confSoundBoardActive = config.RegisterOption("yagpdb.soundboard_active", "Soundboard active (needs ffmpeg installed)", false)
 
 func (p *Plugin) PluginInfo() *common.PluginInfo {
 	return &common.PluginInfo{
@@ -29,11 +26,6 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 var logger = common.GetPluginLogger(&Plugin{})
 
 func RegisterPlugin() {
-	if !confSoundBoardActive.GetBool() {
-		common.GetPluginLogger(&Plugin{}).Warn("Soundboard disabled, skipping plugin init...")
-		return
-	}
-
 	common.InitSchemas("soundboard", DBSchemas...)
 
 	p := &Plugin{}

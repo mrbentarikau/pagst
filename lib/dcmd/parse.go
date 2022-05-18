@@ -1,6 +1,7 @@
 package dcmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/mrbentarikau/pagst/lib/discordgo"
@@ -370,12 +371,9 @@ func ParseSwitches(switches []*ArgDef, data *Data, split []*RawArg) ([]*RawArg, 
 	return newRaws, nil
 }
 
-var (
-	ArgContainers = []rune{
-		'"',
-		'`',
-	}
-)
+func isArgContainer(r rune) bool {
+	return r == '"' || r == '`'
+}
 
 type RawArg struct {
 	Str       string
@@ -384,9 +382,9 @@ type RawArg struct {
 
 // SplitArgs splits the string into fields
 func SplitArgs(in string) []*RawArg {
-	rawArgs := make([]*RawArg, 0)
+	var rawArgs []*RawArg
 
-	curBuf := ""
+	var buf strings.Builder
 	escape := false
 	var container rune
 	for _, r := range in {
@@ -394,7 +392,7 @@ func SplitArgs(in string) []*RawArg {
 		if r == '\\' {
 			if escape {
 				escape = false
-				curBuf += "\\"
+				buf.WriteByte('\\')
 			} else {
 				escape = true
 			}
@@ -405,38 +403,31 @@ func SplitArgs(in string) []*RawArg {
 		// Check for other special tokens
 		isSpecialToken := true
 		if r == ' ' {
-			// Maybe seperate by space
-			if curBuf != "" && container == 0 && !escape {
-				rawArgs = append(rawArgs, &RawArg{curBuf, 0})
-				curBuf = ""
-			} else if curBuf != "" {
-				curBuf += " "
+			// Maybe separate by space
+			if buf.Len() > 0 && container == 0 && !escape {
+				rawArgs = append(rawArgs, &RawArg{buf.String(), 0})
+				buf.Reset()
+			} else if buf.Len() > 0 {
+				buf.WriteByte(' ')
 			}
 		} else if r == container && container != 0 {
 			// Split arg here
 			if escape {
-				curBuf += string(r)
+				buf.WriteRune(r)
 			} else {
-				rawArgs = append(rawArgs, &RawArg{curBuf, container})
-				curBuf = ""
+				rawArgs = append(rawArgs, &RawArg{buf.String(), container})
+				buf.Reset()
 				container = 0
 			}
-		} else if container == 0 && curBuf == "" {
+		} else if container == 0 && buf.Len() == 0 {
 			// Check if we should start containing a arg
-			foundMatch := false
-			for _, v := range ArgContainers {
-				if v == r {
-					if escape {
-						curBuf += string(r)
-					} else {
-						container = v
-					}
-					foundMatch = true
-					break
+			if isArgContainer(r) {
+				if escape {
+					buf.WriteRune(r)
+				} else {
+					container = r
 				}
-			}
-
-			if !foundMatch {
+			} else {
 				isSpecialToken = false
 			}
 		} else {
@@ -445,9 +436,9 @@ func SplitArgs(in string) []*RawArg {
 
 		if !isSpecialToken {
 			if escape {
-				curBuf += "\\"
+				buf.WriteByte('\\')
 			}
-			curBuf += string(r)
+			buf.WriteRune(r)
 		}
 
 		// Reset escape mode
@@ -455,19 +446,32 @@ func SplitArgs(in string) []*RawArg {
 	}
 
 	// Something was left in the buffer just add it to the end
-	if curBuf != "" {
+	if buf.Len() > 0 {
+		item := buf.String()
 		if container != 0 {
-			curBuf = string(container) + curBuf
+			item = string(container) + item
 		}
-		rawArgs = append(rawArgs, &RawArg{curBuf, 0})
+		rawArgs = append(rawArgs, &RawArg{item, 0})
 	}
 
 	return rawArgs
 }
 
+type comboStats struct {
+	combo  []int
+	compat struct{ poorMatches, goodMatches int }
+}
+
+func (c1 *comboStats) BetterThan(c2 *comboStats) bool {
+	compat1, compat2 := c1.compat, c2.compat
+	if compat1.goodMatches != compat2.goodMatches {
+		return compat1.goodMatches > compat2.goodMatches
+	}
+	return compat1.poorMatches > compat2.poorMatches
+}
+
 // Finds a proper argument combo from the provided args
 func FindCombo(defs []*ArgDef, combos [][]int, args []*RawArg) (combo []int, ok bool) {
-
 	if len(combos) < 1 {
 		out := make([]int, len(defs))
 		for k := range out {
@@ -476,31 +480,39 @@ func FindCombo(defs []*ArgDef, combos [][]int, args []*RawArg) (combo []int, ok 
 		return out, true
 	}
 
-	var selectedCombo []int
-
-	// Find a possible match
-OUTER:
+	bestStats := new(comboStats)
 	for _, combo := range combos {
-		if len(combo) > len(args) {
-			// No match
+		stats, comboOK := collectComboStats(combo, defs, args)
+		if !comboOK {
 			continue
 		}
-
-		// See if this combos arguments matches that of the parsed command
-		for i, comboArg := range combo {
-			def := defs[comboArg]
-
-			if !def.Type.Matches(def, args[i].Str) {
-				continue OUTER
-			}
-		}
-
-		// We got a match, if this match is stronger than the last one set it as selected
-		if len(combo) > len(selectedCombo) || !ok {
-			selectedCombo = combo
+		if !ok || stats.BetterThan(bestStats) {
+			bestStats = stats
 			ok = true
 		}
 	}
 
-	return selectedCombo, ok
+	return bestStats.combo, ok
+}
+
+func collectComboStats(combo []int, defs []*ArgDef, args []*RawArg) (stats *comboStats, ok bool) {
+	if len(combo) > len(args) {
+		return nil, false
+	}
+
+	stats = &comboStats{combo: combo}
+	for i, defPos := range combo {
+		def := defs[defPos]
+		switch compat := def.Type.CheckCompatibility(def, args[i].Str); compat {
+		case Incompatible:
+			return nil, false
+		case CompatibilityPoor:
+			stats.compat.poorMatches++
+		case CompatibilityGood:
+			stats.compat.goodMatches++
+		default:
+			panic(fmt.Sprintf("dcmd: got unexpected compatibility result while selecting combo: %s", compat))
+		}
+	}
+	return stats, true
 }

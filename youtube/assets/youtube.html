@@ -76,18 +76,19 @@
                 <table class="table table-responsive-md table-sm mb-0">
                     <thead>
                         <tr>
-                            <th>Youtube</th>
+                            <th width="15%">Youtube</th>
                             <th width=25%>Discord channel</th>
                             <th width=25%>Mention role</th>
                             <th>Mention everyone</th>
+                            <th>Enabled</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{range .Subs}}
-                        <tr class="{{if .Disabled}}feed-item-disabled{{end}}">
+                        <tr class="{{if not .Enabled}}feed-item-disabled{{end}}">
                             <td>
-                                <p class="form-control-static"><b>{{.YoutubeChannelName}}</b> -
+                                <p class="form-control-static"><b>{{.YoutubeChannelName}}</b><br/>
                                     <code>{{.YoutubeChannelID}}</code></p>
                             </td>
                             <td>
@@ -103,6 +104,9 @@
                             </td>
                             <td>
                                 {{checkbox "MentionEveryone" (joinStr "" "mention-everyone-" .ID) `Mention everyone` .MentionEveryone (joinStr "" `form="sub-item-` .ID `"`)}}
+                            </td>
+                            <td>
+                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Enabled` .Enabled (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
                                 <button form="sub-item-{{.ID}}" type="submit" class="btn btn-success"

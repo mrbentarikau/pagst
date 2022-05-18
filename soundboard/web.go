@@ -61,7 +61,6 @@ func (p *Plugin) InitWeb() {
 
 	web.CPMux.Handle(pat.New("/soundboard/*"), cpMux)
 	web.CPMux.Handle(pat.New("/soundboard"), cpMux)
-	web.CPMux.Use(web.NotFound())
 
 	cpMux.Use(web.RequireBotMemberMW)
 
@@ -72,7 +71,6 @@ func (p *Plugin) InitWeb() {
 	cpMux.Handle(pat.Post("/new"), web.ControllerPostHandler(HandleNew, getHandler, PostForm{}))
 	cpMux.Handle(pat.Post("/update"), web.ControllerPostHandler(HandleUpdate, getHandler, PostForm{}))
 	cpMux.Handle(pat.Post("/delete"), web.ControllerPostHandler(HandleDelete, getHandler, PostForm{}))
-	cpMux.Use(web.NotFound())
 }
 
 func HandleGetCP(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {

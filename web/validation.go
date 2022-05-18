@@ -92,7 +92,6 @@ var (
 func ValidateForm(guild *dstate.GuildSet, tmpl TemplateData, form interface{}) bool {
 
 	ok := true
-
 	v := reflect.Indirect(reflect.ValueOf(form))
 	t := v.Type()
 
@@ -191,7 +190,7 @@ func ValidateForm(guild *dstate.GuildSet, tmpl TemplateData, form interface{}) b
 
 		if err != nil {
 
-			// Create a pretty name for the field by turing: "AnnounceMessage" into "Announce Message"
+			// Create a pretty name for the field by turning: "AnnounceMessage" into "Announce Message"
 			prettyField := ""
 			for _, r := range tField.Name {
 				if unicode.IsUpper(r) {

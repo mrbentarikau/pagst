@@ -97,6 +97,11 @@
                             <label for="{{$id_include_rts}}">Include Retweets</label>
                             {{checkbox "IncludeRetweets" $id_include_rts `` .IncludeRT}}
                         </div>
+                         <div class="form-group col">
+                            {{$id_enabled := (joinStr "" "feed-" .ID "-enabled")}}
+                            <label for="{{$id_enabled}}">Enabled</label>
+                            {{checkbox "Enabled" $id_enabled `` .Enabled}}
+                        </div>
                         <div class="form-group col">
                             <div class="btn-group mt-4">
                                 <button form="feed-item-{{.ID}}" type="submit" class="btn btn-success ml-sm-3"

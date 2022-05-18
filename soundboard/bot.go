@@ -6,9 +6,9 @@ import (
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/soundboard/models"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/soundboard/models"
 )
 
 func (p *Plugin) AddCommands() {

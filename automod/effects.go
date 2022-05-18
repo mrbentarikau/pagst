@@ -10,6 +10,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
+	"github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/moderation"
@@ -705,7 +706,7 @@ func (rf *RemoveRoleEffect) Apply(ctxData *TriggeredRuleData, settings interface
 
 type SendChannelMessageEffectData struct {
 	CustomReason string `valid:",0,280,trimspace"`
-	Duration     int    `valid:",0,43200,trimspace"`
+	Duration     int    `valid:",0,3600,trimspace"`
 	PingUser     bool
 }
 
@@ -737,7 +738,7 @@ func (send *SendChannelMessageEffect) UserSettings() []*SettingDef {
 			Kind: SettingTypeString,
 		},
 		{
-			Name:    "Delete effect's message after x seconds (0 for non-deletion)",
+			Name:    "Delete sent message after x seconds (0 for non-deletion)",
 			Key:     "Duration",
 			Kind:    SettingTypeInt,
 			Default: 0,
@@ -784,10 +785,7 @@ func (send *SendChannelMessageEffect) Apply(ctxData *TriggeredRuleData, settings
 
 	messageID, err := common.BotSession.ChannelMessageSendComplex(ctxData.CS.ID, msgSend)
 	if settingsCast.Duration > 0 {
-		err := scheduledevents2.ScheduleDeleteMessages(ctxData.GS.ID, ctxData.CS.ID, time.Now().Add(time.Second*time.Duration(settingsCast.Duration)), messageID.ID)
-		if err != nil {
-			return err
-		}
+		templates.MaybeScheduledDeleteMessage(ctxData.GS.ID, ctxData.CS.ID, messageID.ID, settingsCast.Duration)
 	}
 
 	return err

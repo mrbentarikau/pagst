@@ -72,11 +72,14 @@ var Command = &commands.YAGCommand{
 			quote = quote[0:1925] + "...\n\n(quote too long)"
 		}
 
-		r, err := regexp.Compile(`\((\d+)\)`)
+		r, err := regexp.Compile(`\((-?\d+)\)`)
 		if err != nil {
 			return "", err
 		}
-		votes = (r.FindStringSubmatch(votes))[1]
+		votesArray := (r.FindStringSubmatch(votes))
+		if len(votesArray) > 0 {
+			votes = votesArray[1]
+		}
 
 		response = fmt.Sprintf("```\n%s```<%s%s> | %s votes", quote, bashHost, number, votes)
 

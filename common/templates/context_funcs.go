@@ -1688,9 +1688,9 @@ func (c *Context) FindRole(role interface{}) *discordgo.Role {
 }
 
 func (c *Context) getRole(r interface{}) (*discordgo.Role, error) {
-	if c.IncreaseCheckStateLock() {
-		return nil, ErrTooManyCalls
-	}
+	/*if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}*/
 
 	return c.FindRole(r), nil
 }
@@ -1708,9 +1708,9 @@ func (c *Context) tmplGetRoleName(roleName string) (*discordgo.Role, error) {
 }
 
 func (c *Context) mentionRole(roleInput interface{}) (string, error) {
-	if c.IncreaseCheckStateLock() {
-		return "", ErrTooManyCalls
-	}
+	/*if c.IncreaseCheckGenericAPICall() {
+		return "", ErrTooManyAPICalls
+	}*/
 
 	role := c.FindRole(roleInput)
 	if role == nil {
@@ -1738,9 +1738,9 @@ func (c *Context) tmplMentionRoleName(roleName string) (string, error) {
 }
 
 func (c *Context) hasRole(roleInput interface{}) (bool, error) {
-	if c.IncreaseCheckStateLock() {
-		return false, ErrTooManyCalls
-	}
+	/*if c.IncreaseCheckGenericAPICall() {
+		return false, ErrTooManyAPICalls
+	}*/
 
 	if c.MS == nil || c.MS.Member == nil {
 		return false, errors.New("member is nil")
@@ -1767,10 +1767,6 @@ func (c *Context) tmplHasRoleName(roleName string) (bool, error) {
 }
 
 func (c *Context) targetHasRole(target interface{}, roleInput interface{}) (bool, error) {
-	if c.IncreaseCheckStateLock() {
-		return false, ErrTooManyCalls
-	}
-
 	if c.IncreaseCheckGenericAPICall() {
 		return false, ErrTooManyAPICalls
 	}
@@ -1813,10 +1809,6 @@ func (c *Context) tmplTargetHasRoleName(target interface{}, roleName string) (bo
 func (c *Context) giveRole(target interface{}, roleInput interface{}, optionalArgs ...interface{}) (string, error) {
 	if c.IncreaseCheckGenericAPICall() {
 		return "", ErrTooManyAPICalls
-	}
-
-	if c.IncreaseCheckStateLock() {
-		return "", ErrTooManyCalls
 	}
 
 	var delay time.Duration
@@ -1877,10 +1869,6 @@ func (c *Context) addRole(roleInput interface{}, optionalArgs ...interface{}) (s
 		return "", ErrTooManyAPICalls
 	}
 
-	if c.IncreaseCheckStateLock() {
-		return "", ErrTooManyCalls
-	}
-
 	var delay time.Duration
 	if len(optionalArgs) > 0 {
 		delay = c.validateDurationDelay(optionalArgs[0])
@@ -1925,10 +1913,6 @@ func (c *Context) tmplAddRoleName(roleName string, optionalArgs ...interface{}) 
 func (c *Context) takeRole(target interface{}, roleInput interface{}, optionalArgs ...interface{}) (string, error) {
 	if c.IncreaseCheckGenericAPICall() {
 		return "", ErrTooManyAPICalls
-	}
-
-	if c.IncreaseCheckStateLock() {
-		return "", ErrTooManyCalls
 	}
 
 	var delay time.Duration
@@ -1987,10 +1971,6 @@ func (c *Context) tmplTakeRoleName(target interface{}, roleName string, optional
 func (c *Context) removeRole(roleInput interface{}, optionalArgs ...interface{}) (string, error) {
 	if c.IncreaseCheckGenericAPICall() {
 		return "", ErrTooManyAPICalls
-	}
-
-	if c.IncreaseCheckStateLock() {
-		return "", ErrTooManyCalls
 	}
 
 	var delay time.Duration
@@ -2053,10 +2033,6 @@ func (c *Context) validateDurationDelay(in interface{}) time.Duration {
 func (c *Context) tmplCounters() (map[string]int, error) {
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
-	}
-
-	if c.IncreaseCheckStateLock() {
-		return nil, ErrTooManyCalls
 	}
 
 	return c.Counters, nil

@@ -78,7 +78,7 @@ func tmplCArg(typ string, name string, opts ...interface{}) (*dcmd.ArgDef, error
 	case "string":
 		def.Type = dcmd.String
 	case "user":
-		def.Type = dcmd.UserReqMention
+		def.Type = dcmd.User
 	case "userid":
 		def.Type = dcmd.UserID
 	case "channel":
@@ -177,7 +177,18 @@ func (pa *ParsedArgs) IsSet(index int) interface{} {
 	return pa.Get(index) != nil
 }
 
-// tmplRunCC either run another custom command immeditely with a max stack depth of 2
+func (pa *ParsedArgs) Len() int {
+	var count int
+	for i := range pa.parsed {
+		if pa.Get(i) != nil {
+			count++
+		}
+	}
+
+	return count
+}
+
+// tmplRunCC either run another custom command immediately with a max stack depth of 2
 // or schedules a custom command to be run in the future sometime with the provided data placed in .ExecData
 func tmplRunCC(ctx *templates.Context) interface{} {
 	return func(ccID int, channel interface{}, delaySeconds interface{}, data interface{}) (string, error) {

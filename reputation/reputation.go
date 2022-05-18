@@ -94,8 +94,8 @@ type RepLogEntry struct {
 func RepLog(guildID, userID int64, paginatedView bool, args ...int) ([]*RepLogEntry, error) {
 	var query = `
 		SELECT
-			created_at, receiver_id, receiver_username, sender_id, sender_username, set_fixed_amount, amount
-		FROM reputation_log
+			created_at, receiver_id, receiver_username, sender_id, sender_username, set_fixed_amount, amount 
+		FROM reputation_log 
 		WHERE guild_id = $1
 		AND (receiver_id=$2 OR sender_id=$2)
 		ORDER BY id DESC

@@ -41,6 +41,7 @@ type EditForm struct {
 	IncludeReplies  bool
 	IncludeRetweets bool
 	MentionRole     []int64 `valid:"role,true"`
+	Enabled         bool
 }
 
 var (
@@ -200,7 +201,7 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 	data := ctx.Value(common.ContextKeyParsedForm).(*EditForm)
 
 	sub.ChannelID = data.DiscordChannel
-	sub.Enabled = true
+	sub.Enabled = data.Enabled
 	if data.DiscordChannel == 0 {
 		sub.Enabled = false
 	}

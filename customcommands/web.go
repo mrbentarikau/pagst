@@ -21,6 +21,7 @@ import (
 	yagtemplate "github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/customcommands/models"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/web"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/null"
@@ -117,7 +118,8 @@ func (p *Plugin) InitWeb() {
 }
 
 func handleCommands(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
-	activeGuild, templateData := web.GetBaseCPContextData(r.Context())
+	ctx := r.Context()
+	activeGuild, templateData := web.GetBaseCPContextData(ctx)
 
 	groupID := int64(0)
 	if v, ok := templateData["CurrentGroupID"]; ok {
@@ -130,6 +132,14 @@ func handleCommands(w http.ResponseWriter, r *http.Request) (web.TemplateData, e
 	}
 
 	templateData["HLJSBuiltins"] = langBuiltins.String()
+
+	count, err := models.CustomCommands(qm.Where("guild_id = ?", activeGuild.ID)).CountG(ctx)
+	if err != nil {
+		return templateData, err
+	}
+
+	updateTemplateWithCountData(int(count), templateData, ctx)
+
 	return serveGroupSelected(r, templateData, groupID, activeGuild.ID)
 }
 
@@ -155,8 +165,17 @@ func handleGetCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData,
 }
 
 func handleGetCommandsGroup(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
-	activeGuild, templateData := web.GetBaseCPContextData(r.Context())
+	ctx := r.Context()
+	activeGuild, templateData := web.GetBaseCPContextData(ctx)
 	groupID, _ := strconv.ParseInt(pat.Param(r, "group"), 10, 64)
+
+	count, err := models.CustomCommands(qm.Where("guild_id = ?", activeGuild.ID)).CountG(ctx)
+	if err != nil {
+		return templateData, err
+	}
+
+	updateTemplateWithCountData(int(count), templateData, ctx)
+
 	return serveGroupSelected(r, templateData, groupID, activeGuild.ID)
 }
 
@@ -752,4 +771,20 @@ func humanizeThousands(input int64) string {
 		f2 = f2 + string(f1[i])
 	}
 	return f2
+}
+
+func updateTemplateWithCountData(count int, templateData web.TemplateData, ctx context.Context) {
+	maxCommands := MaxCommandsForContext(ctx)
+	activeGuild, _ := web.GetBaseCPContextData(ctx)
+	isGuildPremium, _ := premium.IsGuildPremium(activeGuild.ID)
+	templateData["CCCount"] = count
+	templateData["CCLimit"] = maxCommands
+
+	additionalMessage := ""
+	if premium.ContextPremiumTier(ctx) != premium.PremiumTierPremium {
+		if !isGuildPremium {
+			additionalMessage = fmt.Sprintf("(You may increase the limit up to %d with PAGSTDB premium)", MaxCommandsPremium)
+		}
+	}
+	templateData["AdditionalMessage"] = additionalMessage
 }

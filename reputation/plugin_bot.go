@@ -10,6 +10,8 @@ import (
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/reputation/models"
+	"github.com/volatiletech/sqlboiler/queries/qm"
 
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
@@ -109,16 +111,16 @@ var cmds = []*commands.YAGCommand{
 		CmdCategory:  commands.CategoryFun,
 		Name:         "TakeRep",
 		Aliases:      []string{"-", "tr", "trep", "-rep"},
-		Description:  "Takes away rep from someone",
+		Description:  "Takes away absolute value of rep from someone.",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			{Name: "User", Type: dcmd.UserID},
+			{Name: "User", Type: dcmd.User},
 			{Name: "Num", Type: dcmd.Int, Default: 1},
 		},
 		SlashCommandEnabled: true,
 		DefaultEnabled:      false,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
-			parsed.Args[1].Value = -parsed.Args[1].Int()
+			parsed.Args[1].Value = -int(math.Abs(parsed.Args[1].Float64()))
 			return CmdGiveRep(parsed)
 		},
 	},
@@ -126,15 +128,19 @@ var cmds = []*commands.YAGCommand{
 		CmdCategory:         commands.CategoryFun,
 		Name:                "GiveRep",
 		Aliases:             []string{"+", "gr", "grep", "+rep"},
-		Description:         "Gives rep to someone",
+		Description:         "Gives absolute value of rep to someone.",
 		RequiredArgs:        1,
 		SlashCommandEnabled: true,
 		DefaultEnabled:      false,
 		Arguments: []*dcmd.ArgDef{
-			{Name: "User", Type: dcmd.UserID},
+			{Name: "User", Type: dcmd.User},
 			{Name: "Num", Type: dcmd.Int, Default: 1},
 		},
-		RunFunc: CmdGiveRep,
+
+		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			parsed.Args[1].Value = int(math.Abs(parsed.Args[1].Float64()))
+			return CmdGiveRep(parsed)
+		},
 	},
 	{
 		CmdCategory:         commands.CategoryFun,
@@ -167,6 +173,14 @@ var cmds = []*commands.YAGCommand{
 			targetMember, _ := bot.GetMember(parsed.GuildData.GS.ID, targetID)
 			if targetMember != nil {
 				targetUsername = targetMember.User.Username
+			} else {
+				prevMember, err := userPresentInRepLog(targetID, parsed.GuildData.GS.ID, parsed)
+				if err != nil {
+					return nil, err
+				}
+				if !prevMember {
+					return "Invalid User. This user never received/gave rep in this server", nil
+				}
 			}
 
 			err = SetRep(parsed.Context(), parsed.GuildData.GS.ID, parsed.GuildData.MS.User.ID, targetID, int64(parsed.Args[1].Int()))
@@ -315,15 +329,14 @@ var cmds = []*commands.YAGCommand{
 		Name:        "Rep",
 		Description: "Shows yours or the specified users current rep and rank",
 		Arguments: []*dcmd.ArgDef{
-			{Name: "User", Type: dcmd.UserID},
+			{Name: "User", Type: dcmd.User},
 		},
 		SlashCommandEnabled: true,
 		DefaultEnabled:      false,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
-			target := parsed.Author.ID
+			target := parsed.Author
 			if parsed.Args[0].Value != nil {
-				//target = parsed.Args[0].Value.(*discordgo.User)
-				target = parsed.Args[0].Int64()
+				target = parsed.Args[0].Value.(*discordgo.User)
 			}
 
 			conf, err := GetConfig(parsed.Context(), parsed.GuildData.GS.ID)
@@ -331,7 +344,7 @@ var cmds = []*commands.YAGCommand{
 				return "An error occurred finding the server config", err
 			}
 
-			score, rank, err := GetUserStats(parsed.GuildData.GS.ID, target)
+			score, rank, err := GetUserStats(parsed.GuildData.GS.ID, target.ID)
 			if err != nil {
 				if err == ErrUserNotFound {
 					rank = -1
@@ -339,7 +352,8 @@ var cmds = []*commands.YAGCommand{
 					return nil, err
 				}
 			}
-			receiver, err := bot.GetMember(parsed.GuildData.GS.ID, target)
+
+			receiver, err := bot.GetMember(parsed.GuildData.GS.ID, target.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -477,8 +491,7 @@ OUTER:
 }
 
 func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {
-	//target := parsed.Args[0].Value.(*discordgo.User)
-	target := parsed.Args[0].Int64()
+	target := parsed.Args[0].Value.(*discordgo.User)
 
 	conf, err := GetConfig(parsed.Context(), parsed.GuildData.GS.ID)
 	if err != nil {
@@ -491,12 +504,12 @@ func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {
 
 	pointsName := conf.PointsName
 
-	if target == parsed.Author.ID {
+	if target.ID == parsed.Author.ID {
 		return fmt.Sprintf("You can't modify your own %s... **Silly**", pointsName), nil
 	}
 
 	sender := parsed.GuildData.MS
-	receiver, err := bot.GetMember(parsed.GuildData.GS.ID, target)
+	receiver, err := bot.GetMember(parsed.GuildData.GS.ID, target.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +525,7 @@ func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {
 		return nil, err
 	}
 
-	newScore, newRank, err := GetUserStats(parsed.GuildData.GS.ID, target)
+	newScore, newRank, err := GetUserStats(parsed.GuildData.GS.ID, target.ID)
 	if err != nil {
 		newScore = -1
 		newRank = -1
@@ -531,4 +544,17 @@ func CmdGiveRep(parsed *dcmd.Data) (interface{}, error) {
 
 	msg := fmt.Sprintf("%s `%d` %s %s **%s** (current: `#%d` - `%d`)", actionStr, amount, pointsName, targetStr, receiver.User.Username, newRank, newScore)
 	return msg, nil
+}
+
+// Function that checks if the given user has ever received/gave rep in the given server
+func userPresentInRepLog(userID int64, guildID int64, parsed *dcmd.Data) (found bool, err error) {
+	logEntries, err := models.ReputationLogs(qm.Where("guild_id = ? AND (receiver_id = ? OR sender_id = ?)", guildID, userID, userID), qm.OrderBy("id desc"), qm.Limit(1)).AllG(parsed.Context())
+	if err != nil {
+		return false, err
+	}
+
+	if len(logEntries) < 1 {
+		return false, nil
+	}
+	return true, nil
 }

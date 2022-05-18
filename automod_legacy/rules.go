@@ -11,9 +11,9 @@ import (
 	"github.com/mrbentarikau/pagst/antiphishing"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/safebrowsing"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/safebrowsing"
 	"github.com/mediocregopher/radix/v3"
 )
 
@@ -78,7 +78,7 @@ func (r BaseRule) PushViolation(key string) (p Punishment, err error) {
 		return
 	}
 
-	common.RedisPool.Do(radix.FlatCmd(nil, "EXPIRE", key, r.ViolationsExpire))
+	common.RedisPool.Do(radix.FlatCmd(nil, "EXPIRE", key, r.ViolationsExpire*60))
 
 	mute := r.MuteAfter > 0 && violations >= r.MuteAfter
 	kick := r.KickAfter > 0 && violations >= r.KickAfter

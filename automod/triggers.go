@@ -687,8 +687,9 @@ func (g *GoogleSafeBrowsingTrigger) MergeDuplicates(data []interface{}) interfac
 /////////////////////////////////////////////////////////////
 
 type SlowmodeTriggerData struct {
-	Threshold int
-	Interval  int
+	Threshold                int
+	Interval                 int
+	SingleMessageAttachments bool
 }
 
 var _ MessageTrigger = (*SlowmodeTrigger)(nil)
@@ -781,7 +782,7 @@ func (s *SlowmodeTrigger) UserSettings() []*SettingDef {
 		defaultInterval = 60
 	}
 
-	return []*SettingDef{
+	settings := []*SettingDef{
 		{
 			Name:    "Messages",
 			Key:     "Threshold",
@@ -795,6 +796,17 @@ func (s *SlowmodeTrigger) UserSettings() []*SettingDef {
 			Default: defaultInterval,
 		},
 	}
+
+	if s.Attachments {
+		settings = append(settings, &SettingDef{
+			Name:    "Also count multiple attachments in single message",
+			Key:     "SingleMessageAttachments",
+			Kind:    SettingTypeBool,
+			Default: false,
+		})
+	}
+
+	return settings
 }
 
 func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
@@ -815,7 +827,7 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 	within := time.Duration(settings.Interval) * time.Second
 	now := time.Now()
 
-	amount := 1
+	amount := 0
 
 	messages := bot.State.GetMessages(cs.GuildID, cs.ID, &dstate.MessagesQuery{
 		Limit: 1000,
@@ -828,16 +840,19 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 			break
 		}
 
-		if m.ID == v.ID {
-			continue
-		}
-
 		if !s.ChannelBased && v.Author.ID != triggerCtx.MS.User.ID {
 			continue
 		}
 
-		if s.Attachments && len(v.Attachments) < 1 {
-			continue // were only checking messages with attachments
+		if s.Attachments {
+			if len(v.Attachments) < 1 {
+				continue // we're only checking messages with attachments
+			}
+			if settings.SingleMessageAttachments {
+				// Add the count of all attachements of this message to the amount
+				amount += len(v.Attachments)
+				continue
+			}
 		}
 
 		if s.Links && !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(v.Content)) {

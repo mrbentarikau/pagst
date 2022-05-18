@@ -606,9 +606,7 @@ func SplitSendMessage(channelID int64, contents string, allowedMentions discordg
 }
 
 func ParseColor(raw string) (int, bool) {
-	if strings.HasPrefix(raw, "#") {
-		raw = raw[1:]
-	}
+	raw = strings.TrimPrefix(raw, "#")
 
 	// try to parse as hex color code first
 	parsed, err := strconv.ParseInt(raw, 16, 32)
@@ -627,4 +625,23 @@ func ParseColor(raw string) (int, bool) {
 	}
 
 	return 0, false
+}
+
+func FormatList(list []string, conjunction string) string {
+	var sb strings.Builder
+	for i, item := range list {
+		if i > 0 {
+			sb.WriteString(", ")
+			if i == len(list)-1 {
+				sb.WriteString(conjunction)
+				if conjunction != "" {
+					sb.WriteByte(' ')
+				}
+			}
+		}
+		sb.WriteByte('`')
+		sb.WriteString(item)
+		sb.WriteByte('`')
+	}
+	return sb.String()
 }

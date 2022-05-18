@@ -215,13 +215,13 @@ var (
 	ErrNoChannel = errors.New("No channel with that id found")
 )
 
-func (p *Plugin) AddFeed(guildID, discordChannelID int64, youtubeChannelID, youtubeUsername string, mentionEveryone bool, mentionRole int64, feedDisabled bool) (*ChannelSubscription, error) {
+func (p *Plugin) AddFeed(guildID, discordChannelID int64, youtubeChannelID, youtubeUsername string, mentionEveryone bool, mentionRole int64) (*ChannelSubscription, error) {
 	sub := &ChannelSubscription{
 		GuildID:         discordgo.StrID(guildID),
 		ChannelID:       discordgo.StrID(discordChannelID),
 		MentionEveryone: mentionEveryone,
 		MentionRole:     discordgo.StrID(mentionRole),
-		Disabled:        feedDisabled,
+		Enabled:         true,
 	}
 
 	call := p.YTService.Channels.List([]string{"snippet"})
@@ -388,7 +388,7 @@ func (p *Plugin) postVideo(subs []*ChannelSubscription, publishedAt time.Time, v
 	}
 
 	for _, sub := range subs {
-		if sub.ChannelID != "0" {
+		if sub.Enabled {
 			p.sendNewVidMessage(sub.GuildID, sub.ChannelID, video.Snippet.ChannelTitle, video.Id, sub.MentionEveryone, sub.MentionRole, video.Snippet.LiveBroadcastContent)
 		}
 	}
