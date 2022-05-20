@@ -716,10 +716,10 @@ func MaybeScheduledDeleteMessage(guildID, channelID, messageID int64, delaySecon
 	}
 }
 
-func isMaybeContainer(v interface{}) bool {
+func isContainer(v interface{}) bool {
 	rv, _ := indirect(reflect.ValueOf(v))
 	switch rv.Kind() {
-	case reflect.Array, reflect.Slice, reflect.Interface, reflect.Map, reflect.Struct:
+	case reflect.Array, reflect.Slice, reflect.Map:
 		return true
 	default:
 		return false
@@ -788,9 +788,9 @@ type Dict map[interface{}]interface{}
 
 func (d Dict) Set(key interface{}, value interface{}) (string, error) {
 	d[key] = value
-	if isMaybeContainer(value) {
+	if isContainer(value) {
 		if err := detectCyclicValue(d); err != nil {
-			return "", err
+			return "", template.UncatchableError(err)
 		}
 	}
 	return "", nil
@@ -841,9 +841,9 @@ type SDict map[string]interface{}
 
 func (d SDict) Set(key string, value interface{}) (string, error) {
 	d[key] = value
-	if isMaybeContainer(value) {
+	if isContainer(value) {
 		if err := detectCyclicValue(d); err != nil {
-			return "", err
+			return "", template.UncatchableError(err)
 		}
 	}
 	return "", nil
@@ -897,9 +897,9 @@ func (s Slice) Set(index int, item interface{}) (string, error) {
 	}
 
 	s[index] = item
-	if isMaybeContainer(item) {
+	if isContainer(item) {
 		if err := detectCyclicValue(s); err != nil {
-			return "", err
+			return "", template.UncatchableError(err)
 		}
 	}
 	return "", nil

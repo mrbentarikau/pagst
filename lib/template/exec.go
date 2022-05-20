@@ -128,6 +128,22 @@ func (e ExecError) Error() string {
 	return e.Err.Error()
 }
 
+// UncatchableError wraps err in such a way that it will not be handled by a
+// try-catch action.
+func UncatchableError(err error) error {
+	return uncatchableError{err}
+}
+
+// uncatchableError is a wrapper type indicating that the wrapped error should
+// not be ignored by a try-catch action.
+type uncatchableError struct {
+	Err error
+}
+
+func (u uncatchableError) Error() string {
+	return u.Err.Error()
+}
+
 // PassthroughError wraps err in such a way that it will not be stripped of
 // information when handled by a try action.
 func PassthroughError(err error) error {
@@ -646,9 +662,7 @@ func (s *state) idealConstant(constant *parse.NumberNode) reflect.Value {
 	switch {
 	case constant.IsComplex:
 		return reflect.ValueOf(constant.Complex128) // incontrovertible.
-	case constant.IsFloat &&
-		!isHexInt(constant.Text) && !isRuneInt(constant.Text) &&
-		strings.ContainsAny(constant.Text, ".eEpP"):
+	case constant.IsFloat && !isHexInt(constant.Text) && strings.ContainsAny(constant.Text, ".eEpP"):
 		return reflect.ValueOf(constant.Float64)
 	case constant.IsInt:
 		n := int(constant.Int64)
@@ -661,10 +675,6 @@ func (s *state) idealConstant(constant *parse.NumberNode) reflect.Value {
 		s.errorf("%s overflows int", constant.Text)
 	}
 	return zero
-}
-
-func isRuneInt(s string) bool {
-	return len(s) > 0 && s[0] == '\''
 }
 
 func isHexInt(s string) bool {
@@ -875,13 +885,18 @@ func (s *state) evalCall(dot, fun reflect.Value, node parse.Node, name string, a
 		}
 		argv[i] = s.validateType(final, t)
 	}
-	v, didPanic, err := safeCall(fun, argv)
+	v, panicked, err := safeCall(fun, argv)
 	// If we have an error that is not nil, stop execution and return that
 	// error to the caller.
 	if err != nil {
-		// If the call panicked instead of returning a normal error, or if we are not in a try action,
-		// stop execution and report the error.
-		if didPanic || s.tryDepth == 0 {
+		reportError := panicked || s.tryDepth == 0
+		if _, ok := err.(uncatchableError); ok {
+			reportError = true
+		}
+
+		// Stop execution immediately if the error can't be caught, or if it was
+		// a panic.
+		if reportError {
 			s.at(node)
 			s.errorf("error calling %s: %v", name, err)
 		}
