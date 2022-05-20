@@ -16,6 +16,7 @@ import (
 	seventsmodels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/jinzhu/gorm"
 
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
@@ -50,6 +51,7 @@ var cmds = []*commands.YAGCommand{
 			//{Name: "date", Help: "Enables specific date", Type: dcmd.String},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
+			{Name: "channel", Type: dcmd.Channel},
 			{Name: "repeat", Help: "Repeat the reminder at set duration"},
 		},
 		SlashCommandEnabled: true,
@@ -67,36 +69,6 @@ var cmds = []*commands.YAGCommand{
 				repeatDuration = fromNow
 			}
 
-			/*if parsed.Switch("date").Value != nil {
-				dateArgs := strings.Split(parsed.Switch("date").Str(), "\x20")
-				if len(dateArgs) < 5 {
-					return "Needs at least 5 arguments", nil
-				}
-
-				loc := time.UTC
-				if len(dateArgs) >= 6 {
-					var err error
-					loc, err = time.LoadLocation(dateArgs[5])
-					if err != nil {
-						return nil, err
-					}
-				}
-				dateArgs = dateArgs[:5]
-				dateArgsInt := make([]int, len(dateArgs))
-				for k, v := range dateArgs {
-					toInt, err := strconv.ParseInt(v, 10, 64)
-					if err != nil {
-						return nil, err
-					}
-					dateArgsInt[k] = int(toInt)
-				}
-
-				newDate := time.Date(dateArgsInt[0], time.Month(dateArgsInt[1]), dateArgsInt[2], dateArgsInt[3], dateArgsInt[4], 0, 0, loc)
-				if newDate.Before(time.Now().Add(time.Hour * 24)) {
-					return "Date set is too early, needs to be at least 24h later from current time", nil
-				}
-			}*/
-
 			durString := common.HumanizeDuration(common.DurationPrecisionSeconds, fromNow)
 			when := time.Now().Add(fromNow)
 			tUnix := fmt.Sprint(when.Unix())
@@ -105,7 +77,21 @@ var cmds = []*commands.YAGCommand{
 				return "Can be max 365 days from now...", nil
 			}
 
-			_, err := NewReminder(parsed.Author.ID, parsed.GuildData.GS.ID, parsed.ChannelID, parsed.Args[1].Str(), when, repeatDuration)
+			id := parsed.ChannelID
+			if c := parsed.Switch("channel"); c.Value != nil {
+				id = c.Value.(*dstate.ChannelState).ID
+
+				hasPerms, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, id, parsed.GuildData.MS, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages)
+				if err != nil {
+					return "Failed checking permissions, please try again or join the support server.", err
+				}
+
+				if !hasPerms {
+					return "You do not have permissions to send messages there", nil
+				}
+			}
+
+			_, err := NewReminder(parsed.Author.ID, parsed.GuildData.GS.ID, id, parsed.Args[1].Str(), when, repeatDuration)
 			if err != nil {
 				return nil, err
 			}
