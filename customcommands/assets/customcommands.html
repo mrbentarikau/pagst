@@ -172,20 +172,19 @@
             </form>
             <h2 class="card-title">
                 {{$dotSDict := sdict "dot" $dot "insideDot" .}}
-                {{if eq .TriggerType 1 2 3 4}}
-                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{or .RegexTrigger .TextTrigger}}</span>{{template "cc_restrictions" .}}
-                {{else if eq .TriggerType 0}}
-                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}
-                {{else if eq .TriggerType 5}}
-                    {{template "cc_beginning" $dotSDict}}: <span class="cc-text-interval-span">Every {{call $dot.GetCCInterval .}} {{if eq (call $dot.GetCCIntervalType .) 1}}hour(s)</span>{{else}}minute(s)</span>{{end}} Next run: <span id="PAGST-CC-NEXT-RUN-{{.LocalID}}" class="cc-text-next-run-span" title="{{.NextRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
+                {{template "cc_beginning" $dotSDict -}}
+                {{if eq .TriggerType 1 2 3 4}}:
+                    <span class="cc-text-trigger-span">{{or .RegexTrigger .TextTrigger}}</span>{{template "cc_restrictions" .}}
+                {{else if eq .TriggerType 0}}:
+                    <span class="cc-text-trigger-span">{{.TextTrigger}}</span>{{template "cc_restrictions" .}}
+                {{else if eq .TriggerType 5}}:
+                    <span class="cc-text-interval-span">Every {{call $dot.GetCCInterval .}} {{if eq (call $dot.GetCCIntervalType .) 1}}hour(s)</span>{{else}}minute(s)</span>{{end}} Next run: <span id="PAGST-CC-NEXT-RUN-{{.LocalID}}" class="cc-text-next-run-span" title="{{.NextRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
                                         <script>
                                             var date = new Date({{.NextRun.Time.UTC.Unix}} * 1000);
                                             document.getElementById("PAGST-CC-NEXT-RUN-{{.LocalID}}").innerHTML = new Intl.DateTimeFormat(Intl.DateTimeFormat().resolvedOptions().locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
                                         </script></span>&nbsp;&nbsp;Channel: <span class="cc-text-interval-span">{{if .ContextChannel}}{{call $dot.GetChannelName .}}{{else}}None{{end}}</span>
                 {{else if eq .TriggerType 6}}
-                     {{template "cc_beginning" $dotSDict}}{{template "cc_restrictions" .}}
-                {{else}}
-                     {{template "cc_beginning" $dotSDict}}
+                     {{if eq .ReactionTriggerMode 1}} added{{else if eq .ReactionTriggerMode 2}} removed{{else}} added + removed{{end}}{{template "cc_restrictions" .}}
                 {{end}}
                 </a>
             </h2>
@@ -283,7 +282,7 @@
     {{else if eq .insideDot.TriggerType 6}}
         {{$triggerStyleClasses = "cc-trigger-reaction"}}
     {{end}}
-    <a style="padding:15px 20px 10px 20px" title="Run count: {{humanizeThousands .insideDot.RunCount}}" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType}}
+    <a style="padding:15px 20px 10px 20px" title="Run count: {{humanizeThousands .insideDot.RunCount}}" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType -}}
 {{end}}
 
 {{define "cc_restrictions"}}
