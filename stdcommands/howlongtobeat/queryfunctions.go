@@ -39,8 +39,8 @@ func getGameData(searchTitle string) (string, error) {
 	r.Header.Add("Accept", "*/*")
 	r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 	r.Header.Add("User-Agent", "PAGSTDB/20.42.6702")
-	r.Header.Add("Origin", "https://howlongtobeat.com")
-	r.Header.Add("Referer", "https://howlongtobeat.com")
+	r.Header.Add("Origin", hltbURL)
+	r.Header.Add("Referer", hltbURL)
 
 	resp, err := client.Do(r)
 	if err != nil {
