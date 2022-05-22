@@ -28,7 +28,7 @@ var (
 	hltbScheme   = "https"
 	hltbHost     = "howlongtobeat.com"
 	hltbURL      = fmt.Sprintf("%s://%s/", hltbScheme, hltbHost)
-	hltbHostPath = "search_results.php"
+	hltbHostPath = "search_results"
 	hltbRawQuery = "page=1"
 )
 
