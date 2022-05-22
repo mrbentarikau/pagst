@@ -57,6 +57,11 @@ table{
     content: '\f106';
     margin-right: 10px;
 }
+.question-tooltip {
+  margin-left: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+}
 </style>
 <script>
     function pagstamV2Sort(select){
@@ -474,7 +479,7 @@ $(function(){
         typeDropdownCell.find("[data-toggle='tooltip']").detach()
 
         if(partMap[typSelectVal] && partMap[typSelectVal].description){
-            var span = $('<span data-toggle="tooltip" data-placement="bottom"><i class="fas fa-question"></i></span>')
+            var span = $('<span class="question-tooltip" data-toggle="tooltip" data-placement="bottom"><i class="fas fa-question"></i></span>')
             span.attr("title", partMap[typSelectVal].description)
             span.tooltip();
 
@@ -636,7 +641,7 @@ $(function(){
                 <option value="{{.ID}}" {{if eq $selected .ID}} selected {{end}} title="{{.Part.Description}}">{{.Part.Name}}</option>
                 {{end}}{{end}}
             </select>
-            {{if .partType.Description}}<span data-toggle="tooltip" data-placement="bottom" title="{{.partType.Description}}"><i class="fas fa-question"></i></span>{{end}}
+            {{if .partType.Description}}<span class="question-tooltip" data-toggle="tooltip" data-placement="bottom" title="{{.partType.Description}}"><i class="fas fa-question"></i></span>{{end}}
         </div>
     </td>
     <td class="automod-options-column">
