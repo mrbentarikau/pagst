@@ -88,8 +88,8 @@
                         {{range .Subs}}
                         <tr class="{{if not .Enabled}}feed-item-disabled{{end}}">
                             <td>
-                                <p class="form-control-static"><b>{{.YoutubeChannelName}}</b><br/>
-                                    <a href="https://youtube.com/channel/{{.YoutubeChannelID}}" style="color:#aa8900!important" target="_blank"><code>{{.YoutubeChannelID}}</code></a></p>
+                                <p class="form-control-static"><a class="feedlink" href="https://youtube.com/channel/{{.YoutubeChannelID}}" target="_blank"><b>{{.YoutubeChannelName}}</b></a><br/>
+                                   <code>{{.YoutubeChannelID}}</code></p>
                             </td>
                             <td>
                                 <select form="sub-item-{{.ID}}" id="channel" class="form-control" name="DiscordChannel"
