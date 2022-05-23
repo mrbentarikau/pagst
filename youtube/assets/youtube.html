@@ -89,7 +89,7 @@
                         <tr class="{{if not .Enabled}}feed-item-disabled{{end}}">
                             <td>
                                 <p class="form-control-static"><b>{{.YoutubeChannelName}}</b><br/>
-                                    <code>{{.YoutubeChannelID}}</code></p>
+                                    <a href="https://youtube.com/channel/{{.YoutubeChannelID}}" style="color:#aa8900!important" target="_blank"><code>{{.YoutubeChannelID}}</code></a></p>
                             </td>
                             <td>
                                 <select form="sub-item-{{.ID}}" id="channel" class="form-control" name="DiscordChannel"
