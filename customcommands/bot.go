@@ -588,7 +588,7 @@ func handleMessageReactions(evt *eventsystem.EventData) {
 func ExecuteCustomCommandFromReaction(cc *models.CustomCommand, gs *dstate.GuildSet, ms *dstate.MemberState, cs *dstate.ChannelState, reaction *discordgo.MessageReaction, added bool, message *discordgo.Message) error {
 	tmplCtx := templates.NewContext(gs, cs, ms)
 
-	// to make sure the message is in the proper context of the user reacting we set the mssage context to a fake message
+	// to make sure the message is in the proper context of the user reacting we set the message context to a fake message
 	fakeMsg := *message
 	fakeMsg.Member = ms.DgoMember()
 	fakeMsg.Author = fakeMsg.Member.User

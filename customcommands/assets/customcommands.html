@@ -186,12 +186,14 @@
                 {{else if eq .TriggerType 6}}
                      {{if eq .ReactionTriggerMode 1}} added{{else if eq .ReactionTriggerMode 2}} removed{{else}} added + removed{{end}}{{template "cc_restrictions" .}}
                 {{end}}
+                {{if .Note.String}}&nbsp;<sup><i title="Notes for #{{.LocalID}}" class="fa-solid fa-comment fa-sm"></i></sup>{{end}}
                 </a>
             </h2>
         </div>
         <div id="collapse_cmd{{.LocalID}}" class="collapse">
             <input type="text" class="hidden form-control" name="id" value="{{.LocalID}}">
             <div class="card-body p-0 cc-panel">
+                {{if .Note.String}}<span style="color:#a1a1a1"><i>{{.Note.String}}</i></span><br/>{{end}}
                 {{range .Responses}}
                 <pre class="m-0"><div class="code gotmplmd">{{.}}</div></pre>
                 {{else}}

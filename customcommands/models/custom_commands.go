@@ -53,6 +53,7 @@ type CustomCommand struct {
 	CategoriesWhitelistMode   bool              `boil:"categories_whitelist_mode" json:"categories_whitelist_mode" toml:"categories_whitelist_mode" yaml:"categories_whitelist_mode"`
 	RegexTrigger              string            `boil:"regex_trigger" json:"regex_trigger" toml:"regex_trigger" yaml:"regex_trigger"`
 	RegexTriggerCaseSensitive bool              `boil:"regex_trigger_case_sensitive" json:"regex_trigger_case_sensitive" toml:"regex_trigger_case_sensitive" yaml:"regex_trigger_case_sensitive"`
+	Note                      null.String       `boil:"note" json:"note,omitempty" toml:"note" yaml:"note,omitempty"`
 
 	R *customCommandR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L customCommandL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -87,6 +88,7 @@ var CustomCommandColumns = struct {
 	CategoriesWhitelistMode   string
 	RegexTrigger              string
 	RegexTriggerCaseSensitive string
+	Note                      string
 }{
 	LocalID:                   "local_id",
 	GuildID:                   "guild_id",
@@ -116,6 +118,7 @@ var CustomCommandColumns = struct {
 	CategoriesWhitelistMode:   "categories_whitelist_mode",
 	RegexTrigger:              "regex_trigger",
 	RegexTriggerCaseSensitive: "regex_trigger_case_sensitive",
+	Note:                      "note",
 }
 
 // Generated where
@@ -228,6 +231,29 @@ func (w whereHelperint16) IN(slice []int16) qm.QueryMod {
 	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
 }
 
+type whereHelpernull_String struct{ field string }
+
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+
 var CustomCommandWhere = struct {
 	LocalID                   whereHelperint64
 	GuildID                   whereHelperint64
@@ -257,6 +283,7 @@ var CustomCommandWhere = struct {
 	CategoriesWhitelistMode   whereHelperbool
 	RegexTrigger              whereHelperstring
 	RegexTriggerCaseSensitive whereHelperbool
+	Note                      whereHelpernull_String
 }{
 	LocalID:                   whereHelperint64{field: "\"custom_commands\".\"local_id\""},
 	GuildID:                   whereHelperint64{field: "\"custom_commands\".\"guild_id\""},
@@ -286,6 +313,7 @@ var CustomCommandWhere = struct {
 	CategoriesWhitelistMode:   whereHelperbool{field: "\"custom_commands\".\"categories_whitelist_mode\""},
 	RegexTrigger:              whereHelperstring{field: "\"custom_commands\".\"regex_trigger\""},
 	RegexTriggerCaseSensitive: whereHelperbool{field: "\"custom_commands\".\"regex_trigger_case_sensitive\""},
+	Note:                      whereHelpernull_String{field: "\"custom_commands\".\"note\""},
 }
 
 // CustomCommandRels is where relationship names are stored.
@@ -309,8 +337,8 @@ func (*customCommandR) NewStruct() *customCommandR {
 type customCommandL struct{}
 
 var (
-	customCommandAllColumns            = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive"}
-	customCommandColumnsWithoutDefault = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "last_error_time", "date_updated", "categories"}
+	customCommandAllColumns            = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note"}
+	customCommandColumnsWithoutDefault = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "last_error_time", "date_updated", "categories", "note"}
 	customCommandColumnsWithDefault    = []string{"context_channel", "reaction_trigger_mode", "last_error", "run_count", "show_errors", "disabled", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive"}
 	customCommandPrimaryKeyColumns     = []string{"guild_id", "local_id"}
 )

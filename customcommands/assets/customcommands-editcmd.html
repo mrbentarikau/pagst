@@ -70,7 +70,7 @@
                             <a href="." title="Reload page"><i style="font-size: 0.5em" class="fas fa-sync fa-xs"></i></a>
                         </h2>
                         <input type="text" class="hidden form-control" name="id" value="{{.CC.LocalID}}">
-                        Last run: {{if ne .CC.LastRun.Time.Year 1}}<span id="PAGST-CC-Last-Run" title="{{.CC.LastRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}"><script>
+                        Last run: {{if .CC.LastRun.Valid}}<span id="PAGST-CC-Last-Run" title="{{.CC.LastRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}"><script>
                             var runDate = new Date({{.CC.LastRun.Time.UTC.Unix}} * 1000);
                                 document.getElementById("PAGST-CC-Last-Run").innerHTML = new Intl.DateTimeFormat(Intl.DateTimeFormat().resolvedOptions().locale, { dateStyle: 'medium', timeStyle: 'long' }).format(runDate);
                         </script></span>{{else}}N/A{{end}}<br/>
@@ -170,12 +170,6 @@
                                                 value="{{.CC.TextTrigger}}" oninput="onTriggerChanged(this)">
                                             </div>
                                             {{checkbox "case_sensitive" "case_sensitive" "Case Sensitive?" .CC.TextTriggerCaseSensitive}}
-
-                                            <!-- <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="case_sensitive"> Case sensitive?
-                                                </label>
-                                            </div> -->
                                         </div>
                                     </div>
                                 </div>
@@ -189,12 +183,6 @@
                                                 value="{{or .CC.RegexTrigger .CC.TextTrigger}}" oninput="onTriggerChanged(this)">
 
                                             {{checkbox "regex_case_sensitive" "regex_case_sensitive" "Case Sensitive?" .CC.RegexTriggerCaseSensitive}}
-
-                                            <!-- <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="case_sensitive"> Case sensitive?
-                                                </label>
-                                            </div> -->
                                         </div>
                                     </div>
                                 </div>
@@ -357,6 +345,12 @@
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="form-group">
+                                    <label>Notes (<span class="note-length-counter">{{len .CC.Note.String}}</span>/256)</label>
+                                    <input type="text" class="form-control pagst-note" name="note" placeholder="Annotate this custom command..." value="{{if .CC.Note.Valid}}{{.CC.Note.String}}{{end}}" oninput="onNoteChanged(this)">
+                                    <p>An optional description on what this command does.</p>
+                                </div>
+
+                                <div class="form-group">
                                     <label>Custom command group</label>
                                     {{$selectedGroup := .CC.GroupID.Int64}}
                                     <select Name="GroupID" class="form-control">
@@ -378,8 +372,38 @@
                                     </span></b> - <code>
                                     {{.CC.LastError}}</code>{{else}}None{{end}}</p>
 
-                                <h4>Run count</h4>
-                                <p><code>{{humanizeThousands .CC.RunCount}}</code></p>
+                                    <div class="row">
+                                        <div class="col-auto">
+                                            <h4>Run count</h4>
+                                            <p><code>{{humanizeThousands .CC.RunCount}}</code></p>
+                                        </div>
+
+                                        <div class="col-auto">
+                                            <h4>Last run</h4>
+                                            <p><code>{{if .CC.LastRun.Valid}}
+                                                <span id="PAGST-CC-Last-Run-Footer" title="{{.CC.LastRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
+                                                    <script>
+                                                        var runDate = new Date({{.CC.LastRun.Time.UTC.Unix}} * 1000);
+                                                        document.getElementById("PAGST-CC-Last-Run-Footer").innerHTML = new Intl.DateTimeFormat(Intl.DateTimeFormat().resolvedOptions().locale, { dateStyle: 'medium', timeStyle: 'long' }).format(runDate);
+                                                    </script>
+                                                </span>{{else}}None{{end}}</code>
+                                            </p>
+                                        </div>
+
+                                        {{if eq .CC.TriggerType 5}}
+                                        <div class="col-auto">
+                                            <h4>Next scheduled run</h4>
+                                            <p><code>
+                                                <span id="PAGST-CC-Next-Run-Footer" title="{{.CC.NextRun.Time.UTC.Format `2006-01-02 15:04:05 MST`}}">
+                                                    <script>
+                                                        var date = new Date({{.CC.NextRun.Time.UTC.Unix}} * 1000);
+                                                        document.getElementById("PAGST-CC-Next-Run-Footer").innerHTML = new Intl.DateTimeFormat(Intl.DateTimeFormat().resolvedOptions().locale, { dateStyle: 'medium', timeStyle: 'long' }).format(date);
+                                                    </script>
+                                                </span></code>
+                                            </p>
+                                        </div>
+                                        {{end}}
+                                    </div>
 
                                 <h4>Output errors as command response</h4>
                                 {{checkbox "show_errors" "show_errors" "" .CC.ShowErrors}}
@@ -582,7 +606,6 @@
         }
 
         var dropdown = $("#trigger-type-dropdown")
-        console.log("PAGST is awesome!", dropdown.val());
         if (dropdown.val() === "interval_hours" || dropdown.val() === "interval_minutes") {
             // Interval triggers
 
@@ -767,6 +790,28 @@
         display.textContent = combinedLength
 
         if (combinedLength > 20000) {
+            display.classList.add("text-danger");
+        } else {
+            display.classList.remove("text-danger");
+        }
+    }
+
+    function onNoteChanged(input) {
+        var inputs = input.parentElement.parentElement.parentElement.querySelectorAll('input.pagst-note');
+        var combinedLength = 0;
+
+        inputs.forEach(function (elem) {
+             // The data received on the backend contains "\r\n" while it is simply "\n" on the JS side.
+            // Adjust for this discrepancy by double-counting newline characters.
+            const newlines = elem.value.match(/\n/g);
+            if (newlines) combinedLength += newlines.length;
+            combinedLength += elem.value.length;
+        })
+
+        var display = input.parentElement.parentElement.parentElement.querySelector(".note-length-counter")
+        display.textContent = combinedLength
+
+        if (combinedLength > 256) {
             display.classList.add("text-danger");
         } else {
             display.classList.remove("text-danger");

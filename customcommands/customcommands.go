@@ -135,6 +135,7 @@ type CustomCommand struct {
 	CaseSensitive      bool     `json:"case_sensitive" schema:"case_sensitive"`
 	RegexCaseSensitive bool     `json:"regex_case_sensitive" schema:"regex_case_sensitive"`
 	ID                 int64    `json:"id"`
+	Note               string   `json:"note" schema:"note" valid:",0,256"`
 
 	ContextChannel int64 `schema:"context_channel" valid:"channel,true"`
 
@@ -269,6 +270,12 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 
 	if cc.GroupID != 0 {
 		pqCommand.GroupID = null.Int64From(cc.GroupID)
+	}
+
+	if cc.Note != "" {
+		pqCommand.Note = null.StringFrom(cc.Note)
+	} else {
+		pqCommand.Note = null.NewString("", false)
 	}
 
 	if cc.TriggerTypeForm == "interval_hours" {
