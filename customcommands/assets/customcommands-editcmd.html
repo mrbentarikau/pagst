@@ -178,7 +178,7 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="form-group">
-                                            <label>Trigger (<span class="trigger-length-counter">{{or (len .CC.RegexTrigger) (len .CC.TextTrigger)}}</span>/256)</label>
+                                            <label>Trigger (<span class="trigger-length-counter">{{or (len .CC.RegexTrigger) (toRune .CC.TextTrigger|len)}}</span>/256)</label>
                                             <input type="text" class="pagst-trigger form-control" name="regex_trigger" placeholder="fun"
                                                 value="{{or .CC.RegexTrigger .CC.TextTrigger}}" oninput="onTriggerChanged(this)">
 
@@ -303,7 +303,7 @@
                                     <label for="responses">Response (<span class="cc-length-counter">
                                     {{- $responseLen := 0}}
                                     {{- range .CC.Responses}}
-                                        {{- $responseLen = add $responseLen (len .)}}
+                                        {{- $responseLen = add $responseLen (toRune .|len)}}
                                     {{- end -}}
                                     {{$responseLen}}</span>/20000)</label>
 
@@ -345,7 +345,7 @@
                         <div class="row">
                             <div class="col-sm-6">
                                 <div class="form-group">
-                                    <label>Notes (<span class="note-length-counter">{{len .CC.Note.String}}</span>/256)</label>
+                                    <label>Notes (<span class="note-length-counter">{{toRune .CC.Note.String|len}}</span>/256)</label>
                                     <input type="text" class="form-control pagst-note" name="note" placeholder="Annotate this custom command..." value="{{if .CC.Note.Valid}}{{.CC.Note.String}}{{end}}" oninput="onNoteChanged(this)">
                                     <p>An optional description on what this command does.</p>
                                 </div>
@@ -774,20 +774,25 @@
     editor.on("blur",function() {editor.save(),editor.toTextArea()});
     }
 
-    function onCCChanged(textArea,editor) {
-        var textAreas = textArea.parentElement.parentElement.parentElement.querySelectorAll('textarea.pagst-textarea');
+    function lengthScan(scanThis){
         var combinedLength = 0;
-                
-        textAreas.forEach(function (elem) {
-             // The data received on the backend contains "\r\n" while it is simply "\n" on the JS side.
+
+        scanThis.forEach(function (elem) {
+            // The data received on the backend contains "\r\n" while it is simply "\n" on the JS side.
             // Adjust for this discrepancy by double-counting newline characters.
             const newlines = elem.value.match(/\n/g);
             if (newlines) combinedLength += newlines.length;
-            combinedLength += elem.value.length;
+            combinedLength += Array.from(elem.value).length;
         })
+        return combinedLength;
+    }
+
+    function onCCChanged(textArea,editor) {
+        var textAreas = textArea.parentElement.parentElement.parentElement.querySelectorAll('textarea.pagst-textarea');
+        var combinedLength = lengthScan(textAreas);
         
-        var display = textArea.parentElement.parentElement.parentElement.querySelector(".cc-length-counter")
-        display.textContent = combinedLength
+        var display = textArea.parentElement.parentElement.parentElement.querySelector(".cc-length-counter");
+        display.textContent = combinedLength;
 
         if (combinedLength > 20000) {
             display.classList.add("text-danger");
@@ -798,18 +803,10 @@
 
     function onNoteChanged(input) {
         var inputs = input.parentElement.parentElement.parentElement.querySelectorAll('input.pagst-note');
-        var combinedLength = 0;
+        var combinedLength = lengthScan(inputs);
 
-        inputs.forEach(function (elem) {
-             // The data received on the backend contains "\r\n" while it is simply "\n" on the JS side.
-            // Adjust for this discrepancy by double-counting newline characters.
-            const newlines = elem.value.match(/\n/g);
-            if (newlines) combinedLength += newlines.length;
-            combinedLength += elem.value.length;
-        })
-
-        var display = input.parentElement.parentElement.parentElement.querySelector(".note-length-counter")
-        display.textContent = combinedLength
+        var display = input.parentElement.parentElement.parentElement.querySelector(".note-length-counter");
+        display.textContent = combinedLength;
 
         if (combinedLength > 256) {
             display.classList.add("text-danger");
@@ -820,18 +817,10 @@
 
     function onTriggerChanged(input) {
         var inputs = input.parentElement.parentElement.parentElement.querySelectorAll('input.pagst-trigger');
-        var combinedLength = 0;
+        var combinedLength = lengthScan(inputs);
 
-        inputs.forEach(function (elem) {
-             // The data received on the backend contains "\r\n" while it is simply "\n" on the JS side.
-            // Adjust for this discrepancy by double-counting newline characters.
-            const newlines = elem.value.match(/\n/g);
-            if (newlines) combinedLength += newlines.length;
-            combinedLength += elem.value.length;
-        })
-
-        var display = input.parentElement.parentElement.parentElement.querySelector(".trigger-length-counter")
-        display.textContent = combinedLength
+        var display = input.parentElement.parentElement.parentElement.querySelector(".trigger-length-counter");
+        display.textContent = combinedLength;
 
         if (combinedLength > 256) {
             display.classList.add("text-danger");

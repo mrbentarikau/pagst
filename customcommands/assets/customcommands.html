@@ -283,7 +283,7 @@
     {{else if eq .insideDot.TriggerType 6}}
         {{$triggerStyleClasses = "cc-trigger-reaction"}}
     {{end}}
-    <a style="padding:15px 20px 10px 20px" title="Run count: {{humanizeThousands .insideDot.RunCount}}" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType -}}
+    <a style="padding:15px 20px 10px 20px" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown"><span title="Run count: {{humanizeThousands .insideDot.RunCount}}">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType -}}</span>
 {{end}}
 
 {{define "cc_restrictions"}}
