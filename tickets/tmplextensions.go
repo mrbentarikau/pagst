@@ -12,7 +12,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/tickets/models"
-	"github.com/volatiletech/null"
+	"github.com/volatiletech/null/v8"
 )
 
 func init() {

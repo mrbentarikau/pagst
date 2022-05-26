@@ -11,7 +11,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/reddit/models"
 	"github.com/mediocregopher/radix/v3"
-	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 // migrateLegacyRedisFormatToPostgres migrates all feeds from all servers to postgres from the old legacy redis format

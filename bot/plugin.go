@@ -10,8 +10,8 @@ import (
 	"github.com/mediocregopher/radix/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/volatiletech/null"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/discordgo"

@@ -13,7 +13,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/karlseguin/ccache"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 //go:generate sqlboiler --no-hooks psql

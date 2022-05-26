@@ -7,11 +7,11 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEvtsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
-	"github.com/mrbentarikau/pagst/rolecommands/models"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/rolecommands/models"
 	"github.com/tidwall/buntdb"
-	v3_qm "github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 // CommonRoleSettings helps the bot logic by abstracting away the type of the role settings
@@ -340,7 +340,7 @@ func (c *CommonRoleSettings) MaybeScheduleRoleRemoval(ctx context.Context, ms *d
 	}
 
 	// remove existing role removal events for this role
-	_, err := schEvtsModels.ScheduledEvents(v3_qm.Where("event_name='remove_member_role' AND  guild_id = ? AND (data->>'user_id')::bigint = ? AND (data->>'role_id')::bigint = ?", ms.GuildID, ms.User.ID, c.RoleId)).DeleteAll(ctx, common.PQ)
+	_, err := schEvtsModels.ScheduledEvents(qm.Where("event_name='remove_member_role' AND  guild_id = ? AND (data->>'user_id')::bigint = ? AND (data->>'role_id')::bigint = ?", ms.GuildID, ms.User.ID, c.RoleId)).DeleteAll(ctx, common.PQ)
 	if err != nil {
 		return err
 	}

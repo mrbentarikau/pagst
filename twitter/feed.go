@@ -17,8 +17,8 @@ import (
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/twitter/models"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/volatiletech/sqlboiler/boil"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 var _ feeds.Plugin = (*Plugin)(nil)

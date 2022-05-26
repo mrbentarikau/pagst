@@ -21,8 +21,8 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/rsvp/models"
 	"github.com/mrbentarikau/pagst/timezonecompanion"
-	"github.com/volatiletech/sqlboiler/boil"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 var _ bot.BotInitHandler = (*Plugin)(nil)

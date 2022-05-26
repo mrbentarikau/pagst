@@ -6,10 +6,10 @@ import (
 
 	"github.com/mrbentarikau/pagst/bot/models"
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/dstate"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type Candidate struct {

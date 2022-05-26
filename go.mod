@@ -9,7 +9,7 @@ require (
 	github.com/Masterminds/go-fileserver v0.0.0-20150404113552-04d61ae6d130
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.5.0
-	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
+	github.com/buger/jsonparser v1.1.1
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cenkalti/backoff v2.1.1+incompatible
 	github.com/dghubble/oauth1 v0.6.0
@@ -56,9 +56,7 @@ require (
 	github.com/viant/assertly v0.4.8
 	github.com/viant/toolbox v0.24.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	github.com/volatiletech/null v8.0.0+incompatible
 	github.com/volatiletech/null/v8 v8.1.2
-	github.com/volatiletech/sqlboiler v3.7.1+incompatible
 	github.com/volatiletech/sqlboiler/v4 v4.5.0
 	github.com/volatiletech/strmangle v0.0.1
 	goji.io v2.0.2+incompatible

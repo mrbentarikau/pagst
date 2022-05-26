@@ -42,8 +42,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
-	"github.com/volatiletech/null"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 var (

@@ -7,7 +7,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/common/models"
 	"github.com/karlseguin/rcache"
-	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 const CoreServerConfDBSchema = `

@@ -14,7 +14,7 @@ import (
 	prfx "github.com/mrbentarikau/pagst/common/prefix"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 var logger = common.GetPluginLogger(&Plugin{})

@@ -9,7 +9,7 @@ import (
 	"github.com/mrbentarikau/pagst/bot/models"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
-	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 var logger = common.GetFixedPrefixLogger("joinedguildsupdater")

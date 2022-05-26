@@ -10,7 +10,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/soundboard/models"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"golang.org/x/net/context"
 )
 

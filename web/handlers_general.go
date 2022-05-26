@@ -27,7 +27,7 @@ import (
 	"github.com/mrbentarikau/pagst/web/discordblog"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
-	"github.com/volatiletech/null"
+	"github.com/volatiletech/null/v8"
 	"goji.io/pat"
 )
 

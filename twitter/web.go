@@ -14,8 +14,8 @@ import (
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/twitter/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/volatiletech/sqlboiler/boil"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"goji.io"
 	"goji.io/pat"
 )

@@ -23,7 +23,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/lib/gojay"
 	"github.com/pkg/errors"
-	"github.com/volatiletech/null"
+	"github.com/volatiletech/null/v8"
 )
 
 // A Session represents a connection to the Discord API.

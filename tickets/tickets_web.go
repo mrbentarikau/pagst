@@ -12,7 +12,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/tickets/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"goji.io/pat"
 )
 

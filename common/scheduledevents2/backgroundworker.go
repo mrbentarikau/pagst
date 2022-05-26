@@ -12,7 +12,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/backgroundworkers"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mediocregopher/radix/v3"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 const flushTresholdMinutes = 5
