@@ -17,7 +17,7 @@ func GetCommandPrefixRedis(guild int64) (string, error) {
 }
 
 func DefaultCommandPrefix() string {
-	defaultPrefix := "-"
+	defaultPrefix := ";"
 	if common.Testing {
 		defaultPrefix = "("
 	}
