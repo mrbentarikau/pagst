@@ -161,7 +161,7 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="form-group">
-                                            <label>Trigger (<span class="trigger-length-counter">{{len .CC.TextTrigger}}</span>/256)</label>
+                                            <label>Trigger (<span class="trigger-length-counter">{{toRune .CC.TextTrigger|len}}</span>/256)</label>
                                              <div class="input-group mb-2">
                                                 <div class="input-group-prepend" id="command-trigger-prepended-prefix">
                                                     <div class="input-group-text">{{.CommandPrefix}}</div>
@@ -178,7 +178,7 @@
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="form-group">
-                                            <label>Trigger (<span class="trigger-length-counter">{{or (len .CC.RegexTrigger) (toRune .CC.TextTrigger|len)}}</span>/256)</label>
+                                            <label>Trigger (<span class="trigger-length-counter">{{or (toRune .CC.RegexTrigger|len) (toRune .CC.TextTrigger|len)}}</span>/256)</label>
                                             <input type="text" class="pagst-trigger form-control" name="regex_trigger" placeholder="fun"
                                                 value="{{or .CC.RegexTrigger .CC.TextTrigger}}" oninput="onTriggerChanged(this)">
 
