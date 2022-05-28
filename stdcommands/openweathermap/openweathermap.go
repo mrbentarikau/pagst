@@ -5,7 +5,7 @@ package openweathermap
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"math/rand"
 	"net/http"
@@ -22,6 +22,8 @@ var (
 	confOpenWeaterMapAPIKey = config.RegisterOption("yagpdb.openweathermap.apikey", "OpenWeatherMap API key", "")
 	units                   = "metric"
 	openWeatherMapAPIHost   = "https://api.openweathermap.org/data/2.5/"
+	geoCodingAPIHost        = "http://api.openweathermap.org/geo/1.0/direct"
+	queryParam              = "?q="
 )
 
 var Command = &commands.YAGCommand{
@@ -42,7 +44,6 @@ var Command = &commands.YAGCommand{
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var compactView bool
-		queryParam := "?q="
 
 		if data.Args[0].Value == nil && data.Switches["zip"].Value == nil {
 			return "Provide at least a location name or use -zip flag...", nil
@@ -53,7 +54,6 @@ var Command = &commands.YAGCommand{
 		}
 
 		where := data.Args[0].Str()
-		queryURL := fmt.Sprintf(openWeatherMapAPIHost + "weather" + queryParam + where + "&units=" + units + "&appid=" + confOpenWeaterMapAPIKey.GetString())
 
 		if data.Switches["c"].Value != nil && data.Switches["c"].Value.(bool) {
 			compactView = true
@@ -64,7 +64,12 @@ var Command = &commands.YAGCommand{
 			where = data.Switch("zip").Str()
 		}
 
-		weather, err := weatherFromAPI(queryURL, where)
+		geoCode, err := geoCodingAPI(where)
+		if err != nil {
+			return "", err
+		}
+
+		weather, err := weatherFromAPI(where, geoCode)
 		if err != nil {
 			return "", err
 		}
@@ -76,9 +81,25 @@ var Command = &commands.YAGCommand{
 			return createCompact(*weather, windDirection), nil
 		}
 
+		// this is necessary currently, because owm geocoding returns very specific location name, e.g. Alt-Kölln vs Berlin
+		// but coordinate based query gives more accurate results, e.g. first Rome result is not in US but Italy
+		wName := weather.Name
+		if len(geoCode.GeoCodingMap) > 0 {
+			gcName := ""
+			for _, v := range geoCode.GeoCodingMap {
+				if v.LocalNames.En != "" {
+					gcName = v.LocalNames.En
+					break
+				}
+			}
+			if !strings.EqualFold(gcName, wName) {
+				wName = gcName + ", " + wName
+			}
+		}
+
 		embed := &discordgo.MessageEmbed{
-			Title:       "Weather report: " + weather.Name,
-			Description: "**" + weather.Name + ", " + weather.Sys.Country + "**" + fmt.Sprintf("%s%.2f %s%.2f", "\nlat: ", weather.Coord["lat"], "lon: ", weather.Coord["lon"]),
+			Title:       "Weather report: " + wName,
+			Description: "**" + wName + ", " + weather.Sys.Country + "**" + fmt.Sprintf("%s%.2f %s%.2f", "\nlat: ", weather.Coord["lat"], "lon: ", weather.Coord["lon"]),
 			Color:       int(rand.Int63n(16777215)),
 			URL:         fmt.Sprintf("https://openweathermap.com/city/%d", weather.ID),
 			Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: fmt.Sprintf("https://openweathermap.com/img/wn/%s@2x.png", weather.Weather[0].Icon)},
@@ -99,8 +120,46 @@ var Command = &commands.YAGCommand{
 	},
 }
 
-func weatherFromAPI(queryURL, where string) (*openWeatherMap, error) {
+func weatherFromAPI(where string, geoCode *owmGeoCodeStruct) (*openWeatherMap, error) {
 	weather := openWeatherMap{}
+	queryURL := ""
+
+	if len(geoCode.GeoCodingMap) > 0 {
+		lat := geoCode.GeoCodingMap[0].Lat
+		lon := geoCode.GeoCodingMap[0].Lon
+		queryURL = fmt.Sprint(openWeatherMapAPIHost, "weather?lat=", lat, "&lon=", lon, "&units=", units, "&appid=", confOpenWeaterMapAPIKey.GetString())
+	} else {
+		queryURL = fmt.Sprint(openWeatherMapAPIHost, "weather", queryParam, where, "&units=", units, "&appid=", confOpenWeaterMapAPIKey.GetString())
+	}
+
+	body, _ := requestAPI(queryURL)
+
+	queryErr := json.Unmarshal(body, &weather)
+	if queryErr != nil {
+		return nil, queryErr
+	}
+
+	return &weather, nil
+}
+
+func geoCodingAPI(where string) (*owmGeoCodeStruct, error) {
+	out := owmGeoCodeStruct{}
+	coordinates := geoCodingMap{}
+	queryURL := fmt.Sprint(geoCodingAPIHost, queryParam, where, "&limit=", 10, "&appid=", confOpenWeaterMapAPIKey.GetString())
+
+	body, _ := requestAPI(queryURL)
+
+	queryErr := json.Unmarshal(body, &coordinates)
+	if queryErr != nil {
+		return nil, queryErr
+	}
+
+	out.GeoCodingMap = coordinates
+	return &out, nil
+
+}
+
+func requestAPI(queryURL string) ([]byte, error) {
 	req, err := http.NewRequest("GET", queryURL, nil)
 	if err != nil {
 		return nil, err
@@ -118,22 +177,17 @@ func weatherFromAPI(queryURL, where string) (*openWeatherMap, error) {
 	} else if resp.StatusCode == 429 {
 		return nil, commands.NewPublicError("The free tariff has made over 60 API calls per minute.")
 	} else if resp.StatusCode != 200 {
-		return nil, commands.NewPublicError("Cannot fetch weather data for the given location: ", where)
+		return nil, commands.NewPublicError("Cannot fetch data, status code: ", resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	queryErr := json.Unmarshal(body, &weather)
-	if queryErr != nil {
-		return nil, queryErr
-	}
-
-	return &weather, nil
+	return body, nil
 }
 
 // Values are calculated using the August-Roche-Magnus approximation.
