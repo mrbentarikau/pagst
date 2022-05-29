@@ -3,6 +3,8 @@ PAGSTDB
 
 ### People Against Generally Shitty Things Discord Bot
 
+[![PAGST](https://img.shields.io/github/v/tag/mrbentarikau/pagst?style=flat-square)](https://pagst.xyz)
+
 ## Installation
 You have to know how to fill the environment file and setup the bot via Discord - intents need to be enabled!
 
