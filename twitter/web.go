@@ -10,6 +10,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/go-twitter/twitter"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/twitter/models"
@@ -60,6 +61,8 @@ func (p *Plugin) InitWeb() {
 	})
 
 	mux := goji.SubMux()
+	mux.Use(web.RequireBotMemberMW)
+	mux.Use(web.RequirePermMW(discordgo.PermissionManageWebhooks))
 	web.CPMux.Handle(pat.New("/twitter/*"), mux)
 	web.CPMux.Handle(pat.New("/twitter"), mux)
 
