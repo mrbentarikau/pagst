@@ -52,14 +52,14 @@ func getRedditQuote() string {
 	req.Header.Set("User-Agent", "PAGST/20.42.6702 /u/caubert")
 	//req.Header.Set("Content-Type", "application/json")
 
-	resp, _ := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Sprint("Error: ", err)
 	}
 
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Sprint("Error: ", err)
 	}
