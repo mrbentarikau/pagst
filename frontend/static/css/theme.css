@@ -8393,7 +8393,7 @@ textarea:-ms-input-placeholder {
 html.dark .form-control {
 	background-color: #282d36;
 	border-color: #282d36;
-	color: #EEE;
+	/*color: #EEE;*/
 }
 
 html.dark .form-control[disabled],
@@ -10588,6 +10588,11 @@ html[xmlns] .clearfix {
 /* Popover */
 .popover .popover-header {
 	margin: 0 !important;
+	color: inherit;
+}
+
+h3.popover-header{
+	color: #1a1a1a!important;
 }
 
 /* Modals */
