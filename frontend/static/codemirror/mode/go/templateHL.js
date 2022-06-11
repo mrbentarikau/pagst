@@ -56,6 +56,7 @@
     "cembed":true,
     "complexMessage":true,
     "complexMessageEdit":true,
+    "createTicket":true,
     "cslice":true,
     "dict":true,
     "humanizeThousands":true,
@@ -95,6 +96,7 @@
     // context functions
     "editMessage":true,
     "editMessageNoEscape":true,
+    "execTemplate":true,
     "lastMessages":true,
     "pinMessage":true,
     "sendDM":true, 
