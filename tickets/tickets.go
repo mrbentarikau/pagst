@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/tickets/models"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/tickets/models"
 )
 
 type Plugin struct{}

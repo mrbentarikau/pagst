@@ -11,9 +11,9 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
-	"github.com/bwmarrin/snowflake"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/bwmarrin/snowflake"
 	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
 )
@@ -60,6 +60,15 @@ func SendDMEmbed(user int64, embed *discordgo.MessageEmbed) error {
 	}
 
 	_, err = common.BotSession.ChannelMessageSendEmbed(channel.ID, embed)
+	return err
+}
+
+func SendDMEmbedList(user int64, embeds []*discordgo.MessageEmbed) error {
+	channel, err := common.BotSession.UserChannelCreate(user)
+	if err != nil {
+		return err
+	}
+	_, err = common.BotSession.ChannelMessageSendEmbedList(channel.ID, embeds)
 	return err
 }
 
@@ -219,13 +228,13 @@ func SendMessageGS(gs *dstate.GuildSet, channelID int64, msg string) (permsOK bo
 	return true, resp, err
 }
 
-func SendMessageEmbed(guildID int64, channelID int64, msg *discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
+func SendMessageEmbed(guildID int64, channelID int64, embed *discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
 	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionEmbedLinks)
 	if !hasPerms {
 		return false, nil, err
 	}
 
-	resp, err = common.BotSession.ChannelMessageSendEmbed(channelID, msg)
+	resp, err = common.BotSession.ChannelMessageSendEmbed(channelID, embed)
 	permsOK = true
 	return
 }
@@ -237,6 +246,17 @@ func SendMessageEmbedGS(gs *dstate.GuildSet, channelID int64, msg *discordgo.Mes
 	}
 
 	resp, err = common.BotSession.ChannelMessageSendEmbed(channelID, msg)
+	permsOK = true
+	return
+}
+
+func SendMessageEmbedList(guildID int64, channelID int64, embeds []*discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
+	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionEmbedLinks)
+	if !hasPerms {
+		return false, nil, err
+	}
+
+	resp, err = common.BotSession.ChannelMessageSendEmbedList(channelID, embeds)
 	permsOK = true
 	return
 }

@@ -7,6 +7,10 @@ cmd/pagst/access_log
 cmd/pagst/access.log
 cmd/pagst/access*.log
 cmd/pagst/static/report.html
+
+cmd/pagst/capturepanics
+cmd/pagst/dso-cli
+cmd/pagst/shardorchestrator
 cmd/pagst/pagst
 cmd/pagst/templates/plugins/*.html
 cmd/pagst/soundboard

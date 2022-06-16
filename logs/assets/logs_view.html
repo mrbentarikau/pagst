@@ -22,26 +22,30 @@
                     <div><b>PAGSTDB</b> <a class="pagst" href="../../../privacy_policy" rel="noopener">Privacy Policy</a></div>
                 </tr>
                 <tr>
+                    {{if .IsAdmin}}<th>Actions</th>{{end}}
                     <th id="time-col">Time (UTC) <i class="fa fa-caret-up"></i></th>
                     <th>Author</th>
-                    <th>Message</th>{{if .IsAdmin}}
-                    <th>Actions</th>{{end}}
+                    <th class="pagst-log-message">Message</th>
                 </tr>
             </thead>
 
-            <tbody>
+            <tbody id="logs-list">
                 {{$IsAdmin := .IsAdmin}}
                 {{$CanViewDeleted := .CanViewDeleted}}
                 {{range $i, $v := .Messages}}
                 <tr id="log-row-{{$i}}" class="popover-trigger log-row" data-toggle="popover" data-trigger="click" title="Message info" data-placement="top"  data-content="Author ID: {{.Model.AuthorID}} Message ID: {{.Model.ID}}">
+                    {{if $IsAdmin}}
+                    <td>{{if not .Model.Deleted}}<button id="msg-button-{{.Model.ID}}" class="btn btn-sm btn-danger" noconfirm onclick="deleteMessage('{{.Model.ID}}')">Delete</button>{{end}}</td>{{end}}
                     <td class="text-nowrap">{{.Timestamp}}</td>
                     <td style="{{if .Color}}color: #{{.Color}};{{end}}font-weight: 600;">{{.Model.AuthorUsername}}</td>
                     <td id="msg-cell-{{.Model.ID}}" {{if .Model.Deleted}} class="deleted-message" {{end}}>
+                        <div style="max-widt:100vw;overflow:hidden;text-overflow:ellipsis;"><span>
                         {{if .Model.Deleted}}<i class="fas fa-trash mr-2"></i>{{end}}{{if or (not .Model.Deleted) $CanViewDeleted}}{{.Model.Content}}{{else}}This message has been removed from logs. only admins can see it.{{end}}
-                    </td>{{if $IsAdmin}}
-                    <td>{{if not .Model.Deleted}}<button id="msg-button-{{.Model.ID}}" class="btn btn-sm btn-danger" noconfirm onclick="deleteMessage('{{.Model.ID}}')">Delete</button>{{end}}</td>{{end}}
+                        </span></div>
+                    </td>
                 </tr>
                 {{end}}
+
             </tbody>
         </table>
     </div>
@@ -109,6 +113,19 @@ function sortTable(table, reverse) {
     });
     for(i = 0; i < tr.length; ++i) tb.appendChild(tr[i]); // append each row in order
 }
+
+const logsList = document.querySelector("#logs-list");
+
+// Close any open popovers, when clicked outside
+document.body.addEventListener('click', function (event) {
+    const popoverDiv = document.querySelector(".popover")
+    if (!popoverDiv) {
+        return
+    }
+    if (!(logsList.contains(event.target) || popoverDiv.contains(event.target))) {
+        $('[data-toggle="popover"]').popover('hide');
+    }
+});
 
 </script>
 {{template "cp_footer"}}

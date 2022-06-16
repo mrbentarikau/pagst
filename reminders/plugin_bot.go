@@ -48,7 +48,6 @@ var cmds = []*commands.YAGCommand{
 		Arguments: []*dcmd.ArgDef{
 			{Name: "Time", Type: &commands.DurationArg{}},
 			{Name: "Message", Type: dcmd.String},
-			//{Name: "date", Help: "Enables specific date", Type: dcmd.String},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "channel", Type: dcmd.Channel},
