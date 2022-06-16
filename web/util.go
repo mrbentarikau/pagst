@@ -31,6 +31,20 @@ type redditQuoteStruct struct {
 	}
 }
 
+type discordStatusStruct struct {
+	Page struct {
+		ID        string `json:"id"`
+		Name      string `json:"name"`
+		URL       string `json:"url"`
+		TimeZone  string `json:"time_zone"`
+		UpdatedAt string `json:"updated_at"`
+	} `json:"page"`
+	Incidents []struct {
+		Name   string `json:"name"`
+		Status string `json:"status"`
+	} `json:"incidents"`
+}
+
 var ErrTokenExpired = errors.New("OAUTH2 Token expired")
 
 var panelLogKeyCore = cplogs.RegisterActionFormat(&cplogs.ActionFormat{
@@ -52,7 +66,7 @@ func getRedditQuote() string {
 	req.Header.Set("User-Agent", "PAGST/20.42.6702 /u/caubert")
 	//req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, _ := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Sprint("Error: ", err)
 	}
@@ -72,6 +86,42 @@ func getRedditQuote() string {
 	}
 
 	return redditQuoteQuery[0].Data.Children[0].Data.Selfttext
+}
+
+func getDiscordStatus() (*discordStatusStruct, error) {
+	discordStatus := discordStatusStruct{}
+	var DiscordHost = "https://discord.statuspage.io/"
+	var DiscordJSON = "api/v2/incidents/unresolved.json"
+
+	queryURL := DiscordHost + DiscordJSON
+	req, err := http.NewRequest("GET", queryURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("User-Agent", common.BotUserAgent)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	queryErr := json.Unmarshal(body, &discordStatus)
+
+	if queryErr != nil {
+		return nil, nil
+		//return fmt.Sprint("Error: ", queryErr)
+	}
+
+	return &discordStatus, err
 }
 
 func SetContextTemplateData(ctx context.Context, data map[string]interface{}) context.Context {
@@ -111,7 +161,7 @@ func RandBase64(size int) string {
 func GenSessionCookie() *http.Cookie {
 	data := RandBase64(32)
 	cookie := &http.Cookie{
-		Name:   "yagpdb-session",
+		Name:   "pagstdb-session",
 		Value:  data,
 		MaxAge: 86400,
 		Path:   "/",

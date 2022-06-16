@@ -463,7 +463,21 @@ func pollRedditQuotes() {
 
 		<-t.C
 	}
+}
 
+var discordStatus *discordStatusStruct
+
+func pollDiscordStatus() {
+	t := time.NewTicker(time.Minute * 5)
+	for {
+		var err error
+		discordStatus, err = getDiscordStatus()
+		if err != nil {
+			logger.WithError(err).Error("failed retrieving Discord's status")
+		}
+
+		<-t.C
+	}
 }
 
 func handleRobotsTXT(w http.ResponseWriter, r *http.Request) {

@@ -94,7 +94,7 @@ func BaseTemplateDataMiddleware(inner http.Handler) http.Handler {
 		}
 
 		baseData["BaseURL"] = BaseURL()
-
+		baseData["DiscordStatus"] = discordStatus
 		for k, v := range globalTemplateData {
 			baseData[k] = v
 		}
@@ -106,7 +106,7 @@ func BaseTemplateDataMiddleware(inner http.Handler) http.Handler {
 }
 
 // SessionMiddleware retrieves a session from the request using the session cookie
-// which is actually just a B64 encoded version of the oatuh2 token from discord for the user
+// which is actually just a B64 encoded version of the oauth2 token from discord for the user
 func SessionMiddleware(inner http.Handler) http.Handler {
 	mw := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

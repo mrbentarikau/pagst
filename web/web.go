@@ -16,6 +16,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/patreon"
 	yagtmpl "github.com/mrbentarikau/pagst/common/templates"
+
 	"github.com/mrbentarikau/pagst/frontend"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/web/discordblog"
@@ -98,14 +99,14 @@ func init() {
 		"roleOptions":       tmplRoleDropdown,
 		"roleOptionsMulti":  tmplRoleDropdownMutli,
 
-		"textChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews}, "#"),
-		"textChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews}, "#"),
+		"textChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews, discordgo.ChannelTypeGuildVoice}),
+		"textChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews, discordgo.ChannelTypeGuildVoice}),
 
-		"voiceChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildVoice}, ""),
-		"voiceChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildVoice}, ""),
+		"voiceChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildVoice}),
+		"voiceChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildVoice}),
 
-		"catChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildCategory}, ""),
-		"catChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildCategory}, ""),
+		"catChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildCategory}),
+		"catChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildCategory}),
 	})
 
 	Templates = Templates.Funcs(yagtmpl.StandardFuncMap)
@@ -163,6 +164,7 @@ func Run() {
 	go pollCommandsRan()
 	go pollCCsRan()
 	go pollAMV2sRan()
+	go pollDiscordStatus()
 	go pollRedditQuotes()
 
 	blogChannel := confAnnouncementsChannel.GetInt()

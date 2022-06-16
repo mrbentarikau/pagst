@@ -10,6 +10,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/templates"
+
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 )
@@ -84,6 +85,7 @@ func tmplRoleDropdown(roles []discordgo.Role, highestBotRole *discordgo.Role, ar
 			output += `selected`
 		}
 		output += ">" + template.HTMLEscapeString(emptyName) + "</option>\n"
+		output += `<optgroup label="────────────"></optgroup>`
 	}
 
 	found := false
@@ -92,7 +94,12 @@ func tmplRoleDropdown(roles []discordgo.Role, highestBotRole *discordgo.Role, ar
 		if k == len(roles)-1 {
 			break
 		}
-		if role.Managed && highestBotRole != nil {
+
+		/*if role.Managed && highestBotRole != nil {
+			continue
+		}*/
+
+		if role.Managed {
 			continue
 		}
 
@@ -148,7 +155,11 @@ OUTER:
 		}
 
 		// Allow the selection of managed roles in cases where we do not assign them (for filters and such for example)
-		if role.Managed && highestBotRole != nil {
+		/*if role.Managed && highestBotRole != nil {
+			continue
+		}*/
+
+		if role.Managed {
 			continue
 		}
 
@@ -182,8 +193,8 @@ OUTER:
 	return template.HTML(builder.String())
 }
 
-func tmplChannelOpts(channelTypes []discordgo.ChannelType, optionPrefix string) interface{} {
-	optsBuilder := tmplChannelOptsMulti(channelTypes, optionPrefix)
+func tmplChannelOpts(channelTypes []discordgo.ChannelType) interface{} {
+	optsBuilder := tmplChannelOptsMulti(channelTypes)
 	return func(channels []dstate.ChannelState, selection interface{}, allowEmpty bool, emptyName string) template.HTML {
 
 		// const unknownName = "Deleted channel"
@@ -216,20 +227,28 @@ func tmplChannelOpts(channelTypes []discordgo.ChannelType, optionPrefix string) 
 	}
 }
 
-func tmplChannelOptsMulti(channelTypes []discordgo.ChannelType, optionPrefix string) func(channels []dstate.ChannelState, selections []int64) template.HTML {
+func tmplChannelOptsMulti(channelTypes []discordgo.ChannelType) func(channels []dstate.ChannelState, selections []int64) template.HTML {
 	return func(channels []dstate.ChannelState, selections []int64) template.HTML {
 
 		var builder strings.Builder
 
-		channelOpt := func(id int64, name string) {
+		channelOpt := func(id int64, name string, channelType discordgo.ChannelType) {
 			builder.WriteString(`<option value="` + discordgo.StrID(id) + "\"")
 			for _, selected := range selections {
 				if selected == id {
 					builder.WriteString(" selected")
 				}
 			}
-
-			builder.WriteString(">" + template.HTMLEscapeString(name) + "</option>")
+			var prefix string
+			switch channelType {
+			case discordgo.ChannelTypeGuildText:
+				prefix = "#"
+			case discordgo.ChannelTypeGuildVoice:
+				prefix = "🔊"
+			default:
+				prefix = ""
+			}
+			builder.WriteString(">" + template.HTMLEscapeString(prefix+name) + "</option>")
 		}
 
 		// Channels without a category
@@ -238,7 +257,7 @@ func tmplChannelOptsMulti(channelTypes []discordgo.ChannelType, optionPrefix str
 				continue
 			}
 
-			channelOpt(c.ID, optionPrefix+c.Name)
+			channelOpt(c.ID, c.Name, c.Type)
 		}
 
 		// Group channels by category
@@ -254,7 +273,7 @@ func tmplChannelOptsMulti(channelTypes []discordgo.ChannelType, optionPrefix str
 						continue
 					}
 
-					channelOpt(c.ID, optionPrefix+c.Name)
+					channelOpt(c.ID, c.Name, c.Type)
 				}
 				builder.WriteString("</optgroup>")
 			}

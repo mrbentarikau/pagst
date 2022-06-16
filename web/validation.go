@@ -342,7 +342,7 @@ func ValidateStringField(s string, tags *ValidationTag, guild *dstate.GuildSet) 
 		}
 	}
 
-	// Check what kind of string field it is, and perform the needed vliadation depending on type
+	// Check what kind of string field it is, and perform the needed validation depending on type
 	switch kind {
 	case "template":
 		err = ValidateTemplateField(s, maxLen)
