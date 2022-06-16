@@ -12,8 +12,8 @@ import (
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/common/pubsub"
-	"github.com/mrbentarikau/pagst/web"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/web"
 	"goji.io"
 	"goji.io/pat"
 )
@@ -21,10 +21,10 @@ import (
 //go:embed assets/streaming.html
 var PageHTML string
 
-type ConextKey int
+type ContextKey int
 
 const (
-	ConextKeyConfig ConextKey = iota
+	ContextKeyConfig ContextKey = iota
 )
 
 var panelLogKey = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "streaming_settings_updated", FormatString: "Updated streaming settings"})
@@ -64,7 +64,7 @@ func baseData(inner http.Handler) http.Handler {
 			return
 		}
 		tmpl["StreamingConfig"] = config
-		inner.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ConextKeyConfig, config)))
+		inner.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ContextKeyConfig, config)))
 	}
 
 	return http.HandlerFunc(mw)

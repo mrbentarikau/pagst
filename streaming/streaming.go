@@ -28,7 +28,7 @@ func RegisterPlugin() {
 }
 
 type Config struct {
-	Enabled bool `json:"enabled" schema:"enabled"` // Wether streaming notifications is enabled or not
+	Enabled bool `json:"enabled" schema:"enabled"` // Weather streaming notifications is enabled or not
 
 	// Give a role to people streaming
 	GiveRole int64 `json:"give_role,string" schema:"give_role" valid:"role,true"`
@@ -48,7 +48,7 @@ type Config struct {
 }
 
 type LegacyConfig struct {
-	Enabled bool `json:"enabled" schema:"enabled"` // Wether streaming notifications is enabled or not
+	Enabled bool `json:"enabled" schema:"enabled"` // Weather streaming notifications is enabled or not
 
 	// Give a role to people streaming
 	GiveRole string `json:"give_role" schema:"give_role" valid:"role,true"`
