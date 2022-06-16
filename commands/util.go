@@ -82,7 +82,7 @@ func (d *DurationArg) HelpName() string {
 }
 
 func (d *DurationArg) SlashCommandOptions(def *dcmd.ArgDef) []*discordgo.ApplicationCommandOption {
-	return []*discordgo.ApplicationCommandOption{def.StandardSlashCommandOption(discordgo.CommandOptionTypeString)}
+	return []*discordgo.ApplicationCommandOption{def.StandardSlashCommandOption(discordgo.ApplicationCommandOptionString)}
 }
 
 type DurationOutOfRangeError struct {
@@ -284,7 +284,7 @@ func (ma *MemberArg) HelpName() string {
 }
 
 func (ma *MemberArg) SlashCommandOptions(def *dcmd.ArgDef) []*discordgo.ApplicationCommandOption {
-	return []*discordgo.ApplicationCommandOption{def.StandardSlashCommandOption(discordgo.CommandOptionTypeUser)}
+	return []*discordgo.ApplicationCommandOption{def.StandardSlashCommandOption(discordgo.ApplicationCommandOptionUser)}
 }
 
 type EphemeralOrGuild struct {
@@ -307,7 +307,7 @@ func (e *EphemeralOrGuild) Send(data *dcmd.Data) ([]*discordgo.Message, error) {
 		send := &discordgo.MessageSend{
 			Content:         e.Content,
 			Embeds:          []*discordgo.MessageEmbed{e.Embed},
-			AllowedMentions: discordgo.AllowedMentions{},
+			AllowedMentions: &discordgo.AllowedMentions{},
 		}
 
 		return data.SendFollowupMessage(send, discordgo.AllowedMentions{})
@@ -339,11 +339,13 @@ func (e *EphemeralOrNone) Send(data *dcmd.Data) ([]*discordgo.Message, error) {
 		// 	Content: "Failed running the command.",
 		// })
 
-		// Yeah so because the original reaction response is not marked as ephemeral, and there's no way to change that, just delete it i guess...
-		// because otherwise the followup message turns into the original response
-		err := data.Session.DeleteInteractionResponse(common.BotApplication.ID, data.SlashCommandTriggerData.Interaction.Token)
-		if err != nil {
-			return nil, err
+		if yc, ok := data.Cmd.Command.(*YAGCommand); ok && !yc.IsResponseEphemeral {
+			// Yeah so because the original reaction response is not marked as ephemeral, and there's no way to change that, just delete it i guess...
+			// because otherwise the followup message turns into the original response
+			err := data.Session.DeleteInteractionResponse(common.BotApplication.ID, data.SlashCommandTriggerData.Interaction.Token)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		m, err := data.Session.CreateFollowupMessage(common.BotApplication.ID, data.SlashCommandTriggerData.Interaction.Token, params)
@@ -416,7 +418,7 @@ func (ra *RoleArg) ParseFromInteraction(def *dcmd.ArgDef, data *dcmd.Data, optio
 }
 
 func (ra *RoleArg) SlashCommandOptions(def *dcmd.ArgDef) []*discordgo.ApplicationCommandOption {
-	return []*discordgo.ApplicationCommandOption{def.StandardSlashCommandOption(discordgo.CommandOptionTypeRole)}
+	return []*discordgo.ApplicationCommandOption{def.StandardSlashCommandOption(discordgo.ApplicationCommandOptionRole)}
 }
 
 func (ra *RoleArg) ExtractID(part string, data *dcmd.Data) interface{} {
