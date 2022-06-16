@@ -399,8 +399,6 @@ $(function(){
     //partMap = partMap.sort((a,b) => a.name > b.name)
     {{end}}
 
-    console.log("PAGST_partMap",partMap);
-
     function namePrefixFromKind(kind){
         namePrefix = "Triggers."
         if(kind == 1){
@@ -420,7 +418,6 @@ $(function(){
         var rowIndex = tbody.children().length;
         var row = createPartRow(kind, rowIndex)
 
-        console.log("Creating new: ", kind, rowIndex)
         tbody.append(row);
     })
 

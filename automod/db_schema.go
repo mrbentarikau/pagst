@@ -109,4 +109,9 @@ CREATE INDEX IF NOT EXISTS automod_triggered_rules_guild_idx ON automod_triggere
 CREATE INDEX IF NOT EXISTS automod_triggered_rules_rule_id_idx on automod_triggered_rules(rule_id);
 `, `
 CREATE INDEX IF NOT EXISTS automod_triggered_rules_trigger_idx ON automod_triggered_rules(trigger_id);
+`, `
+CREATE INDEX IF NOT EXISTS automod_rules_ruleset_idx ON automod_rules(ruleset_id);
+`, `
+CREATE INDEX IF NOT EXISTS automod_ruleset_conditions_ruleset_idx ON automod_ruleset_conditions(ruleset_id);
+
 `}

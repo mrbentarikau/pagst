@@ -416,6 +416,76 @@ func (mute *MuteUserEffect) MergeDuplicates(data []interface{}) interface{} {
 
 ///////////////////////////////////////////////////////
 
+type TimeoutUserEffect struct{}
+
+type TimeoutUserEffectData struct {
+	Duration     int    `valid:",0,40320,trimspace"`
+	CustomReason string `valid:",0,150,trimspace"`
+}
+
+func (timeout *TimeoutUserEffect) Kind() RulePartType {
+	return RulePartEffect
+}
+
+func (timeout *TimeoutUserEffect) DataType() interface{} {
+	return &TimeoutUserEffectData{}
+}
+
+func (timeout *TimeoutUserEffect) UserSettings() []*SettingDef {
+	return []*SettingDef{
+		&SettingDef{
+			Name:    "Duration (minutes)",
+			Key:     "Duration",
+			Min:     int(moderation.MinTimeOutDuration.Minutes()),
+			Max:     int(moderation.MaxTimeOutDuration.Minutes()),
+			Kind:    SettingTypeInt,
+			Default: 10,
+		},
+		&SettingDef{
+			Name: "Custom message (empty for default)",
+			Key:  "CustomReason",
+			Min:  0,
+			Max:  150,
+			Kind: SettingTypeString,
+		},
+	}
+}
+
+func (timeout *TimeoutUserEffect) Name() (name string) {
+	return "Timeout user"
+}
+
+func (timeout *TimeoutUserEffect) Description() (description string) {
+	return "Timeouts a member"
+}
+
+func (timeout *TimeoutUserEffect) Apply(ctxData *TriggeredRuleData, settings interface{}) error {
+	// if a user is timed out, do not apply the effect again.
+	member := ctxData.MS.Member
+	if member.TimeoutExpiresAt != nil && member.TimeoutExpiresAt.After(time.Now()) {
+		return nil
+	}
+
+	settingsCast := settings.(*TimeoutUserEffectData)
+
+	reason := "amV2:\n"
+	if settingsCast.CustomReason != "" {
+		reason += settingsCast.CustomReason
+	} else {
+		reason += ctxData.ConstructReason(true)
+	}
+
+	duration := time.Duration(settingsCast.Duration) * time.Minute
+	err := moderation.TimeoutUser(nil, ctxData.GS.ID, ctxData.CS, ctxData.Message, common.BotUser, reason, &ctxData.MS.User, duration)
+	return err
+}
+
+func (timeout *TimeoutUserEffect) MergeDuplicates(data []interface{}) interface{} {
+	return data[0]
+}
+
+///////////////////////////////////////////////////////
+
 type WarnUserEffect struct{}
 
 type WarnUserEffectData struct {
@@ -771,7 +841,7 @@ func (send *SendChannelMessageEffect) Apply(ctxData *TriggeredRuleData, settings
 
 	if settingsCast.PingUser {
 		msgSend.Content = "<@" + discordgo.StrID(ctxData.MS.User.ID) + ">\n"
-		msgSend.AllowedMentions = discordgo.AllowedMentions{
+		msgSend.AllowedMentions = &discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"sort"
 
@@ -197,6 +198,10 @@ func (p *Plugin) checkViolationTriggers(ctxData *TriggeredRuleData, violationNam
 
 func (p *Plugin) handleGuildMemberUpdate(evt *eventsystem.EventData) {
 	evtData := evt.GuildMemberUpdate()
+	// ignore timed-out users
+	if evtData.Member.TimeoutExpiresAt != nil && evtData.Member.TimeoutExpiresAt.After(time.Now()) {
+		return
+	}
 
 	ms := dstate.MemberStateFromMember(evtData.Member)
 
