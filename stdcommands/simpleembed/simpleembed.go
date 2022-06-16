@@ -97,10 +97,14 @@ var Command = &commands.YAGCommand{
 			}
 		}
 
+		if discordgo.IsEmbedEmpty(embed) {
+			return "Cannot send an empty Embed", nil
+		}
+
 		messageSend := &discordgo.MessageSend{
 			Content:         content,
 			Embeds:          []*discordgo.MessageEmbed{embed},
-			AllowedMentions: discordgo.AllowedMentions{},
+			AllowedMentions: &discordgo.AllowedMentions{},
 		}
 		_, err := common.BotSession.ChannelMessageSendComplex(cID, messageSend)
 

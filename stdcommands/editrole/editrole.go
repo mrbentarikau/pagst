@@ -9,9 +9,9 @@ import (
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/moderation"
 	"golang.org/x/image/colornames"
 )
 
@@ -100,7 +100,7 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 
 	_, err := common.BotSession.ChannelMessageSendComplex(cID, &discordgo.MessageSend{
 		Content:         fmt.Sprintf("__**Role(%d) properties:**__\n\n**Name **: `%s`\n**Color **: `%d`\n**Mentionable **: `%t`\n**Hoisted **: `%t`\n**Permissions **: `%d`", role.ID, name, color, mentionable, hoisted, perms),
-		AllowedMentions: discordgo.AllowedMentions{},
+		AllowedMentions: &discordgo.AllowedMentions{},
 	})
 
 	if err != nil {

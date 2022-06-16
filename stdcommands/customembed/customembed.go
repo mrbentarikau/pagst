@@ -25,6 +25,11 @@ var Command = &commands.YAGCommand{
 		if err != nil {
 			return "Failed parsing json: " + err.Error(), err
 		}
+
+		if discordgo.IsEmbedEmpty(parsed) {
+			return "Cannot send an empty embed", nil
+		}
+
 		return parsed, nil
 	},
 }

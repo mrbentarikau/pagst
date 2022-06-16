@@ -2,7 +2,7 @@ package inspire
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 
@@ -10,7 +10,6 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
-	"github.com/lunixbochs/vtclean"
 )
 
 var Command = &commands.YAGCommand{
@@ -35,7 +34,7 @@ var Command = &commands.YAGCommand{
 
 		embed := &discordgo.MessageEmbed{
 			Description: descr,
-			Color:       int(rand.Int63n(16777215)),
+			Color:       int(rand.Int63n(0xffffff)),
 			Image: &discordgo.MessageEmbedImage{
 				URL: inspireURL,
 			},
@@ -52,7 +51,7 @@ func inspireFromAPI() (string, error) {
 		return "", err
 	}
 
-	req.Header.Set("User-Agent", "curlPAGST/7.65.1")
+	req.Header.Set("User-Agent", common.BotUserAgent)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -65,12 +64,13 @@ func inspireFromAPI() (string, error) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
 
-	inspireReturn := vtclean.Clean(string(body), false)
+	//inspireReturn := vtclean.Clean(string(body), false)
+	inspireReturn := string(body)
 
 	return inspireReturn, nil
 }
