@@ -11,81 +11,154 @@
     <h2>YouTube upload feeds</h2>
 </header>
 {{template "cp_alerts" .}}
+
+
+<div class="row">
+    <div class="col">
+        <div class="tabs">
+            <ul class="nav nav-tabs">
+                <li class="nav-item active"><a class="nav-link show active" href="#fast-feeds"
+                        aria-controls="fast-feeds" role="tab" data-toggle="tab">
+                        Add Feed
+                    </a></li>
+                <li class="nav-item"><a class="nav-link" href="#slow-feeds" aria-controls="slow-feeds" role="tab"
+                        data-toggle="tab">
+                        Subscribed Feeds
+                    </a></li>
+            </ul>
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active" id="fast-feeds">
+                    {{mTemplate "youtube_feed_tab_content" "Dot" . "AddNew" true}}</div>
+                <div role="tabpanel" class="tab-pane" id="slow-feeds">
+                    {{mTemplate "youtube_feed_tab_content" "Dot" . "AddNew" false}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "cp_footer" .}}
+{{end}}
 <!-- /.row -->
+{{define "youtube_feed_tab_content"}}
 <div class="row">
     <div class="col-lg-12">
+        {{if .AddNew}}
         <section class="card">
             <header class="card-header">
-                <h2 class="card-title">New feed</h2>
+                <h2 class="card-title">New Feed & Announce</h2>
             </header>
             <div class="card-body">
-                <form class="" method="post" action="/manage/{{.ActiveGuild.ID}}/youtube">
-                    <p><b>Provide either channel ID OR username.</b> Only one of them, not both.<br>
-                        When you go to the channel page, if the address bar has for example
-                        <code>youtube.com/user/idlevideos</code> then the username is idlevideos<br>
-                        If it's <code>youtube.com/channel/UCt-ERbX-2yA6cAqfdKOlUwQ</code> then the id is
-                        <code>UCt-ERbX-2yA6cAqfdKOlUwQ</code><br/>ProTip™: easiest way to get the channel ID is while video is open,<br/>clicking on username will
-                        bring you back to channel's home page, URL has channel ID in it.</p>
-                        <p><b>If Server Channel is set to "None" the added or already active YouTube feed will be disabled.</b></p>
-                    <div class="form-group">
-                        <label for="yt-channel-id">YouTube Channel ID</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-prepend"><span
-                                    class="input-group-text">youtube.com/channel/</span></span>
-                            <input type="text" class="form-control" id="yt-channel-id" name="YoutubeChannelID">
+                <form class="" method="post" action="/manage/{{.Dot.ActiveGuild.ID}}/youtube">
+                    <div class="form-row mb-5">
+                        <div class="form-group col mb-0">
+                            <p><b>Provide either channel ID or username.</b> Only one of them, not both.<br/>
+                            <sup>*</sup>Custom/Video URL search for possible channel titles and add the first result. Not so reliable as above options.</p>
+                            <p>When you go to the channel page, if the address bar has for example
+                            <code>youtube.com/user/idlevideos</code> then the username is idlevideos.<br/>
+                            If it's <code>youtube.com/channel/UCt-ERbX-2yA6cAqfdKOlUwQ</code> then the id is
+                            <code>UCt-ERbX-2yA6cAqfdKOlUwQ</code><br/></p>
+                            <p><b>If Server Channel is set to "None" the added or already active YouTube feed will be disabled.</b></p>
+                            <p><b>NB! </b>If Announce Message is enabled mentions go through templating.</p>
+                        </div>
+                        <div class="form-group col mb-0">
+                            {{checkbox "AnnounceEnabled" "yt-announce-enabled" `<h2 class="card-title">Enable</h2>` .Dot.AnnounceEnabled}}
+                            <label>YouTube Announce Message (<span class="announce-length-counter">{{toRune .Dot.YoutubeAnnounceMsg|len}}</span>/2000)</label>
+                            <textarea class="form-control" rows="5" id="yt-announce-msg" name="YoutubeAnnounceMsg" oninput="onCCChanged(this)">{{.Dot.YoutubeAnnounceMsg}}</textarea>
+                            <p class="help-block">Additional template data is:<code>{{"{{.ChannelID}}"}}</code>,<code>{{"{{.ChannelName}}"}}</code>,<code>{{"{{.LiveStream}}"}}</code>,<code>{{"{{.SelectedRoleID}}"}}</code>,<code>{{"{{.VideoID}}"}}</code>,<code>{{"{{.URL}}"}}</code></p>
+                            <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstSubmitSave" class="btn btn-sm btn-success btn-block" formaction="/manage/{{.Dot.ActiveGuild.ID}}/youtube/handle_announce" data-async-form-alertsonly>Save</button>
+                            </span>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="yt-channel-user">YouTube Username</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-prepend"><span
+                    <div class="form-row mb-3">
+                        <div class="form-group col mb-0">
+                            <label for="yt-channel-id">YouTube Channel ID</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-prepend"><span
+                                    class="input-group-text">youtube.com/channel/</span></span>
+                                <input type="text" class="form-control" id="yt-channel-id" name="YoutubeChannelID">
+                            </div>
+                        </div>
+                        <div class="form-group col mb-0">
+                            <label for="yt-channel-user">YouTube Username</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-prepend"><span
                                     class="input-group-text">youtube.com/user/</span></span>
-                            <input type="text" class="form-control" id="yt-channel-user" name="YoutubeChannelUser">
+                                <input type="text" class="form-control" id="yt-channel-user" name="YoutubeChannelUser">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row mb-5">
+                        <div class="form-group col mb-0">
+                            <label for="yt-channel-user">YouTube Custom URL<sup>*</sup></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-prepend"><span
+                                    class="input-group-text">youtube.com/c/</span></span>
+                                <input type="text" class="form-control" id="yt-custom-url" name="YoutubeCustomURL">
+                            </div>
+                        </div>
+                        <div class="form-group col mb-0">
+                            <label for="yt-channel-user">YouTube Video URL<sup>*</sup></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-prepend"><span
+                                    class="input-group-text">youtube.com/watch?v=</span></span>
+                                <input type="text" class="form-control" id="yt-video-url" name="YoutubeVideoURL">
+                            </div>
                         </div>
                     </div>
                     <div class="form-row mb-0">
                         <div class="form-group col mb-0">
                             <label for="channel">Discord Channel</label>
                             <select id="channel" class="form-control" name="DiscordChannel" data-requireperms-send>
-                                {{textChannelOptions .ActiveGuild.Channels nil true "None"}}
+                                {{textChannelOptions .Dot.ActiveGuild.Channels nil true "None"}}
                             </select>
                         </div>
                         <div class="form-group col mb-0">
                             <label for="mention-role">Mention role</label>
                             <select id="mention-role" name="MentionRole" class="form-control">
-                                {{roleOptions .ActiveGuild.Roles nil .MentionRole "None selected"}}
+                                {{roleOptions .Dot.ActiveGuild.Roles nil .Dot.MentionRole "None selected"}}
                             </select>
                         </div>
                     </div>
-                    {{checkbox "MentionEveryone" "new-mention-everyone" `Mention everyone` false}}
+                    <table class="mb-3">
+                        <tr>
+                            <td style="padding-right:42px">
+                                {{checkbox "MentionEveryone" "new-mention-everyone" `Mention everyone` false}}
+                            </td>
+                            <td>
+                                {{checkbox "PublishLivestream" "new-publish-livestream" `Publish livestreams` false}}
+                            </td>
+                        </tr>
+                    </table>
                     <button type="submit" class="btn btn-success btn-block">Add</button>
                 </form>
             </div>
         </section>
+        {{else}}
         <section class="card">
             <header class="card-header">
-                <h2 class="card-title">Current subscribed channels</h2>
+                <h2 class="card-title">Current subscribed YouTube channels</h2>
             </header>
             <div class="card-body">
-                {{$dot := .}}
-                {{range .Subs}}
+                {{with .Dot.Subs}}<span>Subscribed feeds: {{len .}}</span><br/><br/>{{end}}
+                {{$dot := .Dot}}
+                {{range .Dot.Subs -}}
                 <form id="sub-item-{{.ID}}" data-async-form method="post"
                     action="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{.ID}}/update"><input type="text"
-                        class="hidden form-control" name="id" value="{{.ID}}"></form>{{end}}
-
+                        class="hidden form-control" name="id" value="{{.ID}}"></form>
+                {{- end}}
                 <table class="table table-responsive-md table-sm mb-0">
                     <thead>
                         <tr>
                             <th width="15%">Youtube</th>
-                            <th width=25%>Discord channel</th>
-                            <th width=25%>Mention role</th>
+                            <th width=20%>Discord channel</th>
+                            <th width=20%>Mention role</th>
                             <th>Mention everyone</th>
+                            <th>Publish livestreams</th>
                             <th>Enabled</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {{range .Subs}}
+                        {{range .Dot.Subs}}
                         <tr class="{{if not .Enabled}}feed-item-disabled{{end}}">
                             <td>
                                 <p class="form-control-static"><a class="feedlink" href="https://youtube.com/channel/{{.YoutubeChannelID}}" target="_blank"><b>{{.YoutubeChannelName}}</b></a><br/>
@@ -106,6 +179,9 @@
                                 {{checkbox "MentionEveryone" (joinStr "" "mention-everyone-" .ID) `Mention everyone` .MentionEveryone (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
+                                {{checkbox "PublishLivestream" (joinStr "" "publish-livestream-" .ID) `Publish livestreams` .PublishLivestream (joinStr "" `form="sub-item-` .ID `"`)}}
+                            </td>
+                            <td>
                                 {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Enabled` .Enabled (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
@@ -120,6 +196,7 @@
                 </table>
             </div>
         </section>
+        {{end}}
         <!-- /.card -->
     </div>
     <!-- /.col-lg-12 -->
@@ -129,24 +206,84 @@
     $(function () {
         var idInput = $("#yt-channel-id");
         var userInput = $("#yt-channel-user");
+        var cURLInput = $("#yt-custom-url");
+        var vURLInput = $("#yt-video-url");
 
         userInput.on("input", function (arg) {
             if (userInput.val().length > 0) {
                 idInput.attr("disabled", true);
+                cURLInput.attr("disabled", true);
+                vURLInput.attr("disabled", true);
             } else {
                 idInput.attr("disabled", false);
+                cURLInput.attr("disabled", false);
+                vURLInput.attr("disabled", false);
             }
         })
-
 
         idInput.on("input", function (arg) {
             if (idInput.val().length > 0) {
                 userInput.attr("disabled", true);
+                cURLInput.attr("disabled", true);
+                vURLInput.attr("disabled", true);
             } else {
                 userInput.attr("disabled", false);
+                cURLInput.attr("disabled", false);
+                vURLInput.attr("disabled", false);
+            }
+        })
+
+        cURLInput.on("input", function (arg) {
+            if (cURLInput.val().length > 0) {
+                userInput.attr("disabled", true);
+                idInput.attr("disabled", true);
+                vURLInput.attr("disabled", true);
+            } else {
+                userInput.attr("disabled", false);
+                idInput.attr("disabled", false);
+                vURLInput.attr("disabled",false);
+            }
+        })
+
+        vURLInput.on("input", function (arg) {
+            if (vURLInput.val().length > 0) {
+                userInput.attr("disabled", true);
+                idInput.attr("disabled", true);
+                cURLInput.attr("disabled", true);
+            } else {
+                userInput.attr("disabled", false);
+                idInput.attr("disabled", false);
+                cURLInput.attr("disabled", false);
             }
         })
     })
 </script>
-{{template "cp_footer" .}}
+<script type="text/javascript">
+	function lengthScan(scanThis){
+        var combinedLength = 0;
+
+        scanThis.forEach(function (elem) {
+            // The data received on the backend contains "\r\n" while it is simply "\n" on the JS side.
+            // Adjust for this discrepancy by double-counting newline characters.
+            const newlines = elem.value.match(/\n/g);
+            if (newlines) combinedLength += newlines.length;
+            combinedLength += Array.from(elem.value).length;
+        })
+        return combinedLength;
+    }
+
+    function onCCChanged(textArea) {
+        var textAreas = textArea.parentElement.querySelectorAll('textarea');
+        var combinedLength = lengthScan(textAreas);
+
+        var display = textArea.parentElement.querySelector(".announce-length-counter")
+        display.textContent = combinedLength
+
+        if (combinedLength > 2000) {
+            display.classList.add("text-danger");
+        } else {
+            display.classList.remove("text-danger");
+        }
+    }
+</script>
 {{end}}

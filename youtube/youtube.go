@@ -60,6 +60,11 @@ func RegisterPlugin() {
 	common.RegisterPlugin(p)
 }
 
+type AnnouncementMessage struct {
+	Enabled     bool
+	AnnounceMsg string `json:"yt_announce_msg" valid:"template,2000"`
+}
+
 type ChannelSubscription struct {
 	common.SmallModel
 	GuildID            string
@@ -68,6 +73,7 @@ type ChannelSubscription struct {
 	YoutubeChannelName string
 	MentionEveryone    bool
 	MentionRole        string
+	PublishLivestream  bool
 	Enabled            bool `sql:"DEFAULT:true"`
 }
 

@@ -43,10 +43,15 @@ var (
 type Form struct {
 	YoutubeChannelID   string
 	YoutubeChannelUser string
+	YoutubeCustomURL   string
+	YoutubeVideoURL    string
+	YoutubeAnnounceMsg string `json:"yt_announce_msg" valid:"template,2000"`
+	AnnounceEnabled    bool
 	DiscordChannel     int64 `valid:"channel,true"`
 	ID                 uint
 	MentionEveryone    bool
 	MentionRole        int64 `valid:"role,true"`
+	PublishLivestream  bool
 	Enabled            bool
 }
 
@@ -62,7 +67,7 @@ func (p *Plugin) InitWeb() {
 	web.CPMux.Handle(pat.New("/youtube/*"), ytMux)
 	web.CPMux.Handle(pat.New("/youtube"), ytMux)
 
-	// Alll handlers here require guild channels present
+	// All handlers here require guild channels present
 	ytMux.Use(web.RequireBotMemberMW)
 	ytMux.Use(web.RequirePermMW(discordgo.PermissionMentionEveryone))
 
@@ -75,6 +80,7 @@ func (p *Plugin) InitWeb() {
 
 	ytMux.Handle(pat.Post(""), addHandler)
 	ytMux.Handle(pat.Post("/"), addHandler)
+	ytMux.Handle(pat.Post("/handle_announce"), web.ControllerPostHandler(p.HandleAnnouncement, mainGetHandler, Form{}))
 	ytMux.Handle(pat.Post("/:item/update"), web.ControllerPostHandler(BaseEditHandler(p.HandleEdit), mainGetHandler, Form{}))
 	ytMux.Handle(pat.Post("/:item/delete"), web.ControllerPostHandler(BaseEditHandler(p.HandleRemove), mainGetHandler, nil))
 	ytMux.Handle(pat.Get("/:item/delete"), web.ControllerPostHandler(BaseEditHandler(p.HandleRemove), mainGetHandler, nil))
@@ -82,6 +88,9 @@ func (p *Plugin) InitWeb() {
 	// The handler from pubsubhub
 	web.RootMux.Handle(pat.New("/yt_new_upload/"+confWebsubVerifytoken.GetString()), http.HandlerFunc(p.HandleFeedUpdate))
 }
+
+const DefaultAnnounceMessage = `**{{.ChannelName}}** just uploaded a new video!
+{{.URL}}`
 
 func (p *Plugin) HandleYoutube(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
 	ctx := r.Context()
@@ -93,7 +102,15 @@ func (p *Plugin) HandleYoutube(w http.ResponseWriter, r *http.Request) (web.Temp
 		return templateData, err
 	}
 
+	templateData["YoutubeAnnounceMsg"] = DefaultAnnounceMessage
+	var announceMsg AnnouncementMessage
+	err = common.GetRedisJson("youtube_announce_message:"+discordgo.StrID(ag.ID), &announceMsg)
+	if err == nil && announceMsg.AnnounceMsg != "" {
+		templateData["YoutubeAnnounceMsg"] = announceMsg.AnnounceMsg
+	}
+
 	templateData["Subs"] = subs
+	templateData["AnnounceEnabled"] = announceMsg.Enabled
 	templateData["VisibleURL"] = "/manage/" + discordgo.StrID(ag.ID) + "/youtube"
 
 	return templateData, nil
@@ -108,19 +125,20 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 	common.GORM.Model(&ChannelSubscription{}).Where("guild_id = ?", activeGuild.ID).Count(&count)
 
 	if count >= MaxFeedsForContext(ctx) {
-		return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Max %d youtube feeds allowed (%d for premium servers)", GuildMaxFeeds, GuildMaxFeedsPremium))), nil
+		return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Max %d YouTube feeds allowed (%d for premium servers)", GuildMaxFeeds, GuildMaxFeedsPremium))), nil
 	}
 
 	data := ctx.Value(common.ContextKeyParsedForm).(*Form)
 
 	cID := trimYouTubeURLParts(data.YoutubeChannelID)
 	username := trimYouTubeURLParts(data.YoutubeChannelUser)
-	if cID == "" && username == "" {
-		return templateData.AddAlerts(web.ErrorAlert("Neither channelid or username specified.")), errors.New("ChannelID and username not specified")
+	cURL := trimYouTubeURLParts(data.YoutubeCustomURL)
+	vURL := trimYouTubeURLParts(data.YoutubeVideoURL)
+	if cID == "" && username == "" && cURL == "" && vURL == "" {
+		return templateData.AddAlerts(web.ErrorAlert("Neither channelID or username specified.")), errors.New("ChannelID and username not specified")
 	}
 
-	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, data.YoutubeChannelID, data.YoutubeChannelUser, data.MentionEveryone, data.MentionRole)
-	//sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, cID, username, data.MentionEveryone)
+	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, data.YoutubeChannelID, data.YoutubeChannelUser, data.YoutubeCustomURL, data.YoutubeVideoURL, data.MentionEveryone, data.MentionRole, data.PublishLivestream)
 	if err != nil {
 		if err == ErrNoChannel {
 			return templateData.AddAlerts(web.ErrorAlert("No channel by that id/username found")), errors.New("channel not found")
@@ -177,6 +195,18 @@ func BaseEditHandler(inner web.ControllerHandlerFunc) web.ControllerHandlerFunc 
 	}
 }
 
+func (p *Plugin) HandleAnnouncement(w http.ResponseWriter, r *http.Request) (templateData web.TemplateData, err error) {
+	ctx := r.Context()
+	guild, templateData := web.GetBaseCPContextData(ctx)
+	data := ctx.Value(common.ContextKeyParsedForm).(*Form)
+
+	var announceMsg AnnouncementMessage
+	announceMsg.AnnounceMsg = data.YoutubeAnnounceMsg
+	announceMsg.Enabled = data.AnnounceEnabled
+	err = common.SetRedisJson("youtube_announce_message:"+discordgo.StrID(guild.ID), announceMsg)
+	return
+}
+
 func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateData web.TemplateData, err error) {
 	ctx := r.Context()
 	_, templateData = web.GetBaseCPContextData(ctx)
@@ -185,6 +215,7 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 	data := ctx.Value(common.ContextKeyParsedForm).(*Form)
 
 	sub.MentionEveryone = data.MentionEveryone
+	sub.PublishLivestream = data.PublishLivestream
 	sub.ChannelID = discordgo.StrID(data.DiscordChannel)
 	sub.MentionRole = discordgo.StrID(data.MentionRole)
 	if data.DiscordChannel == 0 {
@@ -271,7 +302,7 @@ func (p *Plugin) HandleFeedUpdate(w http.ResponseWriter, r *http.Request) {
 
 	err = p.CheckVideo(parsed.VideoId, parsed.ChannelID)
 	if err != nil {
-		web.CtxLogger(ctx).WithError(err).Error("Failed parsing checking new yotuube video")
+		web.CtxLogger(ctx).WithError(err).Error("Failed parsing checking new YouTube video")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
