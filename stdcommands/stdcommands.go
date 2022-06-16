@@ -63,6 +63,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/unbanserver"
 	"github.com/mrbentarikau/pagst/stdcommands/undelete"
 	"github.com/mrbentarikau/pagst/stdcommands/viewperms"
+	"github.com/mrbentarikau/pagst/stdcommands/voidservers"
 	"github.com/mrbentarikau/pagst/stdcommands/weather"
 	"github.com/mrbentarikau/pagst/stdcommands/wolframalpha"
 	"github.com/mrbentarikau/pagst/stdcommands/wouldyourather"
@@ -151,6 +152,7 @@ func (p *Plugin) AddCommands() {
 		topevents.Command,
 		topservers.Command,
 		unbanserver.Command,
+		voidservers.Command,
 	)
 
 	statedbg.Commands()
