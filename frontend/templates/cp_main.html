@@ -148,6 +148,16 @@
     {{template "googleAnalytics" .}}
 </body>
 
+
+<script>
+    var observer = new MutationObserver(function(mutations) {
+        $("a").filter(function(){
+            return this.host !== location.host
+        }).attr("target","_blank");
+    });
+    observer.observe(document.querySelector("body"), { childList: true, subtree: true });
+</script>
+
 </html>
 {{end}}{{end}}
 
@@ -156,13 +166,20 @@
 <script>
 $(function(){
     showAlerts("{{json .Alerts}}");
-    $.getJSON("https://srhpyqt94yxb.statuspage.io/api/v2/incidents/unresolved.json", function(data) {
+    /*$.getJSON("https://srhpyqt94yxb.statuspage.io/api/v2/incidents/unresolved.json", function(data) {
         if (data.incidents) {
             data.incidents.forEach(function(incident) {
                 addAlertPAGST("warning","Discord's " + incident.status + " an incident: " + incident.name + ". Functionality may be limited.");
             })
         }
-    });
+    });*/
+    {{with .DiscordStatus}}
+        {{if .Incidents}}
+            {{range .Incidents}}
+                 addAlertPAGST("warning","Discord's " + {{.Status}} + " an incident: " + {{.Name}} + ". Functionality may be limited.");
+            {{end}}
+        {{end}}
+    {{end}}
 })
 </script>
 <div id="alerts_pagst">
@@ -199,7 +216,7 @@ For example, to mention a user, you would do <code><@{{"{{"}}.User.ID{{"}}"}}></
 {{end}}
 
 {{/*Specific template helpers*/}}
-{{define "template_helper_user"}}<code>{{"{{"}}.User{{"}}"}}: <a href="https://docs.yagpdb.xyz/reference/templates#user"><code>.User</code> object documentation.</a></code>{{end}}
-{{define "template_helper_guild"}}<code>{{"{{"}}.Guild{{"}}"}}<a href="https://docs.yagpdb.xyz/reference/templates#guild-server"><code>.Guild</code> object reference.</a></code>{{end}}
+{{define "template_helper_user"}}<code>{{"{{"}}.User{{"}}"}}: <a href="https://github.com/mrbentarikau/pagst-rtfm/blob/master/context_data.org#user"><code>.User</code> object documentation.</a></code>{{end}}
+{{define "template_helper_guild"}}<code>{{"{{"}}.Guild{{"}}"}}<a href="https://github.com/mrbentarikau/pagst-rtfm/blob/master/context_data.org#guildserver"><code>.Guild</code> object reference.</a></code>{{end}}
 
 {{define "set_roles"}}<script>var activeGuildRoles = JSON.parse('{{json .ActiveGuild.Roles}}');</script>{{end}}

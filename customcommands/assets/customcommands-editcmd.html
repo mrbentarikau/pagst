@@ -63,7 +63,7 @@
                             <span class="cc-text-trigger-span">{{.CC.TextTrigger}}</span>
                             {{else if eq .CC.TriggerType 1 2 3 4}}:
                             <span class="cc-text-trigger-span">{{or .CC.RegexTrigger .CC.TextTrigger}}</span>
-                            {{else if ne .CC.TriggerType 6}}:
+                            {{else if and (ne .CC.TriggerType 6) (ne .CC.TriggerType 10)}}:
                             Every
                             {{call .GetCCInterval .CC}}
                             {{if eq (call .GetCCIntervalType .CC) 1}}hour(s){{else}}minute(s){{end}}{{end}}
@@ -166,7 +166,7 @@
                                                 <div class="input-group-prepend" id="command-trigger-prepended-prefix">
                                                     <div class="input-group-text">{{.CommandPrefix}}</div>
                                                 </div>
-                                                <input type="text" class="pagst-trigger form-control" name="trigger" placeholder="fun"
+                                                <input type="text" class="pagst-trigger form-control" name="trigger" placeholder="void"
                                                 value="{{.CC.TextTrigger}}" oninput="onTriggerChanged(this)">
                                             </div>
                                             {{checkbox "case_sensitive" "case_sensitive" "Case Sensitive?" .CC.TextTriggerCaseSensitive}}
@@ -179,7 +179,7 @@
                                     <div class="col-sm-12">
                                         <div class="form-group">
                                             <label>Trigger (<span class="trigger-length-counter">{{or (toRune .CC.RegexTrigger|len) (toRune .CC.TextTrigger|len)}}</span>/256)</label>
-                                            <input type="text" class="pagst-trigger form-control" name="regex_trigger" placeholder="fun"
+                                            <input type="text" class="pagst-trigger form-control" name="regex_trigger" placeholder="void"
                                                 value="{{or .CC.RegexTrigger .CC.TextTrigger}}" oninput="onTriggerChanged(this)">
 
                                             {{checkbox "regex_case_sensitive" "regex_case_sensitive" "Case Sensitive?" .CC.RegexTriggerCaseSensitive}}
@@ -286,59 +286,89 @@
                                     <div style="margin: 0 3px 7px 0px">Editor theme:
                                         <select onchange="selectTheme()" id=themeSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;">
                                             <option selected>no CodeMirror</option>
-                                            <option>ayu-dark</option>
-                                            <option>bespin</option>
-                                            <option>cobalt</option>
-                                            <option>darcula</option>
-                                            <option>gruvbox-dark</option>
-                                            <option>mbo</option>
-                                            <option>monokai</option>
-                                            <option>nord</option>
-                                            <option>panda-syntax</option>
-                                            <option>vibrant-ink</option>
-                                            <option>yonce</option>
+                                            {{range cslice "ayu-dark" "bespin" "cobalt" "darcula" "gruvbox-dark" "mbo" "monokai" "nord" "panda-syntax" "vibrant-ink" "yonce"}}
+                                                <option>{{.}}</option>
+                                            {{end}}
                                         </select>
-                                        <span style="margin-left:5px">Auto-close brackets:<i style="position: relative; top: -0.5em; font-size: 75%;"class="fas fa-question-circle" title="If CodeMirror enabled"></i> &nbsp;<select onchange="selectBrackets()" id=bracketsSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;"><option selected>disabled</option><option>enabled</option></select></span><span style="margin-left:5px"><i>(alt+shift+s is quicksave, F11/ESC for fullscreen on/off)</i></span>
+                                        <span style="margin-left:5px">Auto-close brackets:<i style="position: relative; top: -0.5em; font-size: 75%;"class="fas fa-question-circle" title="If CodeMirror enabled"></i> &nbsp;<select onchange="selectBrackets()" id=bracketsSelect style="background-color: #282828;color:#a1a1a1;border-color:#a1a1a1;"><option selected>disabled</option><option>enabled</option></select></span><span style="margin-left:5px"><i>(alt+shift+s is quicksave, alt+shift+c is colour picker, F11/ESC for fullscreen on/off)</i></span>
                                     </div>
                                     <label for="responses">Response (<span class="cc-length-counter">
-                                    {{- $responseLen := 0}}
-                                    {{- range .CC.Responses}}
-                                        {{- $responseLen = add $responseLen (toRune .|len)}}
-                                    {{- end -}}
-                                    {{$responseLen}}</span>/20000)</label>
+                                    {{- with .CC.Responses}}{{- index . 0|toRune|len -}}</span>/20000)</label>{{else}}x/20000{{- end -}}
 
                                     <!-- Use .btn-add for simplicity and let the page loader adjust. -->
-                                    
-                                    {{range .CC.Responses}}
                                     <div class="entry input-group input-group-sm">
-                                            <div class="form-control response-text-area tab-textbox withScrollbar" style="padding-left:0px!important">
-                                                <textarea class="pagst-textarea cc-editor form-control response-text-area tab-textbox withScrollbar" name="responses"
-                                                    placeholder="Command body here" rows="5" id="pagst-textarea" onfocus="textAreaWrapper(this)" oninput="onCCChanged(this)">{{- . -}}
-                                                </textarea>
-                                            </div>
-                                            <span class="input-group-append">
-                                                <button class="btn btn-success btn-add btn-circle" onclick="textAreaWrapper(this),editorToTextArea()" type="button">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
-                                            </span>
-                                    </div>
-                                    
-                                    {{else}}{{/* quite redundant */}}
-                                    <div class="entry input-group  input-group-sm">
-                                        <textarea class="pagst-textarea form-control cc-editor response-text-area tab-textbox" name="responses"
-                                            placeholder="Command body here" rows="5"></textarea>
-                                        <span class="input-group-append">
-                                            <button class="btn btn-success btn-add btn-circle" type="button">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </span>
-                                    </div>
-                                    
-                                    {{end}}
+                                        <div class="form-control response-text-area tab-textbox withScrollbar">
+                                            <textarea class="pagst-textarea cc-editor form-control response-text-area tab-textbox withScrollbar" name="responses"
+                                                    placeholder="Command body here" rows="7" id="pagst-textarea" onfocus="textAreaWrapper(this)" oninput="onCCChanged(this)">{{- with .CC.Responses}}{{- index . 0 -}}{{else}}void{{- end -}}
+                                            </textarea>
+                                        </div>
+                                    </div>                                  
                                     <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstSubmitSave" class="btn btn-sm btn-success btn-block"
                                     formaction="/manage/{{$guild}}/customcommands/commands/{{.CC.LocalID}}/update"
                                     data-async-form-alertsonly>Save</button></span>
                                     <a class="mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#cc-help-modal">Info</a>
+                                    Jump to CC: 
+                                    <select id="ccJumper" style="background-color: #282828;color:#a1a1a1;border-color:#1a1a1a;">
+                                        {{range .CustomCommands}}
+                                            {{$ID := .LocalID}}
+                                            {{$trigType := ""}}
+                                            {{$trigName := ""}}
+                                            {{if eq .GroupID.Int64 $.CC.GroupID.Int64}}
+                                                {{if eq .TriggerType 1 2 3 4}}{{$trigName = print " - " (or .RegexTrigger .TextTrigger "void")}}{{end}}
+                                                {{if eq .TriggerType 0}}
+                                                    {{$trigType = "cmd"}}
+                                                    {{$trigName = print "- " (or .TextTrigger "void")}}
+                                                {{else if eq .TriggerType 1}}
+                                                    {{$trigType = "starts w."}}
+                                                {{else if eq .TriggerType 2}}
+                                                    {{$trigType = "contains"}}
+                                                {{else if eq .TriggerType 3}}
+                                                    {{$trigType = "regex"}}
+                                                {{else if eq .TriggerType 4}}
+                                                    {{$trigType = "ex. match"}}
+                                                {{else if eq .TriggerType 5}}
+                                                    {{if eq (call $.GetCCIntervalType $.CC) 1}}
+                                                        {{$trigType = "hourly interval"}}
+                                                    {{else}}
+                                                        {{$trigType = "minute interval"}}
+                                                    {{end}}
+                                                {{else if eq .TriggerType 6}}
+                                                    {{$trigType = "reaction"}}
+                                                    {{if eq .ReactionTriggerMode 1}}{{$trigType = print $trigType " added"}}
+                                                    {{else if eq .ReactionTriggerMode 2}}{{$trigType = print $trigType " removed"}}
+                                                    {{else}}{{$trigType = print $trigType " added/removed"}}
+                                                    {{end}}
+                                                {{else}}{{$trigType = "none"}}
+                                                {{end}}
+                                                {{if gt (toRune $trigName|len) 64}}{{$trigName = print (slice (toRune $trigName) 0 64|str) "..."}}{{end}}
+                                                {{$option := printf "#%d - %s %s" $ID $trigType $trigName}}
+                                                {{if eq $.CC.LocalID $ID}}
+                                                <option selected value="{{$ID}}">{{$option}}</option>
+                                                {{else}}
+                                                <option value="{{$ID}}">{{$option}}</option>
+                                                {{end}}
+                                            {{end}}
+                                        {{end}}
+                                    </select>
+                                    <script>
+                                        $(function(){
+                                            $('#ccJumper').on('change', function () {
+                                                const regex = /\/{{.CC.LocalID}}\//i;
+                                                const re = "{{.RequestURI}}";
+
+                                                var newCCID = $(this).val();
+                                                var jumper = "{{.BaseURL}}" + re.replace(regex,"/"+newCCID+"/")
+                                                
+                                                if (jumper) {
+                                                    if (confirm("Are you sure you want to jump to CC #"+newCCID+"?\n\n...\n\nMake sure you've saved!")){
+                                                        window.location = jumper; // redirect    
+                                                    }
+                                                    
+                                                }
+                                                return false;
+                                            });
+                                        });
+                                    </script>
                                 </div>
                             </div>
                         </div>
@@ -524,15 +554,10 @@
                         marks the end of the for loop.</p>
                     <!-- {{/* .IgnoreMe */}} -->
                     <p>
-                        See the <a href="https://docs.yagpdb.xyz/templates" target="_blank">templating</a> and <a
+                        See the <a href="https://github.com/mrbentarikau/pagst-rtfm" target="_blank">templating RTFM</a> and <a
                             href="https://docs.yagpdb.xyz/commands/custom-commands" target="_blank">custom
                             command</a>
-                        docs for more info and join the YAGPDB's support server if you have further questions. Custom
-                        commands
-                        for yagpdb/pagstdb are rather complicated for the time being.</p>
-                    <p class="help-block">
-                        PAGSTDB will pick one message at random from all configured responses.
-                    </p>
+                        docs for more info.</p>
                 </div>
             </div>
         </div>
@@ -557,13 +582,21 @@
 
 <script src="/static/codemirror/lib/codemirror.js"></script>
 <link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="/static/codemirror/addon/colorpicker/codemirror-colorpicker.css">
 <link rel="stylesheet" href="/static/codemirror/addon/display/fullscreen.css">
+<link rel="stylesheet" href="/static/codemirror/addon/fold/foldgutter.css">
 
 <script src="/static/codemirror/addon/display/fullscreen.js"></script>
+<script src="/static/codemirror/addon/colorpicker/codemirror-colorpicker.js"></script>
 <script src="/static/codemirror/addon/edit/closebrackets.js"></script>
 <script src="/static/codemirror/addon/edit/matchbrackets.js"></script>
+<script src="/static/codemirror/addon/fold/foldcode.js"></script>
+<script src="/static/codemirror/addon/fold/foldgutter.js"></script>
+<script src="/static/codemirror/addon/fold/brace-fold.js"></script>
+
 <script src="/static/codemirror/mode/go/go.js"></script>
 <script src="/static/codemirror/mode/go/templateHL.js"></script>
+
 <link rel="stylesheet" href="/static/codemirror/theme/ayu-dark.css">
 <link rel="stylesheet" href="/static/codemirror/theme/bespin.css">
 <link rel="stylesheet" href="/static/codemirror/theme/cobalt.css">
@@ -622,6 +655,8 @@
 
             handleTimeTriggerChannelChange();
             $("#time-trigger-no-channel-warning").removeClass("hidden");
+            $("#require-no-roles-warning").addClass("hidden");
+            $("#time-trigger-no-channel-warning").removeClass("hidden");
 
         } else if (dropdown.val() === "reaction") {
             // Reaction triggers
@@ -636,6 +671,9 @@
             $("#interval-cc-run-now").addClass("hidden")
 
             $("#trigger-warning").attr("hidden", true);
+            $("#time-trigger-no-channel-warning").addClass("hidden");
+            $("#require-no-channels-warning").removeClass("hidden");
+            $("#require-no-roles-warning").removeClass("hidden");
             $("#time-trigger-no-channel-warning").addClass("hidden");
 
         } else if (isTextTrigger(dropdown.val())) {
@@ -652,6 +690,8 @@
             $("#interval-cc-run-now").addClass("hidden")
 
             $("#trigger-warning").attr("hidden", true);
+            $("#require-no-channels-warning").removeClass("hidden");
+            $("#require-no-roles-warning").removeClass("hidden");
             // $("#trigger-warning").text("No trigger set, this command will only be able to be called from other commands")
             $("#time-trigger-no-channel-warning").addClass("hidden");
 
@@ -669,6 +709,8 @@
             $("#interval-cc-run-now").addClass("hidden")
 
             $("#trigger-warning").attr("hidden", true);
+            $("#require-no-channels-warning").removeClass("hidden");
+            $("#require-no-roles-warning").removeClass("hidden");
             // $("#trigger-warning").text("No trigger set, this command will only be able to be called from other commands")
             $("#time-trigger-no-channel-warning").addClass("hidden");
 
@@ -686,6 +728,9 @@
             $("#trigger-warning").removeAttr("hidden");
             $("#trigger-warning").text("No trigger set, this command will only be able to be called from other commands")
             $("#time-trigger-no-channel-warning").addClass("hidden");
+            $("#require-no-channels-warning").addClass("hidden");
+            $("#require-no-roles-warning").addClass("hidden");
+            $("#time-trigger-no-channel-warning").addClass("hidden")
         };
 
         if (dropdown.val() === "cmd") $("#command-trigger-prepended-prefix").show();
@@ -699,17 +744,39 @@
     }
 
     $(function () {
-        triggerTypeChanged();
+        handleTimeTriggerChannelChange();
         handleRestrictionChange($("#require-role-mode").prop("checked"), $("#command-roles"), "require-no-roles-warning", requireNoRolesWarning);
         handleRestrictionChange($("#require-channel-mode").prop("checked"), $("#command-channels"), "require-no-channels-warning", requireNoChannelsWarning);
         handleRestrictionChange($("#require-category-mode").prop("checked"), $("#command-categories"), "require-no-categories-warning", requireNoCategoriesWarning);
-        handleTimeTriggerChannelChange();
+        triggerTypeChanged();
     })
     
-    var textAreaTheme = "no CodeMirror"
-    var bracketsEnabled = false
+    var textAreaTheme = getCookie("codeMirror_textAreaTheme");
+    if (textAreaTheme == ""){
+        textAreaTheme = "no CodeMirror"
+    }
+    var themeSelectElement = document.getElementById("themeSelect");
+    themeSelect.value = textAreaTheme;
+
+    var bracketsEnabled = false;
     var input = document.getElementById("themeSelect");
     var bracketsInput = document.getElementById("bracketsSelect");
+
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for(let i = 0; i <ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
 
     function selectTheme() {
         textAreaTheme = input.options[input.selectedIndex].textContent;
@@ -718,9 +785,12 @@
         } else {
             location.hash = "#" + textAreaTheme;
         }
+        document.cookie = "codeMirror_textAreaTheme=" + textAreaTheme + "; max-age=3153600000; path=/; Secure";
+        editorToTextArea();
     }
 
     function selectBrackets() {
+        editorToTextArea();
         if (bracketsInput.options[bracketsInput.selectedIndex].textContent == "enabled") {
             bracketsEnabled = true;
             return
@@ -744,34 +814,44 @@
         textAreaTheme = choice;
     }
 
-    function textAreaWrapper(textAreaWrapperValue){    
-    if (textAreaTheme == "no CodeMirror") {
-        return
+    function textAreaWrapper(textAreaWrapperValue){
+        if (textAreaTheme == "no CodeMirror") {
+            return
     }
+
     editor = CodeMirror.fromTextArea(textAreaWrapperValue,{
         mode: "text/x-go",
         //tabSize: 4,
         autoCloseBrackets: bracketsEnabled,
         matchBrackets: true,
         electricChars: false,
-        theme: textAreaTheme,
+        colorpicker : {
+           mode: 'edit',
+           type: 'box',
+        },
+        foldGutter: true,
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
         lineNumbers:true,
         lineWrapping:true,
         showInvisibles:true,
-        viewportMargin: Infinity,
+        viewportMargin: 10,
+        theme: textAreaTheme,
         extraKeys: {
             "F11": function(cm) {
               cm.setOption("fullScreen", !cm.getOption("fullScreen"));
             },
             "Esc": function(cm) {
               if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-            }
+            },
+            'Shift-Alt-C' : function (cm, event) {
+            cm.state.colorpicker.popup_color_picker();
+            },
         },
     });
     editor.setSize("100%",null);
     editor.on("focus",function() {onCCChanged(document.querySelector('.CodeMirror'),editor)});
     editor.on("change",function() {editor.save(),onCCChanged(document.querySelector('.CodeMirror'),editor)});
-    editor.on("blur",function() {editor.save(),editor.toTextArea()});
+    // editor.on("blur",function() {editor.save(),editor.toTextArea()});
     }
 
     function lengthScan(scanThis){
@@ -787,7 +867,7 @@
         return combinedLength;
     }
 
-    function onCCChanged(textArea,editor) {
+    function onCCChanged(textArea) {
         var textAreas = textArea.parentElement.parentElement.parentElement.querySelectorAll('textarea.pagst-textarea');
         var combinedLength = lengthScan(textAreas);
         

@@ -242,9 +242,9 @@ html.sidebar-left-collapsed #nav-footer {
   content: "✎ ";
 }
 
-html.dark select optgroup {
+/*html.dark select optgroup {
 	background-color: rgb(45, 45, 50) !important;
-}
+}*/
 
 /* for block of numbers */
 .hljs-ln-numbers {
@@ -685,7 +685,8 @@ div.modal-icon>i.fas::before{color: #ec7261!important}
 form>.form-group>p.form-control-static{margin-bottom:7px!important;width:20%;padding-left:7px!important}
 
 /*mainly buttons, info, primary, warn etc */
-.input-group-text,[class*="btn"],.form-control,.form-control-static{color:#a1a1a1!important;text-align:left!important}
+.input-group-text,[class*="btn"]{color:#a1a1a1!important;text-align:left!important}
+.form-control,.form-control-static{color:#a1a1a1;text-align:left}
 [class*="form-control"],.btn-default,.dropdown-menu,.dropdown-menu-righ,.input-group-text{background-color:#282828!important;border-color:#282828!important}
 .btn-success,.btn-info,.btn-primary,.btn-primary-scale-2{color:#89aa00!important;background-color:#282828!important;border-color:#282828!important}
 
@@ -749,6 +750,7 @@ h2.card-title>a:focus{background-color:transparent!important}
 form>a[class="btn btn-outline-danger my-2 my-sm-0"]:focus{box-shadow:0 0 0 0.2rem rgba(170,137,0,0.5)!important}
 .form-control:focus {
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(170, 137, 0, 0.5);
+  color: #a1a1a1!important;
 }
 
 
@@ -757,15 +759,9 @@ html{scrollbar-width:thin!important;scrollbar-color:#89aa00 #1A1A1A!important}
 html:hover{scrollbar-width:thin!important;scrollbar-color:#aa8900 #1A1A1A!important}
 .withScrollbar:hover{scrollbar-width: thin!important;scrollbar-color:#aa8900 #1a1a1a!important}
 .withScrollbar{scrollbar-width: thin!important;scrollbar-color:#89aa00 #1a1a1a!important}
-html::-webkit-scrollbar {width: 7px !important; height: 5px !important}
-html::-webkit-scrollbar-thumb {background: #89aa00!important;}
-html::-webkit-scrollbar-thumb:hover {background:#aa8900!important;}
-body::-webkit-scrollbar {width: 7px !important; height: 5px!important}
-body::-webkit-scrollbar-thumb {background: #89aa00!important;}
-body::-webkit-scrollbar-thumb:hover {background:#aa8900!important;}
-textarea::-webkit-scrollbar {width: 7px !important; height: 5px!important}
-textarea::-webkit-scrollbar-thumb {background: #89aa00!important;}
-textarea::-webkit-scrollbar-thumb:hover {background:#aa8900!important;}
+::-webkit-scrollbar {width: 7px!important; height: 5px!important;background:#1a1a1a!important}
+::-webkit-scrollbar-thumb {background: #89aa00 !important; height:123px!important}
+::-webkit-scrollbar-thumb:hover { background:#aa8900 !important;}
 
 /*ADMIN panel*/
 form>div>button[class*="btn btn-secondary dropdown-toggle"]{background-color:#aa8900!important; border-color:#aa8900!important;color:#1a1a1a!important}

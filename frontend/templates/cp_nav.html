@@ -77,7 +77,7 @@
                 </figure>
                 <div class="profile-info" data-lock-name="Server Name">
                     <span class="name">{{if .ActiveGuild}}{{.ActiveGuild.Name}}{{if .IsGuildPremium}}<i
-                            class="fas fa-crown text-info ml-1"></i>{{end}}{{else}}Loading...{{end}}</span>
+                            class="fa-solid fa-star fa-xs text-info ml-1"></i>{{end}}{{else}}Loading...{{end}}</span>
                     <span class="role">loading....</span>
                 </div>
                 <i class="fa custom-caret"></i>
@@ -128,7 +128,7 @@
                         <a role="menuitem" tabindex="-1" href="/logout"><i class="fas fa-power-off"></i> Logout</a>
                     </li>
                     <li>
-                        <a role="menuitem" tabindex="-1" href="/premium"><i class="fas fa-crown"></i> Premium</a>
+                        <a role="menuitem" tabindex="-1" href="/premium"><i class="fa-solid fa-star"></i> Premium</a>
                     </li>
                 </ul>
             </div>
@@ -297,7 +297,7 @@
     </figure>
     <div class="profile-info" data-lock-name="Server Name">
         <span class="name">{{if .ActiveGuild}}{{.ActiveGuild.Name}}{{if .IsGuildPremium}}<i
-                class="fas fa-crown text-info ml-1"></i>{{end}}{{else}}Select Server{{end}}</span>
+                class="fa-solid fa-star fa-xs text-info ml-1"></i>{{end}}{{else}}Select Server{{end}}</span>
         <span class="role">Change server</span>
     </div>
 

@@ -71,8 +71,9 @@
     "roleAbove":true,
     "sdict":true,
     "seq":true,
-    "structToSdict":true,
     "shuffle":true,
+    "structToSdict":true,
+    "verb":true,
     
     // string manipulation
     "hasPrefix":true, "hasSuffix":true, "joinStr":true, "lower":true,
@@ -202,6 +203,7 @@
     "dbDelById":true,
     "dbDelMultiple":true,
     "dbGet":true,
+    "dbGetByID":true,
     "dbGetPattern":true,
     "dbIncr":true,
     "dbRank":true,
