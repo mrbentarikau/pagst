@@ -102,8 +102,12 @@ func handleMessageCreate(evt *eventsystem.EventData) {
 
 		go analytics.RecordActiveUnit(msg.GuildID, &Plugin{}, "auto_add_rep")
 
-		content := fmt.Sprintf("Gave +1 %s to **%s**", conf.PointsName, who.Mention())
-		common.BotSession.ChannelMessageSend(msg.ChannelID, content)
+		msgSend := &discordgo.MessageSend{}
+
+		msgSend.Content = fmt.Sprintf("Gave +1 %s to **%s**", conf.PointsName, who.Mention())
+		msgSend.AllowedMentions = &discordgo.AllowedMentions{}
+
+		common.BotSession.ChannelMessageSendComplex(msg.ChannelID, msgSend)
 	}
 }
 
