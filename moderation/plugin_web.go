@@ -8,8 +8,8 @@ import (
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
-	"github.com/mrbentarikau/pagst/web"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/web"
 	"goji.io"
 	"goji.io/pat"
 )
@@ -36,7 +36,7 @@ func (p *Plugin) InitWeb() {
 	web.CPMux.Handle(pat.New("/moderation/*"), subMux)
 
 	subMux.Use(web.RequireBotMemberMW) // need the bot's role
-	subMux.Use(web.RequirePermMW(discordgo.PermissionManageRoles, discordgo.PermissionKickMembers, discordgo.PermissionBanMembers, discordgo.PermissionManageMessages, discordgo.PermissionEmbedLinks))
+	subMux.Use(web.RequirePermMW(discordgo.PermissionManageRoles, discordgo.PermissionKickMembers, discordgo.PermissionBanMembers, discordgo.PermissionManageMessages, discordgo.PermissionEmbedLinks, discordgo.PermissionModerateMembers))
 
 	getHandler := web.ControllerHandler(HandleModeration, "cp_moderation")
 	postHandler := web.ControllerPostHandler(HandlePostModeration, getHandler, Config{})
@@ -74,6 +74,7 @@ func HandlePostModeration(w http.ResponseWriter, r *http.Request) (web.TemplateD
 
 	newConfig := ctx.Value(common.ContextKeyParsedForm).(*Config)
 	newConfig.DefaultMuteDuration.Valid = true
+	newConfig.DefaultTimeoutDuration.Valid = true
 	newConfig.DefaultBanDeleteDays.Valid = true
 	newConfig.DefaultLockdownDuration.Valid = true
 	templateData["ModConfig"] = newConfig

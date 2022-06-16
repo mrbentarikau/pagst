@@ -27,16 +27,18 @@ func (m ModlogAction) String() string {
 }
 
 var (
-	MAMute       = ModlogAction{Prefix: "Muted", Emoji: "🔇", Color: 0x57728e}
-	MAUnmute     = ModlogAction{Prefix: "Unmuted", Emoji: "🔊", Color: 0x62c65f}
-	MAKick       = ModlogAction{Prefix: "Kicked", Emoji: "👢", Color: 0xf2a013}
-	MABanned     = ModlogAction{Prefix: "Banned", Emoji: "🔨", Color: 0xd64848}
-	MAUnbanned   = ModlogAction{Prefix: "Unbanned", Emoji: "🔓", Color: 0x62c65f}
-	MAWarned     = ModlogAction{Prefix: "Warned", Emoji: "⚠", Color: 0xfca253}
-	MAGiveRole   = ModlogAction{Prefix: "", Emoji: "➕", Color: 0x53fcf9}
-	MARemoveRole = ModlogAction{Prefix: "", Emoji: "➖", Color: 0x53fcf9}
-	MALock       = ModlogAction{Prefix: "Locked", Emoji: "🔒", Color: 0xEE00EE}
-	MAUnlock     = ModlogAction{Prefix: "Unlocked", Emoji: "🔓", Color: 0x718AED}
+	MAMute           = ModlogAction{Prefix: "Muted", Emoji: "🔇", Color: 0x57728e}
+	MAUnmute         = ModlogAction{Prefix: "Unmuted", Emoji: "🔊", Color: 0x62c65f}
+	MAKick           = ModlogAction{Prefix: "Kicked", Emoji: "👢", Color: 0xf2a013}
+	MABanned         = ModlogAction{Prefix: "Banned", Emoji: "🔨", Color: 0xd64848}
+	MAUnbanned       = ModlogAction{Prefix: "Unbanned", Emoji: "🔓", Color: 0x62c65f}
+	MAWarned         = ModlogAction{Prefix: "Warned", Emoji: "⚠", Color: 0xfca253}
+	MATimeoutAdded   = ModlogAction{Prefix: "Timed out", Emoji: "⏱", Color: 0x9b59b6}
+	MATimeOutRemoved = ModlogAction{Prefix: "Timeout removed from", Emoji: "⏱", Color: 0x9b59b6}
+	MAGiveRole       = ModlogAction{Prefix: "", Emoji: "➕", Color: 0x53fcf9}
+	MARemoveRole     = ModlogAction{Prefix: "", Emoji: "➖", Color: 0x53fcf9}
+	MALock           = ModlogAction{Prefix: "Locked", Emoji: "🔒", Color: 0xEE00EE}
+	MAUnlock         = ModlogAction{Prefix: "Unlocked", Emoji: "🔓", Color: 0x718AED}
 )
 
 func CreateModlogEmbed(config *Config, author *discordgo.User, action ModlogAction, target interface{}, reason, logLink string) error {
