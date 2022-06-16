@@ -48,6 +48,7 @@ func (p *Plugin) BotInit() {
 
 		handleReactionAdd(ra)
 	}, eventsystem.EventMessageReactionAdd)
+	eventsystem.AddHandlerAsyncLastLegacy(p, handleInteractionCreate, eventsystem.EventInteractionCreate)
 
 	pubsub.AddHandler("dm_reaction", func(evt *pubsub.Event) {
 		dataCast := evt.Data.(*discordgo.MessageReactionAdd)
@@ -71,7 +72,7 @@ func handleReactionAdd(ra *discordgo.MessageReactionAdd) {
 	menusLock.Unlock()
 }
 
-func (p *Plugin) StopBot(wg *sync.WaitGroup) {
+/*func (p *Plugin) StopBot(wg *sync.WaitGroup) {
 	menusLock.Lock()
 	for _, v := range activePaginatedMessages {
 		go v.Stop()
@@ -79,7 +80,7 @@ func (p *Plugin) StopBot(wg *sync.WaitGroup) {
 	menusLock.Unlock()
 
 	wg.Done()
-}
+}*/
 
 type PaginatedMessage struct {
 	// immutable fields, safe to access without a lock, don't write to these, i dont see why you would need to either...
@@ -107,7 +108,7 @@ const (
 
 type PagerFunc func(p *PaginatedMessage, page int) (*discordgo.MessageEmbed, error)
 
-func CreatePaginatedMessage(guildID, channelID int64, initPage, maxPages int, pagerFunc PagerFunc) (*PaginatedMessage, error) {
+/*func CreatePaginatedMessage(guildID, channelID int64, initPage, maxPages int, pagerFunc PagerFunc) (*PaginatedMessage, error) {
 	if initPage < 1 {
 		initPage = 1
 	}
@@ -161,7 +162,7 @@ func CreatePaginatedMessage(guildID, channelID int64, initPage, maxPages int, pa
 	go pm.ticker()
 	return pm, nil
 }
-
+*/
 func (p *PaginatedMessage) HandleReactionAdd(ra *discordgo.MessageReactionAdd) {
 
 	pageMod := 0
