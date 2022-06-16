@@ -144,7 +144,7 @@ func New(args ...interface{}) (s *Session, err error) {
 			if s.MFA {
 				err = ErrMFA
 			} else {
-				err = fmt.Errorf("Unable to fetch discord authentication token. %v", err)
+				err = fmt.Errorf("unable to fetch discord authentication token. %v", err)
 			}
 			return
 		}

@@ -301,10 +301,10 @@ func (s *Session) Open() error {
 }
 
 var (
-	ErrBadAuth        = errors.New("Authentication failed")
-	ErrInvalidIntent  = errors.New("One of the gateway intents passed was invalid")
-	ErrDisabledIntent = errors.New("A intent you specified has not been enabled or not been whitelisted for")
-	ErrInvalidShard   = errors.New("You specified a invalid sharding setup")
+	ErrBadAuth        = errors.New("authentication failed")
+	ErrInvalidIntent  = errors.New("one of the gateway intents passed was invalid")
+	ErrDisabledIntent = errors.New("an intent you specified has not been enabled or not been whitelisted for")
+	ErrInvalidShard   = errors.New("you specified a invalid sharding setup")
 )
 
 func (g *GatewayConnectionManager) Open() error {
@@ -806,7 +806,7 @@ func (g *GatewayConnection) Close() error {
 
 		started := time.Now()
 
-		// Wait for discord to close connnection
+		// Wait for discord to close connection
 		for {
 			time.Sleep(time.Millisecond * 100)
 			g.mu.Lock()

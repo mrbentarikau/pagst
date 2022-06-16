@@ -163,23 +163,38 @@ type ICEServer struct {
 	Credential string `json:"credential"`
 }
 
+// InviteTargetType indicates the type of target of an invite
+// https://discord.com/developers/docs/resources/invite#invite-object-invite-target-types
+type InviteTargetType uint8
+
+// Invite target types
+const (
+	InviteTargetStream             InviteTargetType = 1
+	InviteTargetEmbeddedAppliction InviteTargetType = 2
+)
+
 // A Invite stores all data related to a specific Discord Guild or Channel invite.
 type Invite struct {
-	Guild     *Guild    `json:"guild"`
-	Channel   *Channel  `json:"channel"`
-	Inviter   *User     `json:"inviter"`
-	Code      string    `json:"code"`
-	CreatedAt Timestamp `json:"created_at"`
-	MaxAge    int       `json:"max_age"`
-	Uses      int       `json:"uses"`
-	MaxUses   int       `json:"max_uses"`
-	Revoked   bool      `json:"revoked"`
-	Temporary bool      `json:"temporary"`
-	Unique    bool      `json:"unique"`
+	Guild             *Guild           `json:"guild"`
+	Channel           *Channel         `json:"channel"`
+	Inviter           *User            `json:"inviter"`
+	Code              string           `json:"code"`
+	CreatedAt         Timestamp        `json:"created_at"`
+	MaxAge            int              `json:"max_age"`
+	Uses              int              `json:"uses"`
+	MaxUses           int              `json:"max_uses"`
+	Revoked           bool             `json:"revoked"`
+	Temporary         bool             `json:"temporary"`
+	Unique            bool             `json:"unique"`
+	TargetUser        *User            `json:"target_user"`
+	TargetType        InviteTargetType `json:"target_type"`
+	TargetApplication *Application     `json:"target_application"`
 
 	// will only be filled when using InviteWithCounts
 	ApproximatePresenceCount int `json:"approximate_presence_count"`
 	ApproximateMemberCount   int `json:"approximate_member_count"`
+
+	ExpiresAt Timestamp `json:"expires_at"`
 }
 
 // ChannelType is the type of a Channel
@@ -304,6 +319,12 @@ type PermissionOverwrite struct {
 	Allow int64                   `json:"allow,string"`
 }
 
+// A ChannelFollow holds data returned after following a news channel
+type ChannelFollow struct {
+	ChannelID string `json:"channel_id"`
+	WebhookID string `json:"webhook_id"`
+}
+
 type PermissionOverwriteType int
 
 const (
@@ -311,11 +332,61 @@ const (
 	PermissionOverwriteTypeMember PermissionOverwriteType = 1
 )
 
+// ThreadStart stores all parameters you can use with MessageThreadStartComplex or ThreadStartComplex
+type ThreadStart struct {
+	Name                string      `json:"name"`
+	AutoArchiveDuration int         `json:"auto_archive_duration,omitempty"`
+	Type                ChannelType `json:"type,omitempty"`
+	Invitable           bool        `json:"invitable"`
+	RateLimitPerUser    int         `json:"rate_limit_per_user,omitempty"`
+}
+
+// ThreadMetadata contains a number of thread-specific channel fields that are not needed by other channel types.
+type ThreadMetadata struct {
+	// Whether the thread is archived
+	Archived bool `json:"archived"`
+	// Duration in minutes to automatically archive the thread after recent activity, can be set to: 60, 1440, 4320, 10080
+	AutoArchiveDuration int `json:"auto_archive_duration"`
+	// Timestamp when the thread's archive status was last changed, used for calculating recent activity
+	ArchiveTimestamp Timestamp `json:"archive_timestamp"`
+	// Whether the thread is locked; when a thread is locked, only users with MANAGE_THREADS can unarchive it
+	Locked bool `json:"locked"`
+	// Whether non-moderators can add other non-moderators to a thread; only available on private threads
+	Invitable bool `json:"invitable"`
+}
+
+// ThreadMember is used to indicate whether a user has joined a thread or not.
+// NOTE: ID and UserID are empty (omitted) on the member sent within each thread in the GUILD_CREATE event.
+type ThreadMember struct {
+	// The id of the thread
+	ID int64 `json:"id,omitempty"`
+	// The id of the user
+	UserID int64 `json:"user_id,omitempty"`
+	// The time the current user last joined the thread
+	JoinTimestamp Timestamp `json:"join_timestamp"`
+	// Any user-thread settings, currently only used for notifications
+	Flags int
+}
+
+// ThreadsList represents a list of threads alongisde with thread member objects for the current user.
+type ThreadsList struct {
+	Threads []*Channel      `json:"threads"`
+	Members []*ThreadMember `json:"members"`
+	HasMore bool            `json:"has_more"`
+}
+
+// AddedThreadMember holds information about the user who was added to the thread
+type AddedThreadMember struct {
+	*ThreadMember
+	Member   *Member   `json:"member"`
+	Presence *Presence `json:"presence"`
+}
+
 // Emoji struct holds data related to Emoji's
 type Emoji struct {
 	ID            int64   `json:"id,string"`
 	Name          string  `json:"name"`
-	Roles         IDSlice `json:"roles,string"`
+	Roles         IDSlice `json:"roles"`
 	Managed       bool    `json:"managed"`
 	RequireColons bool    `json:"require_colons"`
 	Animated      bool    `json:"animated"`
@@ -380,6 +451,17 @@ const (
 	MfaLevelElevated
 )
 
+// PremiumTier type definition
+type PremiumTier int
+
+// Constants for PremiumTier levels from 0 to 3 inclusive
+const (
+	PremiumTierNone PremiumTier = 0
+	PremiumTier1    PremiumTier = 1
+	PremiumTier2    PremiumTier = 2
+	PremiumTier3    PremiumTier = 3
+)
+
 // A Guild holds all data related to a specific Discord Guild.  Guilds are also
 // sometimes referred to as Servers in the Discord client.
 type Guild struct {
@@ -388,10 +470,6 @@ type Guild struct {
 
 	// The name of the guild. (2–100 characters)
 	Name string `json:"name"`
-
-	Description string `json:"description"`
-
-	PreferredLocale string `json:"preferred_locale"`
 
 	// The hash of the guild's icon. Use Session.GuildIcon
 	// to retrieve the icon itself.
@@ -406,10 +484,16 @@ type Guild struct {
 	// The user ID of the owner of the guild.
 	OwnerID int64 `json:"owner_id,string"`
 
+	// If we are the owner of the guild
+	Owner bool `json:"owner"`
+
 	// The time at which the current user joined the guild.
 	// This field is only present in GUILD_CREATE events and websocket
 	// update events, and thus is only present in state-cached guilds.
 	JoinedAt Timestamp `json:"joined_at"`
+
+	// The hash of the guild's discovery splash.
+	DiscoverySplash string `json:"discovery_splash"`
 
 	// The hash of the guild's splash.
 	Splash string `json:"splash"`
@@ -440,6 +524,9 @@ type Guild struct {
 	// A list of the custom emojis present in the guild.
 	Emojis []*Emoji `json:"emojis"`
 
+	// A list of the custom stickers present in the guild.
+	Stickers []*Sticker `json:"stickers"`
+
 	// A list of the members in the guild.
 	// This field is only present in GUILD_CREATE events and websocket
 	// update events, and thus is only present in state-cached guilds.
@@ -449,6 +536,12 @@ type Guild struct {
 	// This field is only present in GUILD_CREATE events and websocket
 	// update events, and thus is only present in state-cached guilds.
 	Presences []*Presence `json:"presences"`
+
+	// The maximum number of presences for the guild (the default value, currently 25000, is in effect when null is returned)
+	MaxPresences int `json:"max_presences"`
+
+	// The maximum number of members for the guild
+	MaxMembers int `json:"max_members"`
 
 	// A list of channels in the guild.
 	// This field is only present in GUILD_CREATE events
@@ -461,9 +554,7 @@ type Guild struct {
 	// A list of voice states for the guild.
 	// This field is only present in GUILD_CREATE events and websocket
 	// update events, and thus is only present in state-cached guilds.
-	VoiceStates  []*VoiceState `json:"voice_states"`
-	MaxPresences int           `json:"max_presences"`
-	MaxMembers   int           `json:"max_members"`
+	VoiceStates []*VoiceState `json:"voice_states"`
 
 	// Whether this guild is currently unavailable (most likely due to outage).
 	// This field is only present in GUILD_CREATE events and websocket
@@ -488,8 +579,47 @@ type Guild struct {
 	// The Channel ID to which system messages are sent (eg join and leave messages)
 	SystemChannelID string `json:"system_channel_id"`
 
-	ApproximateMemberCount   int `json:"approximate_member_count"`
+	// The System channel flags
+	SystemChannelFlags SystemChannelFlag `json:"system_channel_flags"`
+
+	// The ID of the rules channel ID, used for rules.
+	RulesChannelID string `json:"rules_channel_id"`
+
+	// the vanity url code for the guild
+	VanityURLCode string `json:"vanity_url_code"`
+
+	// the description for the guild
+	Description string `json:"description"`
+
+	// The hash of the guild's banner
+	Banner string `json:"banner"`
+
+	// The premium tier of the guild
+	PremiumTier PremiumTier `json:"premium_tier"`
+
+	// The total number of users currently boosting this server
+	PremiumSubscriptionCount int `json:"premium_subscription_count"`
+
+	// The preferred locale of a guild with the "PUBLIC" feature; used in server discovery and notices from Discord; defaults to "en-US"
+	PreferredLocale string `json:"preferred_locale"`
+
+	// The id of the channel where admins and moderators of guilds with the "PUBLIC" feature receive notices from Discord
+	PublicUpdatesChannelID string `json:"public_updates_channel_id"`
+
+	// The maximum amount of users in a video channel
+	MaxVideoChannelUsers int `json:"max_video_channel_users"`
+
+	// Approximate number of members in this guild, returned from the GET /guild/<id> endpoint when with_counts is true
+	ApproximateMemberCount int `json:"approximate_member_count"`
+
+	// Approximate number of non-offline members in this guild, returned from the GET /guild/<id> endpoint when with_counts is true
 	ApproximatePresenceCount int `json:"approximate_presence_count"`
+
+	// Permissions of our user
+	Permissions int64 `json:"permissions,string"`
+
+	// Stage instances in the guild
+	StageInstances []*StageInstance `json:"stage_instances"`
 }
 
 func (g *Guild) GetGuildID() int64 {
@@ -516,6 +646,196 @@ func (g *Guild) Channel(id int64) *Channel {
 	return nil
 }
 
+// GuildScheduledEvent is a representation of a scheduled event in a guild. Only for retrieval of the data.
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event
+type GuildScheduledEvent struct {
+	// The ID of the scheduled event
+	ID int64 `json:"id"`
+	// The guild id which the scheduled event belongs to
+	GuildID int64 `json:"guild_id"`
+	// The channel id in which the scheduled event will be hosted, or null if scheduled entity type is EXTERNAL
+	ChannelID int64 `json:"channel_id"`
+	// The id of the user that created the scheduled event
+	CreatorID int64 `json:"creator_id"`
+	// The name of the scheduled event (1-100 characters)
+	Name string `json:"name"`
+	// The description of the scheduled event (1-1000 characters)
+	Description string `json:"description"`
+	// The time the scheduled event will start
+	ScheduledStartTime Timestamp `json:"scheduled_start_time"`
+	// The time the scheduled event will end, required only when entity_type is EXTERNAL
+	ScheduledEndTime *Timestamp `json:"scheduled_end_time"`
+	// The privacy level of the scheduled event
+	PrivacyLevel GuildScheduledEventPrivacyLevel `json:"privacy_level"`
+	// The status of the scheduled event
+	Status GuildScheduledEventStatus `json:"status"`
+	// Type of the entity where event would be hosted
+	// See field requirements
+	// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-field-requirements-by-entity-type
+	EntityType GuildScheduledEventEntityType `json:"entity_type"`
+	// The id of an entity associated with a guild scheduled event
+	EntityID string `json:"entity_id"`
+	// Additional metadata for the guild scheduled event
+	EntityMetadata GuildScheduledEventEntityMetadata `json:"entity_metadata"`
+	// The user that created the scheduled event
+	Creator *User `json:"creator"`
+	// The number of users subscribed to the scheduled event
+	UserCount int `json:"user_count"`
+	// The cover image hash of the scheduled event
+	// see https://discord.com/developers/docs/reference#image-formatting for more
+	// information about image formatting
+	Image string `json:"image"`
+}
+
+// GuildScheduledEventParams are the parameters allowed for creating or updating a scheduled event
+// https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event
+type GuildScheduledEventParams struct {
+	// The channel id in which the scheduled event will be hosted, or null if scheduled entity type is EXTERNAL
+	ChannelID int64 `json:"channel_id,omitempty"`
+	// The name of the scheduled event (1-100 characters)
+	Name string `json:"name,omitempty"`
+	// The description of the scheduled event (1-1000 characters)
+	Description string `json:"description,omitempty"`
+	// The time the scheduled event will start
+	ScheduledStartTime *Timestamp `json:"scheduled_start_time,omitempty"`
+	// The time the scheduled event will end, required only when entity_type is EXTERNAL
+	ScheduledEndTime *Timestamp `json:"scheduled_end_time,omitempty"`
+	// The privacy level of the scheduled event
+	PrivacyLevel GuildScheduledEventPrivacyLevel `json:"privacy_level,omitempty"`
+	// The status of the scheduled event
+	Status GuildScheduledEventStatus `json:"status,omitempty"`
+	// Type of the entity where event would be hosted
+	// See field requirements
+	// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-field-requirements-by-entity-type
+	EntityType GuildScheduledEventEntityType `json:"entity_type,omitempty"`
+	// Additional metadata for the guild scheduled event
+	EntityMetadata *GuildScheduledEventEntityMetadata `json:"entity_metadata,omitempty"`
+	// The cover image hash of the scheduled event
+	// see https://discord.com/developers/docs/reference#image-formatting for more
+	// information about image formatting
+	Image string `json:"image,omitempty"`
+}
+
+/*
+// MarshalJSON is a helper function to marshal GuildScheduledEventParams
+func (p GuildScheduledEventParams) MarshalJSON() ([]byte, error) {
+	type guildScheduledEventParams GuildScheduledEventParams
+
+	if p.EntityType == GuildScheduledEventEntityTypeExternal && p.ChannelID == "" {
+		return Marshal(struct {
+			guildScheduledEventParams
+			ChannelID json.RawMessage `json:"channel_id"`
+		}{
+			guildScheduledEventParams: guildScheduledEventParams(p),
+			ChannelID:                 json.RawMessage("null"),
+		})
+	}
+
+	return Marshal(guildScheduledEventParams(p))
+}*/
+
+// GuildScheduledEventEntityMetadata holds additional metadata for guild scheduled event.
+type GuildScheduledEventEntityMetadata struct {
+	// location of the event (1-100 characters)
+	// required for events with 'entity_type': EXTERNAL
+	Location string `json:"location"`
+}
+
+// GuildScheduledEventPrivacyLevel is the privacy level of a scheduled event.
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level
+type GuildScheduledEventPrivacyLevel int
+
+const (
+	// GuildScheduledEventPrivacyLevelGuildOnly makes the scheduled
+	// event is only accessible to guild members
+	GuildScheduledEventPrivacyLevelGuildOnly GuildScheduledEventPrivacyLevel = 2
+)
+
+// GuildScheduledEventStatus is the status of a scheduled event
+// Valid Guild Scheduled Event Status Transitions :
+// SCHEDULED --> ACTIVE --> COMPLETED
+// SCHEDULED --> CANCELED
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-status
+type GuildScheduledEventStatus int
+
+const (
+	// GuildScheduledEventStatusScheduled represents the current event is in scheduled state
+	GuildScheduledEventStatusScheduled = 1
+	// GuildScheduledEventStatusActive represents the current event is in active state
+	GuildScheduledEventStatusActive = 2
+	// GuildScheduledEventStatusCompleted represents the current event is in completed state
+	GuildScheduledEventStatusCompleted = 3
+	// GuildScheduledEventStatusCanceled represents the current event is in canceled state
+	GuildScheduledEventStatusCanceled = 4
+)
+
+// GuildScheduledEventEntityType is the type of entity associated with a guild scheduled event.
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types
+type GuildScheduledEventEntityType int
+
+const (
+	// GuildScheduledEventEntityTypeStageInstance represents a stage channel
+	GuildScheduledEventEntityTypeStageInstance = 1
+	// GuildScheduledEventEntityTypeVoice represents a voice channel
+	GuildScheduledEventEntityTypeVoice = 2
+	// GuildScheduledEventEntityTypeExternal represents an external event
+	GuildScheduledEventEntityTypeExternal = 3
+)
+
+// GuildScheduledEventUser is a user subscribed to a scheduled event.
+// https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-user-object
+type GuildScheduledEventUser struct {
+	GuildScheduledEventID string  `json:"guild_scheduled_event_id"`
+	User                  *User   `json:"user"`
+	Member                *Member `json:"member"`
+}
+
+// A GuildTemplate represents
+type GuildTemplate struct {
+	// The unique code for the guild template
+	Code string `json:"code"`
+
+	// The name of the template
+	Name string `json:"name"`
+
+	// The description for the template
+	Description string `json:"description"`
+
+	// The number of times this template has been used
+	UsageCount string `json:"usage_count"`
+
+	// The ID of the user who created the template
+	CreatorID int64 `json:"creator_id"`
+
+	// The user who created the template
+	Creator *User `json:"creator"`
+
+	// The timestamp of when the template was created
+	CreatedAt Timestamp `json:"created_at"`
+
+	// The timestamp of when the template was last synced
+	UpdatedAt Timestamp `json:"updated_at"`
+
+	// The ID of the guild the template was based on
+	SourceGuildID int64 `json:"source_guild_id"`
+
+	// The guild 'snapshot' this template contains
+	SerializedSourceGuild *Guild `json:"serialized_source_guild"`
+
+	// Whether the template has unsynced changes
+	IsDirty bool `json:"is_dirty"`
+}
+
+// SystemChannelFlag is the type of flags in the system channel (see SystemChannelFlag* consts)
+// https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags
+type SystemChannelFlag int
+
+// Block containing known SystemChannelFlag values
+const (
+	SystemChannelFlagsSuppressJoin    SystemChannelFlag = 1 << 0
+	SystemChannelFlagsSuppressPremium SystemChannelFlag = 1 << 1
+)
+
 // A UserGuild holds a brief version of a Guild
 type UserGuild struct {
 	ID          int64  `json:"id,string"`
@@ -523,6 +843,27 @@ type UserGuild struct {
 	Icon        string `json:"icon"`
 	Owner       bool   `json:"owner"`
 	Permissions int64  `json:"permissions,string"`
+}
+
+// IconURL returns a URL to the guild's icon.
+func (g *Guild) IconURL() string {
+	if g.Icon == "" {
+		return ""
+	}
+
+	if strings.HasPrefix(g.Icon, "a_") {
+		return EndpointGuildIconAnimated(g.ID, g.Icon)
+	}
+
+	return EndpointGuildIcon(g.ID, g.Icon)
+}
+
+// BannerURL returns a URL to the guild's banner.
+func (g *Guild) BannerURL() string {
+	if g.Banner == "" {
+		return ""
+	}
+	return EndpointGuildBanner(g.ID, g.Banner)
 }
 
 // A GuildParams stores all the data needed to update discord guild settings
@@ -593,15 +934,19 @@ func (r Roles) Swap(i, j int) {
 
 // A VoiceState stores the voice states of Guilds
 type VoiceState struct {
-	UserID    int64  `json:"user_id,string"`
-	SessionID string `json:"session_id"`
-	ChannelID int64  `json:"channel_id,string"`
-	GuildID   int64  `json:"guild_id,string"`
-	Suppress  bool   `json:"suppress"`
-	SelfMute  bool   `json:"self_mute"`
-	SelfDeaf  bool   `json:"self_deaf"`
-	Mute      bool   `json:"mute"`
-	Deaf      bool   `json:"deaf"`
+	UserID                  int64      `json:"user_id,string"`
+	SessionID               string     `json:"session_id"`
+	ChannelID               int64      `json:"channel_id,string"`
+	GuildID                 int64      `json:"guild_id,string"`
+	Suppress                bool       `json:"suppress"`
+	SelfMute                bool       `json:"self_mute"`
+	SelfDeaf                bool       `json:"self_deaf"`
+	Mute                    bool       `json:"mute"`
+	Member                  *Member    `json:"member"`
+	Deaf                    bool       `json:"deaf"`
+	SelfStream              bool       `json:"self_stream"`
+	SelfVideo               bool       `json:"self_video"`
+	RequestToSpeakTimestamp *time.Time `json:"request_to_speak_timestamp"`
 }
 
 // A Presence stores the online, offline, or idle and game status of Guild members.
@@ -808,7 +1153,7 @@ type Member struct {
 
 	// The time at which the member's timeout will expire.
 	// Time in the past or nil if the user is not timed out.
-	TimeOutExpires *time.Time `json:"communication_disabled_until"`
+	TimeoutExpiresAt *time.Time `json:"communication_disabled_until"`
 }
 
 func (m *Member) GetGuildID() int64 {
@@ -1034,6 +1379,7 @@ type APIErrorMessage struct {
 	Message string `json:"message"`
 }
 
+/*
 // Webhook stores the data for a webhook.
 type Webhook struct {
 	ID        int64  `json:"id,string"`
@@ -1047,15 +1393,16 @@ type Webhook struct {
 
 // WebhookParams is a struct for webhook params, used in the WebhookExecute command.
 type WebhookParams struct {
-	Content         string           `json:"content,omitempty"`
-	Username        string           `json:"username,omitempty"`
-	AvatarURL       string           `json:"avatar_url,omitempty"`
-	TTS             bool             `json:"tts,omitempty"`
-	File            *File            `json:"-,omitempty"`
-	Embeds          []*MessageEmbed  `json:"embeds,omitempty"`
-	Flags           int64            `json:"flags,omitempty"`
-	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"`
-}
+	Content         string             `json:"content,omitempty"`
+	Username        string             `json:"username,omitempty"`
+	AvatarURL       string             `json:"avatar_url,omitempty"`
+	TTS             bool               `json:"tts,omitempty"`
+	File            *File              `json:"-,omitempty"`
+	Components      []MessageComponent `json:"components"`
+	Embeds          []*MessageEmbed    `json:"embeds,omitempty"`
+	Flags           int64              `json:"flags,omitempty"`
+	AllowedMentions *AllowedMentions   `json:"allowed_mentions,omitempty"`
+}*/
 
 // MessageReaction stores the data for a message reaction.
 type MessageReaction struct {
@@ -1086,6 +1433,49 @@ type SessionStartLimit struct {
 	Remaining  int   `json:"remaining"`
 	ResetAfter int64 `json:"reset_after"`
 }
+
+// StageInstance holds information about a live stage.
+// https://discord.com/developers/docs/resources/stage-instance#stage-instance-resource
+type StageInstance struct {
+	// The id of this Stage instance
+	ID int64 `json:"id"`
+	// The guild id of the associated Stage channel
+	GuildID int64 `json:"guild_id"`
+	// The id of the associated Stage channel
+	ChannelID int64 `json:"channel_id"`
+	// The topic of the Stage instance (1-120 characters)
+	Topic string `json:"topic"`
+	// The privacy level of the Stage instance
+	// https://discord.com/developers/docs/resources/stage-instance#stage-instance-object-privacy-level
+	PrivacyLevel StageInstancePrivacyLevel `json:"privacy_level"`
+	// Whether or not Stage Discovery is disabled (deprecated)
+	DiscoverableDisabled bool `json:"discoverable_disabled"`
+	// The id of the scheduled event for this Stage instance
+	GuildScheduledEventID int64 `json:"guild_scheduled_event_id"`
+}
+
+// StageInstanceParams represents the parameters needed to create or edit a stage instance
+type StageInstanceParams struct {
+	// ChannelID represents the id of the Stage channel
+	ChannelID int64 `json:"channel_id,omitempty"`
+	// Topic of the Stage instance (1-120 characters)
+	Topic string `json:"topic,omitempty"`
+	// PrivacyLevel of the Stage instance (default GUILD_ONLY)
+	PrivacyLevel StageInstancePrivacyLevel `json:"privacy_level,omitempty"`
+	// SendStartNotification will notify @everyone that a Stage instance has started
+	SendStartNotification bool `json:"send_start_notification,omitempty"`
+}
+
+// StageInstancePrivacyLevel represents the privacy level of a Stage instance
+// https://discord.com/developers/docs/resources/stage-instance#stage-instance-object-privacy-level
+type StageInstancePrivacyLevel int
+
+const (
+	// StageInstancePrivacyLevelPublic The Stage instance is visible publicly. (deprecated)
+	StageInstancePrivacyLevelPublic StageInstancePrivacyLevel = 1
+	// StageInstancePrivacyLevelGuildOnly The Stage instance is visible to only guild members.
+	StageInstancePrivacyLevelGuildOnly StageInstancePrivacyLevel = 2
+)
 
 // Block contains Discord JSON Error Response codes
 const (
@@ -1149,6 +1539,7 @@ type InviteUser struct {
 	Username      string `json:"username"`
 }
 
+/*
 // An ApplicationCommand is the base "command" model that belongs to an application. This is what you are creating when you POST a new command.
 type ApplicationCommand struct {
 	ID                int64                       `json:"id,string"`                    // unique id of the command
@@ -1158,7 +1549,7 @@ type ApplicationCommand struct {
 	Options           []*ApplicationCommandOption `json:"options"`                      // the parameters for the command
 	DefaultPermission *bool                       `json:"default_permission,omitempty"` // (default true)	whether the command is enabled by default when the app is added to a guild
 }
-
+*/
 type CreateApplicationCommandRequest struct {
 	Name              string                      `json:"name"`                         // 1-32 character name matching ^[\w-]{1,32}$
 	Description       string                      `json:"description"`                  // 1-100 character description
@@ -1166,6 +1557,7 @@ type CreateApplicationCommandRequest struct {
 	DefaultPermission *bool                       `json:"default_permission,omitempty"` // (default true)	whether the command is enabled by default when the app is added to a guild
 }
 
+/*
 type ApplicationCommandOption struct {
 	Kind        ApplicationCommandOptionType      `json:"type"`        // value of ApplicationCommandOptionType
 	Name        string                            `json:"name"`        // 1-32 character name matching ^[\w-]{1,32}$
@@ -1230,7 +1622,7 @@ type Interaction struct {
 
 	DataCommand *ApplicationCommandInteractionData `json:"data"`
 }
-
+*/
 type interactionTemp struct {
 	ID            int64           `json:"id,string"`             // id of the interaction
 	ApplicationID int64           `json:"application_id,string"` // id of the application this interaction is for
@@ -1244,6 +1636,7 @@ type interactionTemp struct {
 	Version       int             `json:"version"`               // read-only property, always
 }
 
+/*
 // Interaction requires custom unmarshal logic because of the Data field being dependant on the interaction type
 func (a *Interaction) UnmarshalJSON(b []byte) error {
 	var temp *interactionTemp
@@ -1296,7 +1689,7 @@ type ApplicationCommandInteractionDataResolved struct {
 	Roles    map[int64]*Role    `json:"roles"`
 	Channels map[int64]*Channel `json:"channels"`
 }
-
+*/
 func (a *ApplicationCommandInteractionDataResolved) UnmarshalJSON(b []byte) error {
 	var temp *applicationCommandInteractionDataResolvedTemp
 	err := json.Unmarshal(b, &temp)
@@ -1353,6 +1746,7 @@ type applicationCommandInteractionDataResolvedTemp struct {
 	Channels map[string]*Channel `json:"channels"`
 }
 
+/*
 // Value types:
 //
 // CommandOptionTypeString: string
@@ -1365,10 +1759,10 @@ type ApplicationCommandInteractionDataOption struct {
 	Value   interface{}                                `json:"value"`   // the value of the pair
 	Options []*ApplicationCommandInteractionDataOption `json:"options"` // present if this option is a group or subcommand
 }
-
+*/
 type applicationCommandInteractionDataOptionTemporary struct {
 	Name    string                                     `json:"name"`    // the name of the parameter
-	Kind    ApplicationCommandOptionType               `json:"type"`    // value of ApplicationCommandOptionType
+	Type    ApplicationCommandOptionType               `json:"type"`    // value of ApplicationCommandOptionType
 	Value   json.RawMessage                            `json:"value"`   // the value of the pair
 	Options []*ApplicationCommandInteractionDataOption `json:"options"` // present if this option is a group or subcommand
 }
@@ -1382,37 +1776,38 @@ func (a *ApplicationCommandInteractionDataOption) UnmarshalJSON(b []byte) error 
 
 	*a = ApplicationCommandInteractionDataOption{
 		Name:    temp.Name,
-		Kind:    temp.Kind,
+		Type:    temp.Type,
 		Options: temp.Options,
 	}
 
-	switch temp.Kind {
-	case CommandOptionTypeString:
+	switch temp.Type {
+	case ApplicationCommandOptionString:
 		v := ""
 		err = json.Unmarshal(temp.Value, &v)
 		a.Value = v
-	case CommandOptionTypeInteger:
+	case ApplicationCommandOptionInteger:
 		v := int64(0)
 		err = json.Unmarshal(temp.Value, &v)
 		a.Value = v
-	case CommandOptionTypeBoolean:
+	case ApplicationCommandOptionBoolean:
 		v := false
 		err = json.Unmarshal(temp.Value, &v)
 		a.Value = v
-	case CommandOptionTypeUser, CommandOptionTypeChannel, CommandOptionTypeRole:
+	case ApplicationCommandOptionUser, ApplicationCommandOptionChannel, ApplicationCommandOptionRole:
 		// parse the snowflake
 		v := ""
 		err = json.Unmarshal(temp.Value, &v)
 		if err == nil {
 			a.Value, err = strconv.ParseInt(v, 10, 64)
 		}
-	case CommandOptionTypeSubCommand:
-	case CommandOptionTypeSubCommandGroup:
+	case ApplicationCommandOptionSubCommand:
+	case ApplicationCommandOptionSubCommandGroup:
 	}
 
 	return err
 }
 
+/*
 type InteractionResponse struct {
 	Kind InteractionResponseType                    `json:"type"` // the type of response
 	Data *InteractionApplicationCommandCallbackData `json:"data"` // an optional response message
@@ -1427,25 +1822,16 @@ const (
 	InteractionResponseTypeChannelMessageWithSource         InteractionResponseType = 4 // respond to an interaction with a message
 	InteractionResponseTypeDeferredChannelMessageWithSource InteractionResponseType = 5 // ACK an interaction and edit a response later, the user sees a loading state
 )
-
+*/
 type InteractionApplicationCommandCallbackData struct {
-	Tts             bool             `json:"tts,omitempty"`              //	is the response TTS
+	TTS             bool             `json:"tts,omitempty"`              //	is the response TTS
 	Content         *string          `json:"content,omitempty"`          //	message content
 	Embeds          []MessageEmbed   `json:"embeds,omitempty"`           // supports up to 10 embeds
 	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"` // allowed mentions object
 	Flags           int              `json:"flags,omitempty"`            //	set to 64 to make your response ephemeral
 }
 
-type MessageInteraction struct {
-	ID   int64           `json:"id,string"` // id of the interaction
-	Kind InteractionType `json:"type"`      // the type of interaction
-	Name string          `json:"name"`      // the name of the ApplicationCommand
-	User *User           `json:"user"`      // object the user who invoked the interaction
-
-	// Member is only present when the interaction is from a guild.
-	Member *Member `json:"member"`
-}
-
+/*
 type ThreadMetadata struct {
 	Archived            bool   `json:"archived"`              // whether the thread is archived
 	AutoArchiveDuration int    `json:"auto_archive_duration"` // duration in minutes to automatically archive the thread after recent activity, can be set to: 60, 1440, 4320, 10080
@@ -1460,3 +1846,4 @@ type ThreadMember struct {
 	JoinTimestamp Timestamp `json:"join_timestamp"` // the time the current user last joined the thread
 	Flags         int       `json:"flags"`          // any user-thread settings, currently only used for notifications
 }
+*/

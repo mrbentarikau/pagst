@@ -1,8 +1,8 @@
 package inmemorytracker
 
 import (
-	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 )
 
 var _ dstate.StateTracker = (*InMemoryTracker)(nil)
@@ -41,7 +41,6 @@ func (tracker *InMemoryTracker) GetMember(guildID int64, memberID int64) *dstate
 }
 
 func (shard *ShardTracker) getMemberLocked(guildID int64, memberID int64) *WrappedMember {
-
 	if members, ok := shard.members[guildID]; ok {
 		if ms, ok := members[memberID]; ok {
 			return ms
