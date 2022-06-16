@@ -23,7 +23,7 @@ var ErrTooManyAPICalls = errors.New("too many potential discord api calls functi
 
 func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
 	msgSend := &discordgo.MessageSend{
-		AllowedMentions: discordgo.AllowedMentions{
+		AllowedMentions: &discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
 		},
 	}
@@ -67,7 +67,7 @@ func (c *Context) tmplSendDM(s ...interface{}) (string, error) {
 	info := fmt.Sprintf("Custom Command DM from the server **%s**", c.GS.Name)
 	embedInfo := fmt.Sprintf("Custom Command DM from the server %s", c.GS.Name)
 	msgSend := &discordgo.MessageSend{
-		AllowedMentions: discordgo.AllowedMentions{
+		AllowedMentions: &discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
 		},
 	}
@@ -79,13 +79,20 @@ func (c *Context) tmplSendDM(s ...interface{}) (string, error) {
 			IconURL: gIcon,
 		}
 		msgSend.Embeds = []*discordgo.MessageEmbed{t}
+	case []*discordgo.MessageEmbed:
+		for _, e := range t {
+			e.Footer = &discordgo.MessageEmbedFooter{
+				Text:    embedInfo,
+				IconURL: gIcon,
+			}
+		}
 	case *discordgo.MessageSend:
 		msgSend = t
-
 		if len(msgSend.Embeds) > 0 {
 			for _, e := range msgSend.Embeds {
 				e.Footer = &discordgo.MessageEmbedFooter{
-					Text: embedInfo,
+					Text:    embedInfo,
+					IconURL: gIcon,
 				}
 			}
 			break
@@ -407,7 +414,7 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 
 		var m *discordgo.Message
 		msgSend := &discordgo.MessageSend{
-			AllowedMentions: discordgo.AllowedMentions{
+			AllowedMentions: &discordgo.AllowedMentions{
 				Parse: parseMentions,
 			},
 		}
@@ -423,18 +430,18 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 				}
 			}
 			msgSend.Embeds = []*discordgo.MessageEmbed{typedMsg}
+		case []*discordgo.MessageEmbed:
+			if isDM {
+				for _, e := range typedMsg {
+					e.Footer = &discordgo.MessageEmbedFooter{
+						Text:    embedInfo,
+						IconURL: icon,
+					}
+				}
+			}
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
-
-			if !filterSpecialMentions {
-				msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
-			}
-
-			if msgSend.Reference != nil {
-				cid = c.CurrentFrame.CS.ID
-				msgSend.Reference.ChannelID = cid
-			}
-
+			msgSend.AllowedMentions = &discordgo.AllowedMentions{Parse: parseMentions}
 			if isDM {
 				if len(typedMsg.Embeds) > 0 {
 					for _, e := range msgSend.Embeds {
@@ -490,23 +497,22 @@ func (c *Context) tmplEditMessage(filterSpecialMentions bool) func(channel inter
 
 		case *discordgo.MessageEmbed:
 			msgEdit.Embeds = []*discordgo.MessageEmbed{typedMsg}
+		case []*discordgo.MessageEmbed:
+			msgEdit.Embeds = typedMsg
 		case *discordgo.MessageEdit:
 			embeds := make([]*discordgo.MessageEmbed, 0, len(typedMsg.Embeds))
-
+			//If there are no Embeds and string are explicitly set as null, give an error message.
 			if typedMsg.Content != nil && strings.TrimSpace(*typedMsg.Content) == "" {
 				if len(typedMsg.Embeds) == 0 {
 					return "", errors.New("both content and embed cannot be null")
 				}
 
+				//only keep valid embeds
 				for _, e := range typedMsg.Embeds {
-					if e == nil || e.GetMarshalNil() {
-						continue
+					if e != nil && !e.GetMarshalNil() {
+						embeds = append(typedMsg.Embeds, e)
 					}
-
-					embeds = append(embeds, e)
-					break
 				}
-
 				if len(embeds) == 0 {
 					return "", errors.New("both content and embed cannot be null")
 				}
@@ -911,6 +917,7 @@ func (c *Context) tmplGetMessage(channel, msgID interface{}) (*discordgo.Message
 
 	message, err := common.BotSession.ChannelMessage(cID, mID)
 	if message != nil {
+		// get message endpoint doesn't return guild ID, so just patch it in to make message.Link work
 		message.GuildID = c.GS.ID
 
 		member, err := common.BotSession.GuildMember(message.GuildID, message.Author.ID)
@@ -1396,7 +1403,7 @@ func (c *Context) tmplSetMemberTimeout(target interface{}, optionalArgs ...inter
 
 	until = time.Now().Add(delay)
 
-	err := common.BotSession.GuildMemberTimeout(c.GS.ID, mID, &until)
+	err := common.BotSession.GuildMemberTimeout(c.GS.ID, mID, &until, "")
 	if err != nil {
 		return "", err
 	}

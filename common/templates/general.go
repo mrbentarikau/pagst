@@ -219,13 +219,14 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 	}
 
 	msg := &discordgo.MessageSend{
-		AllowedMentions: discordgo.AllowedMentions{},
+		AllowedMentions: &discordgo.AllowedMentions{},
 	}
 
 	// Default filename
 	filename := "attachment_" + time.Now().Format("2006-01-02_15-04-05")
 	// Embed defaults
 	embedSlice := []*discordgo.MessageEmbed{}
+	// limitation from discord
 	numEmbeds := 10
 
 	for key, val := range messageSdict {
@@ -271,14 +272,14 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			filename = common.CutStringShort(ToString(val), 64)
 		case "allowed_mentions":
 			if val == nil {
-				msg.AllowedMentions = discordgo.AllowedMentions{}
+				msg.AllowedMentions = &discordgo.AllowedMentions{}
 				continue
 			}
 			parsed, err := parseAllowedMentions(val)
 			if err != nil {
 				return nil, err
 			}
-			msg.AllowedMentions = *parsed
+			msg.AllowedMentions = parsed
 		case "reply":
 			reference := &discordgo.MessageReference{
 				MessageID: ToInt64(val),
@@ -317,6 +318,7 @@ func CreateMessageEdit(values ...interface{}) (*discordgo.MessageEdit, error) {
 
 	msg := &discordgo.MessageEdit{}
 	embedSlice := []*discordgo.MessageEmbed{}
+	// limitation from discord
 	numEmbeds := 10
 
 	for key, val := range messageSdict {

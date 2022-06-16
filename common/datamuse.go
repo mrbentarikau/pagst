@@ -7,7 +7,7 @@ package common
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 )
@@ -43,7 +43,7 @@ func wordFromAPI(wrd string, synSwitch bool) string {
 	}
 	resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return response
 	}

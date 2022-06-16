@@ -31,6 +31,8 @@ var LinkRegex = regexp.MustCompile(`(?i)([a-z\d]+://)((\w+:\w+@)?([a-z\d.-]+\.[a
 var DomainFinderRegex = regexp.MustCompile(`(?i)(?:[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?\.)+[a-z\d][a-z\d-]{0,61}[a-z\d]`)
 var ThanksRegex = regexp.MustCompile(`(?i)(?:\A|.+)(?:\+(?:\s+|rep)?|t(?:y(?:sm|vm)?|h(?:a?nks?|n?x)(?:\s+(?:yo)?u)?(?:\s+(?:so|very)\s+much|\s+?a?\s*lot)?)|danke?s?)+.*<@!?\d{17,19}>(?:.+|\z)`)
 
+var BotUserAgent = "PAGSTDB/20.42.6702"
+
 type GuildWithConnected struct {
 	*discordgo.UserGuild
 	Connected bool
@@ -72,7 +74,7 @@ func DelayedMessageDelete(session *discordgo.Session, delay time.Duration, cID, 
 func SendTempMessage(session *discordgo.Session, duration time.Duration, cID int64, msg string) {
 	m, err := BotSession.ChannelMessageSendComplex(cID, &discordgo.MessageSend{
 		Content:         msg,
-		AllowedMentions: AllowedMentionsParseUsers,
+		AllowedMentions: &AllowedMentionsParseUsers,
 	})
 	if err != nil {
 		return
@@ -99,6 +101,10 @@ func RandomNoun() string {
 	}
 
 	return noun
+}
+
+func RandomVerb() string {
+	return Verbs[rand.Intn(len(Verbs))]
 }
 
 type DurationFormatPrecision int
@@ -326,6 +332,7 @@ var StringPerms = map[int64]string{
 	discordgo.PermissionManageChannels:      "Manage Channels",
 	discordgo.PermissionManageServer:        "Manage Server",
 	discordgo.PermissionManageWebhooks:      "Manage Webhooks",
+	discordgo.PermissionModerateMembers:     "Moderate Members / Timeout Members",
 }
 
 func ErrWithCaller(err error) error {
@@ -391,7 +398,9 @@ func HumanizePermissions(perms int64) (res []string) {
 	if perms&discordgo.PermissionManageServer == discordgo.PermissionManageServer {
 		res = append(res, "ManageServer")
 	}
-
+	if perms&discordgo.PermissionViewGuildInsights == discordgo.PermissionViewGuildInsights {
+		res = append(res, "ViewGuildInsights")
+	}
 	if perms&discordgo.PermissionReadMessages == discordgo.PermissionReadMessages {
 		res = append(res, "ReadMessages")
 	}
@@ -419,7 +428,15 @@ func HumanizePermissions(perms int64) (res []string) {
 	if perms&discordgo.PermissionUseExternalEmojis == discordgo.PermissionUseExternalEmojis {
 		res = append(res, "UseExternalEmojis")
 	}
-
+	if perms&discordgo.PermissionUseExternalStickers == discordgo.PermissionUseExternalStickers {
+		res = append(res, "UseExternalStickers")
+	}
+	if perms&discordgo.PermissionUseApplicationCommands == discordgo.PermissionUseApplicationCommands {
+		res = append(res, "UseApplicationCommands")
+	}
+	if perms&discordgo.PermissionUseEmbeddedActivities == discordgo.PermissionUseEmbeddedActivities {
+		res = append(res, "UseEmbeddedActivities")
+	}
 	// Constants for the different bit offsets of voice permissions
 	if perms&discordgo.PermissionVoiceConnect == discordgo.PermissionVoiceConnect {
 		res = append(res, "VoiceConnect")
@@ -439,7 +456,15 @@ func HumanizePermissions(perms int64) (res []string) {
 	if perms&discordgo.PermissionVoiceUseVAD == discordgo.PermissionVoiceUseVAD {
 		res = append(res, "VoiceUseVAD")
 	}
-
+	if perms&discordgo.PermissionPrioritySpeaker == discordgo.PermissionPrioritySpeaker {
+		res = append(res, "PrioritySpeaker")
+	}
+	if perms&discordgo.PermissionRequestToSpeak == discordgo.PermissionRequestToSpeak {
+		res = append(res, "RequestToSpeak")
+	}
+	if perms&discordgo.PermissionStream == discordgo.PermissionStream {
+		res = append(res, "Stream")
+	}
 	// Constants for general management.
 	if perms&discordgo.PermissionChangeNickname == discordgo.PermissionChangeNickname {
 		res = append(res, "ChangeNickname")
@@ -453,12 +478,15 @@ func HumanizePermissions(perms int64) (res []string) {
 	if perms&discordgo.PermissionManageWebhooks == discordgo.PermissionManageWebhooks {
 		res = append(res, "ManageWebhooks")
 	}
-	if perms&discordgo.PermissionManageEmojis == discordgo.PermissionManageEmojis {
-		res = append(res, "ManageEmojis")
+	if perms&discordgo.PermissionManageEmojisAndStickers == discordgo.PermissionManageEmojisAndStickers {
+		res = append(res, "ManageEmojisAndStickers")
 	}
 
 	if perms&discordgo.PermissionCreateInstantInvite == discordgo.PermissionCreateInstantInvite {
 		res = append(res, "CreateInstantInvite")
+	}
+	if perms&discordgo.PermissionModerateMembers == discordgo.PermissionModerateMembers {
+		res = append(res, "ModerateMembers")
 	}
 	if perms&discordgo.PermissionKickMembers == discordgo.PermissionKickMembers {
 		res = append(res, "KickMembers")
@@ -468,6 +496,22 @@ func HumanizePermissions(perms int64) (res []string) {
 	}
 	if perms&discordgo.PermissionManageChannels == discordgo.PermissionManageChannels {
 		res = append(res, "ManageChannels")
+	}
+	if perms&discordgo.PermissionManageEvents == discordgo.PermissionManageEvents {
+		res = append(res, "ManageEvents")
+	}
+
+	if perms&discordgo.PermissionManageThreads == discordgo.PermissionManageThreads {
+		res = append(res, "ManageThreads")
+	}
+	if perms&discordgo.PermissionUsePublicThreads == discordgo.PermissionUsePublicThreads {
+		res = append(res, "UsePublicThreads")
+	}
+	if perms&discordgo.PermissionUsePrivateThreads == discordgo.PermissionUsePrivateThreads {
+		res = append(res, "UsePrivateThreads")
+	}
+	if perms&discordgo.PermissionSendMessagesInThreads == discordgo.PermissionSendMessagesInThreads {
+		res = append(res, "SendMessagesInThreads")
 	}
 	if perms&discordgo.PermissionAddReactions == discordgo.PermissionAddReactions {
 		res = append(res, "AddReactions")
@@ -592,7 +636,7 @@ func SplitSendMessage(channelID int64, contents string, allowedMentions discordg
 		var m *discordgo.Message
 		m, err = BotSession.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
 			Content:         v,
-			AllowedMentions: allowedMentions,
+			AllowedMentions: &allowedMentions,
 		})
 
 		if err != nil {

@@ -122,6 +122,7 @@ var (
 		"seq":                sequence,
 		"structToSdict":      StructToSdict,
 		"shuffle":            shuffle,
+		"verb":               common.RandomVerb,
 
 		// time functions
 		"currentTime":     tmplCurrentTime,
@@ -440,7 +441,7 @@ func (c *Context) MessageSend(content string) *discordgo.MessageSend {
 
 	return &discordgo.MessageSend{
 		Content: content,
-		AllowedMentions: discordgo.AllowedMentions{
+		AllowedMentions: &discordgo.AllowedMentions{
 			Parse: parse,
 			Roles: c.CurrentFrame.MentionRoles,
 		},
@@ -476,6 +477,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 
 	isDM := c.CurrentFrame.SendResponseInDM || (c.CurrentFrame.CS != nil && c.CurrentFrame.CS.IsPrivate())
 
+	var embeds []*discordgo.MessageEmbed
 	for _, v := range c.CurrentFrame.EmbedsToSend {
 		if isDM {
 			v.Footer = &discordgo.MessageEmbedFooter{
@@ -483,8 +485,10 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 				IconURL: c.GS.Icon,
 			}
 		}
-		common.BotSession.ChannelMessageSendEmbed(channelID, v)
+		embeds = append(embeds, v)
+
 	}
+	common.BotSession.ChannelMessageSendEmbedList(channelID, embeds)
 
 	if strings.TrimSpace(content) == "" || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
 		// no point in sending the response if it gets deleted immediately
