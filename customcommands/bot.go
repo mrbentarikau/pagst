@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"math/rand"
 	"regexp"
 	"runtime/debug"
 	"sort"
@@ -859,11 +858,12 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	go analytics.RecordActiveUnit(cmd.GuildID, &Plugin{}, "executed_cc")
 
 	// pick a response and execute it
-	//f.Info("Custom command triggered")
+	// f.Info("Custom command triggered")
 	f.Info("Custom command #", tmplCtx.Data["CCID"], " triggered")
-	//f.Debug("Custom command triggered")
+	// f.Debug("Custom command triggered")
 
-	chanMsg := cmd.Responses[rand.Intn(len(cmd.Responses))]
+	// chanMsg := cmd.Responses[rand.Intn(len(cmd.Responses))]
+	chanMsg := cmd.Responses[0]
 	out, err := tmplCtx.Execute(chanMsg)
 
 	if utf8.RuneCountInString(out) > 2000 {
@@ -1109,7 +1109,7 @@ func CheckMatch(globalPrefix string, cmd *models.CustomCommand, msg string) (mat
 	case CommandTriggerStartsWith:
 		cmdMatch += `\A` + regexp.QuoteMeta(regexTrigger)
 	case CommandTriggerContains:
-		cmdMatch += `\A.*` + regexp.QuoteMeta(regexTrigger)
+		cmdMatch += `.*` + regexp.QuoteMeta(regexTrigger)
 	case CommandTriggerRegex:
 		cmdMatch += regexTrigger
 	case CommandTriggerExact:

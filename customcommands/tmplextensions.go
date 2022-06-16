@@ -40,10 +40,10 @@ func init() {
 		ctx.ContextFuncs["dbCount"] = tmplDBCount(ctx)
 		ctx.ContextFuncs["dbDecr"] = tmplDBIncr(ctx, true)
 		ctx.ContextFuncs["dbDel"] = tmplDBDel(ctx)
-		ctx.ContextFuncs["dbDelByID"] = tmplDBDelById(ctx)
-		ctx.ContextFuncs["dbDelById"] = tmplDBDelById(ctx)
+		ctx.ContextFuncs["dbDelByID"] = tmplDBDelByID(ctx)
 		ctx.ContextFuncs["dbDelMultiple"] = tmplDBDelMultiple(ctx)
 		ctx.ContextFuncs["dbGet"] = tmplDBGet(ctx)
+		ctx.ContextFuncs["dbGetByID"] = tmplDBGetByID(ctx)
 		ctx.ContextFuncs["dbGetPattern"] = tmplDBGetPattern(ctx, false)
 		ctx.ContextFuncs["dbIncr"] = tmplDBIncr(ctx, false)
 		ctx.ContextFuncs["dbRank"] = tmplDBRank(ctx)
@@ -540,6 +540,25 @@ func tmplDBGet(ctx *templates.Context) interface{} {
 	}
 }
 
+func tmplDBGetByID(ctx *templates.Context) interface{} {
+	return func(userID, dbID int64) (interface{}, error) {
+		if ctx.IncreaseCheckCallCounterPremium("db_interactions", 10, 50) {
+			return "", templates.ErrTooManyCalls
+		}
+
+		m, err := models.TemplatesUserDatabases(qm.Where("guild_id = ? AND user_id = ? AND id = ? AND (expires_at IS NULL OR expires_at > now())", ctx.GS.ID, userID, dbID)).OneG(context.Background())
+		if err != nil {
+			if err != sql.ErrNoRows {
+				return nil, err
+			}
+
+			return nil, nil
+		}
+
+		return ToLightDBEntry(m)
+	}
+}
+
 func tmplDBGetPattern(ctx *templates.Context, inverse bool) interface{} {
 	order := "id asc"
 	if inverse {
@@ -588,7 +607,7 @@ func tmplDBDel(ctx *templates.Context) interface{} {
 	}
 }
 
-func tmplDBDelById(ctx *templates.Context) interface{} {
+func tmplDBDelByID(ctx *templates.Context) interface{} {
 	return func(userID int64, id int64) (interface{}, error) {
 		if ctx.IncreaseCheckCallCounterPremium("db_interactions", 10, 50) {
 			return "", templates.ErrTooManyCalls

@@ -165,10 +165,10 @@ type CustomCommand struct {
 var _ web.CustomValidator = (*CustomCommand)(nil)
 
 func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
-	if len(cc.Responses) > MaxUserMessages {
+	/*if len(cc.Responses) > MaxUserMessages {
 		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Too many responses, max %d", MaxUserMessages)))
 		return false
-	}
+	}*/
 
 	foundOkayResponse := false
 	for _, v := range cc.Responses {
@@ -198,7 +198,7 @@ func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
 		return false
 	}
 
-	/*from master
+	/*// from master
 	if cc.TriggerTypeForm == "interval_minutes" && (cc.TimeTriggerInterval < MinIntervalTriggerDurationMinutes || cc.TimeTriggerInterval > MaxIntervalTriggerDurationMinutes) {
 		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Minute interval can be between %v and %v", MinIntervalTriggerDurationMinutes, MaxIntervalTriggerDurationMinutes)))
 		return false
@@ -207,8 +207,7 @@ func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
 	if cc.TriggerTypeForm == "interval_hours" && (cc.TimeTriggerInterval < MinIntervalTriggerDurationHours || cc.TimeTriggerInterval > MaxIntervalTriggerDurationHours) {
 		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Hourly interval can be between %v and %v", MinIntervalTriggerDurationHours, MaxIntervalTriggerDurationHours)))
 		return false
-	}
-	*/
+	}*/
 
 	// check max interval limits
 	var intvMax bool
@@ -223,7 +222,7 @@ func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
 		intvMax = true
 	}
 
-	if time.Minute*time.Duration(cc.TimeTriggerInterval*intvMult) < 0 || intvMax {
+	if (cc.TriggerTypeForm == "interval_minutes" || cc.TriggerTypeForm == "interval_hours") && (time.Minute*time.Duration(cc.TimeTriggerInterval*intvMult) < 0 || intvMax) {
 		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Interval %d goes beyond limits of negative or 292 years...", cc.TimeTriggerInterval)))
 		return false
 	}
