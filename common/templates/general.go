@@ -219,7 +219,7 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 	}
 
 	msg := &discordgo.MessageSend{
-		AllowedMentions: &discordgo.AllowedMentions{},
+		AllowedMentions: discordgo.AllowedMentions{},
 	}
 
 	// Default filename
@@ -272,14 +272,14 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			filename = common.CutStringShort(ToString(val), 64)
 		case "allowed_mentions":
 			if val == nil {
-				msg.AllowedMentions = &discordgo.AllowedMentions{}
+				msg.AllowedMentions = discordgo.AllowedMentions{}
 				continue
 			}
 			parsed, err := parseAllowedMentions(val)
 			if err != nil {
 				return nil, err
 			}
-			msg.AllowedMentions = parsed
+			msg.AllowedMentions = *parsed
 		case "reply":
 			reference := &discordgo.MessageReference{
 				MessageID: ToInt64(val),

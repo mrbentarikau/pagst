@@ -23,7 +23,7 @@ var ErrTooManyAPICalls = errors.New("too many potential discord api calls functi
 
 func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend {
 	msgSend := &discordgo.MessageSend{
-		AllowedMentions: &discordgo.AllowedMentions{
+		AllowedMentions: discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
 		},
 	}
@@ -67,7 +67,7 @@ func (c *Context) tmplSendDM(s ...interface{}) (string, error) {
 	info := fmt.Sprintf("Custom Command DM from the server **%s**", c.GS.Name)
 	embedInfo := fmt.Sprintf("Custom Command DM from the server %s", c.GS.Name)
 	msgSend := &discordgo.MessageSend{
-		AllowedMentions: &discordgo.AllowedMentions{
+		AllowedMentions: discordgo.AllowedMentions{
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
 		},
 	}
@@ -414,7 +414,7 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 
 		var m *discordgo.Message
 		msgSend := &discordgo.MessageSend{
-			AllowedMentions: &discordgo.AllowedMentions{
+			AllowedMentions: discordgo.AllowedMentions{
 				Parse: parseMentions,
 			},
 		}
@@ -441,7 +441,7 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 			}
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
-			msgSend.AllowedMentions = &discordgo.AllowedMentions{Parse: parseMentions}
+			msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
 			if isDM {
 				if len(typedMsg.Embeds) > 0 {
 					for _, e := range msgSend.Embeds {
@@ -527,7 +527,7 @@ func (c *Context) tmplEditMessage(filterSpecialMentions bool) func(channel inter
 		}
 
 		if !filterSpecialMentions {
-			msgEdit.AllowedMentions = &discordgo.AllowedMentions{
+			msgEdit.AllowedMentions = discordgo.AllowedMentions{
 				Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers, discordgo.AllowedMentionTypeRoles, discordgo.AllowedMentionTypeEveryone},
 			}
 		}
@@ -2043,4 +2043,56 @@ func (c *Context) tmplCounters() (map[string]int, error) {
 	}
 
 	return c.Counters, nil
+}
+
+func (c *Context) tmplGetGuildIntegrations() (integrations []*discordgo.Integration, err error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_integrations", 1) {
+		return nil, ErrTooManyCalls
+	}
+
+	integrations, err = common.BotSession.GuildIntegrations(c.GS.ID)
+
+	return
+
+}
+
+func (c *Context) tmplGuildMemberMove(channel interface{}, target interface{}) (string, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return "", ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_integrations", 5) {
+		return "", ErrTooManyCalls
+	}
+
+	cID := c.ChannelArg(channel)
+	if cID == 0 {
+		return "", nil
+	}
+
+	if cID == c.CurrentFrame.CS.ID {
+		cID = 0
+	}
+
+	mID := targetUserID(target)
+	if mID == 0 {
+		return "", nil
+	}
+
+	member, _ := bot.GetMember(c.GS.ID, mID)
+	if member == nil {
+		return "", nil
+	}
+
+	err := common.BotSession.GuildMemberMove(c.GS.ID, member.User.ID, cID)
+	if err != nil {
+		return "", err
+	}
+
+	return "", nil
+
 }

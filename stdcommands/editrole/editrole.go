@@ -100,7 +100,7 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 
 	_, err := common.BotSession.ChannelMessageSendComplex(cID, &discordgo.MessageSend{
 		Content:         fmt.Sprintf("__**Role(%d) properties:**__\n\n**Name **: `%s`\n**Color **: `%d`\n**Mentionable **: `%t`\n**Hoisted **: `%t`\n**Permissions **: `%d`", role.ID, name, color, mentionable, hoisted, perms),
-		AllowedMentions: &discordgo.AllowedMentions{},
+		AllowedMentions: discordgo.AllowedMentions{},
 	})
 
 	if err != nil {

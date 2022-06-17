@@ -697,7 +697,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			send := &discordgo.MessageSend{
 				Content: topContent,
 				Embeds:  []*discordgo.MessageEmbed{embed},
-				AllowedMentions: &discordgo.AllowedMentions{
+				AllowedMentions: discordgo.AllowedMentions{
 					Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
 				},
 			}

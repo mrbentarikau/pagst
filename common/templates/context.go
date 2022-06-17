@@ -441,7 +441,7 @@ func (c *Context) MessageSend(content string) *discordgo.MessageSend {
 
 	return &discordgo.MessageSend{
 		Content: content,
-		AllowedMentions: &discordgo.AllowedMentions{
+		AllowedMentions: discordgo.AllowedMentions{
 			Parse: parse,
 			Roles: c.CurrentFrame.MentionRoles,
 		},
