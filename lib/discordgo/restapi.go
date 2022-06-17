@@ -1038,9 +1038,9 @@ func (s *Session) GuildMemberTimeoutWithReason(guildID int64, userID int64, unti
 
 	extraHeaders := make(map[string]string)
 	if reason != "" {
-		extraHeaders["X-Audit-Log-Reason"] = url.QueryEscape(reason)
+		extraHeaders["X-Audit-Log-Reason"] = reason
 	}
-	_, err = s.RequestWithBucketID("PATCH", EndpointGuildMember(guildID, userID), data, nil, EndpointGuildMember(guildID, 0))
+	_, err = s.RequestWithBucketID("PATCH", EndpointGuildMember(guildID, userID), data, extraHeaders, EndpointGuildMember(guildID, 0))
 	return
 }
 
