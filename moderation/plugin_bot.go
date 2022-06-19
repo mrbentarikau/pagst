@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/jinzhu/gorm"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
@@ -19,8 +21,6 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dshardorchestrator"
 	"github.com/mrbentarikau/pagst/lib/dstate"
-	"github.com/jinzhu/gorm"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -49,16 +49,17 @@ func (p *Plugin) BotInit() {
 	// scheduledevents.RegisterEventHandler("mod_unban", handleUnbanLegacy)
 	scheduledevents2.RegisterHandler("moderation_unmute", ScheduledUnmuteData{}, handleScheduledUnmute)
 	scheduledevents2.RegisterHandler("moderation_unban", ScheduledUnbanData{}, handleScheduledUnban)
-	//scheduledevents2.RegisterHandler("moderation_unlock_role", ScheduledUnlockData{}, handleScheduledUnlock)
+	scheduledevents2.RegisterHandler("moderation_unlock_role", ScheduledUnlockData{}, handleScheduledUnlock)
 	scheduledevents2.RegisterLegacyMigrater("unmute", handleMigrateScheduledUnmute)
 	scheduledevents2.RegisterLegacyMigrater("mod_unban", handleMigrateScheduledUnban)
 
 	eventsystem.AddHandlerAsyncLastLegacy(p, bot.ConcurrentEventHandler(HandleGuildBanAddRemove), eventsystem.EventGuildBanAdd, eventsystem.EventGuildBanRemove)
 	eventsystem.AddHandlerAsyncLast(p, HandleGuildMemberRemove, eventsystem.EventGuildMemberRemove)
-	//eventsystem.AddHandlerAsyncLast(p, LockRoleLockdownMW(HandleGuildRoleDelete), eventsystem.EventGuildRoleDelete)
-	//eventsystem.AddHandlerAsyncLast(p, LockRoleLockdownMW(HandleGuildRoleUpdate), eventsystem.EventGuildRoleUpdate)
+	eventsystem.AddHandlerAsyncLast(p, LockRoleLockdownMW(HandleGuildRoleDelete), eventsystem.EventGuildRoleDelete)
+	eventsystem.AddHandlerAsyncLast(p, LockRoleLockdownMW(HandleGuildRoleUpdate), eventsystem.EventGuildRoleUpdate)
 	eventsystem.AddHandlerAsyncLast(p, LockMemberMuteMW(HandleMemberJoin), eventsystem.EventGuildMemberAdd)
 	eventsystem.AddHandlerAsyncLast(p, LockMemberMuteMW(HandleGuildMemberUpdate), eventsystem.EventGuildMemberUpdate)
+	//eventsystem.AddHandlerAsyncLast(p, HandleGuildMemberTimeoutChange, eventsystem.EventGuildMemberUpdate)
 
 	eventsystem.AddHandlerAsyncLastLegacy(p, bot.ConcurrentEventHandler(HandleGuildCreate), eventsystem.EventGuildCreate)
 	eventsystem.AddHandlerAsyncLast(p, HandleChannelCreateUpdate, eventsystem.EventChannelCreate, eventsystem.EventChannelUpdate)
@@ -271,6 +272,55 @@ func RefreshMuteOverrideForChannel(config *Config, channel dstate.ChannelState) 
 	}
 }
 
+/* YAG new thing, commented out for now
+func HandleGuildMemberTimeoutChange(evt *eventsystem.EventData) (retry bool, err error) {
+	data := evt.GuildMemberUpdate()
+	//ignore members who aren't timedout or have been timedout in the past
+	if data.TimeoutExpiresAt == nil || data.TimeoutExpiresAt.Before(time.Now()) {
+		return false, nil
+	}
+
+	config, err := GetConfig(data.GuildID)
+	if err != nil {
+		return true, errors.WithStackIf(err)
+	}
+
+	// no modlog channel setup
+	if config.IntActionChannel() == 0 {
+		return false, nil
+	}
+	// If we poll the audit log too fast then there sometimes wont be a audit log entry
+	time.Sleep(time.Second * 3)
+
+	author, entry := FindAuditLogEntry(data.GuildID, discordgo.AuditLogActionMemberUpdate, data.User.ID, time.Second*5)
+	if entry == nil || author == nil {
+		return false, nil
+	}
+	logger.Infof("got timeout event %v", entry)
+
+	if entry.Changes[0].Key != "communication_disabled_until" {
+		return false, nil
+	}
+
+	if author.ID == common.BotUser.ID {
+		// Bot performed the timeout, don't make duplicate modlog entries
+		return false, nil
+	}
+
+	if !config.LogTimeouts {
+		// User doesn't want us to log timeouts not made through yag
+		return false, nil
+	}
+
+	err = CreateModlogEmbed(config, author, MATimeoutAdded, data.User, entry.Reason, "")
+	if err != nil {
+		logger.WithError(err).WithField("guild", data.GuildID).Error("Failed sending timeout log message")
+		return false, errors.WithStackIf(err)
+	}
+
+	return false, nil
+}*/
+
 func HandleGuildBanAddRemove(evt *eventsystem.EventData) {
 	var user *discordgo.User
 	var guildID = evt.GS.ID
@@ -403,11 +453,10 @@ func checkAuditLogMemberRemoved(config *Config, data *discordgo.GuildMemberRemov
 
 // Since updating mutes are now a complex operation with removing roles and whatnot,
 // to avoid weird bugs from happening we lock it so it can only be updated one place per user
-/*func LockRoleLockdownMW(next func(evt *eventsystem.EventData, PermsData int) (retry bool, err error)) eventsystem.HandlerFunc {
+func LockRoleLockdownMW(next func(evt *eventsystem.EventData, PermsData int64) (retry bool, err error)) eventsystem.HandlerFunc {
 	return func(evt *eventsystem.EventData) (retry bool, err error) {
-		var roleID int64
+		var roleID, rolePerms int64
 		roleUpdate := false
-		rolePerms := 0
 		// TODO: add utility functions to the eventdata struct for fetching things like these?
 		if evt.Type == eventsystem.EventGuildRoleDelete {
 			roleID = evt.GuildRoleDelete().RoleID
@@ -440,15 +489,15 @@ func checkAuditLogMemberRemoved(config *Config, data *discordgo.GuildMemberRemov
 		}
 
 		// If it's a role update update event and locked perms remain locked, dont do anything
-		if roleUpdate && int(currentLockdown.PermsToggle)&rolePerms == 0 {
+		if roleUpdate && currentLockdown.PermsToggle&rolePerms == 0 {
 			return false, nil
 		}
 
-		return next(evt, int(currentLockdown.PermsToggle))
+		return next(evt, currentLockdown.PermsToggle)
 	}
-}*/
+}
 
-func HandleGuildRoleDelete(evt *eventsystem.EventData, togglePerms int) (retry bool, err error) {
+func HandleGuildRoleDelete(evt *eventsystem.EventData, togglePerms int64) (retry bool, err error) {
 	data := evt.GuildRoleDelete()
 
 	// remove all existing unlock events for this role irrespective of lock or unlock event
@@ -467,7 +516,7 @@ func HandleGuildRoleDelete(evt *eventsystem.EventData, togglePerms int) (retry b
 	return false, nil
 }
 
-/*func HandleGuildRoleUpdate(evt *eventsystem.EventData, togglePerms int) (retry bool, err error) {
+func HandleGuildRoleUpdate(evt *eventsystem.EventData, togglePerms int64) (retry bool, err error) {
 	role := evt.GuildRoleUpdate().Role
 	newPerms := role.Permissions &^ togglePerms
 	_, err = common.BotSession.GuildRoleEdit(evt.GS.ID, role.ID, role.Name, role.Color, role.Hoist, newPerms, role.Mentionable)
@@ -475,7 +524,7 @@ func HandleGuildRoleDelete(evt *eventsystem.EventData, togglePerms int) (retry b
 		return bot.CheckDiscordErrRetry(err), errors.WithStackIf(err)
 	}
 	return false, nil
-}*/
+}
 
 // Since updating mutes are now a complex operation with removing roles and whatnot,
 // to avoid weird bugs from happening we lock it so it can only be updated one place per user
@@ -692,7 +741,7 @@ func handleScheduledUnban(evt *seventsmodels.ScheduledEvent, data interface{}) (
 	return false, nil
 }
 
-/*func handleScheduledUnlock(evt *seventsmodels.ScheduledEvent, data interface{}) (retry bool, err error) {
+func handleScheduledUnlock(evt *seventsmodels.ScheduledEvent, data interface{}) (retry bool, err error) {
 	unlockData := data.(*ScheduledUnlockData)
 
 	guildID := evt.GuildID
@@ -721,4 +770,3 @@ func handleScheduledUnban(evt *seventsmodels.ScheduledEvent, data interface{}) (
 
 	return false, nil
 }
-*/
