@@ -21,6 +21,10 @@ ALTER TABLE reputation_configs ADD COLUMN IF NOT EXISTS disable_custom_thanks_de
 `, `
 ALTER TABLE reputation_configs ADD COLUMN IF NOT EXISTS custom_thanks_regex VARCHAR(64) NOT NULL DEFAULT '';
 `, `
+ALTER TABLE reputation_configs ADD COLUMN IF NOT EXISTS whitelisted_thanks_channels BIGINT[];
+`, `
+ALTER TABLE reputation_configs ADD COLUMN IF NOT EXISTS blacklisted_thanks_channels BIGINT[];
+`, `
 DO $$
 BEGIN
 

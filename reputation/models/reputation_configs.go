@@ -44,6 +44,8 @@ type ReputationConfig struct {
 	BlacklistedReceiveRoles      types.Int64Array `boil:"blacklisted_receive_roles" json:"blacklisted_receive_roles,omitempty" toml:"blacklisted_receive_roles" yaml:"blacklisted_receive_roles,omitempty"`
 	DisableCustomThanksDetection bool             `boil:"disable_custom_thanks_detection" json:"disable_custom_thanks_detection" toml:"disable_custom_thanks_detection" yaml:"disable_custom_thanks_detection"`
 	CustomThanksRegex            string           `boil:"custom_thanks_regex" json:"custom_thanks_regex" toml:"custom_thanks_regex" yaml:"custom_thanks_regex"`
+	WhitelistedThanksChannels    types.Int64Array `boil:"whitelisted_thanks_channels" json:"whitelisted_thanks_channels,omitempty" toml:"whitelisted_thanks_channels" yaml:"whitelisted_thanks_channels,omitempty"`
+	BlacklistedThanksChannels    types.Int64Array `boil:"blacklisted_thanks_channels" json:"blacklisted_thanks_channels,omitempty" toml:"blacklisted_thanks_channels" yaml:"blacklisted_thanks_channels,omitempty"`
 
 	R *reputationConfigR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L reputationConfigL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -69,6 +71,8 @@ var ReputationConfigColumns = struct {
 	BlacklistedReceiveRoles      string
 	DisableCustomThanksDetection string
 	CustomThanksRegex            string
+	WhitelistedThanksChannels    string
+	BlacklistedThanksChannels    string
 }{
 	GuildID:                      "guild_id",
 	PointsName:                   "points_name",
@@ -89,6 +93,8 @@ var ReputationConfigColumns = struct {
 	BlacklistedReceiveRoles:      "blacklisted_receive_roles",
 	DisableCustomThanksDetection: "disable_custom_thanks_detection",
 	CustomThanksRegex:            "custom_thanks_regex",
+	WhitelistedThanksChannels:    "whitelisted_thanks_channels",
+	BlacklistedThanksChannels:    "blacklisted_thanks_channels",
 }
 
 var ReputationConfigTableColumns = struct {
@@ -111,6 +117,8 @@ var ReputationConfigTableColumns = struct {
 	BlacklistedReceiveRoles      string
 	DisableCustomThanksDetection string
 	CustomThanksRegex            string
+	WhitelistedThanksChannels    string
+	BlacklistedThanksChannels    string
 }{
 	GuildID:                      "reputation_configs.guild_id",
 	PointsName:                   "reputation_configs.points_name",
@@ -131,6 +139,8 @@ var ReputationConfigTableColumns = struct {
 	BlacklistedReceiveRoles:      "reputation_configs.blacklisted_receive_roles",
 	DisableCustomThanksDetection: "reputation_configs.disable_custom_thanks_detection",
 	CustomThanksRegex:            "reputation_configs.custom_thanks_regex",
+	WhitelistedThanksChannels:    "reputation_configs.whitelisted_thanks_channels",
+	BlacklistedThanksChannels:    "reputation_configs.blacklisted_thanks_channels",
 }
 
 // Generated where
@@ -281,6 +291,8 @@ var ReputationConfigWhere = struct {
 	BlacklistedReceiveRoles      whereHelpertypes_Int64Array
 	DisableCustomThanksDetection whereHelperbool
 	CustomThanksRegex            whereHelperstring
+	WhitelistedThanksChannels    whereHelpertypes_Int64Array
+	BlacklistedThanksChannels    whereHelpertypes_Int64Array
 }{
 	GuildID:                      whereHelperint64{field: "\"reputation_configs\".\"guild_id\""},
 	PointsName:                   whereHelperstring{field: "\"reputation_configs\".\"points_name\""},
@@ -301,6 +313,8 @@ var ReputationConfigWhere = struct {
 	BlacklistedReceiveRoles:      whereHelpertypes_Int64Array{field: "\"reputation_configs\".\"blacklisted_receive_roles\""},
 	DisableCustomThanksDetection: whereHelperbool{field: "\"reputation_configs\".\"disable_custom_thanks_detection\""},
 	CustomThanksRegex:            whereHelperstring{field: "\"reputation_configs\".\"custom_thanks_regex\""},
+	WhitelistedThanksChannels:    whereHelpertypes_Int64Array{field: "\"reputation_configs\".\"whitelisted_thanks_channels\""},
+	BlacklistedThanksChannels:    whereHelpertypes_Int64Array{field: "\"reputation_configs\".\"blacklisted_thanks_channels\""},
 }
 
 // ReputationConfigRels is where relationship names are stored.
@@ -320,9 +334,9 @@ func (*reputationConfigR) NewStruct() *reputationConfigR {
 type reputationConfigL struct{}
 
 var (
-	reputationConfigAllColumns            = []string{"guild_id", "points_name", "enabled", "cooldown", "max_give_amount", "required_give_role", "required_receive_role", "blacklisted_give_role", "blacklisted_receive_role", "admin_role", "disable_thanks_detection", "max_remove_amount", "admin_roles", "required_give_roles", "required_receive_roles", "blacklisted_give_roles", "blacklisted_receive_roles", "disable_custom_thanks_detection", "custom_thanks_regex"}
+	reputationConfigAllColumns            = []string{"guild_id", "points_name", "enabled", "cooldown", "max_give_amount", "required_give_role", "required_receive_role", "blacklisted_give_role", "blacklisted_receive_role", "admin_role", "disable_thanks_detection", "max_remove_amount", "admin_roles", "required_give_roles", "required_receive_roles", "blacklisted_give_roles", "blacklisted_receive_roles", "disable_custom_thanks_detection", "custom_thanks_regex", "whitelisted_thanks_channels", "blacklisted_thanks_channels"}
 	reputationConfigColumnsWithoutDefault = []string{"guild_id", "points_name", "enabled", "cooldown", "max_give_amount"}
-	reputationConfigColumnsWithDefault    = []string{"required_give_role", "required_receive_role", "blacklisted_give_role", "blacklisted_receive_role", "admin_role", "disable_thanks_detection", "max_remove_amount", "admin_roles", "required_give_roles", "required_receive_roles", "blacklisted_give_roles", "blacklisted_receive_roles", "disable_custom_thanks_detection", "custom_thanks_regex"}
+	reputationConfigColumnsWithDefault    = []string{"required_give_role", "required_receive_role", "blacklisted_give_role", "blacklisted_receive_role", "admin_role", "disable_thanks_detection", "max_remove_amount", "admin_roles", "required_give_roles", "required_receive_roles", "blacklisted_give_roles", "blacklisted_receive_roles", "disable_custom_thanks_detection", "custom_thanks_regex", "whitelisted_thanks_channels", "blacklisted_thanks_channels"}
 	reputationConfigPrimaryKeyColumns     = []string{"guild_id"}
 	reputationConfigGeneratedColumns      = []string{}
 )

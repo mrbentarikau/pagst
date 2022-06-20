@@ -31,15 +31,17 @@ type PostConfigForm struct {
 	EnableThanksDetection       bool
 	PointsName                  string  `valid:",50"`
 	Cooldown                    int     `valid:"0,86401"` // One day
-	MaxGiveAmount               int64   `valid:"0,"`
-	MaxRemoveAmount             int64   `valid:"0,"`
+	MaxGiveAmount               int64   `valid:"1,"`
+	MaxRemoveAmount             int64   `valid:"1,"`
 	RequiredGiveRoles           []int64 `valid:"role,true"`
 	RequiredReceiveRoles        []int64 `valid:"role,true"`
 	BlacklistedGiveRoles        []int64 `valid:"role,true"`
 	BlacklistedReceiveRoles     []int64 `valid:"role,true"`
 	AdminRoles                  []int64 `valid:"role,true"`
 	EnableCustomThanksDetection bool
-	CustomThanksRegex           string `valid:",64"`
+	CustomThanksRegex           string  `valid:",64"`
+	WhitelistedThanksChannels   []int64 `valid:"channel,true"`
+	BlacklistedThanksChannels   []int64 `valid:"channel,true"`
 }
 
 func (p PostConfigForm) RepConfig() *models.ReputationConfig {
@@ -57,6 +59,8 @@ func (p PostConfigForm) RepConfig() *models.ReputationConfig {
 		DisableThanksDetection:       !p.EnableThanksDetection,
 		DisableCustomThanksDetection: !p.EnableCustomThanksDetection,
 		CustomThanksRegex:            p.CustomThanksRegex,
+		WhitelistedThanksChannels:    p.WhitelistedThanksChannels,
+		BlacklistedThanksChannels:    p.BlacklistedThanksChannels,
 	}
 }
 
@@ -71,7 +75,7 @@ func (p *Plugin) InitWeb() {
 	web.AddSidebarItem(web.SidebarCategoryFun, &web.SidebarItem{
 		Name: "Reputation",
 		URL:  "reputation",
-		Icon: "fas fa-angry",
+		Icon: "fa-solid fa-trophy",
 	})
 
 	subMux := goji.SubMux()
@@ -129,6 +133,8 @@ func HandlePostReputation(w http.ResponseWriter, r *http.Request) (templateData 
 		"disable_thanks_detection",
 		"disable_custom_thanks_detection",
 		"custom_thanks_regex",
+		"whitelisted_thanks_channels",
+		"blacklisted_thanks_channels",
 	), boil.Infer())
 
 	if err == nil {
