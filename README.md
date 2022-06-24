@@ -3,9 +3,9 @@ PAGSTDB
 
 ### People Against Generally Shitty Things Discord Bot
 
-[![PAGST](https://img.shields.io/github/v/tag/mrbentarikau/pagst?style=flat-square)](https://pagst.xyz)
-[![BSD-3](https://img.shields.io/github/license/mrbentarikau/pagst?color=%231a1a1a)](https://opensource.org/licenses/BSD-3-Clause)
-[![Donate on paypal](https://img.shields.io/badge/paypal-donate-1?style=flat-square&logo=paypal&color=gray)][paypal]
+[![PAGST](https://img.shields.io/github/v/tag/mrbentarikau/pagst?style=flat-square)][pagst]
+[![BSD-3](https://img.shields.io/github/license/mrbentarikau/pagst?color=%231a1a1a)][license]
+[![Donate on paypal](https://img.shields.io/badge/paypal-donate-1?style=flat-square&logo=paypal&color=%231c1c1c)][paypal]
 ## Installation
 You have to know how to fill the environment file and setup the bot via Discord - intents need to be enabled!
 
@@ -33,4 +33,6 @@ some of the code here. not merged to YAG yet, has been made by YAGPDB contributo
 Go away now : )
 
 
+[license]: https://opensource.org/licenses/BSD-3-Clause
+[pagst]: https://pagst.xyz
 [paypal]: https://paypal.me/mrbentarikau/10
