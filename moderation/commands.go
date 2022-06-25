@@ -2,6 +2,7 @@ package moderation
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -1031,14 +1032,26 @@ var ModerationCommands = []*commands.YAGCommand{
 					Footer:      &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("By: %s (%13s)", warn[0].AuthorUsernameDiscrim, warn[0].AuthorID)},
 				}, nil
 			}
+
+			userID := parsed.Args[0].Int64()
+			if userID == 0 {
+				userID = parsed.Author.ID
+			}
+
+			var maxCount int
+			err = common.GORM.Table("moderation_warnings").Where("user_id = ? AND guild_id = ?", userID, parsed.GuildData.GS.ID).Count(&maxCount).Error
+			if err != nil && err != gorm.ErrRecordNotFound {
+				return nil, err
+			}
+
 			page := parsed.Args[1].Int()
 			if page < 1 {
 				page = 1
 			}
 			if parsed.Context().Value(paginatedmessages.CtxKeyNoPagination) != nil {
-				return PaginateWarnings(parsed)(nil, page)
+				return PaginateWarnings(parsed, maxCount)(nil, page)
 			}
-			pm, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, page, 0, PaginateWarnings(parsed))
+			pm, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, page, int(math.Ceil(float64(maxCount)/6)), PaginateWarnings(parsed, maxCount))
 			return pm, err
 		},
 	},
@@ -1218,9 +1231,7 @@ var ModerationCommands = []*commands.YAGCommand{
 		Arguments: []*dcmd.ArgDef{
 			{Name: "User", Type: dcmd.UserID},
 			{Name: "Role", Type: &commands.RoleArg{}},
-		},
-		ArgSwitches: []*dcmd.ArgDef{
-			{Name: "d", Default: time.Duration(0), Help: "Duration", Type: &commands.DurationArg{}},
+			{Name: "Duration", Type: &commands.DurationArg{}, Default: time.Duration(0)},
 		},
 		RequiredDiscordPermsHelp: "(ManageRoles)",
 		RequireBotPerms:          [][]int64{{discordgo.PermissionAdministrator}, {discordgo.PermissionManageServer}, {discordgo.PermissionManageRoles}},
@@ -1251,9 +1262,9 @@ var ModerationCommands = []*commands.YAGCommand{
 				return "Can't give roles above you", nil
 			}
 
-			dur := parsed.Switches["d"].Value.(time.Duration)
+			dur := parsed.Args[2].Value.(time.Duration)
 
-			// no point if the user has the role and is not updating the expiracy
+			// no point if the user has the role and is not updating the expiry
 			if common.ContainsInt64Slice(member.Member.Roles, role.ID) && dur <= 0 {
 				return "That user already has that role", nil
 			}
@@ -1495,7 +1506,7 @@ func FindRole(gs *dstate.GuildSet, roleS string) *discordgo.Role {
 	return nil
 }
 
-func PaginateWarnings(parsed *dcmd.Data) func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+func PaginateWarnings(parsed *dcmd.Data, count int) func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 
 	return func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 
@@ -1509,11 +1520,11 @@ func PaginateWarnings(parsed *dcmd.Data) func(p *paginatedmessages.PaginatedMess
 		limit := 6
 
 		var result []*WarningModel
-		var count int
+		/*var count int
 		err = common.GORM.Table("moderation_warnings").Where("user_id = ? AND guild_id = ?", userID, parsed.GuildData.GS.ID).Count(&count).Error
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, err
-		}
+		}*/
 		err = common.GORM.Where("user_id = ? AND guild_id = ?", userID, parsed.GuildData.GS.ID).Order("id desc").Offset(skip).Limit(limit).Find(&result).Error
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, err
@@ -1526,7 +1537,7 @@ func PaginateWarnings(parsed *dcmd.Data) func(p *paginatedmessages.PaginatedMess
 		desc := fmt.Sprintf("**Total :** `%d`", count)
 		var fields []*discordgo.MessageEmbedField
 		currentField := &discordgo.MessageEmbedField{
-			Name:  "⠀", //Use braille blank character for seamless transition between feilds
+			Name:  "⠀", //Use braille blank character for seamless transition between fields
 			Value: "",
 		}
 		fields = append(fields, currentField)
