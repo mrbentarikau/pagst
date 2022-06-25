@@ -2096,3 +2096,17 @@ func (c *Context) tmplGuildMemberMove(channel interface{}, target interface{}) (
 	return "", nil
 
 }
+
+func (c *Context) tmplCountMembers(isBot bool) func() (int, error) {
+	return func() (int, error) {
+		if c.IncreaseCheckGenericAPICall() {
+			return 0, ErrTooManyAPICalls
+		}
+
+		if c.IncreaseCheckCallCounter("guild_integrations", 2) {
+			return 0, ErrTooManyCalls
+		}
+
+		return bot.State.GetMemberCount(c.GS.ID, isBot), nil
+	}
+}

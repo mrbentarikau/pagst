@@ -40,6 +40,28 @@ func (tracker *InMemoryTracker) GetMember(guildID int64, memberID int64) *dstate
 	return nil
 }
 
+func (tracker *InMemoryTracker) GetMemberCount(guildID int64, bot bool) int {
+	shard := tracker.getGuildShard(guildID)
+	shard.mu.RLock()
+	defer shard.mu.RUnlock()
+
+	var count int
+	if members, ok := shard.members[guildID]; ok {
+		for _, ms := range members {
+			if bot {
+				if ms.MemberState.User.Bot {
+					count++
+				}
+			} else {
+				if !ms.MemberState.User.Bot {
+					count++
+				}
+			}
+		}
+	}
+	return count
+}
+
 func (shard *ShardTracker) getMemberLocked(guildID int64, memberID int64) *WrappedMember {
 	if members, ok := shard.members[guildID]; ok {
 		if ms, ok := members[memberID]; ok {
