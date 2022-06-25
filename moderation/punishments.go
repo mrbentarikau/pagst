@@ -29,8 +29,11 @@ const (
 	PunishmentTimeout
 )
 
-const MaxTimeOutDuration = 40320 * time.Minute
-const MinTimeOutDuration = time.Minute
+const (
+	MaxTimeOutDuration     = 40320 * time.Minute
+	MinTimeOutDuration     = time.Minute
+	DefaultTimeoutDuration = 10 * time.Minute
+)
 
 const (
 	DefaultDMMessage = `You have been {{.ModAction}}

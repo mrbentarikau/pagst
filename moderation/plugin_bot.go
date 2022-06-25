@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/jinzhu/gorm"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
@@ -21,6 +19,8 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dshardorchestrator"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/jinzhu/gorm"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -59,7 +59,7 @@ func (p *Plugin) BotInit() {
 	eventsystem.AddHandlerAsyncLast(p, LockRoleLockdownMW(HandleGuildRoleUpdate), eventsystem.EventGuildRoleUpdate)
 	eventsystem.AddHandlerAsyncLast(p, LockMemberMuteMW(HandleMemberJoin), eventsystem.EventGuildMemberAdd)
 	eventsystem.AddHandlerAsyncLast(p, LockMemberMuteMW(HandleGuildMemberUpdate), eventsystem.EventGuildMemberUpdate)
-	//eventsystem.AddHandlerAsyncLast(p, HandleGuildMemberTimeoutChange, eventsystem.EventGuildMemberUpdate)
+	eventsystem.AddHandlerAsyncLast(p, HandleGuildMemberTimeoutChange, eventsystem.EventGuildMemberUpdate)
 
 	eventsystem.AddHandlerAsyncLastLegacy(p, bot.ConcurrentEventHandler(HandleGuildCreate), eventsystem.EventGuildCreate)
 	eventsystem.AddHandlerAsyncLast(p, HandleChannelCreateUpdate, eventsystem.EventChannelCreate, eventsystem.EventChannelUpdate)
@@ -272,7 +272,6 @@ func RefreshMuteOverrideForChannel(config *Config, channel dstate.ChannelState) 
 	}
 }
 
-/* YAG new thing, commented out for now
 func HandleGuildMemberTimeoutChange(evt *eventsystem.EventData) (retry bool, err error) {
 	data := evt.GuildMemberUpdate()
 	//ignore members who aren't timedout or have been timedout in the past
@@ -319,7 +318,7 @@ func HandleGuildMemberTimeoutChange(evt *eventsystem.EventData) (retry bool, err
 	}
 
 	return false, nil
-}*/
+}
 
 func HandleGuildBanAddRemove(evt *eventsystem.EventData) {
 	var user *discordgo.User
@@ -484,7 +483,7 @@ func LockRoleLockdownMW(next func(evt *eventsystem.EventData, PermsData int64) (
 		}
 
 		// Don't bother doing anything if this lockdown is almost up and its a role update event
-		if roleUpdate && !currentLockdown.ExpiresAt.IsZero() && currentLockdown.ExpiresAt.Sub(time.Now()) < 5*time.Second {
+		if roleUpdate && !currentLockdown.ExpiresAt.IsZero() && time.Until(currentLockdown.ExpiresAt) < 5*time.Second {
 			return false, nil
 		}
 
