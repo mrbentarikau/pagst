@@ -42,6 +42,8 @@ type StateTracker interface {
 	//
 	// Note that f may not be called if there were no results
 	IterateMembers(guildID int64, f func(chunk []*MemberState) bool)
+
+	GetMemberCount(guildID int64, bot bool) int
 }
 
 // Relatively cheap, less frequently updated things
