@@ -238,7 +238,7 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 				continue
 			}
 			switch val.(type) {
-			case Slice, []*discordgo.MessageEmbed:
+			case Slice, *Slice, []*discordgo.MessageEmbed:
 				rv, _ := indirect(reflect.ValueOf(val))
 				for i := 0; i < rv.Len() && i < numEmbeds; i++ {
 					embed, err := CreateEmbed(rv.Index(i).Interface())
@@ -281,6 +281,9 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			}
 			msg.AllowedMentions = *parsed
 		case "reply":
+			if val == nil {
+				continue
+			}
 			reference := &discordgo.MessageReference{
 				MessageID: ToInt64(val),
 			}

@@ -649,11 +649,12 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
 	c.addContextFunc("getAllMessageReactions", c.tmplGetAllMessageReactions)
 	c.addContextFunc("getChannel", c.tmplGetChannel)
+	c.addContextFunc("getChannelPins", c.tmplGetChannelPins(false))
 	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
 	c.addContextFunc("getMember", c.tmplGetMember)
 	c.addContextFunc("getMessage", c.tmplGetMessage)
 	c.addContextFunc("getThread", c.tmplGetThread)
-	c.addContextFunc("getPinCount", c.tmplGetChannelPinCount)
+	c.addContextFunc("getPinCount", c.tmplGetChannelPins(true))
 	c.addContextFunc("setMemberTimeout", c.tmplSetMemberTimeout)
 
 	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)

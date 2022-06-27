@@ -40,19 +40,19 @@ func (c *Context) buildDM(gName string, s ...interface{}) *discordgo.MessageSend
 		msgSend.Content = fmt.Sprint(s...)
 	}
 
-	if !bot.IsSpecialGuild(c.GS.GuildState.ID) {
-		info := fmt.Sprintf("DM from server: %s", gName)
-		if len(msgSend.Embeds) > 0 {
-			for _, e := range msgSend.Embeds {
-				e.Footer = &discordgo.MessageEmbedFooter{
-					Text: info,
-				}
+	//if !bot.IsSpecialGuild(c.GS.GuildState.ID) {
+	info := fmt.Sprintf("DM from server: %s", gName)
+	if len(msgSend.Embeds) > 0 {
+		for _, e := range msgSend.Embeds {
+			e.Footer = &discordgo.MessageEmbedFooter{
+				Text: info,
 			}
-		} else {
-			info := fmt.Sprintf("DM from server: **%s**", gName)
-			msgSend.Content = info + "\n" + msgSend.Content
 		}
+	} else {
+		info := fmt.Sprintf("DM from server: **%s**", gName)
+		msgSend.Content = info + "\n" + msgSend.Content
 	}
+	//}
 
 	return msgSend
 }
@@ -118,7 +118,7 @@ func (c *Context) tmplSendDM(s ...interface{}) (string, error) {
 
 func (c *Context) tmplSendTargetDM(target interface{}, s ...interface{}) string {
 	if bot.IsSpecialGuild(c.GS.ID) {
-		if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 3) {
+		if len(s) < 1 || c.IncreaseCheckCallCounter("send_dm", 3) || c.IncreaseCheckGenericAPICall() || c.MS == nil {
 			return ""
 		}
 
@@ -132,7 +132,7 @@ func (c *Context) tmplSendTargetDM(target interface{}, s ...interface{}) string 
 			return ""
 		}
 
-		msgSend := c.buildDM("", s...)
+		msgSend := c.buildDM(c.GS.Name, s...)
 		if msgSend == nil {
 			return ""
 		}
@@ -1060,22 +1060,33 @@ func (c *Context) tmplGetChannelOrThread(channel interface{}) (*CtxChannel, erro
 	return CtxChannelFromCS(cstate), nil
 }
 
-func (c *Context) tmplGetChannelPinCount(channel interface{}) (int, error) {
-	if c.IncreaseCheckCallCounterPremium("count_pins", 2, 4) {
-		return 0, ErrTooManyCalls
-	}
+func (c *Context) tmplGetChannelPins(pinCount bool) func(channel interface{}) (interface{}, error) {
+	return func(channel interface{}) (interface{}, error) {
+		if c.IncreaseCheckCallCounterPremium("count_pins", 2, 4) {
+			return 0, ErrTooManyCalls
+		}
 
-	cID := c.ChannelArgNoDM(channel)
-	if cID == 0 {
-		return 0, errors.New("unknown channel")
-	}
+		cID := c.ChannelArgNoDM(channel)
+		if cID == 0 {
+			return 0, errors.New("unknown channel")
+		}
 
-	msg, err := common.BotSession.ChannelMessagesPinned(cID)
-	if err != nil {
-		return 0, err
-	}
+		msg, err := common.BotSession.ChannelMessagesPinned(cID)
+		if err != nil {
+			return 0, err
+		}
 
-	return len(msg), nil
+		if pinCount {
+			return len(msg), nil
+		}
+
+		ids := []int64{}
+		for _, v := range msg {
+			ids = append(ids, v.ID)
+		}
+
+		return ids, nil
+	}
 }
 
 func (c *Context) tmplAddReactions(values ...reflect.Value) (reflect.Value, error) {
