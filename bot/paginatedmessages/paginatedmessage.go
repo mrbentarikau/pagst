@@ -19,7 +19,7 @@ var (
 	menusLock               sync.Mutex
 )
 
-var ErrNoResults = errors.New("No results")
+var ErrNoResults = errors.New("no results")
 
 type Plugin struct{}
 
@@ -38,7 +38,21 @@ func RegisterPlugin() {
 var _ bot.BotInitHandler = (*Plugin)(nil)
 
 func (p *Plugin) BotInit() {
+	eventsystem.AddHandlerAsyncLastLegacy(p, handleInteractionCreate, eventsystem.EventInteractionCreate)
 
+	// this just handles interaction events from DMS
+	pubsub.AddHandler("dm_interaction", func(evt *pubsub.Event) {
+		dataCast := evt.Data.(*discordgo.InteractionCreate)
+		switch dataCast.MessageComponentData().CustomID {
+		case paginationNext:
+			handlePageChange(dataCast, 1)
+		case paginationPrev:
+			handlePageChange(dataCast, -1)
+		}
+	}, discordgo.InteractionCreate{})
+}
+
+/*
 	eventsystem.AddHandlerAsyncLastLegacy(p, func(evt *eventsystem.EventData) {
 		ra := evt.MessageReactionAdd()
 		if ra.GuildID == 0 {
@@ -72,7 +86,7 @@ func handleReactionAdd(ra *discordgo.MessageReactionAdd) {
 	menusLock.Unlock()
 }
 
-/*func (p *Plugin) StopBot(wg *sync.WaitGroup) {
+func (p *Plugin) StopBot(wg *sync.WaitGroup) {
 	menusLock.Lock()
 	for _, v := range activePaginatedMessages {
 		go v.Stop()
@@ -100,11 +114,6 @@ type PaginatedMessage struct {
 	lastUpdateTime time.Time
 	mu             sync.Mutex
 }
-
-const (
-	EmojiNext = "➡"
-	EmojiPrev = "⬅"
-)
 
 type PagerFunc func(p *PaginatedMessage, page int) (*discordgo.MessageEmbed, error)
 
