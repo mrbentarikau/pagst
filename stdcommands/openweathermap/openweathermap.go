@@ -92,7 +92,7 @@ var Command = &commands.YAGCommand{
 					break
 				}
 			}
-			if !strings.EqualFold(gcName, wName) {
+			if !strings.EqualFold(gcName, wName) && gcName != "" {
 				wName = gcName + ", " + wName
 			}
 		}
