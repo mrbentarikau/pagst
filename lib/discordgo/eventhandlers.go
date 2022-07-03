@@ -61,6 +61,9 @@ const (
 	resumedEventType                       = "RESUMED"
 	stageInstanceCreateEventType           = "STAGE_INSTANCE_CREATE"
 	stageInstanceDeleteEventType           = "STAGE_INSTANCE_DELETE"
+	stageInstanceEventCreateEventType      = "STAGE_INSTANCE_EVENT_CREATE"
+	stageInstanceEventDeleteEventType      = "STAGE_INSTANCE_EVENT_DELETE"
+	stageInstanceEventUpdateEventType      = "STAGE_INSTANCE_EVENT_UPDATE"
 	stageInstanceUpdateEventType           = "STAGE_INSTANCE_UPDATE"
 	threadCreateEventType                  = "THREAD_CREATE"
 	threadDeleteEventType                  = "THREAD_DELETE"
@@ -1138,6 +1141,66 @@ func (eh stageInstanceDeleteEventHandler) Handle(s *Session, i interface{}) {
 	}
 }
 
+// stageInstanceEventCreateEventHandler is an event handler for StageInstanceEventCreate events.
+type stageInstanceEventCreateEventHandler func(*Session, *StageInstanceEventCreate)
+
+// Type returns the event type for StageInstanceEventCreate events.
+func (eh stageInstanceEventCreateEventHandler) Type() string {
+	return stageInstanceEventCreateEventType
+}
+
+// New returns a new instance of StageInstanceEventCreate.
+func (eh stageInstanceEventCreateEventHandler) New() interface{} {
+	return &StageInstanceEventCreate{}
+}
+
+// Handle is the handler for StageInstanceEventCreate events.
+func (eh stageInstanceEventCreateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*StageInstanceEventCreate); ok {
+		eh(s, t)
+	}
+}
+
+// stageInstanceEventDeleteEventHandler is an event handler for StageInstanceEventDelete events.
+type stageInstanceEventDeleteEventHandler func(*Session, *StageInstanceEventDelete)
+
+// Type returns the event type for StageInstanceEventDelete events.
+func (eh stageInstanceEventDeleteEventHandler) Type() string {
+	return stageInstanceEventDeleteEventType
+}
+
+// New returns a new instance of StageInstanceEventDelete.
+func (eh stageInstanceEventDeleteEventHandler) New() interface{} {
+	return &StageInstanceEventDelete{}
+}
+
+// Handle is the handler for StageInstanceEventDelete events.
+func (eh stageInstanceEventDeleteEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*StageInstanceEventDelete); ok {
+		eh(s, t)
+	}
+}
+
+// stageInstanceEventUpdateEventHandler is an event handler for StageInstanceEventUpdate events.
+type stageInstanceEventUpdateEventHandler func(*Session, *StageInstanceEventUpdate)
+
+// Type returns the event type for StageInstanceEventUpdate events.
+func (eh stageInstanceEventUpdateEventHandler) Type() string {
+	return stageInstanceEventUpdateEventType
+}
+
+// New returns a new instance of StageInstanceEventUpdate.
+func (eh stageInstanceEventUpdateEventHandler) New() interface{} {
+	return &StageInstanceEventUpdate{}
+}
+
+// Handle is the handler for StageInstanceEventUpdate events.
+func (eh stageInstanceEventUpdateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*StageInstanceEventUpdate); ok {
+		eh(s, t)
+	}
+}
+
 // stageInstanceUpdateEventHandler is an event handler for StageInstanceUpdate events.
 type stageInstanceUpdateEventHandler func(*Session, *StageInstanceUpdate)
 
@@ -1550,6 +1613,12 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return stageInstanceCreateEventHandler(v)
 	case func(*Session, *StageInstanceDelete):
 		return stageInstanceDeleteEventHandler(v)
+	case func(*Session, *StageInstanceEventCreate):
+		return stageInstanceEventCreateEventHandler(v)
+	case func(*Session, *StageInstanceEventDelete):
+		return stageInstanceEventDeleteEventHandler(v)
+	case func(*Session, *StageInstanceEventUpdate):
+		return stageInstanceEventUpdateEventHandler(v)
 	case func(*Session, *StageInstanceUpdate):
 		return stageInstanceUpdateEventHandler(v)
 	case func(*Session, *ThreadCreate):
@@ -1636,6 +1705,9 @@ func init() {
 	registerInterfaceProvider(resumedEventHandler(nil))
 	registerInterfaceProvider(stageInstanceCreateEventHandler(nil))
 	registerInterfaceProvider(stageInstanceDeleteEventHandler(nil))
+	registerInterfaceProvider(stageInstanceEventCreateEventHandler(nil))
+	registerInterfaceProvider(stageInstanceEventDeleteEventHandler(nil))
+	registerInterfaceProvider(stageInstanceEventUpdateEventHandler(nil))
 	registerInterfaceProvider(stageInstanceUpdateEventHandler(nil))
 	registerInterfaceProvider(threadCreateEventHandler(nil))
 	registerInterfaceProvider(threadDeleteEventHandler(nil))

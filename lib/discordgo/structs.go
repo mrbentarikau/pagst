@@ -112,7 +112,7 @@ type Integration struct {
 	Revoked           bool                    `json:"revoked"`
 	Application       *IntegrationApplication `json:"application"`
 
-	GuildID int64 `json:"guild_id,string,omitempty"` // Sent in the Integration events
+	//GuildID int64 `json:"guild_id,string,omitempty"` // Sent in the Integration events
 }
 
 // ExpireBehavior of Integration
@@ -359,13 +359,13 @@ type ThreadMetadata struct {
 // NOTE: ID and UserID are empty (omitted) on the member sent within each thread in the GUILD_CREATE event.
 type ThreadMember struct {
 	// The id of the thread
-	ID int64 `json:"id,omitempty"`
+	ID int64 `json:"id,string,omitempty"`
 	// The id of the user
-	UserID int64 `json:"user_id,omitempty"`
+	UserID int64 `json:"user_id,string,omitempty"`
 	// The time the current user last joined the thread
 	JoinTimestamp Timestamp `json:"join_timestamp"`
 	// Any user-thread settings, currently only used for notifications
-	Flags int
+	Flags int `json:"flags"`
 }
 
 // ThreadsList represents a list of threads alongisde with thread member objects for the current user.
@@ -618,8 +618,8 @@ type Guild struct {
 	// Permissions of our user
 	Permissions int64 `json:"permissions,string"`
 
-	// Stage instances in the guild - Disabled for now KRAAKA level event
-	// StageInstances []*StageInstance `json:"stage_instances"`
+	// Stage instances in the guild
+	StageInstances []*StageInstance `json:"stage_instances"`
 }
 
 func (g *Guild) GetGuildID() int64 {
@@ -650,13 +650,13 @@ func (g *Guild) Channel(id int64) *Channel {
 // https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event
 type GuildScheduledEvent struct {
 	// The ID of the scheduled event
-	ID int64 `json:"id"`
+	ID int64 `json:"id,string"`
 	// The guild id which the scheduled event belongs to
-	GuildID int64 `json:"guild_id"`
+	GuildID int64 `json:"guild_id,string"`
 	// The channel id in which the scheduled event will be hosted, or null if scheduled entity type is EXTERNAL
-	ChannelID int64 `json:"channel_id"`
+	ChannelID int64 `json:"channel_id,string"`
 	// The id of the user that created the scheduled event
-	CreatorID int64 `json:"creator_id"`
+	CreatorID int64 `json:"creator_id,string"`
 	// The name of the scheduled event (1-100 characters)
 	Name string `json:"name"`
 	// The description of the scheduled event (1-1000 characters)
@@ -691,7 +691,7 @@ type GuildScheduledEvent struct {
 // https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event
 type GuildScheduledEventParams struct {
 	// The channel id in which the scheduled event will be hosted, or null if scheduled entity type is EXTERNAL
-	ChannelID int64 `json:"channel_id,omitempty"`
+	ChannelID int64 `json:"channel_id,string,omitempty"`
 	// The name of the scheduled event (1-100 characters)
 	Name string `json:"name,omitempty"`
 	// The description of the scheduled event (1-1000 characters)
@@ -805,7 +805,7 @@ type GuildTemplate struct {
 	UsageCount string `json:"usage_count"`
 
 	// The ID of the user who created the template
-	CreatorID int64 `json:"creator_id"`
+	CreatorID int64 `json:"creator_id,string"`
 
 	// The user who created the template
 	Creator *User `json:"creator"`
@@ -817,7 +817,7 @@ type GuildTemplate struct {
 	UpdatedAt Timestamp `json:"updated_at"`
 
 	// The ID of the guild the template was based on
-	SourceGuildID int64 `json:"source_guild_id"`
+	SourceGuildID int64 `json:"source_guild_id,string"`
 
 	// The guild 'snapshot' this template contains
 	SerializedSourceGuild *Guild `json:"serialized_source_guild"`
@@ -1379,31 +1379,6 @@ type APIErrorMessage struct {
 	Message string `json:"message"`
 }
 
-/*
-// Webhook stores the data for a webhook.
-type Webhook struct {
-	ID        int64  `json:"id,string"`
-	GuildID   int64  `json:"guild_id,string"`
-	ChannelID int64  `json:"channel_id,string"`
-	User      *User  `json:"user"`
-	Name      string `json:"name"`
-	Avatar    string `json:"avatar"`
-	Token     string `json:"token"`
-}
-
-// WebhookParams is a struct for webhook params, used in the WebhookExecute command.
-type WebhookParams struct {
-	Content         string             `json:"content,omitempty"`
-	Username        string             `json:"username,omitempty"`
-	AvatarURL       string             `json:"avatar_url,omitempty"`
-	TTS             bool               `json:"tts,omitempty"`
-	File            *File              `json:"-,omitempty"`
-	Components      []MessageComponent `json:"components"`
-	Embeds          []*MessageEmbed    `json:"embeds,omitempty"`
-	Flags           int64              `json:"flags,omitempty"`
-	AllowedMentions *AllowedMentions   `json:"allowed_mentions,omitempty"`
-}*/
-
 // MessageReaction stores the data for a message reaction.
 type MessageReaction struct {
 	UserID    int64 `json:"user_id,string"`
@@ -1429,21 +1404,20 @@ type GatewayBotResponse struct {
 }
 
 type SessionStartLimit struct {
-	Total      int   `json:"total"`
-	Remaining  int   `json:"remaining"`
-	ResetAfter int64 `json:"reset_after"`
+	Total      int   `json:"total,omitempty"`
+	Remaining  int   `json:"remaining,omitempty"`
+	ResetAfter int64 `json:"reset_after,omitempty"`
 }
 
-/* Disabled for now - KRAAKA level event
 // StageInstance holds information about a live stage.
 // https://discord.com/developers/docs/resources/stage-instance#stage-instance-resource
 type StageInstance struct {
 	// The id of this Stage instance
-	ID int64 `json:"id"`
+	ID int64 `json:"id,string"`
 	// The guild id of the associated Stage channel
-	GuildID int64 `json:"guild_id"`
+	GuildID int64 `json:"guild_id,string"`
 	// The id of the associated Stage channel
-	ChannelID int64 `json:"channel_id"`
+	ChannelID int64 `json:"channel_id,string"`
 	// The topic of the Stage instance (1-120 characters)
 	Topic string `json:"topic"`
 	// The privacy level of the Stage instance
@@ -1452,13 +1426,13 @@ type StageInstance struct {
 	// Whether or not Stage Discovery is disabled (deprecated)
 	DiscoverableDisabled bool `json:"discoverable_disabled"`
 	// The id of the scheduled event for this Stage instance
-	GuildScheduledEventID int64 `json:"guild_scheduled_event_id"`
+	GuildScheduledEventID int64 `json:"guild_scheduled_event_id,string"`
 }
 
 // StageInstanceParams represents the parameters needed to create or edit a stage instance
 type StageInstanceParams struct {
 	// ChannelID represents the id of the Stage channel
-	ChannelID int64 `json:"channel_id,omitempty"`
+	ChannelID int64 `json:"channel_id,string,omitempty"`
 	// Topic of the Stage instance (1-120 characters)
 	Topic string `json:"topic,omitempty"`
 	// PrivacyLevel of the Stage instance (default GUILD_ONLY)
@@ -1477,7 +1451,6 @@ const (
 	// StageInstancePrivacyLevelGuildOnly The Stage instance is visible to only guild members.
 	StageInstancePrivacyLevelGuildOnly StageInstancePrivacyLevel = 2
 )
-*/
 
 // Block contains Discord JSON Error Response codes
 const (
@@ -1541,17 +1514,6 @@ type InviteUser struct {
 	Username      string `json:"username"`
 }
 
-/*
-// An ApplicationCommand is the base "command" model that belongs to an application. This is what you are creating when you POST a new command.
-type ApplicationCommand struct {
-	ID                int64                       `json:"id,string"`                    // unique id of the command
-	ApplicationID     int64                       `json:"application_id,string"`        // unique id of the parent application
-	Name              string                      `json:"name"`                         // 1-32 character name matching ^[\w-]{1,32}$
-	Description       string                      `json:"description"`                  // 1-100 character description
-	Options           []*ApplicationCommandOption `json:"options"`                      // the parameters for the command
-	DefaultPermission *bool                       `json:"default_permission,omitempty"` // (default true)	whether the command is enabled by default when the app is added to a guild
-}
-*/
 type CreateApplicationCommandRequest struct {
 	Name              string                      `json:"name"`                         // 1-32 character name matching ^[\w-]{1,32}$
 	Description       string                      `json:"description"`                  // 1-100 character description
@@ -1559,139 +1521,6 @@ type CreateApplicationCommandRequest struct {
 	DefaultPermission *bool                       `json:"default_permission,omitempty"` // (default true)	whether the command is enabled by default when the app is added to a guild
 }
 
-/*
-type ApplicationCommandOption struct {
-	Kind        ApplicationCommandOptionType      `json:"type"`        // value of ApplicationCommandOptionType
-	Name        string                            `json:"name"`        // 1-32 character name matching ^[\w-]{1,32}$
-	Description string                            `json:"description"` // 1-100 character description
-	Required    bool                              `json:"required"`    // if the parameter is required or optional--default false
-	Choices     []*ApplicationCommandOptionChoice `json:"choices"`     // of ApplicationCommandOptionChoice	choices for string and int types for the user to pick from
-	Options     []*ApplicationCommandOption       `json:"options"`     // of ApplicationCommandOption	if the option is a subcommand or subcommand group type, this nested options will be the parameters
-}
-
-type ApplicationCommandOptionType int
-
-const (
-	CommandOptionTypeSubCommand      ApplicationCommandOptionType = 1
-	CommandOptionTypeSubCommandGroup ApplicationCommandOptionType = 2
-	CommandOptionTypeString          ApplicationCommandOptionType = 3
-	CommandOptionTypeInteger         ApplicationCommandOptionType = 4
-	CommandOptionTypeBoolean         ApplicationCommandOptionType = 5
-	CommandOptionTypeUser            ApplicationCommandOptionType = 6
-	CommandOptionTypeChannel         ApplicationCommandOptionType = 7
-	CommandOptionTypeRole            ApplicationCommandOptionType = 8
-)
-
-// If you specify choices for an option, they are the only valid values for a user to pick
-type ApplicationCommandOptionChoice struct {
-	Name  string      `json:"name"`  //	1-100 character choice name
-	Value interface{} `json:"value"` // 	value of the choice, up to 100 characters if string
-}
-
-// GuildApplicationCommandPermissions is returned when fetching the permissions for a command in a guild
-type GuildApplicationCommandPermissions struct {
-	ID            int64                            `json:"id,string"`             //	the id of the command
-	ApplicationID int64                            `json:"application_id,string"` //	the id of the application the command belongs to
-	GuildID       int64                            `json:"guild_id,string"`       //	the id of the guild
-	Permissions   []*ApplicationCommandPermissions `json:"permissions"`           // of ApplicationCommandPermissions	the permissions for the command in the guild
-}
-
-// ApplicationCommandPermissions allow you to enable or disable commands for specific users or roles within a guild.
-type ApplicationCommandPermissions struct {
-	ID         int64                            `json:"id,string"`  //	the id of the role or user
-	Kind       ApplicationCommandPermissionType `json:"type"`       //	role or user
-	Permission bool                             `json:"permission"` //	true to allow, false, to disallow
-}
-
-type ApplicationCommandPermissionType int
-
-const (
-	CommandPermissionTypeRole ApplicationCommandPermissionType = 1
-	CommandPermissionTypeUser ApplicationCommandPermissionType = 2
-)
-
-// Interaction is the base "thing" that is sent when a user invokes a command, and is the same for Slash Commands and other future interaction types.
-type Interaction struct {
-	ID            int64           `json:"id,string"`             // id of the interaction
-	ApplicationID int64           `json:"application_id,string"` // id of the application this interaction is for
-	Kind          InteractionType `json:"type"`                  // the type of interaction
-	GuildID       int64           `json:"guild_id,string"`       // the guild it was sent from
-	ChannelID     int64           `json:"channel_id,string"`     // the channel it was sent from
-	Member        *Member         `json:"member"`                // member object	guild member data for the invoking user, including permissions
-	User          *User           `json:"user"`                  // object	user object for the invoking user, if invoked in a DM
-	Token         string          `json:"token"`                 // a continuation token for responding to the interaction
-	Version       int             `json:"version"`               // read-only property, always
-
-	DataCommand *ApplicationCommandInteractionData `json:"data"`
-}
-*/
-type interactionTemp struct {
-	ID            int64           `json:"id,string"`             // id of the interaction
-	ApplicationID int64           `json:"application_id,string"` // id of the application this interaction is for
-	Kind          InteractionType `json:"type"`                  // the type of interaction
-	Data          json.RawMessage `json:"data"`                  // data payload
-	GuildID       int64           `json:"guild_id,string"`       // the guild it was sent from
-	ChannelID     int64           `json:"channel_id,string"`     // the channel it was sent from
-	Member        *Member         `json:"member"`                // member object	guild member data for the invoking user, including permissions
-	User          *User           `json:"user"`                  // object	user object for the invoking user, if invoked in a DM
-	Token         string          `json:"token"`                 // a continuation token for responding to the interaction
-	Version       int             `json:"version"`               // read-only property, always
-}
-
-/*
-// Interaction requires custom unmarshal logic because of the Data field being dependant on the interaction type
-func (a *Interaction) UnmarshalJSON(b []byte) error {
-	var temp *interactionTemp
-	err := json.Unmarshal(b, &temp)
-	if err != nil {
-		return err
-	}
-
-	*a = Interaction{
-		ID:            temp.ID,
-		ApplicationID: temp.ApplicationID,
-		Kind:          temp.Kind,
-		GuildID:       temp.GuildID,
-		ChannelID:     temp.ChannelID,
-		Member:        temp.Member,
-		User:          temp.User,
-		Token:         temp.Token,
-		Version:       temp.Version,
-	}
-
-	switch temp.Kind {
-	case InteractionTypeApplicationCommand:
-		err = json.Unmarshal(temp.Data, &a.DataCommand)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-type InteractionType int
-
-const (
-	InteractionTypePing               InteractionType = 1
-	InteractionTypeApplicationCommand InteractionType = 2
-)
-
-type ApplicationCommandInteractionData struct {
-	ID       int64                                      `json:"id,string"` // the ID of the invoked command
-	Name     string                                     `json:"name"`      // the name of the invoked command
-	Resolved ApplicationCommandInteractionDataResolved  `json:"resolved"`  // converted users + roles + channels
-	Options  []*ApplicationCommandInteractionDataOption `json:"options"`   // of ApplicationCommandInteractionDataOption the params + values from the user
-}
-
-// this might need a custom unmarshal function
-type ApplicationCommandInteractionDataResolved struct {
-	Users    map[int64]*User    `json:"users"`
-	Members  map[int64]*Member  `json:"members"`
-	Roles    map[int64]*Role    `json:"roles"`
-	Channels map[int64]*Channel `json:"channels"`
-}
-*/
 func (a *ApplicationCommandInteractionDataResolved) UnmarshalJSON(b []byte) error {
 	var temp *applicationCommandInteractionDataResolvedTemp
 	err := json.Unmarshal(b, &temp)
@@ -1748,20 +1577,6 @@ type applicationCommandInteractionDataResolvedTemp struct {
 	Channels map[string]*Channel `json:"channels"`
 }
 
-/*
-// Value types:
-//
-// CommandOptionTypeString: string
-// CommandOptionTypeInteger: int64
-// CommandOptionTypeBoolean: bool
-// User, Channel, Role: int64 snowflake
-type ApplicationCommandInteractionDataOption struct {
-	Name    string                                     `json:"name"`    // the name of the parameter
-	Kind    ApplicationCommandOptionType               `json:"type"`    // value of ApplicationCommandOptionType
-	Value   interface{}                                `json:"value"`   // the value of the pair
-	Options []*ApplicationCommandInteractionDataOption `json:"options"` // present if this option is a group or subcommand
-}
-*/
 type applicationCommandInteractionDataOptionTemporary struct {
 	Name    string                                     `json:"name"`    // the name of the parameter
 	Type    ApplicationCommandOptionType               `json:"type"`    // value of ApplicationCommandOptionType
@@ -1832,20 +1647,3 @@ type InteractionApplicationCommandCallbackData struct {
 	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"` // allowed mentions object
 	Flags           int              `json:"flags,omitempty"`            //	set to 64 to make your response ephemeral
 }
-
-/*
-type ThreadMetadata struct {
-	Archived            bool   `json:"archived"`              // whether the thread is archived
-	AutoArchiveDuration int    `json:"auto_archive_duration"` // duration in minutes to automatically archive the thread after recent activity, can be set to: 60, 1440, 4320, 10080
-	ArchiveTimestamp    string `json:"archive_timestamp"`     // timestamp when the thread's archive status was last changed, used for calculating recent activity
-	Locked              bool   `json:"locked"`                // whether the thread is locked; when a thread is locked, only users with MANAGE_THREADS can unarchive it
-}
-
-// A thread member is used to indicate whether a user has joined a thread or not.
-type ThreadMember struct {
-	ID            int64     `json:"id,string"`      // the id of the thread (NOT INCLUDED IN GUILDCREATE)
-	UserID        int64     `json:"user_id,string"` // the id of the user (NOT INCLUDED IN GUILDCREATE)
-	JoinTimestamp Timestamp `json:"join_timestamp"` // the time the current user last joined the thread
-	Flags         int       `json:"flags"`          // any user-thread settings, currently only used for notifications
-}
-*/
