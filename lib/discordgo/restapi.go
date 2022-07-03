@@ -827,7 +827,7 @@ func (s *Session) GuildBanCreateWithReason(guildID, userID int64, reason string,
 
 	var extraHeaders map[string]string
 	if reason != "" {
-		extraHeaders = map[string]string{"X-Audit-Log-Reason": reason}
+		extraHeaders = map[string]string{"X-Audit-Log-Reason": url.PathEscape(reason)}
 	}
 
 	_, err = s.RequestWithBucketID("PUT", uri, data, extraHeaders, EndpointGuildBan(guildID, 0))
@@ -953,7 +953,7 @@ func (s *Session) GuildMemberDeleteWithReason(guildID, userID int64, reason stri
 	var extraHeaders map[string]string
 
 	if reason != "" {
-		extraHeaders = map[string]string{"X-Audit-Log-Reason": reason}
+		extraHeaders = map[string]string{"X-Audit-Log-Reason": url.PathEscape(reason)}
 	}
 
 	_, err = s.RequestWithBucketID("DELETE", EndpointGuildMember(guildID, userID), nil, extraHeaders, EndpointGuildMember(guildID, 0))
@@ -1816,6 +1816,24 @@ var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 // channelID : The ID of a Channel.
 // data      : The message struct to send.
 func (s *Session) ChannelMessageSendComplex(channelID int64, msg *MessageSend) (st *Message, err error) {
+	/*totalNils := 0
+	totalEmbeds := len(msg.Embeds)
+	embeds := make([]*MessageEmbed, 0, len(msg.Embeds))
+	for _, e := range msg.Embeds {
+		if e == nil {
+			totalNils++
+		} else {
+			if e.Type != "" {
+				e.Type = "rich"
+			}
+			embeds = append(embeds, e)
+		}
+	}
+	if totalEmbeds > 0 && totalNils == totalEmbeds {
+		msg.Embeds = nil
+	} else {
+		msg.Embeds = embeds
+	}*/
 	msg.Embeds = ValidateComplexMessageEmbeds(msg.Embeds)
 
 	endpoint := EndpointChannelMessages(channelID)
@@ -1978,6 +1996,28 @@ func (s *Session) ChannelMessageEdit(channelID, messageID int64, content string)
 // ChannelMessageEditComplex edits an existing message, replacing it entirely with
 // the given MessageEdit struct
 func (s *Session) ChannelMessageEditComplex(msg *MessageEdit) (st *Message, err error) {
+	/*totalNils := 0
+	totalEmbeds := len(msg.Embeds)
+	embeds := make([]*MessageEmbed, 0, len(msg.Embeds))
+	if totalEmbeds == 0 {
+		embeds = nil
+	} else {
+		for _, e := range msg.Embeds {
+			if e == nil {
+				totalNils++
+			} else {
+				if e.Type != "" {
+					e.Type = "rich"
+				}
+				embeds = append(embeds, e)
+			}
+		}
+		if totalNils == totalEmbeds {
+			msg.Embeds = nil
+		} else {
+			msg.Embeds = embeds
+		}
+	}*/
 	msg.Embeds = ValidateComplexMessageEmbeds(msg.Embeds)
 
 	response, err := s.RequestWithBucketID("PATCH", EndpointChannelMessage(msg.Channel, msg.ID), msg, nil, EndpointChannelMessage(msg.Channel, 0))
@@ -3391,8 +3431,6 @@ func (s *Session) DeleteFollowupMessage(applicationID int64, token string, messa
 	return
 }
 
-/* Disabled for now - KRAAKA level event
-
 // ------------------------------------------------------------------------------------------------
 // Functions specific to stage instances
 // ------------------------------------------------------------------------------------------------
@@ -3442,7 +3480,6 @@ func (s *Session) StageInstanceDelete(channelID int64) (err error) {
 	_, err = s.RequestWithBucketID("DELETE", EndpointStageInstance(channelID), nil, nil, EndpointStageInstance(channelID))
 	return
 }
-*/
 
 // ------------------------------------------------------------------------------------------------
 // Functions specific to guilds scheduled events
