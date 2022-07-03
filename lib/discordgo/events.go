@@ -216,6 +216,7 @@ func (e *GuildIntegrationsUpdate) GetGuildID() int64 {
 	return e.GuildID
 }
 
+/* Disabling for now - KRAAKA level event
 // StageInstanceEventCreate is the data for a StageInstanceEventCreate event.
 type StageInstanceEventCreate struct {
 	*StageInstance
@@ -230,6 +231,7 @@ type StageInstanceEventUpdate struct {
 type StageInstanceEventDelete struct {
 	*StageInstance
 }
+*/
 
 // GuildScheduledEventCreate is the data for a GuildScheduledEventCreate event.
 type GuildScheduledEventCreate struct {
