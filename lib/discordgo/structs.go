@@ -618,8 +618,8 @@ type Guild struct {
 	// Permissions of our user
 	Permissions int64 `json:"permissions,string"`
 
-	// Stage instances in the guild
-	StageInstances []*StageInstance `json:"stage_instances"`
+	// Stage instances in the guild - Disabled for now KRAAKA level event
+	// StageInstances []*StageInstance `json:"stage_instances"`
 }
 
 func (g *Guild) GetGuildID() int64 {
@@ -1434,6 +1434,7 @@ type SessionStartLimit struct {
 	ResetAfter int64 `json:"reset_after"`
 }
 
+/* Disabled for now - KRAAKA level event
 // StageInstance holds information about a live stage.
 // https://discord.com/developers/docs/resources/stage-instance#stage-instance-resource
 type StageInstance struct {
@@ -1476,6 +1477,7 @@ const (
 	// StageInstancePrivacyLevelGuildOnly The Stage instance is visible to only guild members.
 	StageInstancePrivacyLevelGuildOnly StageInstancePrivacyLevel = 2
 )
+*/
 
 // Block contains Discord JSON Error Response codes
 const (

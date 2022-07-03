@@ -3391,6 +3391,8 @@ func (s *Session) DeleteFollowupMessage(applicationID int64, token string, messa
 	return
 }
 
+/* Disabled for now - KRAAKA level event
+
 // ------------------------------------------------------------------------------------------------
 // Functions specific to stage instances
 // ------------------------------------------------------------------------------------------------
@@ -3440,6 +3442,7 @@ func (s *Session) StageInstanceDelete(channelID int64) (err error) {
 	_, err = s.RequestWithBucketID("DELETE", EndpointStageInstance(channelID), nil, nil, EndpointStageInstance(channelID))
 	return
 }
+*/
 
 // ------------------------------------------------------------------------------------------------
 // Functions specific to guilds scheduled events
