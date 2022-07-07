@@ -12,7 +12,7 @@ import (
 type Condition interface {
 	RulePart
 
-	// IsMet is called to check wether this condition is met or not
+	// IsMet is called to check whether this condition is met or not
 	IsMet(data *TriggeredRuleData, parsedSettings interface{}) (bool, error)
 }
 
@@ -46,10 +46,10 @@ func (mrc *MemberRolesCondition) Name() string {
 
 func (mrc *MemberRolesCondition) Description() string {
 	if mrc.Blacklist {
-		return "Ignore users with atleast one of these roles from this rule"
+		return "Ignore users with at least one of these roles from this rule"
 	}
 
-	return "Require atleast one of these roles on the user"
+	return "Require at least one of these roles on the user"
 }
 
 func (mrc *MemberRolesCondition) UserSettings() []*SettingDef {
@@ -253,7 +253,7 @@ func (cd *VoiceChannelsCondition) IsMet(data *TriggeredRuleData, settings interf
 			// Blacklisted channel
 			return false, nil
 		} else {
-			// Whilelisted channel
+			// Whitelisted channel
 			return true, nil
 		}
 	}
@@ -355,7 +355,7 @@ func (cd *ChannelCategoriesCondition) IsMet(data *TriggeredRuleData, settings in
 			// blacklisted channel category
 			return false, nil
 		} else {
-			// whilelisted channel category
+			// whitelisted channel category
 			return true, nil
 		}
 	}
@@ -753,3 +753,110 @@ func (dmc *DomainCondition) containsDomain(link string, list []string) (bool, st
 func (cd *DomainCondition) MergeDuplicates(data []interface{}) interface{} {
 	return data[0]
 }
+
+/////////////////////////////////////////////////////////////////
+
+type ActiveTimeConditionData struct {
+	TimeHours    []int64
+	TimeWeekdays []int64
+}
+
+var _ Condition = (*ActiveTimeCondition)(nil)
+
+type ActiveTimeCondition struct {
+	Inactive bool // if true, then inactive mode, otherwise active mode
+}
+
+func (atc *ActiveTimeCondition) Kind() RulePartType {
+	return RulePartCondition
+}
+
+func (atc *ActiveTimeCondition) DataType() interface{} {
+	return &ActiveTimeConditionData{}
+}
+
+func (atc *ActiveTimeCondition) Name() string {
+	if atc.Inactive {
+		return "Time inactive"
+	}
+
+	return "Time active"
+}
+
+func (atc *ActiveTimeCondition) Description() string {
+	if atc.Inactive {
+		return "Inactive at set times"
+	}
+
+	return "Active at set times"
+}
+
+func (atc *ActiveTimeCondition) UserSettings() []*SettingDef {
+	return []*SettingDef{
+		{
+			Name: "Hours",
+			Key:  "TimeHours",
+			Kind: SettingTypeActiveHours,
+		},
+		{
+			Name: "Weekdays",
+			Key:  "TimeWeekdays",
+			Kind: SettingTypeActiveWeekdays,
+		},
+	}
+}
+
+func (atc *ActiveTimeCondition) IsMet(data *TriggeredRuleData, settings interface{}) (bool, error) {
+	settingsCast := settings.(*ActiveTimeConditionData)
+	if data.CS == nil {
+		return true, nil
+	}
+
+	timeHours := settingsCast.TimeHours
+	timeWeekdays := settingsCast.TimeWeekdays
+
+	containsHour := common.ContainsInt64Slice(timeHours, int64(time.Now().UTC().Hour()))
+	containsWeekday := common.ContainsInt64Slice(timeWeekdays, int64(time.Now().UTC().Weekday()))
+
+	if len(timeHours) > 0 && len(timeWeekdays) > 0 {
+		if containsHour && containsWeekday {
+			if atc.Inactive {
+				// Inactive time
+				return false, nil
+			} else {
+				// Active time
+				return true, nil
+			}
+		} else {
+			if atc.Inactive {
+				// Not in a blacklisted channel
+				return true, nil
+			}
+			return false, nil
+		}
+	}
+
+	if containsHour || containsWeekday {
+		if atc.Inactive {
+			// Inactive time
+			return false, nil
+		} else {
+			// Active time
+			return true, nil
+		}
+	}
+
+	if atc.Inactive {
+		// Not in a blacklisted channel
+		return true, nil
+	}
+
+	// Not in a whitelisted channel
+	return false, nil
+}
+
+func (atc *ActiveTimeCondition) MergeDuplicates(data []interface{}) interface{} {
+	return data[0]
+}
+
+/////////////////////////////////////////////////////////////////

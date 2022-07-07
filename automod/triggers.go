@@ -525,67 +525,6 @@ func (inv *ServerInviteTrigger) MergeDuplicates(data []interface{}) interface{} 
 }
 
 /////////////////////////////////////////////////////////////
-/*
-var _ MessageTrigger = (*AntiFishDetectorTrigger)(nil)
-
-type AntiFishDetectorTrigger struct{}
-
-func (g *AntiFishDetectorTrigger) Kind() RulePartType {
-	return RulePartTrigger
-}
-
-func (g *AntiFishDetectorTrigger) DataType() interface{} {
-	return nil
-}
-
-func (g *AntiFishDetectorTrigger) Name() string {
-	return "Anti-Fish API flagged bad links"
-}
-
-func (g *AntiFishDetectorTrigger) Description() string {
-	return "Triggers on messages containing links that are flagged by Anti-Fish API as unsafe. Older version of Flagged Scam links trigger."
-}
-
-func (g *AntiFishDetectorTrigger) UserSettings() []*SettingDef {
-	return []*SettingDef{}
-}
-
-func (g *AntiFishDetectorTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
-	if common.LinkRegexJonas.MatchString(forwardSlashReplacer.Replace(m.Content)) {
-		antiFish, err := common.AntiFishQuery(m.Content)
-		if err != nil {
-			logger.WithError(err).Error("Failed checking URLs from Anti-Fish API.")
-			return false, nil
-		}
-
-		if antiFish.Match {
-			return true, nil
-		}
-
-		matches := common.LinkRegexJonas.FindAllString(forwardSlashReplacer.Replace(m.Content), -1)
-
-		for _, v := range matches {
-			trasparencyReport, err := common.TransparencyReportQuery(v)
-			if err != nil {
-				logger.WithError(err).Error("Failed checking URLs from Google's Transparency Report API.")
-				return false, nil
-			}
-
-			if (trasparencyReport.UnsafeContent > 1 && trasparencyReport.UnsafeContent <= 3) || trasparencyReport.ScoreTotal >= 2 {
-				return true, nil
-			}
-
-		}
-	}
-
-	return false, nil
-}
-
-func (g *AntiFishDetectorTrigger) MergeDuplicates(data []interface{}) interface{} {
-	return data[0] // no point in having duplicates of this
-}
-*/
-/////////////////////////////////////////////////////////////
 
 var _ MessageTrigger = (*AntiPhishingLinkTrigger)(nil)
 
@@ -690,6 +629,7 @@ type SlowmodeTriggerData struct {
 	Threshold                int
 	Interval                 int
 	SingleMessageAttachments bool
+	SingleMessageLinks       bool
 }
 
 var _ MessageTrigger = (*SlowmodeTrigger)(nil)
@@ -776,15 +716,20 @@ func (s *SlowmodeTrigger) Description() string {
 func (s *SlowmodeTrigger) UserSettings() []*SettingDef {
 	defaultMessages := 5
 	defaultInterval := 5
+	thresholdName := "Messages"
 
 	if s.Attachments {
 		defaultMessages = 10
 		defaultInterval = 60
+		thresholdName = "Attachments"
+	} else if s.Links {
+		defaultInterval = 60
+		thresholdName = "Links"
 	}
 
 	settings := []*SettingDef{
 		{
-			Name:    "Messages",
+			Name:    thresholdName,
 			Key:     "Threshold",
 			Kind:    SettingTypeInt,
 			Default: defaultMessages,
@@ -801,6 +746,13 @@ func (s *SlowmodeTrigger) UserSettings() []*SettingDef {
 		settings = append(settings, &SettingDef{
 			Name:    "Also count multiple attachments in single message",
 			Key:     "SingleMessageAttachments",
+			Kind:    SettingTypeBool,
+			Default: false,
+		})
+	} else if s.Links {
+		settings = append(settings, &SettingDef{
+			Name:    "Also count multiple links in single message",
+			Key:     "SingleMessageLinks",
 			Kind:    SettingTypeBool,
 			Default: false,
 		})
@@ -849,14 +801,28 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 				continue // we're only checking messages with attachments
 			}
 			if settings.SingleMessageAttachments {
-				// Add the count of all attachements of this message to the amount
+				// Add the count of all attachments of this message to the amount
 				amount += len(v.Attachments)
 				continue
 			}
 		}
 
-		if s.Links && !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(v.Content)) {
+		/*if s.Links && !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(v.Content)) {
 			continue // were only checking messages with links
+		}*/
+
+		if s.Links {
+			//&& !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(v.Content)) {
+			linksLen := len(common.LinkRegexJonas.FindAllString(forwardSlashReplacer.Replace(v.Content), -1))
+			//continue // were only checking messages with links
+			if linksLen < 1 {
+				continue // we're only checking messages with links
+			}
+			if settings.SingleMessageLinks {
+				// Add the count of all links of this message to the amount
+				amount += linksLen
+				continue
+			}
 		}
 
 		if s.Stickers && len(v.Stickers) < 1 {

@@ -238,9 +238,10 @@ table{
 {{range $i, $rule := .CurrentRuleset.R.RulesetAutomodRules}}
 <div class="row">
     <div class="col">
-        <form action="/manage/{{$dot.ActiveGuild.ID}}/automod/ruleset/{{$dot.CurrentRuleset.ID}}/rule/{{.ID}}/update" method="post" data-async-form>
+        <form action="/manage/{{$dot.ActiveGuild.ID}}/automod/ruleset/{{$dot.CurrentRuleset.ID}}/rule/{{.ID}}/update" method="post" data-async-form data-async-form-alertsonly>
             <!-- Pressing enter uses the first button for some reason -->
             <button class="hidden" type="submit"></button>
+            <!--input class="hidden" type="text" name="Name" value="{{.Name}}"-->
 
             <section class="card card-featured card-featured-warning">
                 <header class="card-header">
@@ -366,6 +367,18 @@ table{
     </select>
     <select id="automod-roledropdown-single-template" class="form-control">
         {{roleOptions .ActiveGuild.Roles nil}}
+    </select>
+    <select id="automod-active-hours-template" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+        {{range seq 0 24}}<option value="{{.}}">{{.}}</option>{{end}}
+    </select>
+    <select id="automod-active-weekdays-template" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+        <option value="1">Monday</option>
+        <option value="2">Tuesday</option>
+        <option value="3">Wednesday</option>
+        <option value="4">Thursday</option>
+        <option value="5">Friday</option>
+        <option value="6">Saturday</option>
+        <option value="0">Sunday</option>
     </select>
     <select id="automod-channel-multi-template" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
         {{textChannelOptionsMulti .ActiveGuild.Channels nil}}
@@ -542,6 +555,10 @@ $(function(){
                 input.attr("value", opt.Default)
             }
 
+            if(opt.Placeholder){
+                input.attr("placeholder", opt.Placeholder)
+            }
+
             column.append(input)
             break;
         case "string":
@@ -556,6 +573,10 @@ $(function(){
 
             if(opt.Default){
                 input.attr("value", opt.Default)
+            }
+
+            if(opt.Placeholder){
+                input.attr("placeholder", opt.Placeholder)
             }
 
             column.append(input)
@@ -578,6 +599,12 @@ $(function(){
             break;
         case "role":
             cloneDropdown(column, "#automod-roledropdown-single-template", key, true);
+            break;
+        case "active_hours":
+            cloneDropdown(column, "#automod-active-hours-template", key, true);
+            break;
+        case "active_weekdays":
+            cloneDropdown(column, "#automod-active-weekdays-template", key, true);
             break;
         case "multi_channel":
             cloneDropdown(column, "#automod-channel-multi-template", key, true);
@@ -659,6 +686,38 @@ $(function(){
                     {{else if eq .Kind "role"}}
                     <select name="{{$name}}" class="form-control" >
                         {{roleOptions $dot.dot.ActiveGuild.Roles nil (index $dot.settings .Key)}}
+                    </select>
+                    {{else if eq .Kind "active_hours"}}
+                    <select name="{{$name}}" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+                        {{$selectedHours := $dot.settings.TimeHours}}
+                        {{range seq 0 24}}<option value="{{.}}"
+                            {{if in $selectedHours .}}selected{{end}}>{{.}}</option>
+                        {{end}}
+                    </select>
+                    {{else if eq .Kind "active_weekdays"}}
+                    <select name="{{$name}}" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+                        {{$selectedWeekdays := $dot.settings.TimeWeekdays}}
+                        <option value="1"
+                            {{if in $selectedWeekdays 1}}selected{{end}}>
+                            Monday</option>
+                        <option value="2"
+                            {{if in $selectedWeekdays 2}}selected{{end}}>
+                            Tuesday</option>
+                        <option value="3"
+                            {{if in $selectedWeekdays 3}}selected{{end}}>
+                            Wednesday</option>
+                        <option value="4"
+                            {{if in $selectedWeekdays 4}}selected{{end}}>
+                            Thursday</option>
+                        <option value="5"
+                            {{if in $selectedWeekdays 5}}selected{{end}}>
+                            Friday</option>
+                        <option value="6"
+                            {{if in $selectedWeekdays 6}}selected{{end}}>
+                            Saturday</option>
+                        <option value="0"
+                            {{if in $selectedWeekdays 0}}selected{{end}}>
+                            Sunday</option>
                     </select>
                     {{else if eq .Kind "multi_channel"}}
                     <select name="{{$name}}" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
