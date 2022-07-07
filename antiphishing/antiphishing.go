@@ -259,6 +259,9 @@ func queryPhishingLinks(input []string) (string, error) {
 
 func CheckMessageForPhishingDomains(input string) (string, error) {
 	matches := common.LinkRegex.FindAllString(input, -1)
+	if len(matches) < 1 {
+		matches = append(matches, common.LinkRegexJonas.FindAllString(input, -1)...)
+	}
 
 	if len(matches) < 1 {
 		return "", nil
