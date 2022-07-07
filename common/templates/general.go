@@ -1598,3 +1598,11 @@ func tmplHumanizeDurationSeconds(in interface{}) string {
 func tmplHumanizeTimeSinceDays(in time.Time) string {
 	return common.HumanizeDuration(common.DurationPrecisionDays, time.Since(in))
 }
+
+func tmplDereferencePointer(arg interface{}) interface{} {
+	if reflect.ValueOf(arg).Kind() == reflect.Ptr {
+		return reflect.ValueOf(arg).Elem().Interface()
+	} else {
+		return arg
+	}
+}

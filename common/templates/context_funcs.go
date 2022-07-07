@@ -2121,3 +2121,44 @@ func (c *Context) tmplCountMembers(isBot bool) func() (int, error) {
 		return bot.State.GetMemberCount(c.GS.ID, isBot), nil
 	}
 }
+
+func (c *Context) tmplGetAuditLog(args ...interface{}) ([]*discordgo.AuditLogEntry, error) {
+	var userID, beforeID int64
+	var actionType, limit int
+
+	if len(args) < 1 {
+		return nil, errors.New("no arguments given")
+	}
+
+	argsSdict, err := StringKeyDictionary(args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, val := range argsSdict {
+		switch strings.ToLower(key) {
+		case "userid":
+			userID = targetUserID(val)
+		case "before":
+			beforeID = ToInt64(val)
+		case "action_type":
+			actionType = tmplToInt(val)
+		case "limit":
+			limit = tmplToInt(val)
+			if limit < 1 {
+				limit = 1
+			} else if limit > 100 {
+				limit = 100
+			}
+		default:
+			return nil, errors.New(`invalid key "` + key + ` "passed to audit log uri builder`)
+		}
+	}
+
+	response, err := common.BotSession.GuildAuditLog(c.GS.ID, userID, beforeID, actionType, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return response.AuditLogEntries, nil
+}
