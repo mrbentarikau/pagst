@@ -28,13 +28,6 @@ type CtxChannel struct {
 	OwnerID              int64                            `json:"owner_id"`
 }
 
-/* PAGST previous vers
-func (c *CtxChannel) Mention() string {
-	if c == nil {
-		return "No such channel to mention"
-	}
-	return "<#" + discordgo.StrID(c.ID) + ">"
-*/
 func (c *CtxChannel) Mention() (string, error) {
 	if c == nil {
 		return "", errors.New("channel not found")

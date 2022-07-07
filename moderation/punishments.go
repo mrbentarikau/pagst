@@ -140,7 +140,7 @@ func punish(config *Config, p Punishment, guildID int64, channel *dstate.Channel
 		}
 
 		// Pull user details from audit log if we can
-		auditLog, err := common.BotSession.GuildAuditLog(gs.ID, common.BotUser.ID, 0, auditLogType, 10)
+		auditLog, err := common.BotSession.GuildAuditLog(gs.ID, common.BotUser.ID, 0, int(auditLogType), 10)
 		if err == nil {
 			for _, v := range auditLog.Users {
 				if v.ID == user.ID {

@@ -2,10 +2,10 @@ package discordgo
 
 // Webhook stores the data for a webhook.
 type Webhook struct {
-	ID        int64       `json:"id"`
+	ID        int64       `json:"id,string"`
 	Type      WebhookType `json:"type"`
-	GuildID   int64       `json:"guild_id"`
-	ChannelID int64       `json:"channel_id"`
+	GuildID   int64       `json:"guild_id,string"`
+	ChannelID int64       `json:"channel_id,string"`
 	User      *User       `json:"user"`
 	Name      string      `json:"name"`
 	Avatar    string      `json:"avatar"`

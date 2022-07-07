@@ -34,7 +34,7 @@ const (
 	ContextKeyConfig ContextKey = iota
 )
 
-const MuteDeniedChannelPerms = discordgo.PermissionSendMessages | discordgo.PermissionVoiceSpeak | discordgo.PermissionUsePublicThreads | discordgo.PermissionUsePrivateThreads
+const MuteDeniedChannelPerms = discordgo.PermissionSendMessages | discordgo.PermissionVoiceSpeak | discordgo.PermissionUsePublicThreads | discordgo.PermissionUsePrivateThreads | discordgo.PermissionSendMessagesInThreads
 
 var _ commands.CommandProvider = (*Plugin)(nil)
 var _ bot.BotInitHandler = (*Plugin)(nil)
@@ -297,7 +297,7 @@ func HandleGuildMemberTimeoutChange(evt *eventsystem.EventData) (retry bool, err
 	}
 	logger.Infof("got timeout event %v", entry)
 
-	if entry.Changes[0].Key != "communication_disabled_until" {
+	if *entry.Changes[0].Key != discordgo.AuditLogChangeKeyCommunicationDisabledUntil {
 		return false, nil
 	}
 
@@ -641,8 +641,8 @@ func HandleGuildMemberUpdate(evt *eventsystem.EventData) (retry bool, err error)
 	return false, nil
 }
 
-func FindAuditLogEntry(guildID int64, typ int, targetUser int64, within time.Duration) (author *discordgo.User, entry *discordgo.AuditLogEntry) {
-	auditlog, err := common.BotSession.GuildAuditLog(guildID, 0, 0, typ, 10)
+func FindAuditLogEntry(guildID int64, typ discordgo.AuditLogAction, targetUser int64, within time.Duration) (author *discordgo.User, entry *discordgo.AuditLogEntry) {
+	auditlog, err := common.BotSession.GuildAuditLog(guildID, 0, 0, int(typ), 10)
 	if err != nil {
 		return nil, nil
 	}

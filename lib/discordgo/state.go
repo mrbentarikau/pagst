@@ -517,6 +517,7 @@ func (s *State) ChannelRemove(channel *Channel) error {
 	return nil
 }
 
+/*
 // GuildChannel gets a channel by ID from a guild.
 // This method is Deprecated, use Channel(channelID)
 func (s *State) GuildChannel(guildID, channelID int64) (*Channel, error) {
@@ -527,7 +528,7 @@ func (s *State) GuildChannel(guildID, channelID int64) (*Channel, error) {
 // This method is Deprecated, use Channel(channelID)
 func (s *State) PrivateChannel(channelID int64) (*Channel, error) {
 	return s.Channel(channelID)
-}
+}*/
 
 // Channel gets a channel by ID, it will look in all guilds and private channels.
 func (s *State) Channel(channelID int64) (*Channel, error) {

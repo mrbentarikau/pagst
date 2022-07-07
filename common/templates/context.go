@@ -137,6 +137,8 @@ var (
 		"humanizeDurationMinutes": tmplHumanizeDurationMinutes,
 		"humanizeDurationSeconds": tmplHumanizeDurationSeconds,
 		"humanizeTimeSinceDays":   tmplHumanizeTimeSinceDays,
+
+		"derefPointer": tmplDereferencePointer,
 	}
 
 	contextSetupFuncs = []ContextSetupFunc{}
@@ -677,6 +679,9 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots)
 
 	c.addContextFunc("sort", c.tmplSort)
+
+	// testing grounds
+	//c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
 }
 
 type limitedWriter struct {

@@ -240,7 +240,7 @@ func runServers(mainMuxer *goji.Mux) {
 			Cache:      cache,
 		}
 
-		// launch the redir server
+		// launch the redis server
 		go func() {
 			unsafeHandler := &http.Server{
 				Addr:        ListenAddressHTTP,
@@ -272,7 +272,7 @@ func runServers(mainMuxer *goji.Mux) {
 
 func setupRoutes() *goji.Mux {
 
-	// setup the root routes and middlewares
+	// setup the root routes and middle-wares
 	setupRootMux()
 	RootMux.Use(NotFound())
 	// Guild specific public routes, does not require admin or being logged in at all

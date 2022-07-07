@@ -35,8 +35,8 @@ var (
 	MAWarned         = ModlogAction{Prefix: "Warned", Emoji: "⚠", Color: 0xfca253}
 	MATimeoutAdded   = ModlogAction{Prefix: "Timed out", Emoji: "⏱", Color: 0x9b59b6}
 	MATimeOutRemoved = ModlogAction{Prefix: "Timeout removed from", Emoji: "⏱", Color: 0x9b59b6}
-	MAGiveRole       = ModlogAction{Prefix: "", Emoji: "➕", Color: 0x53fcf9}
-	MARemoveRole     = ModlogAction{Prefix: "", Emoji: "➖", Color: 0x53fcf9}
+	MAGiveRole       = ModlogAction{Prefix: "", Emoji: "👍", Color: 0x53fcf9}
+	MARemoveRole     = ModlogAction{Prefix: "", Emoji: "👎", Color: 0x53fcf9}
 	MALock           = ModlogAction{Prefix: "Locked", Emoji: "🔒", Color: 0xEE00EE}
 	MAUnlock         = ModlogAction{Prefix: "Unlocked", Emoji: "🔓", Color: 0x718AED}
 )

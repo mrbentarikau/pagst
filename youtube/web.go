@@ -23,6 +23,7 @@ import (
 	"github.com/mediocregopher/radix/v3"
 	"goji.io"
 	"goji.io/pat"
+	"google.golang.org/api/youtube/v3"
 )
 
 type CtxKey int
@@ -45,6 +46,7 @@ type Form struct {
 	YoutubeChannelUser string
 	YoutubeCustomURL   string
 	YoutubeVideoURL    string
+	YoutubeURL         string
 	YoutubeAnnounceMsg string `json:"yt_announce_msg" valid:"template,2000"`
 	AnnounceEnabled    bool
 	DiscordChannel     int64 `valid:"channel,true"`
@@ -54,6 +56,24 @@ type Form struct {
 	PublishLivestream  bool
 	Enabled            bool
 }
+
+type ytUrlType int
+
+const (
+	ytUrlTypeVideo ytUrlType = iota
+	ytUrlTypeCustom
+	ytUrlTypeChannel
+	ytUrlTypeUser
+	ytUrlTypeInvalid
+)
+
+var (
+	ytUrlRegex        = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com`)
+	ytVideoUrlRegex   = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]+).*`)
+	ytChannelUrlRegex = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/(channel)\/(UC[\w-]{21}[AQgw])$`)
+	ytCustomUrlRegex  = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/(c\/)?([\w-]+)$`)
+	ytUserUrlRegex    = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/(user\/)([\w-]+)$`)
+)
 
 func (p *Plugin) InitWeb() {
 	web.AddHTMLTemplate("youtube/assets/youtube.html", PageHTML)
@@ -116,6 +136,13 @@ func (p *Plugin) HandleYoutube(w http.ResponseWriter, r *http.Request) (web.Temp
 	return templateData, nil
 }
 
+type LegacyYTStruct struct {
+	YTChannelID string
+	YTUsername  string
+	YTCustomURL string
+	YTVideoURL  string
+}
+
 func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
 	ctx := r.Context()
 	activeGuild, templateData := web.GetBaseCPContextData(ctx)
@@ -134,11 +161,32 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 	username := trimYouTubeURLParts(data.YoutubeChannelUser)
 	cURL := trimYouTubeURLParts(data.YoutubeCustomURL)
 	vURL := trimYouTubeURLParts(data.YoutubeVideoURL)
-	if cID == "" && username == "" && cURL == "" && vURL == "" {
-		return templateData.AddAlerts(web.ErrorAlert("Neither channelID or username specified.")), errors.New("ChannelID and username not specified")
+
+	url := data.YoutubeURL
+	if !ytUrlRegex.MatchString(url) && cID == "" && username == "" && cURL == "" && vURL == "" {
+		return templateData.AddAlerts(web.ErrorAlert("This is not a YouTube link...")), nil
 	}
 
-	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, data.YoutubeChannelID, data.YoutubeChannelUser, data.YoutubeCustomURL, data.YoutubeVideoURL, data.MentionEveryone, data.MentionRole, data.PublishLivestream)
+	var ytChannel, legacyYTChannel *youtube.Channel
+	var err error
+	if url != "" {
+		ytChannel, err = p.getYTChannel(url)
+	} else {
+		legacyYT := LegacyYTStruct{
+			YTChannelID: data.YoutubeChannelID,
+			YTUsername:  data.YoutubeChannelUser,
+			YTCustomURL: data.YoutubeCustomURL,
+			YTVideoURL:  data.YoutubeVideoURL,
+		}
+		legacyYTChannel, err = p.legacyGetYTChannel(legacyYT)
+	}
+
+	if err != nil {
+		logger.WithError(err).Errorf("error occurred fetching channel for URL %s", url)
+		return templateData.AddAlerts(web.ErrorAlert("No channel found for that link")), err
+	}
+
+	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, legacyYTChannel, ytChannel, data.MentionEveryone, data.MentionRole, data.PublishLivestream)
 	if err != nil {
 		if err == ErrNoChannel {
 			return templateData.AddAlerts(web.ErrorAlert("No channel by that id/username found")), errors.New("channel not found")

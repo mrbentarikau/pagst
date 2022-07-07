@@ -493,6 +493,7 @@ var ModerationCommands = []*commands.YAGCommand{
 		CmdCategory:   commands.CategoryModeration,
 		Name:          "Timeout",
 		Description:   "Timeouts a member",
+		Aliases:       []string{"to"},
 		Arguments: []*dcmd.ArgDef{
 			{Name: "User", Type: dcmd.UserID},
 			{Name: "Duration", Type: &commands.DurationArg{}},
@@ -551,6 +552,7 @@ var ModerationCommands = []*commands.YAGCommand{
 		CmdCategory:   commands.CategoryModeration,
 		Name:          "RemoveTimeOut",
 		Description:   "Removes a members timeout",
+		Aliases:       []string{"untimeout", "cleartimeout", "deltimeout", "rto"},
 		RequiredArgs:  1,
 		Arguments: []*dcmd.ArgDef{
 			{Name: "User", Type: dcmd.UserID},
@@ -651,6 +653,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			{Name: "Reason", Type: dcmd.String},
 		},
 		SlashCommandEnabled: true,
+		IsResponseEphemeral: true,
 		DefaultEnabled:      false,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			config, _, err := MBaseCmd(parsed, 0)
@@ -681,7 +684,7 @@ var ModerationCommands = []*commands.YAGCommand{
 				return "No report channel set up", nil
 			}
 
-			topContent := fmt.Sprintf("%s reported %s", parsed.Author.Mention(), target.Mention())
+			topContent := fmt.Sprintf("%s reported **%s#%s (ID %d)**", parsed.Author.Mention(), target.Username, target.Discriminator, target.ID)
 
 			embed := &discordgo.MessageEmbed{
 				Author: &discordgo.MessageEmbedAuthor{
@@ -709,7 +712,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			}
 
 			// Don't bother sending confirmation if it is done in the report channel
-			if channelID != parsed.ChannelID {
+			if channelID != parsed.ChannelID || parsed.SlashCommandTriggerData != nil {
 				return "User reported to the proper authorities!", nil
 			}
 
@@ -747,6 +750,7 @@ var ModerationCommands = []*commands.YAGCommand{
 		RequireBotPerms:          [][]int64{{discordgo.PermissionAdministrator}, {discordgo.PermissionManageServer}, {discordgo.PermissionManageMessages}},
 		ArgumentCombos:           [][]int{{0}, {0, 1}, {1, 0}},
 		SlashCommandEnabled:      true,
+		IsResponseEphemeral:      true,
 		DefaultEnabled:           false,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			botMember, err := bot.GetMember(parsed.GuildData.GS.ID, common.BotUser.ID)
@@ -1167,7 +1171,6 @@ var ModerationCommands = []*commands.YAGCommand{
 		SlashCommandEnabled:      true,
 		DefaultEnabled:           false,
 		RunFunc: paginatedmessages.PaginatedCommand(0, func(parsed *dcmd.Data, p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
-
 			showUserIDs := false
 			config, _, err := MBaseCmd(parsed, 0)
 			if err != nil {
