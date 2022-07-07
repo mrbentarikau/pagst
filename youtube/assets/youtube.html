@@ -5,6 +5,24 @@
     .feed-item-disabled {
         background-color: #f003;
     }
+
+    .cc-collapsibleDown:before{
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    content: "\f107";
+    margin-right: 10px;
+    }
+
+    .cc-collapsibleDown:focus,.cc-collapsibleDown:hover,.cc-collapsibleUp:focus,.cc-collapsibleUp:hover{
+        background-color: #1f1f1f!important;
+    }
+
+    .cc-collapsibleUp:before{
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        content: '\f106';
+        margin-right: 10px;
+    }
 </style>
 
 <header class="page-header">
@@ -48,7 +66,7 @@
             </header>
             <div class="card-body">
                 <form class="" method="post" action="/manage/{{.Dot.ActiveGuild.ID}}/youtube">
-                    <div class="form-row mb-5">
+                    <div class="form-row mb-3">
                         <div class="form-group col mb-0">
                             <p><b>Provide either channel ID or username.</b> Only one of them, not both.<br/>
                             <sup>*</sup>Custom/Video URL search for possible channel titles and add the first result. Not so reliable as above options.</p>
@@ -68,42 +86,53 @@
                             </span>
                         </div>
                     </div>
-                    <div class="form-row mb-3">
-                        <div class="form-group col mb-0">
-                            <label for="yt-channel-id">YouTube Channel ID</label>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-prepend"><span
-                                    class="input-group-text">youtube.com/channel/</span></span>
-                                <input type="text" class="form-control" id="yt-channel-id" name="YoutubeChannelID">
-                            </div>
-                        </div>
-                        <div class="form-group col mb-0">
-                            <label for="yt-channel-user">YouTube Username</label>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-prepend"><span
-                                    class="input-group-text">youtube.com/user/</span></span>
-                                <input type="text" class="form-control" id="yt-channel-user" name="YoutubeChannelUser">
-                            </div>
+                    <div class="form-group">
+                        <label for="yt-channel-url">YouTube Link</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Enter link of youtube channel or video or user" id="yt-channel-url" name="YoutubeUrl">
                         </div>
                     </div>
-                    <div class="form-row mb-5">
-                        <div class="form-group col mb-0">
-                            <label for="yt-channel-user">YouTube Custom URL<sup>*</sup></label>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-prepend"><span
-                                    class="input-group-text">youtube.com/c/</span></span>
-                                <input type="text" class="form-control" id="yt-custom-url" name="YoutubeCustomURL">
+                    <section style="margin-bottom: 25px;padding-bottom: -25px;">
+                        <a style="text-decoration: none;color:#a1a1a1!important;display:block;font-size:14px!important" data-toggle="collapse" href="#collapse_YT_adv_search" aria-expanded="false" aria-controls="collapse_YT_adv_search" class="cc-collapsibleDown"><span>More precise YT-channel search:</span></a>
+                        <div class="card-body collapse" id="collapse_YT_adv_search">
+                            <div class="form-row mb-3">
+                                <div class="form-group col mb-0">
+                                    <label for="yt-channel-id">YouTube Channel ID</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-prepend"><span
+                                            class="input-group-text">youtube.com/channel/</span></span>
+                                        <input type="text" class="form-control" id="yt-channel-id" name="YoutubeChannelID">
+                                    </div>
+                                </div>
+                                <div class="form-group col mb-0">
+                                    <label for="yt-channel-user">YouTube Username</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-prepend"><span
+                                            class="input-group-text">youtube.com/user/</span></span>
+                                        <input type="text" class="form-control" id="yt-channel-user" name="YoutubeChannelUser">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row mb-3">
+                                <div class="form-group col mb-0">
+                                    <label for="yt-channel-user">YouTube Custom URL<sup>*</sup></label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-prepend"><span
+                                            class="input-group-text">youtube.com/c/</span></span>
+                                        <input type="text" class="form-control" id="yt-custom-url" name="YoutubeCustomURL">
+                                    </div>
+                                </div>
+                                <div class="form-group col mb-0">
+                                    <label for="yt-video-url">YouTube Video URL<sup>*</sup></label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-prepend"><span
+                                            class="input-group-text">youtube.com/watch?v=</span></span>
+                                        <input type="text" class="form-control" id="yt-video-url" name="YoutubeVideoURL">
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group col mb-0">
-                            <label for="yt-channel-user">YouTube Video URL<sup>*</sup></label>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-prepend"><span
-                                    class="input-group-text">youtube.com/watch?v=</span></span>
-                                <input type="text" class="form-control" id="yt-video-url" name="YoutubeVideoURL">
-                            </div>
-                        </div>
-                    </div>
+                    </section>
                     <div class="form-row mb-0">
                         <div class="form-group col mb-0">
                             <label for="channel">Discord Channel</label>
@@ -208,8 +237,10 @@
         var userInput = $("#yt-channel-user");
         var cURLInput = $("#yt-custom-url");
         var vURLInput = $("#yt-video-url");
+        var yURL = $("#yt-channel-url");
 
         userInput.on("input", function (arg) {
+            yURL[0].value = '';
             if (userInput.val().length > 0) {
                 idInput.attr("disabled", true);
                 cURLInput.attr("disabled", true);
@@ -222,6 +253,7 @@
         })
 
         idInput.on("input", function (arg) {
+            yURL[0].value = '';
             if (idInput.val().length > 0) {
                 userInput.attr("disabled", true);
                 cURLInput.attr("disabled", true);
@@ -234,6 +266,7 @@
         })
 
         cURLInput.on("input", function (arg) {
+            yURL[0].value = '';
             if (cURLInput.val().length > 0) {
                 userInput.attr("disabled", true);
                 idInput.attr("disabled", true);
@@ -246,6 +279,7 @@
         })
 
         vURLInput.on("input", function (arg) {
+            yURL[0].value = '';
             if (vURLInput.val().length > 0) {
                 userInput.attr("disabled", true);
                 idInput.attr("disabled", true);
@@ -286,4 +320,11 @@
         }
     }
 </script>
+<script>
+    $('.collapse').on('shown.bs.collapse', function(){
+    $(this).parent().find('.cc-collapsibleDown').removeClass('cc-collapsibleDown').addClass('cc-collapsibleUp');}).on('hidden.bs.collapse',function(){
+        $(this).parent().find('.cc-collapsibleUp').removeClass('cc-collapsibleUp').addClass('cc-collapsibleDown');});
+</script>
+
+
 {{end}}

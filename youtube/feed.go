@@ -246,24 +246,91 @@ var (
 	ErrNoChannel = errors.New("no channel with that id found")
 )
 
-func (p *Plugin) AddFeed(guildID, discordChannelID int64, youtubeChannelID, youtubeUsername, youtubeCustomURL, youtubeVideoURL string, mentionEveryone bool, mentionRole int64, publishLivestream bool) (*ChannelSubscription, error) {
-	sub := &ChannelSubscription{
-		GuildID:           discordgo.StrID(guildID),
-		ChannelID:         discordgo.StrID(discordChannelID),
-		MentionEveryone:   mentionEveryone,
-		MentionRole:       discordgo.StrID(mentionRole),
-		PublishLivestream: publishLivestream,
-		Enabled:           true,
+func (p *Plugin) parseYtUrl(url string) (t ytUrlType, id string, err error) {
+	if ytVideoUrlRegex.MatchString(url) {
+		capturingGroups := ytVideoUrlRegex.FindAllStringSubmatch(url, -1)
+		if len(capturingGroups) > 0 && len(capturingGroups[0]) > 0 && len(capturingGroups[0][4]) > 0 {
+			return ytUrlTypeVideo, capturingGroups[0][4], nil
+		}
+	} else if ytChannelUrlRegex.MatchString(url) {
+		capturingGroups := ytChannelUrlRegex.FindAllStringSubmatch(url, -1)
+		if len(capturingGroups) > 0 && len(capturingGroups[0]) > 0 && len(capturingGroups[0][5]) > 0 {
+			return ytUrlTypeChannel, capturingGroups[0][5], nil
+		}
+	} else if ytCustomUrlRegex.MatchString(url) {
+		capturingGroups := ytCustomUrlRegex.FindAllStringSubmatch(url, -1)
+		if len(capturingGroups) > 0 && len(capturingGroups[0]) > 0 && len(capturingGroups[0][5]) > 0 {
+			return ytUrlTypeCustom, capturingGroups[0][5], nil
+		}
+	} else if ytUserUrlRegex.MatchString(url) {
+		capturingGroups := ytUserUrlRegex.FindAllStringSubmatch(url, -1)
+		if len(capturingGroups) > 0 && len(capturingGroups[0]) > 0 && len(capturingGroups[0][5]) > 0 {
+			return ytUrlTypeUser, capturingGroups[0][5], nil
+		}
+	}
+	return ytUrlTypeInvalid, "", errors.New("invalid or incomplete url")
+}
+
+func (p *Plugin) getYTChannel(url string) (channel *youtube.Channel, err error) {
+	urlType, id, err := p.parseYtUrl(url)
+	if err != nil {
+		return nil, err
 	}
 
+	var cResp *youtube.ChannelListResponse
+	channelListCall := p.YTService.Channels.List([]string{"snippet"})
+
+	switch urlType {
+	case ytUrlTypeChannel:
+		channelListCall = channelListCall.Id(id)
+	case ytUrlTypeUser:
+		channelListCall = channelListCall.ForUsername(id)
+	case ytUrlTypeCustom:
+		searchListCall := p.YTService.Search.List([]string{"snippet"})
+		searchListCall = searchListCall.Q(id).Type("channel")
+		sResp, err := searchListCall.Do()
+		if err != nil {
+			return nil, common.ErrWithCaller(err)
+		}
+		if len(sResp.Items) < 1 {
+			return nil, ErrNoChannel
+		}
+		channelListCall = channelListCall.Id(sResp.Items[0].Id.ChannelId)
+	case ytUrlTypeVideo:
+		searchListCall := p.YTService.Search.List([]string{"snippet"})
+		searchListCall = searchListCall.Q(id).Type("video")
+		sResp, err := searchListCall.Do()
+
+		if err != nil {
+			return nil, common.ErrWithCaller(err)
+		}
+		if len(sResp.Items) < 1 {
+			return nil, ErrNoChannel
+		}
+		channelListCall = channelListCall.Id(sResp.Items[0].Snippet.ChannelId)
+	default:
+		return nil, common.ErrWithCaller(errors.New("invalid youtube Url"))
+	}
+	cResp, err = channelListCall.Do()
+
+	if err != nil {
+		return nil, common.ErrWithCaller(err)
+	}
+	if len(cResp.Items) < 1 {
+		return nil, ErrNoChannel
+	}
+	return cResp.Items[0], nil
+}
+
+func (p *Plugin) legacyGetYTChannel(url LegacyYTStruct) (channel *youtube.Channel, err error) {
 	call := p.YTService.Channels.List([]string{"snippet"})
-	if youtubeChannelID != "" {
-		call = call.Id(youtubeChannelID)
-	} else if youtubeUsername != "" {
-		call = call.ForUsername(youtubeUsername)
-	} else if youtubeCustomURL != "" {
+	if url.YTChannelID != "" {
+		call = call.Id(url.YTChannelID)
+	} else if url.YTUsername != "" {
+		call = call.ForUsername(url.YTUsername)
+	} else if url.YTCustomURL != "" {
 		searchCall := p.YTService.Search.List([]string{"snippet"})
-		searchCall = searchCall.Q(youtubeCustomURL).Type("channel")
+		searchCall = searchCall.Q(url.YTCustomURL).Type("channel")
 		sResp, err := searchCall.Do()
 		if err != nil {
 			return nil, common.ErrWithCaller(err)
@@ -275,7 +342,7 @@ func (p *Plugin) AddFeed(guildID, discordChannelID int64, youtubeChannelID, yout
 		call = call.Id(sResp.Items[0].Id.ChannelId)
 	} else {
 		searchCall := p.YTService.Search.List([]string{"snippet"})
-		searchCall = searchCall.Q(youtubeVideoURL).Type("video")
+		searchCall = searchCall.Q(url.YTVideoURL).Type("video")
 
 		sResp, err := searchCall.Do()
 		if err != nil {
@@ -296,11 +363,28 @@ func (p *Plugin) AddFeed(guildID, discordChannelID int64, youtubeChannelID, yout
 	if len(cResp.Items) < 1 {
 		return nil, ErrNoChannel
 	}
+	return cResp.Items[0], nil
+}
 
-	sub.YoutubeChannelName = cResp.Items[0].Snippet.Title
-	sub.YoutubeChannelID = cResp.Items[0].Id
+func (p *Plugin) AddFeed(guildID, discordChannelID int64, legacyYTChannel, ytChannel *youtube.Channel, mentionEveryone bool, mentionRole int64, publishLivestream bool) (*ChannelSubscription, error) {
+	sub := &ChannelSubscription{
+		GuildID:           discordgo.StrID(guildID),
+		ChannelID:         discordgo.StrID(discordChannelID),
+		MentionEveryone:   mentionEveryone,
+		MentionRole:       discordgo.StrID(mentionRole),
+		PublishLivestream: publishLivestream,
+		Enabled:           true,
+	}
 
-	err = common.BlockingLockRedisKey(RedisChannelsLockKey, 0, 10)
+	if ytChannel != nil {
+		sub.YoutubeChannelName = ytChannel.Snippet.Title
+		sub.YoutubeChannelID = ytChannel.Id
+	} else {
+		sub.YoutubeChannelName = legacyYTChannel.Snippet.Title
+		sub.YoutubeChannelID = legacyYTChannel.Id
+	}
+
+	err := common.BlockingLockRedisKey(RedisChannelsLockKey, 0, 10)
 	if err != nil {
 		return nil, err
 	}
