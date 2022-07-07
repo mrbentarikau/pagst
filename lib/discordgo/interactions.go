@@ -32,6 +32,7 @@ const (
 type ApplicationCommand struct {
 	ID                int64                  `json:"id,string,omitempty"`
 	ApplicationID     int64                  `json:"application_id,string,omitempty"`
+	GuildID           int64                  `json:"guild_id,string,omitempty"`
 	Version           string                 `json:"version,omitempty"`
 	Type              ApplicationCommandType `json:"type,omitempty"`
 	Name              string                 `json:"name"`
@@ -189,6 +190,9 @@ type Interaction struct {
 	// The message on which interaction was used.
 	// NOTE: this field is only filled when a button click triggered the interaction. Otherwise it will be nil.
 	Message *Message `json:"message"`
+
+	// Bitwise set of permissions the app or bot has within the channel the interaction was sent from
+	AppPermissions int64 `json:"app_permissions,string"`
 
 	// The member who invoked this interaction.
 	// NOTE: this field is only filled when the slash command was invoked in a guild;
