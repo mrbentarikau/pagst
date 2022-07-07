@@ -41,7 +41,7 @@
                                 <input type="number" min="1" class="form-control" id="max-rep-amount-remove"
                                     name="MaxRemoveAmount" value="{{.RepSettings.MaxRemoveAmount}}">
                             </div>
-                            <div class="row" id="thanks-channels" {{if eq .RepSettings.DisableThanksDetection true}}hidden{{end}}>
+                            <div class="row" id="thanks-channels" {{if (and .RepSettings.DisableThanksDetection .RepSettings.DisableCustomThanksDetection)}}hidden{{end}}>
                                 <div class="form-group col mb-9">
                                     <label>Whitelisted channels for giving rep using thanks</label><br>
                                     <select name="WhitelistedThanksChannels" class="multiselect form-control"

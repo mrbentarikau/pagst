@@ -406,10 +406,8 @@ func DetailedLeaderboardEntries(guildID int64, ranks []*RankEntry) ([]*Leaderboa
 	if bot.Running {
 		var tmp []*dstate.MemberState
 		tmp, err = bot.GetMembers(guildID, userIDs...)
-		if tmp != nil {
-			for _, v := range tmp {
-				members = append(members, v.DgoMember())
-			}
+		for _, v := range tmp {
+			members = append(members, v.DgoMember())
 		}
 	} else {
 		members, err = botrest.GetMembers(guildID, userIDs...)
