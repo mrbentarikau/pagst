@@ -48,6 +48,8 @@ var RulePartMap = map[int]RulePart{
 	33: &AntiPhishingLinkTrigger{},
 	34: &MessageLengthTrigger{},
 	35: &MessageLengthTrigger{Inverted: true},
+	36: &SlowmodeTrigger{ChannelBased: false, Links: true},
+	37: &SlowmodeTrigger{ChannelBased: true, Links: true},
 
 	/*
 		9X:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
@@ -56,10 +58,8 @@ var RulePartMap = map[int]RulePart{
 		9X:  &UserStatusWordlistTrigger{Blacklist: true},
 	*/
 
-	92: &SlowmodeTrigger{ChannelBased: false, Links: true, Stickers: true},
-	93: &SlowmodeTrigger{ChannelBased: true, Links: false, Stickers: true},
-	96: &SlowmodeTrigger{ChannelBased: false, Links: true},
-	97: &SlowmodeTrigger{ChannelBased: true, Links: true},
+	92: &SlowmodeTrigger{ChannelBased: false, Stickers: true},
+	93: &SlowmodeTrigger{ChannelBased: true, Stickers: true},
 	98: &VoiceStateUpdateTrigger{UserJoin: true},
 	99: &VoiceStateUpdateTrigger{UserJoin: false},
 	//100: &AntiFishDetectorTrigger{},
@@ -79,6 +79,8 @@ var RulePartMap = map[int]RulePart{
 	212: &ChannelCategoriesCondition{Blacklist: false},
 	213: &MessageEditedCondition{NewMessage: true},
 	214: &MessageEditedCondition{NewMessage: false},
+	295: &ActiveTimeCondition{Inactive: false},
+	296: &ActiveTimeCondition{Inactive: true},
 	297: &DomainCondition{},
 	298: &VoiceChannelsCondition{Blacklist: true},
 	299: &VoiceChannelsCondition{Blacklist: false},
@@ -130,6 +132,8 @@ const (
 	SettingTypeRole                   = "role"
 	SettingTypeMultiRole              = "multi_role"
 	SettingTypeChannel                = "channel"
+	SettingTypeActiveHours            = "active_hours"
+	SettingTypeActiveWeekdays         = "active_weekdays"
 	SettingTypeMultiChannel           = "multi_channel"
 	SettingTypeMultiVoiceChannel      = "multi_voice_channel"
 	SettingTypeMultiChannelCategories = "multi_channel_cat"
@@ -140,11 +144,12 @@ const (
 )
 
 type SettingDef struct {
-	Name     string
-	Key      string
-	Kind     SettingType
-	Min, Max int
-	Default  interface{} `json:",omitempty"`
+	Name        string
+	Key         string
+	Kind        SettingType
+	Min, Max    int
+	Default     interface{} `json:",omitempty"`
+	Placeholder string      `json:",omitempty"`
 }
 
 type RulePartType int
@@ -163,7 +168,7 @@ type RulePart interface {
 	// Returns the available user settings that can be changed (such as roles)
 	UserSettings() []*SettingDef
 
-	// Returns a human readble name for this rule data entry and a description
+	// Returns a human readable name for this rule data entry and a description
 	Name() string
 	Description() string
 
