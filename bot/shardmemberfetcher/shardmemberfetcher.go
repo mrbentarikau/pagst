@@ -449,7 +449,6 @@ func (s *shardMemberFetcher) fetchSingle(req *MemberFetchRequest) {
 }
 
 func (s *shardMemberFetcher) fetchSingleInner(req *MemberFetchRequest) (*dstate.MemberState, error) {
-
 	// check if its already in state first
 	gs := s.state.GetGuild(req.Guild)
 	if gs == nil {

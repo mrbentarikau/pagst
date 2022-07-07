@@ -320,7 +320,7 @@ func HandleReactionAdd(evt *eventsystem.EventData) {
 
 	err := pubsub.Publish("dm_reaction", -1, ra)
 	if err != nil {
-		logger.WithError(err).Error("failed publishing dm reaction")
+		logger.WithError(err).Error("failed publishing DM reaction")
 	}
 }
 
@@ -334,7 +334,7 @@ func HandleInteractionCreate(evt *eventsystem.EventData) {
 	}
 	err := pubsub.Publish("dm_interaction", -1, ic)
 	if err != nil {
-		logger.WithError(err).Error("failed publishing dm interaction")
+		logger.WithError(err).Error("failed publishing DM interaction")
 	}
 }
 
@@ -352,7 +352,7 @@ func HandleMessageCreate(evt *eventsystem.EventData) {
 
 	err := pubsub.Publish("dm_message", -1, mc)
 	if err != nil {
-		logger.WithError(err).Error("failed publishing dm message")
+		logger.WithError(err).Error("failed publishing DM message")
 	}
 }
 
