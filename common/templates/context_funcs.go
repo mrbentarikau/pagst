@@ -172,6 +172,14 @@ func (c *Context) baseChannelArg(v interface{}) *dstate.ChannelState {
 						return &v
 					}
 				}
+				// Thread name, look for it
+				for _, vv := range c.GS.Threads {
+					if strings.EqualFold(t, vv.Name) &&
+						(vv.Type == discordgo.ChannelTypeGuildPublicThread ||
+							vv.Type == discordgo.ChannelTypeGuildPrivateThread) {
+						return &vv
+					}
+				}
 			}
 		}
 	}
