@@ -247,7 +247,7 @@ func (c *Context) sendNestedTemplate(channel interface{}, dm bool, name string, 
 				return "", errors.New("unknown channel")
 			}
 
-			cs = c.GS.GetChannel(cID)
+			cs = c.GS.GetChannelOrThread(cID)
 			if cs == nil {
 				return "", errors.New("unknown channel")
 			}
