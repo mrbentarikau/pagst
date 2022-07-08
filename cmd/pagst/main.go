@@ -43,6 +43,7 @@ import (
 	"github.com/mrbentarikau/pagst/timezonecompanion"
 	"github.com/mrbentarikau/pagst/twitter"
 	"github.com/mrbentarikau/pagst/verification"
+	"github.com/mrbentarikau/pagst/yageconomy"
 	"github.com/mrbentarikau/pagst/youtube"
 	// External plugins
 )
@@ -90,6 +91,7 @@ func main() {
 	timezonecompanion.RegisterPlugin()
 	twitter.RegisterPlugin()
 	verification.RegisterPlugin()
+	yageconomy.RegisterPlugin()
 	youtube.RegisterPlugin()
 
 	run.Run()

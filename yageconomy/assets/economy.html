@@ -1,0 +1,221 @@
+{{define "cp_economy_settings"}}
+{{template "cp_head" .}}
+
+<div class="page-header">
+    <h2>Economy settings</h2>
+</div>
+
+{{template "cp_alerts" .}}
+
+<div class="row">
+    <div class="col-lg-12">
+        <form role="form" method="post" data-async-form>
+            <section class="card {{if .PluginSettings.Enabled}}card-featured card-featured-success{{end}}">
+                <header class="card-header">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="rep-enabled-check" name="Enabled" {{if .PluginSettings.Enabled}} checked{{end}}>
+                        <label class="form-check-label" for="rep-enabled-check">
+                            <h2 class="card-title">Ecnonomy settings</h2>
+                        </label>
+                    </div>
+                </header>
+
+                <div class="card-body">                        
+                    <div class="row">
+                        <div class="col">
+                            <h4>Currency</h4>
+                            <div class="form-group">
+                                <label>Currency name</label>
+                                <input type="text" name="CurrencyName" class="form-control" value="{{.PluginSettings.CurrencyName}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Currency name (plural)</label>
+                                <input type="text" name="CurrencyNamePlural" class="form-control" value="{{.PluginSettings.CurrencyNamePlural}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Currency symbol</label>
+                                <input type="text" name="CurrencySymbol" class="form-control" value="{{.PluginSettings.CurrencySymbol}}">
+                            </div>
+                            <hr>
+
+                            <h4>Daily</h4>
+                            <div class="form-group">
+                                <label>Daily cooldown (minutes)</label>
+                                <input type="number" name="DailyFrequency" class="form-control" value="{{.PluginSettings.DailyFrequency}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Daily amount</label>
+                                <input type="number" name="DailyAmount" class="form-control" value="{{.PluginSettings.DailyAmount}}">
+                            </div>
+                            <hr>
+
+                            <h4>Auto Plant</h4>
+                            <div class="form-group">
+                                <label>Auto-plant channels</label>
+                                <select name="AutoPlantChannels" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+                                    {{textChannelOptionsMulti .ActiveGuild.Channels .PluginSettings.AutoPlantChannels}}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Auto plant min money</label>
+                                <input type="number" name="AutoPlantMin" class="form-control" value="{{.PluginSettings.AutoPlantMin}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Auto plant max money</label>
+                                <input type="number" name="AutoPlantMax" class="form-control" value="{{.PluginSettings.AutoPlantMax}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Auto chance per message (%)</label>
+                                <input type="number" name="AutoPlantChance" class="form-control" value="{{call .fmtDecimalPercentage .PluginSettings.AutoPlantChance.Big}}" step="0.01" min="0" max="100">
+                            </div>
+
+                            <hr>
+                            
+                            <h4>Heist</h4>
+                            <div class="form-group">
+                                <label>Failed heist gambling lockdown (minutes)</label>
+                                <input type="number" name="HeistFailedGamblingBanDuration" class="form-control" value="{{.PluginSettings.HeistFailedGamblingBanDuration}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Heist server wide cooldown (minutes)</label>
+                                <input type="number" name="HeistServerCooldown" class="form-control" value="{{.PluginSettings.HeistServerCooldown}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Fixed Heist payout</label>
+                                <input type="number" name="HeistFixedPayout" class="form-control" value="{{.PluginSettings.HeistFixedPayout}}">
+                                <p class="help-block">Set to 0 to use dynamic payouts</p>
+                            </div>
+
+                            <hr>
+                        </div>
+                        <div class="col">
+                            <h4>Misc</h4>
+                            <div class="form-group">
+                                <label>Start balance</label>
+                                <input type="number" name="StartBalance" class="form-control" value="{{.PluginSettings.StartBalance}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Economy admins</label>
+                                <select name="Admins" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+                                    {{roleOptionsMulti .ActiveGuild.Roles nil .PluginSettings.Admins}}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Economy enabled in... (blank for all channels)</label>
+                                <select name="EnabledChannels" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
+                                    {{textChannelOptionsMulti .ActiveGuild.Channels .PluginSettings.EnabledChannels}}
+                                </select>
+                            </div>
+                            
+                            <hr>
+
+                            <h4>Chat money</h4>
+                            <div class="form-group">
+                                <label>Chat money Cooldown (seconds)</label>
+                                <input type="number" name="ChatmoneyFrequency" class="form-control" value="{{.PluginSettings.ChatmoneyFrequency}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Chat money min give amount</label>
+                                <input type="number" name="ChatmoneyAmountMin" class="form-control" value="{{.PluginSettings.ChatmoneyAmountMin}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Chat money max give amount</label>
+                                <input type="number" name="ChatmoneyAmountMax" class="form-control" value="{{.PluginSettings.ChatmoneyAmountMax}}">
+                            </div>
+
+                            <hr>
+
+                            <h4>Rob</h4>
+                            <div class="form-group">
+                                <label>Rob fine amount (% of money in wallet)</label>
+                                <input type="number" name="RobFine" class="form-control" value="{{.PluginSettings.RobFine}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Rob Cooldown (seconds)</label>
+                                <input type="number" name="RobCooldown" class="form-control" value="{{.PluginSettings.RobCooldown}}">
+                            </div>
+
+                            <hr>
+
+                            <h4>Fishing</h4>
+                            <div class="form-group">
+                                <label>Fishing cooldown (minutes)</label>
+                                <input type="number" name="FishingCooldown" class="form-control" value="{{.PluginSettings.FishingCooldown}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Fishing max win</label>
+                                <input type="number" name="FishingMaxWinAmount" class="form-control" value="{{.PluginSettings.FishingMaxWinAmount}}">
+                            </div>
+                            <div class="form-group">
+                                <label>Fishing min win</label>
+                                <input type="number" name="FishingMinWinAmount" class="form-control" value="{{.PluginSettings.FishingMinWinAmount}}">
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary btn-lg btn-block">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- /.panel -->
+        </form>
+        <!-- /form -->
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<!-- /.row -->
+<div class="row">
+    <div class="col-lg-12">
+        <form role="form" method="post" action="/manage/{{.ActiveGuild.ID}}/economy/pick_image" enctype="multipart/form-data">
+            <section class="card">
+                <header class="card-header">
+                    <h2 class="card-title">Pick/Plant image background</h2>
+                </header>
+
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="sound-file">Upload a image</label>
+                        <input type="file" id="sound-file" name="image">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-lg btn-block">Upload</button>
+                    </div>
+                </div>
+            </section>
+        </form>
+    </div>
+</div>
+
+<!-- /.row -->
+{{$ag := .ActiveGuild}}
+{{range .PickImages}}
+<div class="row">
+    <div class="col-lg-12">
+        <section class="card">
+            <header class="card-header">
+                <h2 class="card-title">Image #{{.ID}}</h2>
+            </header>
+
+            <div class="card-body">
+                <form role="form" method="post" action="/manage/{{$ag.ID}}/economy/delete_pick_image/{{.ID}}" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <image src="/manage/{{$ag.ID}}/economy/pick_image/{{.ID}}"></image>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-danger btn-lg btn-block">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+</div>
+{{end}}
+{{template "cp_footer" .}}
+
+{{end}}

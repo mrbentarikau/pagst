@@ -17,13 +17,16 @@ require (
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dpatrie/urbandictionary v0.0.0-20151214192647-3b38cbf4cb81
 	github.com/ei14/calc v0.0.0-20220307072502-adbe43bdf801
+	github.com/ericlagergren/decimal v0.0.0-20190729173012-f05d33913e5a
 	github.com/fatih/structs v1.1.0
+	github.com/fogleman/gg v1.3.0
 	github.com/francoispqt/gojay v1.2.13
 	github.com/friendsofgo/errors v0.9.2
 	github.com/getsentry/sentry-go v0.7.0
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-errors/errors v1.0.1
 	github.com/gobwas/ws v1.1.0
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/safebrowsing v0.0.0-20190624211811-bbf0d20d26b3
 	github.com/gorilla/schema v1.1.0
 	github.com/gorilla/websocket v1.4.2
@@ -83,7 +86,6 @@ require (
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/ericlagergren/decimal v0.0.0-20190729173012-f05d33913e5a // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect

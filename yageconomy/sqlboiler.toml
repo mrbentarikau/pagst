@@ -1,0 +1,11 @@
+add-global-variants="true"
+no-hooks="true"
+no-tests="true"
+
+[psql]
+dbname="yagpdb"
+host="localhost"
+user="postgres"
+pass="123"
+sslmode="disable"
+whitelist=["economy_configs", "economy_users", "economy_logs", "economy_shop_items","economy_shop_list_items", "economy_plants", "economy_waifu_affinities", "economy_waifu_items", "economy_pick_images2"]
