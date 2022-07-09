@@ -242,10 +242,10 @@ func stopFullScan(guildID int64) {
 func handleGuildChunk(evt *eventsystem.EventData) {
 	chunk := evt.GuildMembersChunk()
 	guildID := chunk.GuildID
-	if chunk.Nonce == "" || strconv.Itoa(int(guildID)) != chunk.Nonce {
+	/*if chunk.Nonce == "" || strconv.Itoa(int(guildID)) != chunk.Nonce {
 		// This event was not triggered by Full Scan
 		return
-	}
+	}*/
 
 	config, err := GetGeneralConfig(guildID)
 	if err != nil {
