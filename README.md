@@ -18,6 +18,9 @@ Installation really depends on how you like to deploy code.
 
 This version does not provide docker components like YAGPDB has, but this is still all doable.
 
+## Addendum
+This branch includes Jonas747's Yageconomy plugin.
+
 ## Various
 What's there to say.
 Before license change and branching out caubert forked it and 
