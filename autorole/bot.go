@@ -16,6 +16,8 @@ import (
 	scheduledEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/moderation"
+
 	"github.com/mediocregopher/radix/v3"
 )
 
@@ -255,6 +257,7 @@ func handleGuildChunk(evt *eventsystem.EventData) {
 	if config.Role == 0 || config.OnlyOnJoin {
 		return
 	}
+
 	go iterateGuildChunkMembers(guildID, config, chunk)
 }
 
@@ -264,13 +267,26 @@ func iterateGuildChunkMembers(guildID int64, config *GeneralConfig, chunk *disco
 		return
 	}
 
-	lastTimeFullScanStatusRefreshed := time.Now()
-	err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanStatus(chunk.GuildID), "100", strconv.Itoa(FullScanIterating)))
+	var mutedMembers []*moderation.MuteModel
+	err := common.GORM.Select("user_id").Where(&moderation.MuteModel{GuildID: guildID}).Find(&mutedMembers).Error
 	if err != nil {
-		logger.WithError(err).Error("Failed marking full scan iterating")
+		logger.WithError(err).Error("failed fetching muted users from moderation")
 	}
 
+	lastTimeFullScanStatusRefreshed := time.Now()
+	err = common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanStatus(chunk.GuildID), "100", strconv.Itoa(FullScanIterating)))
+	if err != nil {
+		logger.WithError(err).Error("failed marking full scan iterating")
+	}
+
+MemberLoop:
 	for _, m := range chunk.Members {
+
+		for _, muted := range mutedMembers {
+			if muted.UserID == m.User.ID {
+				continue MemberLoop
+			}
+		}
 
 		if config.AssignRoleAfterScreening && m.Pending {
 			// Skip this member if Membership Screening is pending for it
@@ -297,7 +313,7 @@ func iterateGuildChunkMembers(guildID int64, config *GeneralConfig, chunk *disco
 
 		err = common.RedisPool.Do(radix.Cmd(nil, "ZADD", RedisKeyFullScanAutoroleMembers(chunk.GuildID), "-1", strconv.FormatInt(m.User.ID, 10)))
 		if err != nil {
-			logger.WithError(err).Error("Failed adding user to the set")
+			logger.WithError(err).Error("failed adding user to the set")
 		}
 
 		if time.Since(lastTimeFullScanStatusRefreshed) > time.Second*50 {
@@ -309,7 +325,7 @@ func iterateGuildChunkMembers(guildID int64, config *GeneralConfig, chunk *disco
 			lastTimeFullScanStatusRefreshed = time.Now()
 			err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanStatus(chunk.GuildID), "100", strconv.Itoa(FullScanIterating)))
 			if err != nil {
-				logger.WithError(err).Error("Failed refreshing full scan iterating")
+				logger.WithError(err).Error("failed refreshing full scan iterating")
 			}
 		}
 	}
@@ -323,7 +339,7 @@ func iterateGuildChunkMembers(guildID int64, config *GeneralConfig, chunk *disco
 		// All chunks are processed, launching a go routine to start assigning autorole to the members in the set
 		err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanStatus(chunk.GuildID), "10", strconv.Itoa(FullScanIterationDone)))
 		if err != nil {
-			logger.WithError(err).Error("Failed marking Full scan iteration complete")
+			logger.WithError(err).Error("failed marking Full scan iteration complete")
 		}
 		logger.WithField("guild", guildID).Info("Full scan iteration is done, starting assigning roles.")
 		go assignFullScanAutorole(guildID, config)
@@ -470,6 +486,13 @@ func handleAssignRole(evt *scheduledEventsModels.ScheduledEvent, data interface{
 
 func handleGuildMemberUpdate(evt *eventsystem.EventData) (retry bool, err error) {
 	update := evt.GuildMemberUpdate()
+
+	var memberMute moderation.MuteModel
+	err = common.GORM.Where(moderation.MuteModel{UserID: update.User.ID, GuildID: update.GuildID}).First(&memberMute).Error
+	if err == nil {
+		return false, nil
+	}
+
 	// ignore timed out users
 	if update.Member.TimeoutExpiresAt != nil && update.Member.TimeoutExpiresAt.After(time.Now()) {
 		return false, nil
