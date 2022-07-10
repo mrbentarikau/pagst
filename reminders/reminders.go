@@ -2,15 +2,14 @@ package reminders
 
 import (
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
-	"github.com/jinzhu/gorm"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 )
 
@@ -134,6 +133,7 @@ func NewReminder(userID int64, guildID int64, channelID int64, message string, w
 	return reminder, err
 }
 
+/*
 func checkUserEvtHandlerLegacy(evt string) error {
 	split := strings.Split(evt, ":")
 	if len(split) < 2 {
@@ -161,3 +161,4 @@ func checkUserEvtHandlerLegacy(evt string) error {
 
 	return nil
 }
+*/
