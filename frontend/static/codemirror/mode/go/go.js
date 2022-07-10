@@ -16,18 +16,18 @@ CodeMirror.defineMode("go", function(config) {
   var methodRE = /[a-z_A-Z0-9'\xa1-\uffff]/;
 
   var keywords = {
-    /*"break":true, "case":true, "chan":true, "const":true, "continue":true,
+    /*"case":true, "chan":true, "const":true,
     "default":true, "defer":true, "else":true, "fallthrough":true, "for":true,
     "func":true, "go":true, "goto":true, "if":true, "import":true,
-    "interface":true, "map":true, "package":true, "range":true, "return":true,
+    "interface":true, "map":true, "package":true,
     "select":true, "struct":true, "switch":true, "type":true, "var":true,
     "bool":true, "byte":true, "complex64":true, "complex128":true,
     "float32":true, "float64":true, "int8":true, "int16":true, "int32":true,
     "int64":true, "string":true, "uint8":true, "uint16":true, "uint32":true,
     "uint64":true, "int":true, "uint":true, "uintptr":true, "error": true,
     "rune":true,*/
-    "block":true, "define":true, "else":true, "end":true,
-    "if":true,"range":true, "template":true, "with":true
+    "block":true, "break":true, "continue":true, "define":true, "else":true, "end":true,
+    "if":true,"range":true, "return":true, "template":true, "while":true, "with":true
   };
 
   var atoms = {
