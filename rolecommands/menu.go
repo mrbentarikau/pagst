@@ -258,9 +258,9 @@ func UpdateRoleMenuMessage(ctx context.Context, rm *models.RoleMenu) error {
 		emoji := opt.UnicodeEmoji
 		if opt.EmojiID != 0 {
 			if opt.EmojiAnimated {
-				emoji = fmt.Sprintf("<a:yagpdb:%d>", opt.EmojiID)
+				emoji = fmt.Sprintf("<a:pagst:%d>", opt.EmojiID)
 			} else {
-				emoji = fmt.Sprintf("<:yagpdb:%d>", opt.EmojiID)
+				emoji = fmt.Sprintf("<:pagst:%d>", opt.EmojiID)
 			}
 		}
 
