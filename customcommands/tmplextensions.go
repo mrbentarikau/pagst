@@ -256,6 +256,10 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			m.UserData = encoded
 		}
 
+		if len(m.UserData) > CCDataLimit {
+			return "", errors.New("data size too big")
+		}
+
 		err = scheduledevents2.ScheduleEvent("cc_delayed_run", ctx.GS.ID, time.Now().Add(time.Second*time.Duration(actualDelay)), m)
 		if err != nil {
 			return "", errors.WrapIf(err, "failed scheduling cc run")
