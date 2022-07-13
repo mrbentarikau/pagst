@@ -450,6 +450,16 @@ func (c *Context) tmplSendMessage(filterSpecialMentions bool, returnID bool) fun
 		case *discordgo.MessageSend:
 			msgSend = typedMsg
 			msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
+
+			if !filterSpecialMentions {
+				msgSend.AllowedMentions = discordgo.AllowedMentions{Parse: parseMentions}
+			}
+
+			if msgSend.Reference != nil {
+				cid = c.CurrentFrame.CS.ID
+				msgSend.Reference.ChannelID = cid
+			}
+
 			if isDM {
 				if len(typedMsg.Embeds) > 0 {
 					for _, e := range msgSend.Embeds {
