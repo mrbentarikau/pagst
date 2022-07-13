@@ -56,7 +56,7 @@ type ShardMigrationHandler interface {
 
 var metricsLeftGuilds = promauto.NewCounter(prometheus.CounterOpts{
 	Name: "yagpdb_left_guilds",
-	Help: "Guilds yagpdb left",
+	Help: "Guilds pagstdb left",
 })
 
 func guildRemoved(guildID int64) {

@@ -77,15 +77,17 @@ var cmds = []*commands.YAGCommand{
 			}
 
 			id := parsed.ChannelID
-			if c := parsed.Switch("channel"); c.Value != nil {
-				id = c.Value.(*dstate.ChannelState).ID
 
+			if c := parsed.Switch("channel"); c.Value != nil {
 				hasPerms, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, id, parsed.GuildData.MS, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages)
 				if err != nil {
 					return "Failed checking permissions, please try again or join the support server.", err
 				}
 
-				if !hasPerms {
+				id = c.Value.(*dstate.ChannelState).ID
+				nok := commands.CanExecuteInChannel(parsed, id)
+
+				if !hasPerms || !nok {
 					return "You do not have permissions to send messages there", nil
 				}
 			}

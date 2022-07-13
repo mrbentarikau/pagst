@@ -107,6 +107,7 @@ var (
 		"complexMessage":     CreateMessageSend,
 		"complexMessageEdit": CreateMessageEdit,
 		"cslice":             CreateSlice,
+		"derefPointer":       tmplDereferencePointer,
 		"dict":               Dictionary,
 		"humanizeThousands":  tmplHumanizeThousands,
 		"in":                 in,
@@ -138,7 +139,9 @@ var (
 		"humanizeDurationSeconds": tmplHumanizeDurationSeconds,
 		"humanizeTimeSinceDays":   tmplHumanizeTimeSinceDays,
 
-		"derefPointer": tmplDereferencePointer,
+		// testing grounds
+		//"getGuildIntegrations":   tmplGetGuildIntegrations,
+		//"guildMemberMove":   tmplGuildMemberMove,
 	}
 
 	contextSetupFuncs = []ContextSetupFunc{}
@@ -681,7 +684,7 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("sort", c.tmplSort)
 
 	// testing grounds
-	//c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
+	c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
 }
 
 type limitedWriter struct {

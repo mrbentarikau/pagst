@@ -45,9 +45,9 @@ func main() {
 	orch.ResponsibleForShards = activeShards
 	orch.NodeLauncher = &orchestrator.StdNodeLauncher{
 		LaunchCmdName: "./capturepanics",
-		LaunchArgs:    []string{"./yagpdb", "-bot", "-syslog"},
+		LaunchArgs:    []string{"./pagst", "-bot", "-syslog"},
 
-		VersionCmdName: "./yagpdb",
+		VersionCmdName: "./pagst",
 		VersionArgs:    []string{"-version"},
 	}
 	orch.Logger = &dshardorchestrator.StdLogger{
