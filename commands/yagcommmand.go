@@ -422,8 +422,17 @@ type CanExecuteError struct {
 	Message string
 }
 
+func CanExecuteInChannel(data *dcmd.Data, channelID int64) bool {
+	yagCommand := data.Cmd.Command.(*YAGCommand)
+	canExecute, _, _, err := yagCommand.checkCanExecuteCommand(data, channelID)
+	if err != nil {
+		return false
+	}
+	return canExecute
+}
+
 // checks if the specified user can execute the command, and if so returns the settings for said command
-func (yc *YAGCommand) checkCanExecuteCommand(data *dcmd.Data) (canExecute bool, resp *CanExecuteError, settings *CommandSettings, err error) {
+func (yc *YAGCommand) checkCanExecuteCommand(data *dcmd.Data, channelID int64) (canExecute bool, resp *CanExecuteError, settings *CommandSettings, err error) {
 	// Check guild specific settings if not triggered from a DM
 	if data.GuildData != nil {
 		guild := data.GuildData.GS
@@ -434,7 +443,13 @@ func (yc *YAGCommand) checkCanExecuteCommand(data *dcmd.Data) (canExecute bool, 
 			}
 		}
 
-		settings, err = yc.GetSettings(data.ContainerChain, data.GuildData.CS.ID, data.GuildData.CS.ParentID, guild.ID)
+		if channelID > 0 {
+			parentID := data.GuildData.GS.GetChannelOrThread(channelID).ParentID
+			settings, err = yc.GetSettings(data.ContainerChain, channelID, parentID, guild.ID)
+		} else {
+			settings, err = yc.GetSettings(data.ContainerChain, data.GuildData.CS.ID, data.GuildData.CS.ParentID, guild.ID)
+		}
+
 		if err != nil {
 			resp = &CanExecuteError{
 				Type:    ReasonError,

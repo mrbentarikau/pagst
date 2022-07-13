@@ -198,7 +198,8 @@ func YAGCommandMiddleware(inner dcmd.RunFunc) dcmd.RunFunc {
 		defer removeRunningCommand(guildID, data.ChannelID, data.Author.ID, yc)
 
 		// Check if the user can execute the command
-		canExecute, resp, settings, err := yc.checkCanExecuteCommand(data)
+		var channelID int64
+		canExecute, resp, settings, err := yc.checkCanExecuteCommand(data, channelID)
 		if err != nil {
 			yc.Logger(data).WithError(err).Error("An error occured while checking if we could run command")
 		}

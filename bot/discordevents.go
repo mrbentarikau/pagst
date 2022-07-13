@@ -114,7 +114,7 @@ var guildJoinHandler = joinedguildsupdater.NewUpdater()
 
 var metricsJoinedGuilds = promauto.NewCounter(prometheus.CounterOpts{
 	Name: "yagpdb_joined_guilds",
-	Help: "Guilds yagpdb newly joined",
+	Help: "Guilds pagstdb newly joined",
 })
 
 var commonEventsTotal = promauto.NewCounterVec(prometheus.CounterOpts{

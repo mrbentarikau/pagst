@@ -208,15 +208,16 @@ var (
 	})
 )
 
-var RedisAddr = loadRedisAddr()
+var RedisAddr, RedisPass = loadRedisAddr()
 
-func loadRedisAddr() string {
+func loadRedisAddr() (string, string) {
 	addr := os.Getenv("YAGPDB_REDIS")
+	redisPass := os.Getenv("YAGPDB_REDISPASSWORD")
 	if addr == "" {
 		addr = "localhost:6379"
 	}
 
-	return addr
+	return addr, redisPass
 }
 
 func connectRedis(unitTests bool) (err error) {
@@ -244,6 +245,14 @@ func connectRedis(unitTests bool) (err error) {
 		opts = append(opts,
 			radix.PoolConnFunc(func(network, addr string) (radix.Conn, error) {
 				return radix.Dial(network, addr, radix.DialSelectDB(2))
+			}),
+		)
+	}
+
+	if RedisPass != "" {
+		opts = append(opts,
+			radix.PoolConnFunc(func(network, addr string) (radix.Conn, error) {
+				return radix.Dial(network, addr, radix.DialAuthPass(RedisPass))
 			}),
 		)
 	}

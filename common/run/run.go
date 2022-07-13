@@ -100,7 +100,7 @@ func Init() {
 		os.Exit(1)
 	}
 
-	log.Info("Starting YAGPDB version " + common.VERSION)
+	log.Info("Starting PAGSTDB version " + common.VERSION)
 
 	err := common.CoreInit(true)
 	if err != nil {

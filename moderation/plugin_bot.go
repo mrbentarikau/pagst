@@ -170,7 +170,7 @@ func createMuteRole(config *Config, guildID int64) (int64, error) {
 	}
 
 	r, err := common.BotSession.GuildRoleCreateComplex(guildID, discordgo.RoleCreate{
-		Name:        "Muted - (by yagpdb)",
+		Name:        "Muted - (by pagstdb)",
 		Permissions: 0,
 		Mentionable: false,
 		Color:       0,
