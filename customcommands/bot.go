@@ -48,7 +48,7 @@ import (
 var (
 	CCExecLock        = keylock.NewKeyLock()
 	DelayedCCRunLimit = multiratelimit.NewMultiRatelimiter(0.1, 10)
-	CCDataLimit       = 10000000
+	CCDataLimit       = 5000000
 )
 
 type DelayedRunLimitKey struct {
@@ -805,6 +805,7 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 
 	tmplCtx.Name = "CC #" + strconv.Itoa(int(cmd.LocalID))
 	tmplCtx.Data["CCID"] = cmd.LocalID
+	tmplCtx.Data["CCNote"] = cmd.Note.String
 	tmplCtx.Data["CCRunCount"] = cmd.RunCount + 1
 	if cmd.TriggerType > 0 && cmd.TriggerType < 5 {
 		tmplCtx.Data["CCTrigger"] = cmd.RegexTrigger
