@@ -9,29 +9,31 @@ import (
 )
 
 var (
-	confOwner  = config.RegisterOption("yagpdb.owner", "ID of the owner of the bot", 0)
-	confOwners = config.RegisterOption("yagpdb.owners", "Comma seperated IDs of the owners of the bot", "")
+	ConfBotName      = config.RegisterOption("yagpdb.name", "Name of the bot", "PAGSTDB")
+	ConfBotUserAgent = config.RegisterOption("yagpdb.user_agent", "User-Agent of the bot", "PAGSTDB/20.42.6702")
+	confOwner        = config.RegisterOption("yagpdb.owner", "ID of the owner of the bot", 0)
+	confOwners       = config.RegisterOption("yagpdb.owners", "Comma separated IDs of the owners of the bot", "")
 
 	ConfClientID     = config.RegisterOption("yagpdb.clientid", "Client ID of the discord application", nil)
 	ConfClientSecret = config.RegisterOption("yagpdb.clientsecret", "Client Secret of the discord application", nil)
 	ConfBotToken     = config.RegisterOption("yagpdb.bottoken", "Token of the bot user", nil)
-	ConfHost         = config.RegisterOption("yagpdb.host", "Host without the protocol, example: example.com, used by the webserver", nil)
+	ConfHost         = config.RegisterOption("yagpdb.host", "Host without the protocol, example: example.com, used by the web server", nil)
 	ConfEmail        = config.RegisterOption("yagpdb.email", "Email used when fetching lets encrypt certificate", "")
 
-	ConfPQHost     = config.RegisterOption("yagpdb.pqhost", "Postgres host", "localhost")
-	ConfPQUsername = config.RegisterOption("yagpdb.pqusername", "Postgres user", "postgres")
-	ConfPQPassword = config.RegisterOption("yagpdb.pqpassword", "Postgres passoword", "")
-	ConfPQDB       = config.RegisterOption("yagpdb.pqdb", "Postgres database", "yagpdb")
+	ConfPQHost     = config.RegisterOption("yagpdb.pqhost", "PostgreSQL host", "localhost")
+	ConfPQUsername = config.RegisterOption("yagpdb.pqusername", "PostgreSQL user", "postgres")
+	ConfPQPassword = config.RegisterOption("yagpdb.pqpassword", "PostgreSQL password", "")
+	ConfPQDB       = config.RegisterOption("yagpdb.pqdb", "PostgreSQL database", "yagpdb")
 
 	ConfMaxCCR            = config.RegisterOption("yagpdb.max_ccr", "Maximum number of concurrent outgoing requests to discord", 25)
 	ConfDisableKeepalives = config.RegisterOption("yagpdb.disable_keepalives", "Disables keepalive connections for outgoing requests to discord, this shouldn't be needed but i had networking issues once so i had to", false)
 
 	confNoSchemaInit = config.RegisterOption("yagpdb.no_schema_init", "Disable schema intiialization", false)
 
-	confMaxSQLConns = config.RegisterOption("yagdb.pq_max_conns", "Max connections to postgres", 3)
+	confMaxSQLConns = config.RegisterOption("yagpdb.pq_max_conns", "Max connections to postgres", 3)
 
 	ConfTotalShards             = config.RegisterOption("yagpdb.sharding.total_shards", "Total number shards", 0)
-	ConfActiveShards            = config.RegisterOption("yagpdb.sharding.active_shards", "Shards active on this hoste, ex: '1-10,25'", "")
+	ConfActiveShards            = config.RegisterOption("yagpdb.sharding.active_shards", "Shards active on this host, ex: '1-10,25'", "")
 	ConfLargeBotShardingEnabled = config.RegisterOption("yagpdb.large_bot_sharding", "Set to enable large bot sharding (for 200k+ guilds)", false)
 	ConfBucketsPerNode          = config.RegisterOption("yagpdb.shard.buckets_per_node", "Number of buckets per node", 8)
 	ConfShardBucketSize         = config.RegisterOption("yagpdb.shard.shard_bucket_size", "Shards per bucket", 2)
@@ -53,8 +55,7 @@ func LoadConfig() (err error) {
 	config.Load()
 
 	requiredConf := []*config.ConfigOption{
-		ConfClientID,
-		ConfClientSecret,
+		ConfClientID, ConfClientSecret,
 		ConfBotToken,
 		ConfHost,
 	}
