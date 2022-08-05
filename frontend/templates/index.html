@@ -17,7 +17,7 @@
 <meta name="msapplication-config" content="/static/icons/browserconfig.xml?v=6">
 <meta name="theme-color" content="#ffffff">
 
-  <meta property="og:title" content="PAGSTDB" />
+  <meta property="og:title" content="{{.BotName}}" />
   <meta property="og:description" content="People Against Generally Shitty Things Discord Bot" />
   <!-- For Social Media -->
   <meta property="description" content="People Against Generally Shitty Things Discord Bot" />
@@ -30,7 +30,7 @@
   <link rel="stylesheet" href="/static/css/custom.css">
   <!-- Custom Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400,500,700|Poppins:500,700" rel="stylesheet">
-  <title>PAGSTDB</title>
+  <title>{{.BotName}}</title>
 <style>
 ::-webkit-scrollbar {width: 7px !important; height: 5px !important}
 ::-webkit-scrollbar-thumb {background: #a1a1a1 !important;}
@@ -81,7 +81,7 @@
           <div class="row justify-content-md-center">
             <div class="col col-md-10">
               <h1 class="brand-heading bold intro_head">
-                <br/>PAGSTDB</h1>
+                <br/>{{.BotName}}</h1>
                 <div style="background-color: rgba(26,26,26,0.7);border:1px solid #a1a1a1;border-radius:5px;margin-top:25px">
                   <p style="margin: 7px;line-height:1.25em;font-size: 2.2em!important" class="intro_headline">People Against Generally Shitty Things Discord Bot</p>
                   <span style="text-align: left;display:block; margin-left:15px;margin-top: 0px;margin-bottom: 5px;color:#c1c1c1!important">Internalization {{ printf "%.2f%%" (mult (fdiv .JoinedServers 199) 100) }} by {{.JoinedServers}} joined intransigent servers</span>
@@ -105,7 +105,7 @@
       <div class="row justify-content-md-center">
         <img class="img-responsive about aboutlogo" src="/static/img/logo_y.png" alt="logo of pagstdb" style="height:10%"/>
         <div class="col col-lg-8 abouttext" style="padding-bottom: 3%; text-align: left">
-          <p class="about poppins semibold" style="line-height: 1.2;font-size: 2rem;background-color: #1a1a1a; margin-top:51px">About PAGSTDB<br/><span style="text-align:left;font-size: 13px;display: block;"><i>Cessation of Existence</i></span></p>
+          <p class="about poppins semibold" style="line-height: 1.2;font-size: 2rem;background-color: #1a1a1a; margin-top:51px">About {{.BotName}}<br/><span style="text-align:left;font-size: 13px;display: block;"><i>Cessation of Existence</i></span></p>
 
           <p class="about"><b>PAGSTDB</b> is 100% open-source and started as a fork of YAGPDB, so following text and all further naming refers to master-bot and its dev. Jonas747#0001.</p>
           <p class="about"> YAGPDB is a multi-purpose Discord bot that I've worked on for quite some time now. What does it do? Well, it does

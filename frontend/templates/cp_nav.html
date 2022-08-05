@@ -3,7 +3,7 @@
 <header class="header">
     <div class="logo-container">
         <a href="/manage" class="logo">
-            <img src="/static/img/avatar.png" height="35" alt="PAGSTDB" />
+            <img src="/static/img/avatar.png" height="35" alt="{{.BotName}}" />
         </a>
         <div class="d-md-none toggle-sidebar-left" data-toggle-class="sidebar-left-opened" data-target="html"
             data-fire-event="sidebar-left-opened">
@@ -146,14 +146,6 @@
 {{end}}
 
 {{define "cp_nav_sidebar"}}
-<style>
-    @media(min-width: 768px) {
-        #sidebar-left {
-            margin-bottom: {{.CurrentAd.Height}}px;
-        }
-    }
-</style>
-
 <!-- start: sidebar -->
 <aside id="sidebar-left" class="sidebar-left">
 
@@ -186,7 +178,9 @@
                         </a>
                     </li>-->
                     {{range (index .SidebarItems "Top")}}
-                    {{template "sidebar_item" (dict "ActiveGuild" $ag "Item" .)}}
+                        {{if le $ag.GuildState.MemberCount 500}}
+                            {{template "sidebar_item" (dict "ActiveGuild" $ag "Item" .)}}
+                        {{end}}
                     {{end}}
                     <li class="nav-parent">
                         <a class="nav-link" href="#">
@@ -199,9 +193,9 @@
                             {{end}}
                         </ul>
                     </li>
-                    <li class="nav-parent   ">
+                    <li class="nav-parent">
                         <a class="nav-link" href="#">
-                            <i class="fas fa-rss" aria-hidden="true"></i>
+                            <i class="fa-solid fa-folder" aria-hidden="true"></i>
                             <span>Notifications & Feeds</span>
                         </a>
                         <ul class="nav nav-children">
@@ -251,24 +245,6 @@
     </div>
 </aside>
 <!-- end: sidebar -->
-
-
-{{if gt .CurrentAd.Height 0}}
-<div id="nav-footer" style="height: {{.CurrentAd.Height}}px;">
-    <a href="{{.CurrentAd.LinkURL}}" target="_blank">
-        {{if .CurrentAd.VideoUrls}}
-        {{$dot := .}}
-        <video id="nav-footer-img" autoplay loop muted>
-            {{range $i, $v := .CurrentAd.VideoUrls}}
-            <source src="/{{$v}}" type="{{index $dot.CurrentAd.VideoTypes $i}}">
-            {{end}}
-        </video>
-        {{else}}
-        <img src="/{{.CurrentAd.Path}}" id="nav-footer-img"></img>
-        {{end}}
-    </a>
-</div>
-{{end}}
 {{end}}
 
 {{define "sidebar_item"}}

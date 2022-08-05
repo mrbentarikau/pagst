@@ -42,6 +42,10 @@ func (p *Plugin) BotInit() {
 	// this just handles interaction events from DMS
 	pubsub.AddHandler("dm_interaction", func(evt *pubsub.Event) {
 		dataCast := evt.Data.(*discordgo.InteractionCreate)
+		if dataCast.Type != discordgo.InteractionMessageComponent {
+			return
+		}
+
 		switch dataCast.MessageComponentData().CustomID {
 		case paginationNext:
 			handlePageChange(dataCast, 1)
