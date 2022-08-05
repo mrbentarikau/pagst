@@ -14,6 +14,11 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+	"unicode"
+
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
@@ -36,9 +41,10 @@ const (
 var PageHTML string
 
 var (
-	panelLogKeyAddedFeed   = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "youtube_added_feed", FormatString: "Added youtube feed from %s"})
-	panelLogKeyRemovedFeed = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "youtube_removed_feed", FormatString: "Removed youtube feed from %s"})
-	panelLogKeyUpdatedFeed = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "youtube_updated_feed", FormatString: "Updated youtube feed from %s"})
+	panelLogKeyAddedFeed        = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "youtube_added_feed", FormatString: "Added YouTube feed %s"})
+	panelLogKeyFeedAnnouncement = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "youtube_feed_announcement", FormatString: "Updated YouTube feed announcement"})
+	panelLogKeyRemovedFeed      = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "youtube_removed_feed", FormatString: "Removed YouTube feed from %s"})
+	panelLogKeyUpdatedFeed      = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "youtube_updated_feed", FormatString: "Updated YouTube feed %s"})
 )
 
 type Form struct {
@@ -162,27 +168,33 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 	cURL := trimYouTubeURLParts(data.YoutubeCustomURL)
 	vURL := trimYouTubeURLParts(data.YoutubeVideoURL)
 
-	url := data.YoutubeURL
-	if !ytUrlRegex.MatchString(url) && cID == "" && username == "" && cURL == "" && vURL == "" {
+	urlYT := data.YoutubeURL
+	if !ytUrlRegex.MatchString(urlYT) && cID == "" && username == "" && cURL == "" && vURL == "" {
 		return templateData.AddAlerts(web.ErrorAlert("This is not a YouTube link...")), nil
 	}
 
 	var ytChannel, legacyYTChannel *youtube.Channel
 	var err error
-	if url != "" {
-		ytChannel, err = p.getYTChannel(url)
+	tChain := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+
+	if urlYT != "" {
+		urlYT, _ = url.QueryUnescape(urlYT)
+		urlYT, _, _ = transform.String(tChain, urlYT)
+		ytChannel, err = p.getYTChannel(urlYT)
 	} else {
+		customURL, _ := url.QueryUnescape(data.YoutubeCustomURL)
+		customURL, _, _ = transform.String(tChain, customURL)
 		legacyYT := LegacyYTStruct{
 			YTChannelID: data.YoutubeChannelID,
 			YTUsername:  data.YoutubeChannelUser,
-			YTCustomURL: data.YoutubeCustomURL,
+			YTCustomURL: customURL,
 			YTVideoURL:  data.YoutubeVideoURL,
 		}
 		legacyYTChannel, err = p.legacyGetYTChannel(legacyYT)
 	}
 
 	if err != nil {
-		logger.WithError(err).Errorf("error occurred fetching channel for URL %s", url)
+		logger.WithError(err).Errorf("error occurred fetching channel for URL %s", urlYT)
 		return templateData.AddAlerts(web.ErrorAlert("No channel found for that link")), err
 	}
 
@@ -252,6 +264,9 @@ func (p *Plugin) HandleAnnouncement(w http.ResponseWriter, r *http.Request) (tem
 	announceMsg.AnnounceMsg = data.YoutubeAnnounceMsg
 	announceMsg.Enabled = data.AnnounceEnabled
 	err = common.SetRedisJson("youtube_announce_message:"+discordgo.StrID(guild.ID), announceMsg)
+
+	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyFeedAnnouncement, &cplogs.Param{}))
+
 	return
 }
 
@@ -324,7 +339,7 @@ func (p *Plugin) HandleFeedUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle new/udpated video
+	// Handle new/updated video
 	defer r.Body.Close()
 	bodyReader := io.LimitReader(r.Body, 0xffff1)
 

@@ -45,7 +45,7 @@ func catFactFromAPI() (string, error) {
 		return "", err
 	}
 
-	req.Header.Set("User-Agent", common.BotUserAgent)
+	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

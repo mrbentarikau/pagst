@@ -7,15 +7,15 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/serverstats/messagestatscollector"
-	"github.com/mrbentarikau/pagst/web"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
-	"github.com/mediocregopher/radix/v3"
+	"github.com/mrbentarikau/pagst/serverstats/messagestatscollector"
+	"github.com/mrbentarikau/pagst/web"
 )
 
 func MarkGuildAsToBeChecked(guildID int64) {
@@ -203,7 +203,9 @@ func guildSlice() []int64 {
 	for _, shard := range shards {
 		guilds := bot.State.GetShardGuilds(int64(shard))
 		for _, g := range guilds {
-			result = append(result, g.ID)
+			if g.MemberCount <= 500 {
+				result = append(result, g.ID)
+			}
 		}
 	}
 

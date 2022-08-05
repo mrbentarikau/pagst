@@ -82,7 +82,7 @@
                             <label>YouTube Announce Message (<span class="announce-length-counter">{{toRune .Dot.YoutubeAnnounceMsg|len}}</span>/2000)</label>
                             <textarea class="form-control" rows="5" id="yt-announce-msg" name="YoutubeAnnounceMsg" oninput="onCCChanged(this)">{{.Dot.YoutubeAnnounceMsg}}</textarea>
                             <p class="help-block">Additional template data is:<code>{{"{{.ChannelID}}"}}</code>,<code>{{"{{.ChannelName}}"}}</code>,<code>{{"{{.LiveStream}}"}}</code>,<code>{{"{{.SelectedRoleID}}"}}</code>,<code>{{"{{.VideoID}}"}}</code>,<code>{{"{{.URL}}"}}</code></p>
-                            <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstSubmitSave" class="btn btn-sm btn-success btn-block" formaction="/manage/{{.Dot.ActiveGuild.ID}}/youtube/handle_announce" data-async-form-alertsonly>Save</button>
+                            <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstAnnounceSave" class="btn btn-sm btn-success btn-block" formaction="/manage/{{.Dot.ActiveGuild.ID}}/youtube/handle_announce" data-async-form-alertsonly>Save</button>
                             </span>
                         </div>
                     </div>

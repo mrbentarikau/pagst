@@ -544,8 +544,8 @@
                     </p>
                     <p class="help-block">Execute bot commands using
                         <code>{{`{{exec "command" "arg1" "arg2"}}`}}</code>, Example:
-                        <code>{{"{{exec \"role\" \"pagstdb\"}}"}}</code> will be the same as the user typing
-                        <code>(mention or prefix) role pagstdb</code></p>
+                        <code>{{"{{exec \"role\" \"{{.BotName}}\"}}"}}</code> will be the same as the user typing
+                        <code>(mention or prefix) role {{.BotName}}</code></p>
                     <p class="help-block">Arguments are available in a string array: <code>.CmdArgs</code><br>
                         Access
                         single arguments by index using <code>{{"{{index .CmdArgs 0}}"}}</code><br>Get the number of

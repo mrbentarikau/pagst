@@ -1058,6 +1058,59 @@ func (c *Context) tmplGetThread(channel interface{}) (*CtxChannel, error) {
 	return CtxChannelFromCS(cstate), nil
 }
 
+func (c *Context) tmplGetThreadsArchived(args ...interface{}) (*discordgo.ThreadsList, error) {
+	var before time.Time
+	var channelID int64
+	var limit int
+
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_archived_threads", 3) {
+		return nil, ErrTooManyCalls
+	}
+
+	if len(args) < 1 {
+		return nil, errors.New("no arguments given")
+	}
+
+	argsSdict, err := StringKeyDictionary(args...)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, val := range argsSdict {
+		switch strings.ToLower(key) {
+		case "channel":
+			channelID = c.ChannelArg(val)
+			if channelID == 0 {
+				return nil, nil //dont send an error , a nil output would indicate invalid/unknown channel
+			}
+		case "before":
+			if realTime, ok := val.(time.Time); ok {
+				before = realTime
+			}
+		case "limit":
+			limit = tmplToInt(val)
+			if limit < 1 {
+				limit = 1
+			} else if limit > 100 {
+				limit = 100
+			}
+		default:
+			return nil, errors.New(`invalid key "` + key + ` "passed to getArchivedThreads builder`)
+		}
+	}
+
+	response, err := common.BotSession.ThreadsArchived(channelID, &before, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 func (c *Context) tmplGetChannelOrThread(channel interface{}) (*CtxChannel, error) {
 
 	if c.IncreaseCheckGenericAPICall() {
@@ -2094,7 +2147,7 @@ func (c *Context) tmplGuildMemberMove(channel interface{}, target interface{}) (
 		return "", ErrTooManyAPICalls
 	}
 
-	if c.IncreaseCheckCallCounter("guild_integrations", 5) {
+	if c.IncreaseCheckCallCounter("guild_integrations", 3) {
 		return "", ErrTooManyCalls
 	}
 
@@ -2141,6 +2194,14 @@ func (c *Context) tmplCountMembers(isBot bool) func() (int, error) {
 }
 
 func (c *Context) tmplGetAuditLog(args ...interface{}) ([]*discordgo.AuditLogEntry, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_auditlogs", 2) {
+		return nil, ErrTooManyCalls
+	}
+
 	var userID, beforeID int64
 	var actionType, limit int
 
@@ -2179,4 +2240,27 @@ func (c *Context) tmplGetAuditLog(args ...interface{}) ([]*discordgo.AuditLogEnt
 	}
 
 	return response.AuditLogEntries, nil
+}
+
+func (c *Context) tmplGetUser(target interface{}) (*discordgo.User, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_integrations", 3) {
+		return nil, ErrTooManyCalls
+	}
+
+	uID := targetUserID(target)
+	if uID == 0 {
+		return nil, nil
+	}
+
+	user, err := common.BotSession.User(uID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/mrbentarikau/pagst/analytics"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/feeds"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
@@ -189,7 +190,7 @@ OUTER:
 		return
 	}
 
-	webhookUsername := t.User.ScreenName + " • PAGSTDB"
+	webhookUsername := t.User.ScreenName + " • " + common.ConfBotName.GetString()
 	embed := createTweetEmbed(t)
 	for _, v := range relevantFeeds {
 		go analytics.RecordActiveUnit(v.GuildID, p, "posted_twitter_message")
@@ -330,7 +331,7 @@ func (p *Plugin) updateConfigsLoop() {
 		case <-ticker.C:
 		case wg := <-p.Stop:
 			wg.Done()
-			logger.Info("youtube updateConfigsLoop shut down")
+			logger.Info("twitter updateConfigsLoop shut down")
 			return
 		}
 	}

@@ -256,7 +256,7 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			m.UserData = encoded
 		}
 
-		if len(m.UserData) > CCDataLimit {
+		if len(m.UserData) >= CCDataLimit {
 			return "", errors.New("data size too big")
 		}
 

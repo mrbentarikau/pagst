@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
@@ -165,7 +166,7 @@ func requestAPI(queryURL string) ([]byte, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "PAGSTDB/20.42.6702")
+	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

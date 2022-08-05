@@ -783,7 +783,7 @@ func updateTemplateWithCountData(count int, templateData web.TemplateData, ctx c
 	additionalMessage := ""
 	if premium.ContextPremiumTier(ctx) != premium.PremiumTierPremium {
 		if !isGuildPremium {
-			additionalMessage = fmt.Sprintf("(You may increase the limit up to %d with PAGSTDB premium)", MaxCommandsPremium)
+			additionalMessage = fmt.Sprintf("(You may increase the limit up to %d with %s premium)", MaxCommandsPremium, common.ConfBotName.GetString())
 		}
 	}
 	templateData["AdditionalMessage"] = additionalMessage
