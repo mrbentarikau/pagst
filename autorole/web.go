@@ -73,8 +73,11 @@ func (p *Plugin) InitWeb() {
 	muxer.Handle(pat.Post("/fullscan"), web.ControllerPostHandler(handlePostFullScan, getHandler, nil))
 	muxer.Handle(pat.Post("/fullscan/cancel"), web.ControllerPostHandler(handleCancelFullScan, getHandler, nil))
 
-	muxer.Handle(pat.Post(""), web.SimpleConfigSaverHandler(Form{}, getHandler, panelLogKeyUpdatedSettings))
-	muxer.Handle(pat.Post("/"), web.SimpleConfigSaverHandler(Form{}, getHandler, panelLogKeyUpdatedSettings))
+	muxer.Handle(pat.Post(""), web.ControllerPostHandler(handlePostUpdateSettings, getHandler, GeneralConfig{}))
+	muxer.Handle(pat.Post("/"), web.ControllerPostHandler(handlePostUpdateSettings, getHandler, GeneralConfig{}))
+
+	//muxer.Handle(pat.Post(""), web.SimpleConfigSaverHandler(Form{}, getHandler, panelLogKeyUpdatedSettings))
+	//muxer.Handle(pat.Post("/"), web.SimpleConfigSaverHandler(Form{}, getHandler, panelLogKeyUpdatedSettings))
 }
 
 func handleGetAutoroleMainPage(w http.ResponseWriter, r *http.Request) interface{} {
@@ -103,6 +106,11 @@ func handleGetAutoroleMainPage(w http.ResponseWriter, r *http.Request) interface
 			var assignedRoles string
 			common.RedisPool.Do(radix.Cmd(&assignedRoles, "GET", RedisKeyFullScanAssignedRoles(activeGuild.ID)))
 			tmpl["AssignedRoles"] = assignedRoles
+		case FullScanRemovingRole:
+			fullScanStatus = "Removing roles"
+			var removedRoles string
+			common.RedisPool.Do(radix.Cmd(&removedRoles, "GET", RedisKeyFullScanAssignedRoles(activeGuild.ID)))
+			tmpl["RemovedRoles"] = removedRoles
 		case FullScanCancelled:
 			fullScanStatus = "Cancelled"
 		}
@@ -114,6 +122,13 @@ func handleGetAutoroleMainPage(w http.ResponseWriter, r *http.Request) interface
 	common.RedisPool.Do(radix.Cmd(&proc, "GET", KeyProcessing(activeGuild.ID)))
 	tmpl["Processing"] = proc
 	tmpl["ProcessingETA"] = int(proc / 60)
+
+	isPremium, err := premium.IsGuildPremium(activeGuild.ID)
+	if err != nil {
+		logger.WithError(err).Error("failed checking if guild is premium")
+		return tmpl
+	}
+	tmpl["IsPremium"] = isPremium
 
 	return tmpl
 
@@ -160,6 +175,26 @@ func handleCancelFullScan(w http.ResponseWriter, r *http.Request) (web.TemplateD
 	return tmpl, nil
 }
 
+func handlePostUpdateSettings(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
+	ctx := r.Context()
+	activeGuild, tmpl := web.GetBaseCPContextData(ctx)
+	data := ctx.Value(common.ContextKeyParsedForm).(*GeneralConfig)
+
+	if data.Role != 0 && data.Role == data.RemoveRole {
+		return tmpl.AddAlerts(web.ErrorAlert("Assign and Remove roles the same...")), nil
+	}
+
+	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyUpdatedSettings))
+
+	err := common.SetRedisJson(KeyGeneral(activeGuild.ID), data)
+	if err != nil {
+		return tmpl, err
+	}
+
+	pubsub.EvictCacheSet(configCache, activeGuild.ID)
+	return tmpl, nil
+}
+
 var _ web.PluginWithServerHomeWidget = (*Plugin)(nil)
 
 func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
@@ -174,7 +209,9 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 	}
 
 	enabledDisabled := ""
+	enabledDisabledRemove := ""
 	autoroleRole := "none"
+	autoroleRemoveRole := "none"
 
 	if role := ag.GetRole(general.Role); role != nil {
 		templateData["WidgetEnabled"] = true
@@ -185,12 +222,23 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 		enabledDisabled = web.EnabledDisabledSpanStatus(false)
 	}
 
+	if removeRole := ag.GetRole(general.RemoveRole); removeRole != nil {
+		templateData["WidgetEnabled"] = true
+		enabledDisabledRemove = web.EnabledDisabledSpanStatus(true)
+		autoroleRemoveRole = html.EscapeString(removeRole.Name)
+	} else {
+		templateData["WidgetDisabled"] = true
+		enabledDisabledRemove = web.EnabledDisabledSpanStatus(false)
+	}
+
 	format := `<ul>
-	<li>Autorole status: %s</li>
-	<li>Autorole role: <code>%s</code></li>
+	<li>Autorole assign status: %s</li>
+	<li>Autorole assigned role: <code>%s</code></li>
+	<li>Autorole remove status: %s</li>
+	<li>Autorole removed role: <code>%s</code></li>
 </ul>`
 
-	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, enabledDisabled, autoroleRole))
+	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, enabledDisabled, autoroleRole, enabledDisabledRemove, autoroleRemoveRole))
 
 	return templateData, nil
 }
