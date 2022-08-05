@@ -171,6 +171,7 @@ func Run() {
 		if !flagRunEverything {
 			runFeeds = strings.Split(flagRunFeeds, ",")
 		}
+
 		go feeds.Run(runFeeds)
 	}
 
