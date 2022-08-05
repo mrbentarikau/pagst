@@ -778,6 +778,7 @@ type SendChannelMessageEffectData struct {
 	CustomReason string `valid:",0,280,trimspace"`
 	Duration     int    `valid:",0,3600,trimspace"`
 	PingUser     bool
+	LogChannel   int64
 }
 
 type SendChannelMessageEffect struct{}
@@ -800,6 +801,12 @@ func (send *SendChannelMessageEffect) Description() (description string) {
 
 func (send *SendChannelMessageEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
+		{
+			Name:    "Channel to send message in (None for triggering channel)",
+			Key:     "LogChannel",
+			Kind:    SettingTypeChannel,
+			Default: nil,
+		},
 		{
 			Name: "Custom message",
 			Key:  "CustomReason",
@@ -830,12 +837,12 @@ func (send *SendChannelMessageEffect) Apply(ctxData *TriggeredRuleData, settings
 		return nil
 	}
 
+	settingsCast := settings.(*SendChannelMessageEffectData)
+
 	// If we dont have any channel data, we can't send a message
-	if ctxData.CS == nil {
+	if ctxData.CS == nil && settingsCast.LogChannel == 0 {
 		return nil
 	}
-
-	settingsCast := settings.(*SendChannelMessageEffectData)
 
 	msgSend := &discordgo.MessageSend{}
 
@@ -853,7 +860,14 @@ func (send *SendChannelMessageEffect) Apply(ctxData *TriggeredRuleData, settings
 		msgSend.Content += ctxData.ConstructReason(true)
 	}
 
-	message, err := common.BotSession.ChannelMessageSendComplex(ctxData.CS.ID, msgSend)
+	var logChannel int64
+	if settingsCast.LogChannel != 0 {
+		logChannel = settingsCast.LogChannel
+	} else {
+		logChannel = ctxData.CS.ID
+	}
+
+	message, err := common.BotSession.ChannelMessageSendComplex(logChannel, msgSend)
 	if settingsCast.Duration > 0 && message != nil {
 		templates.MaybeScheduledDeleteMessage(ctxData.GS.ID, ctxData.CS.ID, message.ID, settingsCast.Duration)
 	}

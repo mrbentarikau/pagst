@@ -386,6 +386,9 @@ table{
     <select id="automod-voice-channel-multi-template" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
         {{voiceChannelOptionsMulti .ActiveGuild.Channels nil}}
     </select>
+    <select id="automod-channel-single-template" class="form-control">
+        {{textChannelOptions .ActiveGuild.Channels nil true "None"}}
+    </select>
     <select id="automod-list-selection-template" class="form-control">
         {{range .AutomodLists}}
         <option value="{{.ID}}">{{.Name}}</option>
@@ -606,6 +609,9 @@ $(function(){
         case "active_weekdays":
             cloneDropdown(column, "#automod-active-weekdays-template", key, true);
             break;
+        case "channel":
+            cloneDropdown(column, "#automod-channel-single-template", key, true);
+            break;
         case "multi_channel":
             cloneDropdown(column, "#automod-channel-multi-template", key, true);
             break;
@@ -718,6 +724,10 @@ $(function(){
                         <option value="0"
                             {{if in $selectedWeekdays 0}}selected{{end}}>
                             Sunday</option>
+                    </select>
+                    {{else if eq .Kind "channel"}}
+                    <select name="{{$name}}" class="form-control">
+                        {{textChannelOptions $dot.dot.ActiveGuild.Channels (index $dot.settings .Key) true "None"}}
                     </select>
                     {{else if eq .Kind "multi_channel"}}
                     <select name="{{$name}}" class="multiselect form-control" multiple="multiple" data-plugin-multiselect>
