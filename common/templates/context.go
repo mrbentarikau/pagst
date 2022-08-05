@@ -140,8 +140,6 @@ var (
 		"humanizeTimeSinceDays":   tmplHumanizeTimeSinceDays,
 
 		// testing grounds
-		//"getGuildIntegrations":   tmplGetGuildIntegrations,
-		//"guildMemberMove":   tmplGuildMemberMove,
 	}
 
 	contextSetupFuncs = []ContextSetupFunc{}
@@ -191,6 +189,8 @@ type Context struct {
 	CurrentFrame *ContextFrame
 
 	IsExecedByLeaveMessage bool
+
+	IsExecedByEvalCC bool
 
 	contextFuncsAdded bool
 }
@@ -339,6 +339,9 @@ func (c *Context) Parse(source string) (*template.Template, error) {
 const (
 	MaxOpsNormal  = 1000000
 	MaxOpsPremium = 2500000
+
+	MaxOpsEvalNormal  = 10000
+	MaxOpsEvalPremium = 25000
 )
 
 func (c *Context) Execute(source string) (string, error) {
@@ -381,8 +384,14 @@ func (c *Context) executeParsed() (string, error) {
 
 	if c.IsPremium {
 		parsed = parsed.MaxOps(MaxOpsPremium)
+		if c.IsExecedByEvalCC {
+			parsed = parsed.MaxOps(MaxOpsEvalPremium)
+		}
 	} else {
 		parsed = parsed.MaxOps(MaxOpsNormal)
+		if c.IsExecedByEvalCC {
+			parsed = parsed.MaxOps(MaxOpsEvalNormal)
+		}
 	}
 
 	var buf bytes.Buffer
@@ -557,6 +566,9 @@ func (c *Context) IncreaseCheckCallCounterPremium(key string, normalLimit, premi
 }
 
 func (c *Context) IncreaseCheckGenericAPICall() bool {
+	if c.IsExecedByEvalCC {
+		return c.IncreaseCheckCallCounter("api_call", 20)
+	}
 	return c.IncreaseCheckCallCounter("api_call", 100)
 }
 
@@ -684,7 +696,11 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("sort", c.tmplSort)
 
 	// testing grounds
-	c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
+	/*c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
+	c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
+	c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
+	c.addContextFunc("getUser", c.tmplGetUser)
+	c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)*/
 }
 
 type limitedWriter struct {

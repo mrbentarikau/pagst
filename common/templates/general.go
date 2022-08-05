@@ -284,10 +284,15 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			if val == nil {
 				continue
 			}
-			reference := &discordgo.MessageReference{
-				MessageID: ToInt64(val),
+
+			mID := ToInt64(val)
+			if mID <= 0 {
+				return nil, fmt.Errorf("invalid message reference ID %v", val)
 			}
-			msg.Reference = reference
+
+			msg.Reference = &discordgo.MessageReference{
+				MessageID: mID,
+			}
 		default:
 			return nil, errors.New(`invalid key "` + key + `" passed to send message builder`)
 		}
