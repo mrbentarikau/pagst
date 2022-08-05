@@ -48,7 +48,7 @@ import (
 var (
 	CCExecLock        = keylock.NewKeyLock()
 	DelayedCCRunLimit = multiratelimit.NewMultiRatelimiter(0.1, 10)
-	CCDataLimit       = 5000000
+	CCDataLimit       = 1048576
 )
 
 type DelayedRunLimitKey struct {
@@ -65,7 +65,7 @@ var _ bot.BotInitHandler = (*Plugin)(nil)
 var _ commands.CommandProvider = (*Plugin)(nil)
 
 func (p *Plugin) AddCommands() {
-	commands.AddRootCommands(p, cmdListCommands, cmdFixCommands)
+	commands.AddRootCommands(p, cmdListCommands, cmdFixCommands, cmdEvalCommand)
 }
 
 func (p *Plugin) BotInit() {
@@ -119,6 +119,90 @@ type DelayedRunCCData struct {
 	UserKey interface{} `json:"user_key"`
 
 	IsExecedByLeaveMessage bool `json:"is_execed_by_leave_message"`
+}
+
+var cmdEvalCommand = &commands.YAGCommand{
+	CmdCategory:  commands.CategoryTool,
+	Name:         "Evalcc",
+	Description:  "executes small custom command code",
+	RequiredArgs: 1,
+	Arguments: []*dcmd.ArgDef{
+		{Name: "code", Type: dcmd.String},
+	},
+	SlashCommandEnabled: false,
+	DefaultEnabled:      true,
+	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		guildData := data.GuildData
+		channel := guildData.CS
+
+		// Disallow calling via exec / execAdmin
+		if data.Context().Value(commands.CtxKeyExecutedByCC) == true {
+			return "", nil
+		}
+
+		var hasCoreWriteRole bool
+		for _, r := range data.GuildData.MS.Member.Roles {
+			if common.ContainsInt64Slice((common.GetCoreServerConfCached(guildData.GS.ID)).AllowedWriteRoles, r) {
+				// we have a core-config allowed write role!
+				hasCoreWriteRole = true
+				break
+			}
+		}
+
+		adminOrPerms, err := bot.AdminOrPermMS(guildData.GS.ID, channel.ID, guildData.MS, discordgo.PermissionManageMessages)
+		if err != nil {
+			return nil, err
+		}
+
+		if !(adminOrPerms || hasCoreWriteRole) {
+			return "You need `Manage Messages` permissions or `Control Panel write access` for this command...", nil
+		}
+
+		ctx := templates.NewContext(guildData.GS, channel, guildData.MS)
+		ctx.IsExecedByEvalCC = true
+
+		maxRunes := 500
+		if ctx.IsPremium {
+			maxRunes = 1000
+		}
+
+		code := data.Args[0].Str()
+
+		code = parseCodeblock(code)
+
+		// Encourage only small code snippets being tested with this command
+		if utf8.RuneCountInString(code) > maxRunes {
+			return "Code is too long for in-place evaluation. Please use the control panel.", nil
+		}
+
+		if channel == nil {
+			return "Something weird happened... Contact the support server.", nil
+		}
+
+		out, err := ctx.Execute(code)
+
+		if err != nil {
+			errFormatted := err.Error()
+			return "An error caused the custom command to stop:\n`" + errFormatted + "`", nil
+		}
+
+		return out, nil
+	},
+}
+
+var codeblockRegexp = regexp.MustCompile(`(?m)\A(?:\x60{2} ?\x60)(?:go(?:lang)?\n)?([\S\s]+)(?:\x60 ?\x60{2})\z`)
+
+// Parses code wrapped in Discord markdown code blocks.
+func parseCodeblock(input string) string {
+	parts := codeblockRegexp.FindStringSubmatch(input)
+
+	// No match found, input was not wrapped in (valid) codeblock markdown
+	// just dump it, don't bother fixing things for the user.
+	if parts == nil {
+		return input
+	}
+
+	return parts[1]
 }
 
 var cmdListCommands = &commands.YAGCommand{
