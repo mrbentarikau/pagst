@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -66,7 +67,7 @@ func tmplCreateTicket(ctx *templates.Context) interface{} {
 		} else if ctx.MS != nil {
 			ms = ctx.MS
 		} else {
-			return nil, errors.New("Context not on Author.")
+			return nil, errors.New("context not on Author")
 		}
 
 		conf, err := models.FindTicketConfigG(context.Background(), ctx.GS.ID)
@@ -93,7 +94,7 @@ func tmplCreateTicket(ctx *templates.Context) interface{} {
 				return nil, err
 			}
 
-			return nil, errors.New("an unknown error occured")
+			return nil, errors.New(fmt.Sprintf("an unknown error occurred %s", err))
 		}
 		return &TemplateTicket{
 			GuildID:               ticket.GuildID,

@@ -9,6 +9,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/jarowinkler"
 )
 
@@ -38,7 +39,7 @@ func getGameData(searchTitle string) (string, error) {
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	r.Header.Add("Accept", "*/*")
 	r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-	r.Header.Add("User-Agent", "PAGSTDB/20.42.6702")
+	r.Header.Add("User-Agent", common.ConfBotUserAgent.GetString())
 	r.Header.Add("Origin", hltbURL)
 	r.Header.Add("Referer", hltbURL)
 

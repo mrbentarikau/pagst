@@ -19,7 +19,7 @@
         <table class="table table-hover table-striped table-responsive-md" id="log-table">
             <thead>
                 <tr>
-                    <div><b>PAGSTDB</b> <a class="pagst" href="../../../privacy_policy" rel="noopener">Privacy Policy</a></div>
+                    <div><b>{{.BotName}}</b> <a class="pagst" href="../../../privacy_policy" rel="noopener">Privacy Policy</a></div>
                 </tr>
                 <tr>
                     {{if .IsAdmin}}<th>Actions</th>{{end}}
@@ -45,7 +45,6 @@
                     </td>
                 </tr>
                 {{end}}
-
             </tbody>
         </table>
     </div>

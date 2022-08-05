@@ -432,7 +432,7 @@ func setupShardManager() {
 	ShardManager = dshardmanager.New(common.GetBotToken())
 	ShardManager.LogChannel = int64(connEvtChannel)
 	ShardManager.StatusMessageChannel = int64(connStatusChannel)
-	ShardManager.Name = "PAGSTDB"
+	ShardManager.Name = common.ConfBotName.GetString()
 	ShardManager.GuildCountsFunc = GuildCountsFunc
 	ShardManager.SessionFunc = func(token string) (session *discordgo.Session, err error) {
 		session, err = discordgo.New(token)

@@ -26,7 +26,7 @@ var Command = &commands.YAGCommand{
 	Cooldown:             2,
 	CmdCategory:          commands.CategoryDebug,
 	HideFromCommandsPage: true,
-	Name:                 "exportcustomscommands",
+	Name:                 "exportcustomcommands",
 	Aliases:              []string{"exportccs", "eccs"},
 	RequireDiscordPerms:  []int64{discordgo.PermissionAdministrator},
 	Description:          "Exports all your custom commands data's reasonable fields as JSON,\nuser has to be serverAdmin.\nServerID argument is for the owner of the bot...",
