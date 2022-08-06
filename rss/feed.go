@@ -217,18 +217,19 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 		return
 	}
 
+	rssEmbed = createRSSEmbed(feed, feedName)
+
 	webhookUsername := "RSS Feed • " + common.ConfBotName.GetString()
 	// not really good using current mqueue-webhooking
 	if (feedName != "" && feedName != "No name") && !announceMsg.Enabled {
 		webhookUsername = "RSS Feed • " + feedName
+		rssEmbed.Footer.Text += " • " + common.ConfBotName.GetString()
 	}
 
 	webhookAvatarURL := ""
 	if feed.Image != nil {
 		webhookAvatarURL = feed.Image.URL
 	}
-
-	rssEmbed = createRSSEmbed(feed, feedName)
 
 	if announceMsg.Enabled {
 		rssEmbed = nil
@@ -289,8 +290,8 @@ func createRSSEmbed(feed *gofeed.Feed, feedName string) *discordgo.MessageEmbed 
 		feedAuthor = feedItem.Authors[0].Name
 	} else {
 		feedAuthor = feed.Title
-	}
 
+	}
 	bm := bluemonday.StripTagsPolicy()
 	feedDescription := common.CutStringShort(feedItem.Description, 4000)
 
