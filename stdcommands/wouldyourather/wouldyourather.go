@@ -19,6 +19,9 @@ var Command = &commands.YAGCommand{
 	Name:        "WouldYouRather",
 	Aliases:     []string{"wyr"},
 	Description: "Get presented with 2 options.",
+	ArgSwitches: []*dcmd.ArgDef{
+		{Name: "raw", Help: "Raw output"},
+	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 
 		q1, q2, err := wouldYouRather()
@@ -39,6 +42,11 @@ var Command = &commands.YAGCommand{
 				IconURL: discordgo.EndpointUserAvatar(data.Author.ID, data.Author.Avatar),
 			},
 		}
+
+		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+			return content, nil
+		}
+
 		msg, err := common.BotSession.ChannelMessageSendEmbed(data.ChannelID, content)
 		if err != nil {
 			return nil, err
