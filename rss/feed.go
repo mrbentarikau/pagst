@@ -71,7 +71,7 @@ func (p *Plugin) checkGoFeed() {
 		parsedFeed, err := rssClient.ParseURL(feed.FeedURL)
 		if err != nil {
 			logger.WithError(err).WithField("feed_url", feed.FeedURL).Warn("goFeed fetching RSS feed erred")
-			return
+			continue
 		}
 		go p.CheckRSSFeed(nil, parsedFeed, feed.FeedURL)
 	}
