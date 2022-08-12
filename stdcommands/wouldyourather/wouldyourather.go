@@ -29,6 +29,8 @@ var Command = &commands.YAGCommand{
 			return nil, err
 		}
 
+		wyrDescription := fmt.Sprintf("**EITHER...**\n🇦 %s\n\n **OR...**\n🇧 %s", q1, q2)
+
 		content := &discordgo.MessageEmbed{
 			Author: &discordgo.MessageEmbedAuthor{
 				Name:    "Would you rather?",
@@ -36,7 +38,7 @@ var Command = &commands.YAGCommand{
 				IconURL: "https://pagst.xyz/static/icons/favicon-32x32.png",
 			},
 			Color:       int(rand.Int63n(16777215)),
-			Description: fmt.Sprintf("**EITHER...**\n🇦 %s\n\n **OR...**\n🇧 %s", q1, q2),
+			Description: wyrDescription,
 			Footer: &discordgo.MessageEmbedFooter{
 				Text:    fmt.Sprintf("Requested by: %s#%s", data.Author.Username, data.Author.Discriminator),
 				IconURL: discordgo.EndpointUserAvatar(data.Author.ID, data.Author.Avatar),
@@ -44,7 +46,7 @@ var Command = &commands.YAGCommand{
 		}
 
 		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
-			return content, nil
+			return wyrDescription, nil
 		}
 
 		msg, err := common.BotSession.ChannelMessageSendEmbed(data.ChannelID, content)

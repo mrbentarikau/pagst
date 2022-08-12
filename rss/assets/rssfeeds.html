@@ -141,7 +141,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="{{if not .Enabled}}feed-item-disabled{{else}}UUGU{{end}}">
+                                <tr {{if not .Enabled}}class="feed-item-disabled"{{end}}>
                                 <td>
                                     <p>
                                     <span class="form-control-static"><a class="feedlink" href="{{.FeedURL}}" target="_blank"><b>{{or .FeedTitle "No Feed Title"}}</b></a></span>
