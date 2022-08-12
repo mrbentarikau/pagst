@@ -134,6 +134,7 @@ var _ Condition = (*ChannelsCondition)(nil)
 
 type ChannelsCondition struct {
 	Blacklist bool // if true, then blacklist mode, otherwise whitelist mode
+	Threads   bool // if true, then focus on threads
 }
 
 func (cd *ChannelsCondition) Kind() RulePartType {
@@ -145,6 +146,14 @@ func (cd *ChannelsCondition) DataType() interface{} {
 }
 
 func (cd *ChannelsCondition) Name() string {
+	if cd.Threads {
+		if cd.Blacklist {
+			return "Ignore threads"
+		}
+
+		return "Active in threads"
+	}
+
 	if cd.Blacklist {
 		return "Ignore channels"
 	}
@@ -153,6 +162,14 @@ func (cd *ChannelsCondition) Name() string {
 }
 
 func (cd *ChannelsCondition) Description() string {
+	if cd.Threads {
+		if cd.Blacklist {
+			return "Ignore threads"
+		}
+
+		return "Only check threads"
+	}
+
 	if cd.Blacklist {
 		return "Ignore the following channels"
 	}
@@ -161,6 +178,10 @@ func (cd *ChannelsCondition) Description() string {
 }
 
 func (cd *ChannelsCondition) UserSettings() []*SettingDef {
+	if cd.Threads {
+		return []*SettingDef{}
+	}
+
 	return []*SettingDef{
 		{
 			Name: "Channels",
@@ -173,6 +194,16 @@ func (cd *ChannelsCondition) UserSettings() []*SettingDef {
 func (cd *ChannelsCondition) IsMet(data *TriggeredRuleData, settings interface{}) (bool, error) {
 	settingsCast := settings.(*ChannelsConditionData)
 	if data.CS == nil {
+		return true, nil
+	}
+
+	if cd.Threads && data.CS.Type.IsThread() {
+		if cd.Blacklist {
+			// Blacklisted thread
+			return false, nil
+		}
+
+		// Whitelisted thread
 		return true, nil
 	}
 

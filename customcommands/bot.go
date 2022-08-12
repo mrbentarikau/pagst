@@ -158,11 +158,30 @@ var cmdEvalCommand = &commands.YAGCommand{
 			return "You need `Manage Messages` permissions or `Control Panel write access` for this command...", nil
 		}
 
-		ctx := templates.NewContext(guildData.GS, channel, guildData.MS)
-		ctx.IsExecedByEvalCC = true
+		tmplCtx := templates.NewContext(guildData.GS, channel, guildData.MS)
+		tmplCtx.IsExecedByEvalCC = true
+
+		// preapre message specific data
+		m := data.TraditionalTriggerData.Message
+
+		args := dcmd.SplitArgs(m.Content)
+		argsStr := make([]string, len(args))
+		for k, v := range args {
+			argsStr[k] = v.Str
+		}
+
+		tmplCtx.Data["Args"] = argsStr
+		tmplCtx.Data["StrippedMsg"] = data.Args[0].Str()
+		tmplCtx.Data["Cmd"] = argsStr[0]
+		if len(argsStr) > 1 {
+			tmplCtx.Data["CmdArgs"] = argsStr[1:]
+		} else {
+			tmplCtx.Data["CmdArgs"] = []string{}
+		}
+		tmplCtx.Data["Message"] = m
 
 		maxRunes := 500
-		if ctx.IsPremium {
+		if tmplCtx.IsPremium {
 			maxRunes = 1000
 		}
 
@@ -179,11 +198,9 @@ var cmdEvalCommand = &commands.YAGCommand{
 			return "Something weird happened... Contact the support server.", nil
 		}
 
-		out, err := ctx.Execute(code)
-
+		out, err := tmplCtx.Execute(code)
 		if err != nil {
-			errFormatted := err.Error()
-			return "An error caused the custom command to stop:\n`" + errFormatted + "`", nil
+			return "An error caused the custom command to stop:\n`" + err.Error() + "`", nil
 		}
 
 		return out, nil

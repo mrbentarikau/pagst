@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/pubsub"
+	"github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/logs/models"
 	"github.com/mrbentarikau/pagst/web"
@@ -43,6 +45,10 @@ type DeleteData struct {
 	ID int64
 }
 
+type DeleteSelected struct {
+	IDs string
+}
+
 type ConfigFormData struct {
 	UsernameLoggingEnabled       bool
 	NicknameLoggingEnabled       bool
@@ -58,6 +64,7 @@ var (
 	panelLogKeyDeletedMessageLog = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "logs_deleted_message_log", FormatString: "Deleted a message log: %d"})
 	panelLogKeyDeletedMessage    = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "logs_deleted_message", FormatString: "Deleted a message from a message log: %d"})
 	panelLogKeyDeletedAll        = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "logs_deleted_all", FormatString: "Deleted %d message logs"})
+	panelLogKeyDeletedSelected   = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "logs_deleted_selected", FormatString: "Deleted %d selected logs: %s"})
 )
 
 func (lp *Plugin) InitWeb() {
@@ -86,6 +93,7 @@ func (lp *Plugin) InitWeb() {
 
 	saveHandler := web.ControllerPostHandler(HandleLogsCPSaveGeneral, cpGetHandler, ConfigFormData{})
 	fullDeleteHandler := web.ControllerPostHandler(HandleLogsCPDelete, cpGetHandler, DeleteData{})
+	deleteSelectedHandler := web.ControllerPostHandler(HandleLogsCPDeleteSelected, cpGetHandler, DeleteSelected{})
 	msgDeleteHandler := web.APIHandler(HandleDeleteMessageJson)
 	clearMessageLogs := web.ControllerPostHandler(HandleLogsCPDeleteAll, cpGetHandler, nil)
 
@@ -93,6 +101,7 @@ func (lp *Plugin) InitWeb() {
 	logCPMux.Handle(pat.Post(""), saveHandler)
 
 	logCPMux.Handle(pat.Post("/fulldelete2"), fullDeleteHandler)
+	logCPMux.Handle(pat.Post("/delete_selected"), deleteSelectedHandler)
 	logCPMux.Handle(pat.Post("/msgdelete2"), msgDeleteHandler)
 	logCPMux.Handle(pat.Post("/delete_all"), clearMessageLogs)
 }
@@ -204,6 +213,38 @@ func HandleLogsCPDelete(w http.ResponseWriter, r *http.Request) (web.TemplateDat
 	// for legacy setups
 	// _, err = models.Messages(models.MessageWhere.MessageLogID.EQ(null.IntFrom(int(data.ID)))).DeleteAll(ctx, common.PQ)
 	return tmpl, err
+}
+
+func HandleLogsCPDeleteSelected(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
+	ctx := r.Context()
+	g, tmpl := web.GetBaseCPContextData(ctx)
+
+	data := ctx.Value(common.ContextKeyParsedForm).(*DeleteSelected)
+
+	if data.IDs == "" {
+		return tmpl.AddAlerts(web.ErrorAlert("No logs selected")), nil
+	}
+
+	ids := make([]int, 0)
+	re := regexp.MustCompile(`,`)
+	idStringSlice := re.Split(data.IDs, -1)
+
+	for _, i := range idStringSlice {
+		ids = append(ids, int(templates.ToInt64(strings.TrimSpace(i))))
+	}
+
+	_, err := models.MessageLogs2s(
+		models.MessageLogs2Where.ID.IN(ids),
+		models.MessageLogs2Where.GuildID.EQ(g.ID),
+	).DeleteAll(r.Context(), common.PQ)
+
+	if err != nil {
+		return tmpl, err
+	}
+	newEntry := web.NewLogEntryFromContext(r.Context(), panelLogKeyDeletedSelected, &cplogs.Param{Type: cplogs.ParamTypeInt, Value: int64(len(ids))}, &cplogs.Param{Type: cplogs.ParamTypeString, Value: data.IDs})
+	go cplogs.RetryAddEntry(newEntry)
+
+	return tmpl, nil
 }
 
 func HandleLogsCPDeleteAll(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
