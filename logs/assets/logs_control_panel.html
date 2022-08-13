@@ -1,6 +1,12 @@
 {{define "cp_logging"}}
 {{template "cp_head" .}}
 
+<style>
+    .select-all-logs{
+        margin: 0.75rem;
+    }
+</style>
+
 <header class="page-header">
     <h2>Message and username/nickname logs</h2>
 </header>
@@ -162,7 +168,8 @@
             </header>
             <div class="card-body">
                 <div class="row">
-                    <div class="col">
+                    <div class="col" style="margin-bottom: 15px;">
+                        <input type="checkbox" name="select-all-logs" class="select-all-logs" />
                         <a class="selected-logs mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#delete-selected-message-logs-modal">
                             Delete selected logs
                         </a>
@@ -174,7 +181,7 @@
                 <div class="table-responsive">
                     <table class="table">
                         <tr>
-                            <th>Select</th>
+                            <th style="padding-right:0px">✓</th>
                             <th>ID</th>
                             <th>Created</th>
                             <th>Author</th>
@@ -184,7 +191,7 @@
                         {{$g := .ActiveGuild.ID}}
                         {{range .Logs}}
                         <tr>
-                            <td><input type="checkbox" id="{{.ID}}" name="logs-selected" value="{{.ID}}"></td>
+                            <td style="padding-right:0px"><input type="checkbox" id="{{.ID}}" name="logs-selected" value="{{.ID}}"></td>
                             <td>#{{.ID}}</td>
                             <td>{{formatTime .CreatedAt}}</td>
                             <td>{{.AuthorUsername}} ({{.AuthorID}})</td>
@@ -228,6 +235,19 @@
 {{template "cp_footer" .}}
 
 <script>
+$("input[name='select-all-logs']").click(function(event) {   
+    if(this.checked) {
+        // Iterate each checkbox
+        $("input[name='logs-selected']").each(function() {
+            this.checked = true;                        
+        });
+    } else {
+        $("input[name='logs-selected']").each(function() {
+            this.checked = false;                       
+        });
+    }
+}); 
+
 $(document).ready(function() {
     $('.selected-logs').click(function() {
       var selectedLogs = [];
