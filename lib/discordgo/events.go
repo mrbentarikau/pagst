@@ -65,19 +65,14 @@ func (evt *Event) NKeys() int {
 
 // A Ready stores all data for the websocket READY event.
 type Ready struct {
-	Version         int          `json:"v"`
-	SessionID       string       `json:"session_id"`
-	User            *SelfUser    `json:"user"`
-	ReadState       []*ReadState `json:"read_state"`
-	PrivateChannels []*Channel   `json:"private_channels"`
-	Guilds          []*Guild     `json:"guilds"`
-
-	// Undocumented fields
-	Settings          *Settings            `json:"user_settings"`
-	UserGuildSettings []*UserGuildSettings `json:"user_guild_settings"`
-	Relationships     []*Relationship      `json:"relationships"`
-	Presences         []*Presence          `json:"presences"`
-	Notes             map[string]string    `json:"notes"`
+	Version          int          `json:"v"`
+	SessionID        string       `json:"session_id"`
+	User             *SelfUser    `json:"user"`
+	Guilds           []*Guild     `json:"guilds"`
+	PrivateChannels  []*Channel   `json:"private_channels"`
+	ResumeGatewayUrl string       `json:"resume_gateway_url"`
+	Shard            [2]int       `json:"shard"`
+	Application      *Application `json:"application"`
 }
 
 // ChannelCreate is the data for a ChannelCreate event.
@@ -260,12 +255,6 @@ type GuildScheduledEventUserRemove struct {
 	GuildID               int64 `json:"guild_id"`
 }
 
-// MessageAck is the data for a MessageAck event.
-type MessageAck struct {
-	MessageID int64 `json:"message_id,string"`
-	ChannelID int64 `json:"channel_id,string"`
-}
-
 // MessageCreate is the data for a MessageCreate event.
 type MessageCreate struct {
 	*Message
@@ -296,7 +285,7 @@ type MessageReactionRemoveAll struct {
 	*MessageReaction
 }
 
-// 	all reactions for a given emoji were explicitly removed from a message
+// all reactions for a given emoji were explicitly removed from a message
 type MessageReactionRemoveEmoji struct {
 	ChannelID int64 `json:"channel_id,string"`
 	GuildID   int64 `json:"guild_id,string"`
@@ -334,16 +323,6 @@ func (p *PresenceUpdate) NKeys() int {
 // Resumed is the data for a Resumed event.
 type Resumed struct {
 	Trace []string `json:"_trace"`
-}
-
-// RelationshipAdd is the data for a RelationshipAdd event.
-type RelationshipAdd struct {
-	*Relationship
-}
-
-// RelationshipRemove is the data for a RelationshipRemove event.
-type RelationshipRemove struct {
-	*Relationship
 }
 
 var _ gojay.UnmarshalerJSONObject = (*TypingStart)(nil)
@@ -397,14 +376,6 @@ func (u *UserUpdate) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
 
 func (u *UserUpdate) NKeys() int {
 	return 0
-}
-
-// UserSettingsUpdate is the data for a UserSettingsUpdate event.
-type UserSettingsUpdate map[string]interface{}
-
-// UserGuildSettingsUpdate is the data for a UserGuildSettingsUpdate event.
-type UserGuildSettingsUpdate struct {
-	*UserGuildSettings
 }
 
 // UserNoteUpdate is the data for a UserNoteUpdate event.

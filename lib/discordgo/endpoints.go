@@ -73,6 +73,7 @@ var (
 
 	EndpointUserGuilds      = func(uID string) string { return "" }
 	EndpointUserGuild       = func(uID string, gID int64) string { return "" }
+	EndpointUserGuildMember = func(uID string, gID int64) string { return "" }
 	EndpointUserChannels    = func(uID string) string { return "" }
 	EndpointUserConnections = func(uID string) string { return "" }
 
@@ -279,6 +280,7 @@ func CreateEndpoints(base string) {
 	EndpointUserSettings = func(uID string) string { return EndpointUsers + uID + "/settings" }
 	EndpointUserGuilds = func(uID string) string { return EndpointUsers + uID + "/guilds" }
 	EndpointUserGuild = func(uID string, gID int64) string { return EndpointUsers + uID + "/guilds/" + StrID(gID) }
+	EndpointUserGuildMember = func(uID string, gID int64) string { return EndpointUserGuild(uID, gID) + "/member" }
 	EndpointUserGuildSettings = func(uID string, gID int64) string { return EndpointUsers + uID + "/guilds/" + StrID(gID) + "/settings" }
 	EndpointUserChannels = func(uID string) string { return EndpointUsers + uID + "/channels" }
 	EndpointUserDevices = func(uID string) string { return EndpointUsers + uID + "/devices" }

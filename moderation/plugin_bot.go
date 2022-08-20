@@ -518,7 +518,16 @@ func HandleGuildRoleDelete(evt *eventsystem.EventData, togglePerms int64) (retry
 func HandleGuildRoleUpdate(evt *eventsystem.EventData, togglePerms int64) (retry bool, err error) {
 	role := evt.GuildRoleUpdate().Role
 	newPerms := role.Permissions &^ togglePerms
-	_, err = common.BotSession.GuildRoleEdit(evt.GS.ID, role.ID, role.Name, role.Color, role.Hoist, newPerms, role.Mentionable)
+
+	roleParams := &discordgo.RoleParams{
+		Name:        role.Name,
+		Color:       &role.Color,
+		Hoist:       &role.Hoist,
+		Permissions: &newPerms,
+		Mentionable: &role.Mentionable,
+	}
+
+	_, err = common.BotSession.GuildRoleEdit(evt.GS.ID, role.ID, roleParams)
 	if err != nil {
 		return bot.CheckDiscordErrRetry(err), errors.WithStackIf(err)
 	}
