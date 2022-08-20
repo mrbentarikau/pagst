@@ -25,7 +25,6 @@ func RegisterActionFormat(format *ActionFormat) string {
 
 // AddEntry adds a entry to the database, also generating a "LocalID" for this entry
 func AddEntry(entry *LogEntry) error {
-
 	localID, err := common.GenLocalIncrIDPQ(nil, entry.GuildID, "control_panel_logs")
 	if err != nil {
 		return err
@@ -42,7 +41,7 @@ func AddEntry(entry *LogEntry) error {
 	return err
 }
 
-// RetryAddEntry will etry AddEntry until it suceeds or 60 seconds has elapsed
+// RetryAddEntry will retry AddEntry until it succeeds or 60 seconds has elapsed
 func RetryAddEntry(entry *LogEntry) {
 	started := time.Now()
 	for {

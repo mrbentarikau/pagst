@@ -39,6 +39,8 @@ var (
 	ConfShardBucketSize         = config.RegisterOption("yagpdb.shard.shard_bucket_size", "Shards per bucket", 2)
 
 	BotOwners []int64
+
+	//EnabledFeeds = make([]string, 0)
 )
 
 var configLoaded = false

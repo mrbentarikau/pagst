@@ -679,7 +679,7 @@ $(function(){
         {{$dot := .}}
         {{range .partType.UserSettings}}
         <div class="col-md">
-            <div class='form-group row'>
+            <div class='form-group row' style="margin-top: 5px;">
                 <label class='col-lg-2'>{{.Name}}:</label>
                 <div class='col-lg-10'>
                     {{$name := joinStr "" $namePrefix "." $dot.partIndex ".Data." .Key}}

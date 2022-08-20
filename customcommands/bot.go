@@ -961,11 +961,8 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	go analytics.RecordActiveUnit(cmd.GuildID, &Plugin{}, "executed_cc")
 
 	// pick a response and execute it
-	// f.Info("Custom command triggered")
 	f.Info("Custom command #", tmplCtx.Data["CCID"], " triggered")
-	// f.Debug("Custom command triggered")
 
-	// chanMsg := cmd.Responses[rand.Intn(len(cmd.Responses))]
 	chanMsg := cmd.Responses[0]
 	out, err := tmplCtx.Execute(chanMsg)
 
@@ -979,7 +976,7 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	if err != nil {
 		logger.WithField("guild", tmplCtx.GS.ID).WithError(err).Error("Error executing custom command")
 		if cmd.ShowErrors {
-			out += "\nAn error caused the execution of the custom command template to stop:\n"
+			out += "\nAn error caused the execution of the custom command " + tmplCtx.Name + " template to stop:\n"
 			out += formatCustomCommandRunErr(chanMsg, err)
 
 			config, configErr := moderation.GetConfig(cmd.GuildID)
@@ -998,6 +995,28 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	if err != nil {
 		return errors.WithStackIf(err)
 	}
+	// handle Response err the same way
+	/*if err != nil {
+		logger.WithField("guild", tmplCtx.GS.ID).WithError(err).Error("Error executing custom command")
+		if cmd.ShowErrors {
+			out += "\nAn error caused the execution of the custom command " + tmplCtx.Name + " template to send response:\n"
+			out += formatCustomCommandRunErr(chanMsg, err)
+
+			config, configErr := moderation.GetConfig(cmd.GuildID)
+			if configErr != nil {
+				return errors.WithMessage(configErr, "GetConfig")
+			}
+
+			if config.CCErrorChannel != "" {
+				_, _, _ = bot.SendMessage(cmd.GuildID, config.IntCCErrorChannel(), out)
+				return nil
+			}
+
+			_, _, _ = bot.SendMessage(cmd.GuildID, tmplCtx.CurrentFrame.CS.ID, out)
+			return nil
+		}
+	}*/
+
 	return nil
 }
 

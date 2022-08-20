@@ -689,3 +689,19 @@ func FormatList(list []string, conjunction string) string {
 	}
 	return sb.String()
 }
+
+/* idea level thing
+func FeedEnabled(pluginName string) bool {
+	if len(EnabledFeeds) < 1 {
+		return false
+	}
+
+	for _, feed := range EnabledFeeds {
+		if strings.EqualFold(feed, pluginName) {
+			return true
+		}
+	}
+
+	return false
+}
+*/

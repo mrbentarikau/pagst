@@ -54,6 +54,10 @@ func RegisterPlugin() {
 		twitterAPI: twitterClient,
 	}
 
+	/*if !common.FeedEnabled(p.PluginInfo().Name) {
+		return
+	}*/
+
 	common.RegisterPlugin(p)
 	mqueue.RegisterSource("twitter", p)
 	common.InitSchemas("twitter", DBSchemas...)
