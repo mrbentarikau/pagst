@@ -414,7 +414,14 @@ func LockUnlockRole(config *Config, lock bool, gs *dstate.GuildSet, channel *dst
 	}
 
 	if newPerms != role.Permissions { //Update only if permissions change
-		_, err = common.BotSession.GuildRoleEdit(gs.ID, role.ID, role.Name, role.Color, role.Hoist, newPerms, role.Mentionable)
+		roleParams := &discordgo.RoleParams{
+			Name:        role.Name,
+			Color:       &role.Color,
+			Hoist:       &role.Hoist,
+			Permissions: &newPerms,
+			Mentionable: &role.Mentionable,
+		}
+		_, err = common.BotSession.GuildRoleEdit(gs.ID, role.ID, roleParams)
 		if err != nil {
 			return nil, err
 		}
@@ -687,13 +694,17 @@ func AddMemberMuteRole(config *Config, id int64, currentRoles []int64) (removedR
 		return
 	}
 
-	err = common.BotSession.GuildMemberEdit(config.GuildID, id, newMemberRoles)
+	guildMemberParams := &discordgo.GuildMemberParams{Roles: &newMemberRoles}
+
+	_, err = common.BotSession.GuildMemberEdit(config.GuildID, id, guildMemberParams)
 	return
 }
 
 func RemoveMemberMuteRole(config *Config, id int64, currentRoles []int64, mute MuteModel) (err error) {
 	newMemberRoles := decideUnmuteRoles(config, currentRoles, mute)
-	err = common.BotSession.GuildMemberEdit(config.GuildID, id, newMemberRoles)
+
+	guildMemberParams := &discordgo.GuildMemberParams{Roles: &newMemberRoles}
+	_, err = common.BotSession.GuildMemberEdit(config.GuildID, id, guildMemberParams)
 	return
 }
 

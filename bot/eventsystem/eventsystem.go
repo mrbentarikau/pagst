@@ -1,6 +1,7 @@
 package eventsystem
 
-//go:generate go run gen/events_gen.go -o events.go
+// go:generate go run gen/events_gen.go -o events.go
+// go get golang.org/x/tools/internal/gocommand@v0.1.11
 
 import (
 	"context"

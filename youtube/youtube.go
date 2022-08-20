@@ -57,6 +57,11 @@ func RegisterPlugin() {
 		logger.WithError(err).Error("Failed setting up youtube plugin, youtube plugin will not be enabled.")
 		return
 	}
+
+	/*if !common.FeedEnabled(p.PluginInfo().Name) {
+		return
+	}*/
+
 	common.RegisterPlugin(p)
 }
 

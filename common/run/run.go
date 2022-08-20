@@ -120,6 +120,7 @@ func Init() {
 	configstore.InitDatabases()
 
 	log.Info("Starting plugins")
+	//common.EnabledFeeds = strings.Split(flagRunFeeds, ",")
 }
 
 func Run() {

@@ -60,6 +60,10 @@ func RegisterPlugin() {
 	mqueue.RegisterSource("rss", p)
 	common.InitSchemas("rssfeeds", DBSchemas...)
 
+	/*if !common.FeedEnabled(p.PluginInfo().Name) {
+		return
+	}*/
+
 	p.rssClient = gofeed.NewParser()
 	p.rssClient.UserAgent = common.ConfBotUserAgent.GetString()
 

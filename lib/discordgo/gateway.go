@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -115,7 +116,32 @@ const (
 
 	GatewayIntentMessageContent GatewayIntent = 1 << 15
 
-	GatewayIntentGuildScheduledEvents GatewayIntent = 1 << 16
+	GatewayIntentGuildScheduledEvents        GatewayIntent = 1 << 16
+	GatewayIntentAutoModerationConfiguration GatewayIntent = 1 << 20
+	GatewayIntentAutoModerationExecution     GatewayIntent = 1 << 21
+
+	/* old stuff */
+	GatewayIntentsAllWithoutPrivileged = GatewayIntentGuilds |
+		GatewayIntentGuildBans |
+		GatewayIntentGuildEmojis |
+		GatewayIntentGuildIntegrations |
+		GatewayIntentGuildWebhooks |
+		GatewayIntentGuildInvites |
+		GatewayIntentGuildVoiceStates |
+		GatewayIntentGuildMessages |
+		GatewayIntentGuildMessageReactions |
+		GatewayIntentGuildMessageTyping |
+		GatewayIntentDirectMessages |
+		GatewayIntentDirectMessageReactions |
+		GatewayIntentDirectMessageTyping |
+		GatewayIntentGuildScheduledEvents
+
+	GatewayIntentsAll = GatewayIntentsAllWithoutPrivileged |
+		GatewayIntentGuildMembers |
+		GatewayIntentGuildPresences |
+		GatewayIntentMessageContent
+
+	GatewayIntentsNone GatewayIntent = 0
 )
 
 // max size of buffers before they're discarded (e.g after a big incmoing event)
@@ -217,25 +243,28 @@ type GatewayConnectionManager struct {
 	currentConnection *GatewayConnection
 	status            GatewayStatus
 
-	sessionID string
-	sequence  int64
+	sessionID        string
+	sequence         int64
+	resumeGatewayUrl string
 
 	idCounter int
 
 	errorStopReconnects error // set when an error occurs that should stop reconnects (such as bad token, and other things)
 }
 
-func (s *GatewayConnectionManager) SetSessionInfo(sessionID string, sequence int64) {
+func (s *GatewayConnectionManager) SetSessionInfo(sessionID string, sequence int64, resumeGatewayUrl string) {
 	s.mu.Lock()
 	s.sessionID = sessionID
 	s.sequence = sequence
+	s.resumeGatewayUrl = resumeGatewayUrl
 	s.mu.Unlock()
 }
 
-func (s *GatewayConnectionManager) GetSessionInfo() (sessionID string, sequence int64) {
+func (s *GatewayConnectionManager) GetSessionInfo() (sessionID string, sequence int64, resumeGatewayUrl string) {
 	s.mu.RLock()
 	sessionID = s.sessionID
 	sequence = s.sequence
+	resumeGatewayUrl = s.resumeGatewayUrl
 	s.mu.RUnlock()
 
 	return
@@ -292,7 +321,7 @@ func (g *GatewayConnectionManager) Open() error {
 	// Opening may be a long process, with ratelimiting and whatnot
 	// we wanna be able to query things like status in the meantime
 	g.mu.Unlock()
-	err := newConn.open(g.sessionID, g.sequence)
+	err := newConn.open(g.sessionID, g.sequence, g.resumeGatewayUrl)
 	g.mu.Lock()
 
 	g.currentConnection = newConn
@@ -398,10 +427,10 @@ type voiceChannelJoinData struct {
 
 // ChannelVoiceJoin joins the session user to a voice channel.
 //
-//    gID     : Guild ID of the channel to join.
-//    cID     : Channel ID of the channel to join.
-//    mute    : If true, you will be set to muted upon joining.
-//    deaf    : If true, you will be set to deafened upon joining.
+//	gID     : Guild ID of the channel to join.
+//	cID     : Channel ID of the channel to join.
+//	mute    : If true, you will be set to muted upon joining.
+//	deaf    : If true, you will be set to deafened upon joining.
 func (g *GatewayConnectionManager) ChannelVoiceJoin(gID, cID int64, mute, deaf bool) (voice *VoiceConnection, err error) {
 
 	g.session.log(LogInformational, "called")
@@ -613,6 +642,9 @@ type GatewayConnection struct {
 
 	// stores session ID of current Gateway connection
 	sessionID string
+
+	// stores url to resume connection
+	resumeGatewayUrl string
 
 	// This gets closed when the connection closes to signal all workers to stop
 	stopWorkers chan interface{}
@@ -857,7 +889,7 @@ func (g *GatewayConnection) Status() (st GatewayStatus) {
 }
 
 // Connect connects to the discord gateway and starts handling frames
-func (g *GatewayConnection) open(sessionID string, sequence int64) error {
+func (g *GatewayConnection) open(sessionID string, sequence int64, resumeGatewayUrl string) error {
 	g.mu.Lock()
 	if g.opened {
 		g.mu.Unlock()
@@ -868,7 +900,12 @@ func (g *GatewayConnection) open(sessionID string, sequence int64) error {
 	var err error
 
 	for {
-		conn, _, _, err = ws.Dial(context.TODO(), g.manager.gateway+"?v="+APIVersion+"&encoding=json&compress=zlib-stream")
+		gatewayUrl := g.manager.gateway
+		// if this is an intended resume, use the resume gateway url provided by discord
+		if sessionID != "" && resumeGatewayUrl != "" {
+			gatewayUrl = resumeGatewayUrl
+		}
+		conn, _, _, err = ws.Dial(context.TODO(), gatewayUrl+"?v="+APIVersion+"&encoding=json&compress=zlib-stream")
 		if err != nil {
 			if conn != nil {
 				conn.Close()
@@ -1246,11 +1283,17 @@ func (g *GatewayConnection) handleReady(r *Ready) {
 	g.mu.Lock()
 	g.sessionID = r.SessionID
 	g.status = GatewayStatusReady
+	g.resumeGatewayUrl = r.ResumeGatewayUrl
+	// Ensure the gatewayUrl always has a trailing slash.
+	// MacOS will fail to connect if we add query params without a trailing slash on the base domain.
+	if !strings.HasSuffix(g.resumeGatewayUrl, "/") {
+		g.resumeGatewayUrl += "/"
+	}
 	g.mu.Unlock()
 
 	g.writer.readyRecv <- true
 
-	g.manager.SetSessionInfo(r.SessionID, 0)
+	g.manager.SetSessionInfo(r.SessionID, 0, r.ResumeGatewayUrl)
 }
 
 func (g *GatewayConnection) handleResumed(r *Resumed) {

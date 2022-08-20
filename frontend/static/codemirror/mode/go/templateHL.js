@@ -64,6 +64,7 @@
     "in":true,
     "inFold":true,
     "json":true,
+    "jsonToSdict":true,
     "kindOf":true,
     "noun":true,
     "ordinalize":true,
