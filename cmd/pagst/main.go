@@ -33,6 +33,7 @@ import (
 	"github.com/mrbentarikau/pagst/reminders"
 	"github.com/mrbentarikau/pagst/reputation"
 	"github.com/mrbentarikau/pagst/rolecommands"
+	"github.com/mrbentarikau/pagst/rss"
 	"github.com/mrbentarikau/pagst/rsvp"
 	"github.com/mrbentarikau/pagst/safebrowsing"
 	"github.com/mrbentarikau/pagst/serverstats"
@@ -80,6 +81,7 @@ func main() {
 	reminders.RegisterPlugin()
 	reputation.RegisterPlugin()
 	rolecommands.RegisterPlugin()
+	rss.RegisterPlugin()
 	rsvp.RegisterPlugin()
 	safebrowsing.RegisterPlugin()
 	scheduledevents2.RegisterPlugin()

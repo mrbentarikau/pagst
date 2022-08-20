@@ -53,21 +53,11 @@ var (
 
 	StartedAt = time.Now()
 
-	CurrentAd *Advertisement
-
 	logger = common.GetFixedPrefixLogger("web")
 
 	confAnnouncementsChannel       = config.RegisterOption("yagpdb.announcements_channel", "Channel to pull announcements from and display on the control panel homepage", 0)
 	confReverseProxyClientIPHeader = config.RegisterOption("yagpdb.web.reverse_proxy_client_ip_header", "If were behind a reverse proxy, this is the header field with the real ip that the proxy passes along", "")
-
-	confAdPath       = config.RegisterOption("yagpdb.ad.img_path", "The ad image ", "")
-	confAdLinkurl    = config.RegisterOption("yagpdb.ad.link", "Link to follow when clicking on the ad", "")
-	confAdWidth      = config.RegisterOption("yagpdb.ad.w", "Ad width", 0)
-	confAdHeight     = config.RegisterOption("yagpdb.ad.h", "Ad Height", 0)
-	ConfAdVideos     = config.RegisterOption("yagpdb.ad.video_paths", "Comma seperated list of video paths in different formats", "")
-	confDemoServerID = config.RegisterOption("yagpdb.web.demo_server_id", "Server ID for live demo links", 0)
-
-	ConfAdsTxt = config.RegisterOption("yagpdb.ads.ads_txt", "Path to the ads.txt file for monetization using ad networks", "")
+	confDemoServerID               = config.RegisterOption("yagpdb.web.demo_server_id", "Server ID for live demo links", 0)
 
 	confDisableRequestLogging = config.RegisterOption("yagpdb.disable_request_logging", "Disable logging of http requests to web server", false)
 
@@ -75,15 +65,6 @@ var (
 	// main prurpose is to plug in a onboarding process through a properietary plugin
 	SelectServerHomePageHandler http.Handler = RenderHandler(HandleSelectServer, "cp_selectserver")
 )
-
-type Advertisement struct {
-	Path       template.URL
-	VideoUrls  []template.URL
-	VideoTypes []string
-	LinkURL    template.URL
-	Width      int
-	Height     int
-}
 
 func init() {
 	b := int32(1)
@@ -145,6 +126,7 @@ func Run() {
 
 	loadTemplates()
 
+	AddGlobalTemplateData("BotName", common.ConfBotName.GetString())
 	AddGlobalTemplateData("ClientID", common.ConfClientID.GetString())
 	AddGlobalTemplateData("Host", common.ConfHost.GetString())
 	AddGlobalTemplateData("Version", common.VERSION)
@@ -172,38 +154,8 @@ func Run() {
 		go discordblog.RunPoller(common.BotSession, int64(blogChannel), time.Minute)
 	}
 
-	loadAd()
-
 	logger.Info("Running webservers")
 	runServers(mux)
-}
-
-func loadAd() {
-	path := confAdPath.GetString()
-	linkurl := confAdLinkurl.GetString()
-
-	CurrentAd = &Advertisement{
-		Path:    template.URL(path),
-		LinkURL: template.URL(linkurl),
-		Width:   confAdWidth.GetInt(),
-		Height:  confAdHeight.GetInt(),
-	}
-
-	videos := strings.Split(ConfAdVideos.GetString(), ",")
-	for _, v := range videos {
-		if v == "" {
-			continue
-		}
-		CurrentAd.VideoUrls = append(CurrentAd.VideoUrls, template.URL(v))
-
-		split := strings.SplitN(v, ".", 2)
-		if len(split) < 2 {
-			CurrentAd.VideoTypes = append(CurrentAd.VideoTypes, "unknown")
-			continue
-		}
-
-		CurrentAd.VideoTypes = append(CurrentAd.VideoTypes, "video/"+split[1])
-	}
 }
 
 func Stop() {
@@ -216,7 +168,7 @@ func IsAcceptingRequests() bool {
 
 func runServers(mainMuxer *goji.Mux) {
 	if !https {
-		logger.Info("Starting PAGSTDB web server http:", ListenAddressHTTP)
+		logger.Info("Starting ", common.ConfBotName.GetString(), " web server http:", ListenAddressHTTP)
 
 		server := &http.Server{
 			Addr:        ListenAddressHTTP,
@@ -229,7 +181,7 @@ func runServers(mainMuxer *goji.Mux) {
 			logger.Error("Failed http ListenAndServe:", err)
 		}
 	} else {
-		logger.Info("Starting PAGSTDB web server http:", ListenAddressHTTP, ", and https:", ListenAddressHTTPS)
+		logger.Info("Starting ", common.ConfBotName.GetString(), " web server http:", ListenAddressHTTP, ", and https:", ListenAddressHTTPS)
 
 		cache := autocert.DirCache("cert")
 
@@ -417,7 +369,6 @@ func setupRootMux() {
 	mux.Handle(pat.Get("/static"), fileserver.FileServer(http.FS(StaticFilesFS)))
 	mux.Handle(pat.Get("/static/*"), fileserver.FileServer(http.FS(StaticFilesFS)))
 	mux.Handle(pat.Get("/robots.txt"), http.HandlerFunc(handleRobotsTXT))
-	mux.Handle(pat.Get("/ads.txt"), http.HandlerFunc(handleAdsTXT))
 
 	// General middleware
 	mux.Use(SkipStaticMW(gziphandler.GzipHandler, ".css", ".js", ".map"))

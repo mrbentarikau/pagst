@@ -21,17 +21,17 @@
     <meta name="theme-color" content="#ffffff">
 
     <!-- More meta stuff -->
-    <meta name="apple-mobile-web-app-title" content="PAGSTDB">
-    <meta name="application-name" content="PAGSTDB">
+    <meta name="apple-mobile-web-app-title" content="{{.BotName}}">
+    <meta name="application-name" content="{{.BotName}}">
     <meta name="msapplication-config" content="/static/icons/browserconfig.xml">
     <meta name="theme-color" content="#ffffff">
 
-    <meta property="og:title" content="PAGSTDB" />
+    <meta property="og:title" content="{{.BotName}}" />
     <meta property="og:description" content="People Against Generally Shitty Things Discord Bot" />
 
-    <title>PAGSTDB - Control panel</title>
+    <title>{{.BotName}} - Control panel</title>
     <meta name="keywords" content="People Against Generally Shitty Things" />
-    <meta name="description" content="PAGSTDB - People Against Generally Shitty Things Discord Bot">
+    <meta name="description" content="{{.BotName}} - People Against Generally Shitty Things Discord Bot">
     <meta name="author" content="jonas747 + others">
 
     <!-- Web Fonts  -->
@@ -180,14 +180,65 @@ $(function(){
             {{end}}
         {{end}}
     {{end}}
+    {{if .ActiveGuild}}
+        function updateBotStatusAlert() {
+            $.getJSON("/status.json", function(data) {
+                const shardID = Number(BigInt("{{.ActiveGuild.ID}}") >> BigInt(22)) % data.total_shards;
+                let removeAlert = true;
+                if (data.offline_shards && data.offline_shards.includes(shardID)) {
+                    upsertAlert("The shard the bot is on for your server is currently offline. Most functionality will not work as expected. Join the support server for more information if this issue persists.");
+                    removeAlert = false;
+                }/* else {
+                    if (data.host_statuses) {
+                        loop: for (const host of data.host_statuses) {
+                            if (!host.Nodes) continue;
+                            for (const node of host.Nodes) {
+                                if (!node.shards) continue;
+                                for (const shard of node.shards) {
+                                    if (shard.shard_id === shardID) {
+                                        if (shard.events_per_second < 1) {
+                                            upsertAlert("The shard the bot is on for your server is currently having issues. Functionality may be limited. Join the support server for more information if this issue persists.");
+                                            removeAlert = false;
+                                        }
+                                        break loop;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }*/
+
+                if (removeAlert) $("#shard-problems-warning").remove();
+            });
+        }
+
+        function upsertAlert(msg) {
+            if ($("#shard-problems-warning").length) {
+                $("#shard-problems-warning alert").text(msg);
+            } else {
+                addAlert("warning", msg, "shard-problems-warning");
+            }
+        }
+
+        // we need BigInt support to run the alert update loop (to compute the shard #)
+        // luckily all modern browsers have supported it for a reasonable
+        // while (https://caniuse.com/bigint) so this should not be a huge
+        // issue.
+        /// 30_000 is 30 seconds
+        if (typeof BigInt !== "undefined") {
+            console.log("Running bot status update alert loop");
+            updateBotStatusAlert();
+            setInterval(updateBotStatusAlert, 30_000);
+        }
+    {{end}}
 })
 </script>
 <div id="alerts_pagst">
-	{{if .Alerts}}
-	<div class="pagst">
+    {{if .Alerts}}
+    <div class="pagst">
 
-	</div>
-	{{end}}
+    </div>
+    {{end}}
 </div>
 <div id="alerts">
     {{if .Alerts}}

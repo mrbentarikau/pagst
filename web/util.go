@@ -99,7 +99,7 @@ func getDiscordStatus() (*discordStatusStruct, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", common.BotUserAgent)
+	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)

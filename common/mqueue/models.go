@@ -36,6 +36,8 @@ type QueuedElement struct {
 	Priority int
 
 	CreatedAt time.Time
+
+	WebhookAvatarURL string
 }
 
 type webhook struct {

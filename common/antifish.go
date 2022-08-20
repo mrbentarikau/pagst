@@ -74,7 +74,7 @@ func AntiFishQuery(phishingQuery string) (*AntiFish, error) {
 	r.Header.Add("Content-Type", "application/json")
 	r.Header.Add("Accept", "*/*")
 	r.Header.Add("Content-Length", strconv.Itoa(len(queryString)))
-	r.Header.Add("User-Agent", "PAGSTDB/20.42.6702")
+	r.Header.Add("User-Agent", ConfBotUserAgent.GetString())
 
 	resp, err := client.Do(r)
 	if err != nil {
@@ -126,7 +126,7 @@ func SinkingYachtsQuery(phishingQuery string) (bool, error) {
 	}
 
 	r.Header.Set("Content-Type", "application/json")
-	r.Header.Set("User-Agent", "PAGSTDB/20.42.6702")
+	r.Header.Set("User-Agent", ConfBotUserAgent.GetString())
 
 	resp, err := client.Do(r)
 	if err != nil {

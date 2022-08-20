@@ -4,6 +4,7 @@
 // Generates the wrapper event handlers for discordgo events
 // The wrappers adds an extra parameter to the handlers which is a redis connection
 // And will also recover from panic that occured inside them
+// go get golang.org/x/tools/internal/gocommand@v0.1.11 etc...
 package main
 
 import (

@@ -27,12 +27,11 @@ func KeyGuild(guildID int64) string         { return "guild:" + discordgo.StrID(
 func KeyGuildChannels(guildID int64) string { return "channels:" + discordgo.StrID(guildID) }
 
 var LinkRegexJonas = regexp.MustCompile(`(http(s)?:\/\/)?(www\.)?[-a-zA-Z0-9@:%_\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)`)
+var LinkRegexProtocolStrict = regexp.MustCompile(`(https?:\/\/)(\w+.)?[-a-zA-Z0-9@:%_\+~#=]{1,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)`)
 var LinkRegexBotlabs = regexp.MustCompile(`(?i)([a-z\d]+:\/\/)([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])`)
 var LinkRegex = regexp.MustCompile(`(?i)([a-z\d]+://)((\w+:\w+@)?([a-z\d.-]+\.[a-z]{2,64})(:\d+)?(/.*)?)`)
 var DomainFinderRegex = regexp.MustCompile(`(?i)(?:[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?\.)+[a-z\d][a-z\d-]{0,61}[a-z\d]`)
 var ThanksRegex = regexp.MustCompile(`(?i)(?:\A|.+)(?:\+(?:\s+|rep)?|t(?:y(?:sm|vm)?|h(?:a?nks?|n?x)(?:\s+(?:yo)?u)?(?:\s+(?:so|very)\s+much|\s+?a?\s*lot)?)|danke?s?)+.*<@!?\d{17,19}>(?:.+|\z)`)
-
-var BotUserAgent = "PAGSTDB/20.42.6702"
 
 type GuildWithConnected struct {
 	*discordgo.UserGuild
@@ -690,3 +689,19 @@ func FormatList(list []string, conjunction string) string {
 	}
 	return sb.String()
 }
+
+/* idea level thing
+func FeedEnabled(pluginName string) bool {
+	if len(EnabledFeeds) < 1 {
+		return false
+	}
+
+	for _, feed := range EnabledFeeds {
+		if strings.EqualFold(feed, pluginName) {
+			return true
+		}
+	}
+
+	return false
+}
+*/

@@ -86,7 +86,6 @@ func BaseTemplateDataMiddleware(inner http.Handler) http.Handler {
 		baseData := map[string]interface{}{
 			"RequestURI":       r.RequestURI,
 			"StartedAtUnix":    StartedAt.Unix(),
-			"CurrentAd":        CurrentAd,
 			"LightTheme":       lightTheme,
 			"SidebarCollapsed": collapseSidebar,
 			"SidebarItems":     sideBarItems,

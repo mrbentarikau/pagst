@@ -33,13 +33,16 @@ func RegisterPlugin() {
 }
 
 type GeneralConfig struct {
-	Role             int64 `json:",string" valid:"role,true"`
-	RequiredDuration int   `valid:"0,"`
+	Role       int64 `json:",string" valid:"role,true"`
+	RemoveRole int64 `json:",string" valid:"role,true"`
+
+	RequiredDuration int `valid:"0,"`
 
 	RequiredRoles            []int64 `valid:"role,true"`
 	IgnoreRoles              []int64 `valid:"role,true"`
 	OnlyOnJoin               bool
 	AssignRoleAfterScreening bool
+	IgnoreBots               bool
 }
 
 const (
@@ -47,6 +50,7 @@ const (
 	FullScanIterating
 	FullScanIterationDone
 	FullScanAssigningRole
+	FullScanRemovingRole
 	FullScanCancelled
 )
 

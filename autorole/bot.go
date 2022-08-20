@@ -17,6 +17,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/moderation"
+	"github.com/mrbentarikau/pagst/streaming"
 
 	"github.com/mediocregopher/radix/v3"
 )
@@ -34,13 +35,18 @@ type assignRoleEventdata struct {
 	RoleID int64 // currently unused
 }
 
+type removeRoleEventdata struct {
+	UserID int64
+	RoleID int64 // currently unused
+}
+
 func (p *Plugin) BotInit() {
 	eventsystem.AddHandlerAsyncLast(p, onMemberJoin, eventsystem.EventGuildMemberAdd)
-	// eventsystem.AddHandlerAsyncLast(p, HandlePresenceUpdate, eventsystem.EventPresenceUpdate)
 	eventsystem.AddHandlerAsyncLastLegacy(p, handleGuildChunk, eventsystem.EventGuildMembersChunk)
 	eventsystem.AddHandlerAsyncLast(p, handleGuildMemberUpdate, eventsystem.EventGuildMemberUpdate)
 
 	scheduledevents2.RegisterHandler("autorole_assign_role", assignRoleEventdata{}, handleAssignRole)
+	scheduledevents2.RegisterHandler("autorole_remove_role", removeRoleEventdata{}, handleRemoveRole)
 
 	// go runDurationChecker()
 }
@@ -61,36 +67,6 @@ var roleCommands = []*commands.YAGCommand{
 		},
 	},
 }
-
-// HandlePresenceUpdate makes sure the member with joined_at is available for the relevant guilds
-// TODO: Figure out a solution that scales better
-// func HandlePresenceUpdate(evt *eventsystem.EventData) (retry bool, err error) {
-// 	p := evt.PresenceUpdate()
-// 	if p.Status == discordgo.StatusOffline {
-// 		return
-// 	}
-
-// 	gs := evt.GS
-
-// 	gs.RLock()
-// 	m := gs.Member(false, p.User.ID)
-// 	if m != nil && m.MemberSet {
-// 		gs.RUnlock()
-// 		return false, nil
-// 	}
-// 	gs.RUnlock()
-
-// 	config, err := GuildCacheGetGeneralConfig(gs)
-// 	if err != nil {
-// 		return true, errors.WithStackIf(err)
-// 	}
-
-// 	if !config.OnlyOnJoin && config.Role != 0 {
-// 		go bot.GetMember(gs.ID, p.User.ID)
-// 	}
-
-// 	return false, nil
-// }
 
 func saveGeneral(guildID int64, config *GeneralConfig) {
 	err := common.SetRedisJson(KeyGeneral(guildID), config)
@@ -160,26 +136,72 @@ func onMemberJoin(evt *eventsystem.EventData) (retry bool, err error) {
 }
 
 func assignRole(config *GeneralConfig, guildID int64, targetID int64) (disabled bool, retry bool, err error) {
-	analytics.RecordActiveUnit(guildID, &Plugin{}, "assigned_role")
-	err = common.BotSession.GuildMemberRoleAdd(guildID, targetID, config.Role)
+	streamingConf, err := streaming.GetConfig(guildID)
 	if err != nil {
-		switch code, _ := common.DiscordError(err); code {
-		case discordgo.ErrCodeUnknownMember:
-			logger.WithError(err).Error("Unknown member when trying to assign role")
-		case discordgo.ErrCodeMissingPermissions, discordgo.ErrCodeMissingAccess, discordgo.ErrCodeUnknownRole:
-			logger.WithError(err).Warn("disabling autorole from error")
-			cop := *config
-			cop.Role = 0
-			saveGeneral(guildID, &cop)
-			return true, false, nil
-		default:
-			return false, bot.CheckDiscordErrRetry(err), err
+		return false, false, nil
+	}
+
+	var streamingRoleSame bool
+	if streamingConf.Enabled && streamingConf.GiveRole == config.Role {
+		streamingRoleSame = true
+	}
+
+	if config.Role != 0 && !streamingRoleSame {
+		analytics.RecordActiveUnit(guildID, &Plugin{}, "assigned_role")
+		err = common.BotSession.GuildMemberRoleAdd(guildID, targetID, config.Role)
+		if err != nil {
+			switch code, _ := common.DiscordError(err); code {
+			case discordgo.ErrCodeUnknownMember:
+				logger.WithError(err).Error("Unknown member when trying to assign role")
+			case discordgo.ErrCodeMissingPermissions, discordgo.ErrCodeMissingAccess, discordgo.ErrCodeUnknownRole:
+				logger.WithError(err).Warn("disabling autorole from error")
+				cop := *config
+				cop.Role = 0
+				saveGeneral(guildID, &cop)
+				return true, false, nil
+			default:
+				return false, bot.CheckDiscordErrRetry(err), err
+			}
 		}
 	}
 
 	return false, false, nil
 }
 
+func removeRole(config *GeneralConfig, guildID int64, targetID int64) (disabled bool, retry bool, err error) {
+	streamingConf, err := streaming.GetConfig(guildID)
+	if err != nil {
+		return false, false, nil
+	}
+
+	var streamingRoleSame bool
+	if streamingConf.Enabled && streamingConf.GiveRole == config.Role {
+		streamingRoleSame = true
+	}
+
+	if config.Role != 0 && !streamingRoleSame {
+		analytics.RecordActiveUnit(guildID, &Plugin{}, "removed_role")
+		err = common.BotSession.GuildMemberRoleRemove(guildID, targetID, config.RemoveRole)
+		if err != nil {
+			switch code, _ := common.DiscordError(err); code {
+			case discordgo.ErrCodeUnknownMember:
+				logger.WithError(err).Error("Unknown member when trying to remove role")
+			case discordgo.ErrCodeMissingPermissions, discordgo.ErrCodeMissingAccess, discordgo.ErrCodeUnknownRole:
+				logger.WithError(err).Warn("disabling autorole remove role from error")
+				cop := *config
+				cop.Role = 0
+				saveGeneral(guildID, &cop)
+				return true, false, nil
+			default:
+				return false, bot.CheckDiscordErrRetry(err), err
+			}
+		}
+	}
+
+	return false, false, nil
+}
+
+// Operates also as CanRemoveFrom
 func (conf *GeneralConfig) CanAssignTo(currentRoles []int64, joinedAt time.Time) bool {
 	if time.Since(joinedAt) < time.Duration(conf.RequiredDuration)*time.Minute {
 		return false
@@ -208,16 +230,32 @@ func (conf *GeneralConfig) CanAssignTo(currentRoles []int64, joinedAt time.Time)
 	return true
 }
 
+func RedisKeyGuildChunkProecssing(gID int64) string {
+	return "autorole_guild_chunk_processing:" + strconv.FormatInt(gID, 10)
+}
+
 func RedisKeyFullScanStatus(gID int64) string {
 	return "autorole_full_scan_status:" + strconv.FormatInt(gID, 10)
+}
+
+func RedisKeyFullScanRemoveStatus(gID int64) string {
+	return "autorole_full_scan_remove_status:" + strconv.FormatInt(gID, 10)
 }
 
 func RedisKeyFullScanAutoroleMembers(gID int64) string {
 	return "autorole_full_scan_autorole_members:" + strconv.FormatInt(gID, 10)
 }
 
+func RedisKeyFullScanRemoveAutoroleMembers(gID int64) string {
+	return "autorole_full_scan_remove_autorole_members:" + strconv.FormatInt(gID, 10)
+}
+
 func RedisKeyFullScanAssignedRoles(gID int64) string {
 	return "autorole_full_scan_assigned_roles:" + strconv.FormatInt(gID, 10)
+}
+
+func RedisKeyFullScanRemovedRoles(gID int64) string {
+	return "autorole_full_scan_removed_roles:" + strconv.FormatInt(gID, 10)
 }
 
 func AutorolePendingMembersKey(gID int64) string {
@@ -244,21 +282,28 @@ func stopFullScan(guildID int64) {
 func handleGuildChunk(evt *eventsystem.EventData) {
 	chunk := evt.GuildMembersChunk()
 	guildID := chunk.GuildID
-	/*if chunk.Nonce == "" || strconv.Itoa(int(guildID)) != chunk.Nonce {
+	if chunk.Nonce == "" || strconv.Itoa(int(guildID)) != chunk.Nonce {
 		// This event was not triggered by Full Scan
 		return
-	}*/
+	}
 
 	config, err := GetGeneralConfig(guildID)
 	if err != nil {
 		return
 	}
 
-	if config.Role == 0 || config.OnlyOnJoin {
+	if (config.Role == 0 && config.RemoveRole == 0) || config.OnlyOnJoin {
 		return
 	}
 
-	go iterateGuildChunkMembers(guildID, config, chunk)
+	if config.Role != config.RemoveRole {
+		if config.Role != 0 {
+			go iterateGuildChunkMembers(guildID, config, chunk)
+		}
+		if config.RemoveRole != 0 {
+			go removeFromGuildChunk(chunk.GuildID, config, chunk)
+		}
+	}
 }
 
 // Iterate through all the members in the chunk, and add them to set, if autorole needs to be assigned to them
@@ -281,6 +326,10 @@ func iterateGuildChunkMembers(guildID int64, config *GeneralConfig, chunk *disco
 
 MemberLoop:
 	for _, m := range chunk.Members {
+
+		if config.IgnoreBots && m.User.Bot {
+			continue MemberLoop
+		}
 
 		for _, muted := range mutedMembers {
 			if muted.UserID == m.User.ID {
@@ -346,6 +395,112 @@ MemberLoop:
 	}
 }
 
+func removeFromGuildChunk(guildID int64, config *GeneralConfig, chunk *discordgo.GuildMembersChunk) {
+	//lastTimeUpdatedBlockingKey := time.Now()
+	//lastTimeUpdatedConfig := time.Now()
+
+	if isFullScanCancelled(guildID) {
+		return
+	}
+
+	lastTimeFullScanStatusRefreshed := time.Now()
+	err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanRemoveStatus(chunk.GuildID), "100", strconv.Itoa(FullScanIterating)))
+	if err != nil {
+		logger.WithError(err).Error("Failed marking full scan iterating")
+	}
+
+	for _, m := range chunk.Members {
+		joinedAt, err := m.JoinedAt.Parse()
+		if err != nil {
+			logger.WithError(err).WithField("ts", m.JoinedAt).WithField("user", m.User.ID).WithField("guild", guildID).Error("failed parsing join timestamp")
+			if config.RequiredDuration > 0 {
+				continue // Need the joined_at field for this
+			}
+		}
+
+		if !config.CanAssignTo(m.Roles, joinedAt) {
+			continue
+		}
+
+		// already no role
+		if !common.ContainsInt64Slice(m.Roles, config.RemoveRole) {
+			continue
+		}
+		/*
+			time.Sleep(time.Second * 2)
+
+			logger.Println("removing", config.RemoveRole, "from", m.User.ID, "from guild chunk event")
+
+			disabled, _, err := removeRole(config, guildID, m.User.ID)
+			if err != nil {
+				logger.WithError(err).WithField("user", m.User.ID).WithField("guild", guildID).Error("failed removing autorole role")
+			}
+			if disabled {
+				break
+			}
+
+			if time.Since(lastTimeUpdatedConfig) > time.Second*10 {
+				// Refresh the config occasionally to make sure it dosen't go stale
+				newConf, err := GetGeneralConfig(guildID)
+				if err == nil {
+					config = newConf
+				} else {
+					return
+				}
+
+				lastTimeUpdatedConfig = time.Now()
+
+				config = newConf
+				if config.RemoveRole == 0 {
+					logger.WithField("guild", guildID).Info("autorole remove role was set to none in the middle of full retroactive assignment, cancelling")
+					return
+				}
+			}
+
+			if time.Since(lastTimeUpdatedBlockingKey) > time.Second*10 {
+				lastTimeUpdatedBlockingKey = time.Now()
+
+				err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyGuildChunkProecssing(guildID), "100", "1"))
+				if err != nil {
+					logger.WithError(err).Error("failed marking autorole chunk processing")
+				}
+			}*/
+
+		err = common.RedisPool.Do(radix.Cmd(nil, "ZADD", RedisKeyFullScanRemoveAutoroleMembers(chunk.GuildID), "-1", strconv.FormatInt(m.User.ID, 10)))
+		if err != nil {
+			logger.WithError(err).Error("Failed adding user to the set")
+		}
+
+		if time.Since(lastTimeFullScanStatusRefreshed) > time.Second*50 {
+			if isFullScanCancelled(guildID) {
+				stopFullScan(guildID)
+				return
+			}
+
+			lastTimeFullScanStatusRefreshed = time.Now()
+			err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanRemoveStatus(chunk.GuildID), "100", strconv.Itoa(FullScanIterating)))
+			if err != nil {
+				logger.WithError(err).Error("Failed refreshing full scan iterating")
+			}
+		}
+	}
+
+	if chunk.ChunkIndex+1 == chunk.ChunkCount {
+		if isFullScanCancelled(guildID) {
+			stopFullScan(guildID)
+			return
+		}
+
+		// All chunks are processed, launching a go routine to start assigning autorole to the members in the set
+		err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanRemoveStatus(chunk.GuildID), "10", strconv.Itoa(FullScanIterationDone)))
+		if err != nil {
+			logger.WithError(err).Error("Failed marking Full Scan iteration complete")
+		}
+		logger.WithField("guild", guildID).Info("Full scan iteration is done, starting removing roles.")
+		go removeFullScanAutorole(guildID, config)
+	}
+}
+
 // Fetches 10 member ids from the set and assigns autorole to them
 func handleAssignFullScanRole(guildID int64, config *GeneralConfig, rolesAssigned *int, totalMembers int) bool {
 	var uIDs []string
@@ -379,6 +534,43 @@ func handleAssignFullScanRole(guildID int64, config *GeneralConfig, rolesAssigne
 	err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanAssignedRoles(guildID), "100", fmt.Sprintf("%d out of %d", *rolesAssigned, totalMembers)))
 	if err != nil {
 		logger.WithError(err).Error("Failed setting roles assigned count")
+	}
+	return isFullScanCancelled(guildID)
+}
+
+// Fetches 10 member ids from the set and assigns autorole to them
+func handleRemoveFullScanRole(guildID int64, config *GeneralConfig, rolesAssigned *int, totalMembers int) bool {
+	var uIDs []string
+	common.RedisPool.Do(radix.Cmd(&uIDs, "ZPOPMIN", RedisKeyFullScanRemoveAutoroleMembers(guildID), "10"))
+	uIDCount := len(uIDs)
+	if uIDCount == 0 {
+		return true
+	}
+	uIDsParsed := make([]int64, 0, uIDCount/2)
+	for _, v := range uIDs {
+		parsed, _ := strconv.ParseInt(v, 10, 64)
+		if parsed < 0 {
+			continue
+		}
+		uIDsParsed = append(uIDsParsed, parsed)
+	}
+
+	memberStates, _ := bot.GetMembers(guildID, uIDsParsed...)
+	for _, ms := range memberStates {
+
+		disabled, _, err := removeRole(config, guildID, ms.User.ID)
+		if err != nil {
+			logger.WithError(err).WithField("user", ms.User.ID).WithField("guild", guildID).Error("autorole failed removing role")
+		}
+		if disabled {
+			logger.Info("removeRole returned disabled=true")
+			return true
+		}
+		*rolesAssigned += 1
+	}
+	err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanRemovedRoles(guildID), "100", fmt.Sprintf("%d out of %d", *rolesAssigned, totalMembers)))
+	if err != nil {
+		logger.WithError(err).Error("failed setting roles removed count")
 	}
 	return isFullScanCancelled(guildID)
 }
@@ -419,8 +611,51 @@ func assignFullScanAutorole(guildID int64, config *GeneralConfig) {
 			}
 		}
 	}
-	logger.WithField("guild", guildID).Info("Autorole full scan completed")
+	logger.WithField("guild", guildID).Info("Autorole full scan completed for adding roles")
 	err = common.RedisPool.Do(radix.Cmd(nil, "DEL", RedisKeyFullScanStatus(guildID), RedisKeyFullScanAutoroleMembers(guildID), RedisKeyFullScanAssignedRoles(guildID)))
+	if err != nil {
+		logger.WithError(err).Error("Failed deleting the full scan related keys from redis")
+	}
+}
+
+func removeFullScanAutorole(guildID int64, config *GeneralConfig) {
+	lastTimeFullScanStatusRefreshed := time.Now()
+	err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanRemoveStatus(guildID), "100", strconv.Itoa(FullScanRemovingRole)))
+	if err != nil {
+		logger.WithError(err).Error("failed marking Full scan removing role")
+	}
+
+	var totalMembers int
+	err = common.RedisPool.Do(radix.Cmd(&totalMembers, "ZCOUNT", RedisKeyFullScanRemoveAutoroleMembers(guildID), "-inf", "+inf"))
+	if err != nil {
+		logger.WithError(err).Error("failed getting count of total members")
+	}
+
+	rolesAssigned := 0
+	for {
+		assignmentDone := handleRemoveFullScanRole(guildID, config, &rolesAssigned, totalMembers)
+		if assignmentDone {
+			break
+		}
+
+		// Sleep for 1 second to prevent hitting discord's rate limits
+		time.Sleep(time.Second * 1)
+
+		if isFullScanCancelled(guildID) {
+			stopFullScan(guildID)
+			return
+		}
+
+		if time.Since(lastTimeFullScanStatusRefreshed) > time.Second*50 {
+			lastTimeFullScanStatusRefreshed = time.Now()
+			err := common.RedisPool.Do(radix.Cmd(nil, "SETEX", RedisKeyFullScanRemoveStatus(guildID), "100", strconv.Itoa(FullScanRemovingRole)))
+			if err != nil {
+				logger.WithError(err).Error("Failed refreshing Full scan assigning role")
+			}
+		}
+	}
+	logger.WithField("guild", guildID).Info("Autorole full scan completed for removing roles")
+	err = common.RedisPool.Do(radix.Cmd(nil, "DEL", RedisKeyFullScanRemoveStatus(guildID), RedisKeyFullScanRemoveAutoroleMembers(guildID), RedisKeyFullScanRemovedRoles(guildID)))
 	if err != nil {
 		logger.WithError(err).Error("Failed deleting the full scan related keys from redis")
 	}
@@ -484,6 +719,49 @@ func handleAssignRole(evt *scheduledEventsModels.ScheduledEvent, data interface{
 	return retry, err
 }
 
+func handleRemoveRole(evt *scheduledEventsModels.ScheduledEvent, data interface{}) (retry bool, err error) {
+	config, err := GetGeneralConfig(evt.GuildID)
+	if err != nil {
+		return true, nil
+	}
+
+	if config.RemoveRole == 0 {
+		// settings changed after they joined
+		return false, nil
+	}
+
+	dataCast := data.(*removeRoleEventdata)
+
+	member, err := bot.GetMember(evt.GuildID, dataCast.UserID)
+	if err != nil {
+		if common.IsDiscordErr(err, discordgo.ErrCodeUnknownMember) {
+			return false, nil
+		}
+
+		return bot.CheckDiscordErrRetry(err), err
+	}
+
+	parsedT, _ := member.Member.JoinedAt.Parse()
+	memberDuration := time.Since(parsedT)
+	if memberDuration < time.Duration(config.RequiredDuration)*time.Minute {
+		// settings may have been changed, re-schedule
+
+		err = scheduledevents2.ScheduleEvent("autorole_remove_role", evt.GuildID,
+			time.Now().Add(time.Minute*time.Duration(config.RequiredDuration)), &removeRoleEventdata{UserID: dataCast.UserID})
+		return bot.CheckDiscordErrRetry(err), err
+	}
+
+	if !config.CanAssignTo(member.Member.Roles, parsedT) {
+		// some other reason they can't get the role, such as whitelist or ignore roles
+		return false, nil
+	}
+
+	go analytics.RecordActiveUnit(evt.GuildID, &Plugin{}, "removed_role")
+
+	_, retry, err = removeRole(config, evt.GuildID, dataCast.UserID)
+	return retry, err
+}
+
 func handleGuildMemberUpdate(evt *eventsystem.EventData) (retry bool, err error) {
 	update := evt.GuildMemberUpdate()
 
@@ -501,6 +779,10 @@ func handleGuildMemberUpdate(evt *eventsystem.EventData) (retry bool, err error)
 	config, err := GuildCacheGetGeneralConfig(update.GuildID)
 	if err != nil {
 		return true, errors.WithStackIf(err)
+	}
+
+	if config.IgnoreBots && update.User.Bot {
+		return false, nil
 	}
 
 	if config.AssignRoleAfterScreening {
@@ -527,11 +809,29 @@ func handleGuildMemberUpdate(evt *eventsystem.EventData) (retry bool, err error)
 		}
 	}
 
-	if config.Role == 0 || config.OnlyOnJoin || evt.GS.GetRole(config.Role) == nil {
+	if (config.Role == 0 && config.RemoveRole == 0) || config.OnlyOnJoin || (evt.GS.GetRole(config.Role) == nil && evt.GS.GetRole(config.RemoveRole) == nil) {
 		return false, nil
 	}
 
-	if common.ContainsInt64Slice(update.Member.Roles, config.Role) {
+	var response *discordgo.GuildAuditLog
+	var responseChangesKey discordgo.AuditLogChangeKey
+	response, _ = common.BotSession.GuildAuditLog(update.GuildID, 0, 0, int(discordgo.AuditLogActionMemberRoleUpdate), 1)
+	if response != nil {
+		responseChangesKey = *response.AuditLogEntries[0].Changes[0].Key
+	}
+
+	if !(config.Role > 0 && config.RemoveRole > 0) {
+		if responseChangesKey == discordgo.AuditLogChangeKeyRoleAdd &&
+			config.Role > 0 &&
+			common.ContainsInt64Slice(update.Member.Roles, config.Role) {
+			return false, nil
+
+		} else if responseChangesKey == discordgo.AuditLogChangeKeyRoleRemove &&
+			config.RemoveRole > 0 &&
+			!common.ContainsInt64Slice(update.Member.Roles, config.RemoveRole) {
+			return false, nil
+		}
+	} else if common.ContainsInt64Slice(update.Member.Roles, config.Role) && !common.ContainsInt64Slice(update.Member.Roles, config.RemoveRole) {
 		return false, nil
 	}
 
@@ -555,7 +855,21 @@ func handleGuildMemberUpdate(evt *eventsystem.EventData) (retry bool, err error)
 
 	go analytics.RecordActiveUnit(update.GuildID, &Plugin{}, "assigned_role")
 
+	go analytics.RecordActiveUnit(update.GuildID, &Plugin{}, "removed_role")
+
 	// if we branched here then all the checks passed and they should be assigned the role
-	_, retry, err = assignRole(config, update.GuildID, update.User.ID)
+	var retryAssign, retryRemove bool
+
+	if config.Role != 0 {
+		_, retryAssign, err = assignRole(config, update.GuildID, update.User.ID)
+	}
+	if config.RemoveRole != 0 {
+		_, retryRemove, err = removeRole(config, update.GuildID, update.User.ID)
+	}
+
+	if retryAssign || retryRemove {
+		retry = true
+	}
+
 	return retry, err
 }

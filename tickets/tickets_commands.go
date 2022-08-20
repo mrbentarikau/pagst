@@ -162,7 +162,9 @@ func (p *Plugin) AddCommands() {
 				return nil, err
 			}
 
-			_, err = common.BotSession.ChannelEdit(currentTicket.Ticket.ChannelID, fmt.Sprintf("#%d-%s", currentTicket.Ticket.LocalID, newName))
+			channelEdit := &discordgo.ChannelEdit{Name: fmt.Sprintf("#%d-%s", currentTicket.Ticket.LocalID, newName)}
+
+			_, err = common.BotSession.ChannelEdit(currentTicket.Ticket.ChannelID, channelEdit)
 			if err != nil {
 				return nil, err
 			}

@@ -19,7 +19,8 @@ type Condition interface {
 /////////////////////////////////////////////////////////////////
 
 type MemberRolesConditionData struct {
-	Roles []int64
+	Roles           []int64
+	RequireAllRoles bool
 }
 
 var _ Condition = (*MemberRolesCondition)(nil)
@@ -53,27 +54,45 @@ func (mrc *MemberRolesCondition) Description() string {
 }
 
 func (mrc *MemberRolesCondition) UserSettings() []*SettingDef {
-	return []*SettingDef{
-		{
+	settings := []*SettingDef{
+		&SettingDef{
 			Name: "Roles",
 			Key:  "Roles",
 			Kind: SettingTypeMultiRole,
 		},
 	}
+	if !mrc.Blacklist {
+		settings = append(settings, &SettingDef{
+			Name:    "Require all selected roles",
+			Key:     "RequireAllRoles",
+			Kind:    SettingTypeBool,
+			Default: false,
+		})
+	}
+	return settings
 }
 
 func (mrc *MemberRolesCondition) IsMet(data *TriggeredRuleData, settings interface{}) (bool, error) {
 	settingsCast := settings.(*MemberRolesConditionData)
+	var allRolesPresent bool
 	for _, r := range settingsCast.Roles {
 		if common.ContainsInt64Slice(data.MS.Member.Roles, r) {
 			if mrc.Blacklist {
 				// Had a blacklist role, this condition is not met
 				return false, nil
-			} else {
+			} else if !settingsCast.RequireAllRoles {
 				// Had a whitelist role, this condition is met
 				return true, nil
 			}
+			allRolesPresent = true
+		} else if settingsCast.RequireAllRoles {
+			// One of the required roles is not present for the member
+			return false, nil
 		}
+	}
+
+	if allRolesPresent {
+		return true, nil
 	}
 
 	if mrc.Blacklist {
@@ -115,6 +134,7 @@ var _ Condition = (*ChannelsCondition)(nil)
 
 type ChannelsCondition struct {
 	Blacklist bool // if true, then blacklist mode, otherwise whitelist mode
+	Threads   bool // if true, then focus on threads
 }
 
 func (cd *ChannelsCondition) Kind() RulePartType {
@@ -126,6 +146,14 @@ func (cd *ChannelsCondition) DataType() interface{} {
 }
 
 func (cd *ChannelsCondition) Name() string {
+	if cd.Threads {
+		if cd.Blacklist {
+			return "Ignore threads"
+		}
+
+		return "Active in threads"
+	}
+
 	if cd.Blacklist {
 		return "Ignore channels"
 	}
@@ -134,6 +162,14 @@ func (cd *ChannelsCondition) Name() string {
 }
 
 func (cd *ChannelsCondition) Description() string {
+	if cd.Threads {
+		if cd.Blacklist {
+			return "Ignore threads"
+		}
+
+		return "Only check threads"
+	}
+
 	if cd.Blacklist {
 		return "Ignore the following channels"
 	}
@@ -142,6 +178,10 @@ func (cd *ChannelsCondition) Description() string {
 }
 
 func (cd *ChannelsCondition) UserSettings() []*SettingDef {
+	if cd.Threads {
+		return []*SettingDef{}
+	}
+
 	return []*SettingDef{
 		{
 			Name: "Channels",
@@ -154,6 +194,16 @@ func (cd *ChannelsCondition) UserSettings() []*SettingDef {
 func (cd *ChannelsCondition) IsMet(data *TriggeredRuleData, settings interface{}) (bool, error) {
 	settingsCast := settings.(*ChannelsConditionData)
 	if data.CS == nil {
+		return true, nil
+	}
+
+	if cd.Threads && data.CS.Type.IsThread() {
+		if cd.Blacklist {
+			// Blacklisted thread
+			return false, nil
+		}
+
+		// Whitelisted thread
 		return true, nil
 	}
 

@@ -23,6 +23,8 @@ import (
 	"github.com/mrbentarikau/pagst/lib/template"
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var (
@@ -51,7 +53,7 @@ var (
 		"printf":      withOutputLimitf(fmt.Sprintf, MaxStringLength),
 		"slice":       slice,
 		"split":       strings.Split,
-		"title":       strings.Title,
+		"title":       cases.Title(language.Und).String,
 		"trim":        trimString(""),
 		"trimLeft":    trimString("left"),
 		"trimRight":   trimString("right"),
@@ -113,6 +115,7 @@ var (
 		"in":                 in,
 		"inFold":             inFold,
 		"json":               tmplJson,
+		"jsonToSdict":        tmplJsonToSDict,
 		"kindOf":             KindOf,
 		"noun":               common.RandomNoun,
 		"ordinalize":         tmplOrdinalize,
@@ -140,8 +143,6 @@ var (
 		"humanizeTimeSinceDays":   tmplHumanizeTimeSinceDays,
 
 		// testing grounds
-		//"getGuildIntegrations":   tmplGetGuildIntegrations,
-		//"guildMemberMove":   tmplGuildMemberMove,
 	}
 
 	contextSetupFuncs = []ContextSetupFunc{}
@@ -192,6 +193,8 @@ type Context struct {
 
 	IsExecedByLeaveMessage bool
 
+	IsExecedByEvalCC bool
+
 	contextFuncsAdded bool
 }
 
@@ -210,6 +213,7 @@ type ContextFrame struct {
 
 	isNestedTemplate bool
 	parsedTemplate   *template.Template
+
 	SendResponseInDM bool
 }
 
@@ -339,6 +343,9 @@ func (c *Context) Parse(source string) (*template.Template, error) {
 const (
 	MaxOpsNormal  = 1000000
 	MaxOpsPremium = 2500000
+
+	MaxOpsEvalNormal  = 10000
+	MaxOpsEvalPremium = 25000
 )
 
 func (c *Context) Execute(source string) (string, error) {
@@ -381,8 +388,14 @@ func (c *Context) executeParsed() (string, error) {
 
 	if c.IsPremium {
 		parsed = parsed.MaxOps(MaxOpsPremium)
+		if c.IsExecedByEvalCC {
+			parsed = parsed.MaxOps(MaxOpsEvalPremium)
+		}
 	} else {
 		parsed = parsed.MaxOps(MaxOpsNormal)
+		if c.IsExecedByEvalCC {
+			parsed = parsed.MaxOps(MaxOpsEvalNormal)
+		}
 	}
 
 	var buf bytes.Buffer
@@ -429,7 +442,7 @@ func (c *Context) ExecuteAndSendWithErrors(source string, channelID int64) error
 	// deal with the results
 	if err != nil {
 		logger.WithField("guild", c.GS.ID).WithError(err).Error("Error executing template: " + c.Name)
-		out += "\nAn error caused the execution of the custom command template to stop:\n"
+		out += "\nAn error caused the execution of the custom command " + c.Name + " template to stop:\n"
 		out += "`" + err.Error() + "`"
 	}
 
@@ -506,20 +519,41 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
 	if err != nil {
-		/*KRAAKA that error printout!!!*/
-		common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(fmt.Sprint(err)))
-		logger.WithError(err).Error("Failed sending message")
+		/* KRAAKA that error printout!!! */
+		logger.WithField("guild", c.GS.ID).WithError(err).Error("Error sending message: " + c.Name)
+		errOut := "\nA response-level error caused the execution of the custom command " + c.Name + " template to stop:\n"
+		errOut += "`" + err.Error() + "`"
+		common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(fmt.Sprint(errOut)))
 	} else {
 		if c.CurrentFrame.DelResponse {
 			MaybeScheduledDeleteMessage(c.GS.ID, channelID, m.ID, c.CurrentFrame.DelResponseDelay)
 		}
 
 		if len(c.CurrentFrame.AddResponseReactionNames) > 0 {
+			//goErrs := make(chan error, 1)
 			go func(frame *ContextFrame) {
 				for _, v := range frame.AddResponseReactionNames {
 					common.BotSession.MessageReactionAdd(m.ChannelID, m.ID, v)
+					// failed response reacts err
+					//err = common.BotSession.MessageReactionAdd(m.ChannelID, m.ID, v)
+					/*if err != nil {
+						goErrs <- err
+
+						logger.WithField("guild", c.GS.ID).WithError(err).Error("Error executing template response: " + c.Name)
+
+						errOut := "\nAn error caused the execution of the custom command " + c.Name + " template to send response:\n"
+						errOut += "`" + err.Error() + "`"
+						common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(errOut))
+						break
+					}*/
 				}
+				//close(goErrs)
 			}(c.CurrentFrame)
+
+			/*goErr:= <-goErrs
+			if goErr != nil {
+				return m, errors.New(fmt.Sprint(goErr))
+			}*/
 		}
 	}
 
@@ -557,6 +591,9 @@ func (c *Context) IncreaseCheckCallCounterPremium(key string, normalLimit, premi
 }
 
 func (c *Context) IncreaseCheckGenericAPICall() bool {
+	if c.IsExecedByEvalCC {
+		return c.IncreaseCheckCallCounter("api_call", 20)
+	}
 	return c.IncreaseCheckCallCounter("api_call", 100)
 }
 
@@ -658,13 +695,13 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
 	c.addContextFunc("getMember", c.tmplGetMember)
 	c.addContextFunc("getMessage", c.tmplGetMessage)
-	c.addContextFunc("getThread", c.tmplGetThread)
 	c.addContextFunc("getPinCount", c.tmplGetChannelPins(true))
+	c.addContextFunc("getThread", c.tmplGetThread)
 	c.addContextFunc("setMemberTimeout", c.tmplSetMemberTimeout)
 
-	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
 	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman)
 	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes)
+	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
 	c.addContextFunc("reFind", c.reFind)
 	c.addContextFunc("reFindAll", c.reFindAll)
 	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches)
@@ -684,7 +721,13 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("sort", c.tmplSort)
 
 	// testing grounds
-	c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
+	/*
+		c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
+		c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
+		c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
+		c.addContextFunc("getUser", c.tmplGetUser)
+		c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
+	*/
 }
 
 type limitedWriter struct {
@@ -880,6 +923,33 @@ func (d SDict) HasKey(k string) (ok bool) {
 }
 
 type Slice []interface{}
+
+/* testing ground
+func (s Slice) String() string {
+	fromStringSlice := make([]string, 0, len(s))
+
+	for _, Sliceval := range s {
+		switch t := Sliceval.(type) {
+		case string:
+			fromStringSlice = append(fromStringSlice, t)
+		case fmt.Stringer:
+			fromStringSlice = append(fromStringSlice, t.String())
+		case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+			fromStringSlice = append(fromStringSlice, ToString(t))
+		default:
+			fromStringSlice = append(fromStringSlice, fmt.Sprintf("%+v", t))
+		}
+	}
+
+	// stringSlice := make([]string, 0, len(s))
+	// for _, v := range s {
+	// 	stringSlice = append(stringSlice, fmt.Sprintf("%v", v))
+	// }
+	//stringSlice = append(stringSlice, fromStringSlice...)
+
+	return strings.Join(fromStringSlice, " ")
+}
+*/
 
 func (s Slice) Append(item interface{}) (interface{}, error) {
 	if len(s)+1 > 10000 {

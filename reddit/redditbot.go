@@ -71,7 +71,7 @@ func (p *Plugin) StopFeed(wg *sync.WaitGroup) {
 }
 
 func UserAgent() string {
-	return fmt.Sprintf("PAGSTDB:%s:%s (by /u/caubert)", confClientID.GetString(), common.VERSION)
+	return fmt.Sprintf("%s:%s:%s (by /u/caubert)", common.ConfBotName.GetString(), confClientID.GetString(), common.VERSION)
 }
 
 func setupClient() *reddit.Client {

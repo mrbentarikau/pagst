@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -42,42 +43,84 @@ var (
 type GatewayIntent int
 
 const (
-	GatewayIntentGuilds                 GatewayIntent = 1 << 0
-	GatewayIntentGuildMembers           GatewayIntent = 1 << 1
-	GatewayIntentGuildBans              GatewayIntent = 1 << 2
-	GatewayIntentGuildEmojis            GatewayIntent = 1 << 3
-	GatewayIntentGuildIntegrations      GatewayIntent = 1 << 4
-	GatewayIntentGuildWebhooks          GatewayIntent = 1 << 5
-	GatewayIntentGuildInvites           GatewayIntent = 1 << 6
-	GatewayIntentGuildVoiceStates       GatewayIntent = 1 << 7
-	GatewayIntentGuildPresences         GatewayIntent = 1 << 8
-	GatewayIntentGuildMessages          GatewayIntent = 1 << 9
-	GatewayIntentGuildMessageReactions  GatewayIntent = 1 << 10
-	GatewayIntentGuildMessageTyping     GatewayIntent = 1 << 11
-	GatewayIntentDirectMessages         GatewayIntent = 1 << 12
+	GatewayIntentGuilds GatewayIntent = 1 << 0
+	// - GUILD_CREATE
+	// - GUILD_UPDATE
+	// - GUILD_DELETE
+	// - GUILD_ROLE_CREATE
+	// - GUILD_ROLE_UPDATE
+	// - GUILD_ROLE_DELETE
+	// - CHANNEL_CREATE
+	// - CHANNEL_UPDATE
+	// - CHANNEL_DELETE
+	// - CHANNEL_PINS_UPDATE
+
+	GatewayIntentGuildMembers GatewayIntent = 1 << 1
+	// - GUILD_MEMBER_ADD
+	// - GUILD_MEMBER_UPDATE
+	// - GUILD_MEMBER_REMOVE
+
+	GatewayIntentGuildBans GatewayIntent = 1 << 2
+	// - GUILD_BAN_ADD
+	// - GUILD_BAN_REMOVE
+
+	GatewayIntentGuildEmojis GatewayIntent = 1 << 3
+	// - GUILD_EMOJIS_UPDATE
+
+	GatewayIntentGuildIntegrations GatewayIntent = 1 << 4
+	// - GUILD_INTEGRATIONS_UPDATE
+
+	GatewayIntentGuildWebhooks GatewayIntent = 1 << 5
+	// - WEBHOOKS_UPDATE
+
+	GatewayIntentGuildInvites GatewayIntent = 1 << 6
+	// - INVITE_CREATE
+	// - INVITE_DELETE
+
+	GatewayIntentGuildVoiceStates GatewayIntent = 1 << 7
+	// - VOICE_STATE_UPDATE
+
+	GatewayIntentGuildPresences GatewayIntent = 1 << 8
+	// - PRESENCE_UPDATE
+
+	GatewayIntentGuildMessages GatewayIntent = 1 << 9
+	// - MESSAGE_CREATE
+	// - MESSAGE_UPDATE
+	// - MESSAGE_DELETE
+	// - MESSAGE_DELETE_BULK
+
+	GatewayIntentGuildMessageReactions GatewayIntent = 1 << 10
+	// - MESSAGE_REACTION_ADD
+	// - MESSAGE_REACTION_REMOVE
+	// - MESSAGE_REACTION_REMOVE_ALL
+	// - MESSAGE_REACTION_REMOVE_EMOJI
+
+	GatewayIntentGuildMessageTyping GatewayIntent = 1 << 11
+	// - TYPING_START
+
+	GatewayIntentDirectMessages GatewayIntent = 1 << 12
+	// - CHANNEL_CREATE
+	// - MESSAGE_CREATE
+	// - MESSAGE_UPDATE
+	// - MESSAGE_DELETE
+	// - CHANNEL_PINS_UPDATE
+
 	GatewayIntentDirectMessageReactions GatewayIntent = 1 << 13
-	GatewayIntentDirectMessageTyping    GatewayIntent = 1 << 14
-	GatewayIntentMessageContent         GatewayIntent = 1 << 15
-	GatewayIntentGuildScheduledEvents   GatewayIntent = 1 << 16
-	/*
-		GatewayIntentsGuilds                 GatewayIntent = 1 << 0
-		GatewayIntentsGuildMembers           GatewayIntent = 1 << 1
-		GatewayIntentsGuildBans              GatewayIntent = 1 << 2
-		GatewayIntentsGuildEmojis            GatewayIntent = 1 << 3
-		GatewayIntentsGuildIntegrations      GatewayIntent = 1 << 4
-		GatewayIntentsGuildWebhooks          GatewayIntent = 1 << 5
-		GatewayIntentsGuildInvites           GatewayIntent = 1 << 6
-		GatewayIntentsGuildVoiceStates       GatewayIntent = 1 << 7
-		GatewayIntentsGuildPresences         GatewayIntent = 1 << 8
-		GatewayIntentsGuildMessages          GatewayIntent = 1 << 9
-		GatewayIntentsGuildMessageReactions  GatewayIntent = 1 << 10
-		GatewayIntentsGuildMessageTyping     GatewayIntent = 1 << 11
-		GatewayIntentsDirectMessages         GatewayIntent = 1 << 12
-		GatewayIntentsDirectMessageReactions GatewayIntent = 1 << 13
-		GatewayIntentsDirectMessageTyping    GatewayIntent = 1 << 14
-		GatewayIntentsMessageContent         GatewayIntent = 1 << 15
-		GatewayIntentsGuildScheduledEvents   GatewayIntent = 1 << 16
-	*/
+	// - MESSAGE_REACTION_ADD
+	// - MESSAGE_REACTION_REMOVE
+	// - MESSAGE_REACTION_REMOVE_ALL
+	// - MESSAGE_REACTION_REMOVE_EMOJI
+
+	GatewayIntentDirectMessageTyping GatewayIntent = 1 << 14
+	// - TYPING_START
+
+	GatewayIntentMessageContent GatewayIntent = 1 << 15
+
+	GatewayIntentGuildScheduledEvents        GatewayIntent = 1 << 16
+	GatewayIntentAutoModerationConfiguration GatewayIntent = 1 << 20
+	GatewayIntentAutoModerationExecution     GatewayIntent = 1 << 21
+
+	/* old stuff */
 	GatewayIntentsAllWithoutPrivileged = GatewayIntentGuilds |
 		GatewayIntentGuildBans |
 		GatewayIntentGuildEmojis |
@@ -99,77 +142,6 @@ const (
 		GatewayIntentMessageContent
 
 	GatewayIntentsNone GatewayIntent = 0
-	/*
-		GatewayIntentGuilds GatewayIntent = 1 << 0
-		// - GUILD_CREATE
-		// - GUILD_UPDATE
-		// - GUILD_DELETE
-		// - GUILD_ROLE_CREATE
-		// - GUILD_ROLE_UPDATE
-		// - GUILD_ROLE_DELETE
-		// - CHANNEL_CREATE
-		// - CHANNEL_UPDATE
-		// - CHANNEL_DELETE
-		// - CHANNEL_PINS_UPDATE
-
-		GatewayIntentGuildMembers GatewayIntent = 1 << 1
-		// - GUILD_MEMBER_ADD
-		// - GUILD_MEMBER_UPDATE
-		// - GUILD_MEMBER_REMOVE
-
-		GatewayIntentGuildBans GatewayIntent = 1 << 2
-		// - GUILD_BAN_ADD
-		// - GUILD_BAN_REMOVE
-
-		GatewayIntentGuildEmojis GatewayIntent = 1 << 3
-		// - GUILD_EMOJIS_UPDATE
-
-		GatewayIntentGuildIntegrations GatewayIntent = 1 << 4
-		// - GUILD_INTEGRATIONS_UPDATE
-
-		GatewayIntentGuildWebhooks GatewayIntent = 1 << 5
-		// - WEBHOOKS_UPDATE
-
-		GatewayIntentGuildInvites GatewayIntent = 1 << 6
-		// - INVITE_CREATE
-		// - INVITE_DELETE
-
-		GatewayIntentGuildVoiceStates GatewayIntent = 1 << 7
-		// - VOICE_STATE_UPDATE
-
-		GatewayIntentGuildPresences GatewayIntent = 1 << 8
-		// - PRESENCE_UPDATE
-
-		GatewayIntentGuildMessages GatewayIntent = 1 << 9
-		// - MESSAGE_CREATE
-		// - MESSAGE_UPDATE
-		// - MESSAGE_DELETE
-		// - MESSAGE_DELETE_BULK
-
-		GatewayIntentGuildMessageReactions GatewayIntent = 1 << 10
-		// - MESSAGE_REACTION_ADD
-		// - MESSAGE_REACTION_REMOVE
-		// - MESSAGE_REACTION_REMOVE_ALL
-		// - MESSAGE_REACTION_REMOVE_EMOJI
-
-		GatewayIntentGuildMessageTyping GatewayIntent = 1 << 11
-		// - TYPING_START
-
-		GatewayIntentDirectMessages GatewayIntent = 1 << 12
-		// - CHANNEL_CREATE
-		// - MESSAGE_CREATE
-		// - MESSAGE_UPDATE
-		// - MESSAGE_DELETE
-		// - CHANNEL_PINS_UPDATE
-
-		GatewayIntentDirectMessageReactions GatewayIntent = 1 << 13
-		// - MESSAGE_REACTION_ADD
-		// - MESSAGE_REACTION_REMOVE
-		// - MESSAGE_REACTION_REMOVE_ALL
-		// - MESSAGE_REACTION_REMOVE_EMOJI
-
-		GatewayIntentDirectMessageTyping GatewayIntent = 1 << 14
-		// - TYPING_START*/
 )
 
 // max size of buffers before they're discarded (e.g after a big incmoing event)
@@ -271,25 +243,28 @@ type GatewayConnectionManager struct {
 	currentConnection *GatewayConnection
 	status            GatewayStatus
 
-	sessionID string
-	sequence  int64
+	sessionID        string
+	sequence         int64
+	resumeGatewayUrl string
 
 	idCounter int
 
 	errorStopReconnects error // set when an error occurs that should stop reconnects (such as bad token, and other things)
 }
 
-func (s *GatewayConnectionManager) SetSessionInfo(sessionID string, sequence int64) {
+func (s *GatewayConnectionManager) SetSessionInfo(sessionID string, sequence int64, resumeGatewayUrl string) {
 	s.mu.Lock()
 	s.sessionID = sessionID
 	s.sequence = sequence
+	s.resumeGatewayUrl = resumeGatewayUrl
 	s.mu.Unlock()
 }
 
-func (s *GatewayConnectionManager) GetSessionInfo() (sessionID string, sequence int64) {
+func (s *GatewayConnectionManager) GetSessionInfo() (sessionID string, sequence int64, resumeGatewayUrl string) {
 	s.mu.RLock()
 	sessionID = s.sessionID
 	sequence = s.sequence
+	resumeGatewayUrl = s.resumeGatewayUrl
 	s.mu.RUnlock()
 
 	return
@@ -346,7 +321,7 @@ func (g *GatewayConnectionManager) Open() error {
 	// Opening may be a long process, with ratelimiting and whatnot
 	// we wanna be able to query things like status in the meantime
 	g.mu.Unlock()
-	err := newConn.open(g.sessionID, g.sequence)
+	err := newConn.open(g.sessionID, g.sequence, g.resumeGatewayUrl)
 	g.mu.Lock()
 
 	g.currentConnection = newConn
@@ -452,10 +427,10 @@ type voiceChannelJoinData struct {
 
 // ChannelVoiceJoin joins the session user to a voice channel.
 //
-//    gID     : Guild ID of the channel to join.
-//    cID     : Channel ID of the channel to join.
-//    mute    : If true, you will be set to muted upon joining.
-//    deaf    : If true, you will be set to deafened upon joining.
+//	gID     : Guild ID of the channel to join.
+//	cID     : Channel ID of the channel to join.
+//	mute    : If true, you will be set to muted upon joining.
+//	deaf    : If true, you will be set to deafened upon joining.
 func (g *GatewayConnectionManager) ChannelVoiceJoin(gID, cID int64, mute, deaf bool) (voice *VoiceConnection, err error) {
 
 	g.session.log(LogInformational, "called")
@@ -667,6 +642,9 @@ type GatewayConnection struct {
 
 	// stores session ID of current Gateway connection
 	sessionID string
+
+	// stores url to resume connection
+	resumeGatewayUrl string
 
 	// This gets closed when the connection closes to signal all workers to stop
 	stopWorkers chan interface{}
@@ -911,7 +889,7 @@ func (g *GatewayConnection) Status() (st GatewayStatus) {
 }
 
 // Connect connects to the discord gateway and starts handling frames
-func (g *GatewayConnection) open(sessionID string, sequence int64) error {
+func (g *GatewayConnection) open(sessionID string, sequence int64, resumeGatewayUrl string) error {
 	g.mu.Lock()
 	if g.opened {
 		g.mu.Unlock()
@@ -922,7 +900,12 @@ func (g *GatewayConnection) open(sessionID string, sequence int64) error {
 	var err error
 
 	for {
-		conn, _, _, err = ws.Dial(context.TODO(), g.manager.gateway+"?v="+APIVersion+"&encoding=json&compress=zlib-stream")
+		gatewayUrl := g.manager.gateway
+		// if this is an intended resume, use the resume gateway url provided by discord
+		if sessionID != "" && resumeGatewayUrl != "" {
+			gatewayUrl = resumeGatewayUrl
+		}
+		conn, _, _, err = ws.Dial(context.TODO(), gatewayUrl+"?v="+APIVersion+"&encoding=json&compress=zlib-stream")
 		if err != nil {
 			if conn != nil {
 				conn.Close()
@@ -1300,11 +1283,17 @@ func (g *GatewayConnection) handleReady(r *Ready) {
 	g.mu.Lock()
 	g.sessionID = r.SessionID
 	g.status = GatewayStatusReady
+	g.resumeGatewayUrl = r.ResumeGatewayUrl
+	// Ensure the gatewayUrl always has a trailing slash.
+	// MacOS will fail to connect if we add query params without a trailing slash on the base domain.
+	if !strings.HasSuffix(g.resumeGatewayUrl, "/") {
+		g.resumeGatewayUrl += "/"
+	}
 	g.mu.Unlock()
 
 	g.writer.readyRecv <- true
 
-	g.manager.SetSessionInfo(r.SessionID, 0)
+	g.manager.SetSessionInfo(r.SessionID, 0, r.ResumeGatewayUrl)
 }
 
 func (g *GatewayConnection) handleResumed(r *Resumed) {

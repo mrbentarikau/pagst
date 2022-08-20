@@ -92,7 +92,14 @@ func cmdFuncEditRole(data *dcmd.Data) (interface{}, error) {
 	}
 
 	if change {
-		_, err := common.BotSession.GuildRoleEdit(data.GuildData.GS.ID, role.ID, name, color, hoisted, perms, mentionable)
+		roleParams := &discordgo.RoleParams{
+			Name:        name,
+			Color:       &color,
+			Hoist:       &hoisted,
+			Permissions: &perms,
+			Mentionable: &mentionable,
+		}
+		_, err := common.BotSession.GuildRoleEdit(data.GuildData.GS.ID, role.ID, roleParams)
 		if err != nil {
 			return nil, err
 		}

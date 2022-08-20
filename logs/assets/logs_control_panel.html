@@ -1,6 +1,12 @@
 {{define "cp_logging"}}
 {{template "cp_head" .}}
 
+<style>
+    .select-all-logs{
+        margin: 0.75rem;
+    }
+</style>
+
 <header class="page-header">
     <h2>Message and username/nickname logs</h2>
 </header>
@@ -30,6 +36,40 @@
                         method="post">
                         <button class="btn btn-default modal-dismiss">Cancel</button>
                         <button type="submit" class="btn btn-danger">Delete them all!</button>
+                    </form>
+                </div>
+            </div>
+        </footer>
+    </section>
+</div>
+
+<div id="delete-selected-message-logs-modal" class="modal-block modal-full-color modal-block-danger mfp-hide">
+    <section class="card">
+        <header class="card-header">
+            <h2 class="card-title">Danger!</h2>
+        </header>
+        <div class="card-body">
+            <div class="modal-wrapper">
+                <div class="modal-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="modal-body">
+                    <p id="checkid"></p>
+                </div>
+                <div class="modal-text">
+                    <h4>Delete selected message logs?</h4>
+                    <p>This cannot be undone.</p>
+                </div>
+            </div>
+        </div>
+        <footer class="card-footer">
+            <div class="row">
+                <div class="col-md-12 text-right">
+                    <form action="/manage/{{.ActiveGuild.ID}}/logging/delete_selected" data-async-form
+                        method="post">
+                        <input id="inputIDs" class="hidden" type="text" name="ids" value="" />
+                        <button class="btn btn-default modal-dismiss">Cancel</button>
+                        <button id="btn-delete-selected" type="submit" class="btn btn-danger" disabled>Delete selected!</button>
                     </form>
                 </div>
             </div>
@@ -101,13 +141,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
+                    <!--div class="row">
                         <div class="col">
                             <a class="mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#delete-all-message-logs-modal">
                                 Delete all logs
                             </a>
                         </div>
-                    </div>
+                    </div-->
                     <div class="row">
                         <div class="col-lg-12">
                             <button type="submit" class="btn btn-success btn-lg btn-block">Save All Settings</button>
@@ -127,9 +167,21 @@
                 </h2>
             </header>
             <div class="card-body">
+                <div class="row">
+                    <div class="col" style="margin-bottom: 15px;">
+                        <input type="checkbox" name="select-all-logs" class="select-all-logs" />
+                        <a class="selected-logs mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#delete-selected-message-logs-modal">
+                            Delete selected logs
+                        </a>
+                        <a class="mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#delete-all-message-logs-modal">
+                            Delete all logs
+                        </a>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table">
                         <tr>
+                            <th style="padding-right:0px">✓</th>
                             <th>ID</th>
                             <th>Created</th>
                             <th>Author</th>
@@ -139,6 +191,7 @@
                         {{$g := .ActiveGuild.ID}}
                         {{range .Logs}}
                         <tr>
+                            <td style="padding-right:0px"><input type="checkbox" id="{{.ID}}" name="logs-selected" value="{{.ID}}"></td>
                             <td>#{{.ID}}</td>
                             <td>{{formatTime .CreatedAt}}</td>
                             <td>{{.AuthorUsername}} ({{.AuthorID}})</td>
@@ -154,6 +207,16 @@
                         </tr>
                         {{end}}
                     </table>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <a class="selected-logs mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#delete-selected-message-logs-modal">
+                            Delete selected logs
+                        </a>
+                        <a class="mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#delete-all-message-logs-modal">
+                            Delete all logs
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="card-footer clearfix">
@@ -171,6 +234,37 @@
 
 {{template "cp_footer" .}}
 
+<script>
+$("input[name='select-all-logs']").click(function(event) {   
+    if(this.checked) {
+        // Iterate each checkbox
+        $("input[name='logs-selected']").each(function() {
+            this.checked = true;                        
+        });
+    } else {
+        $("input[name='logs-selected']").each(function() {
+            this.checked = false;                       
+        });
+    }
+}); 
+
+$(document).ready(function() {
+    $('.selected-logs').click(function() {
+      var selectedLogs = [];
+      $.each($("input[name='logs-selected']:checked"), function() {
+        selectedLogs.push($(this).val());
+      });
+
+      if (selectedLogs != "") {
+        $("#btn-delete-selected").attr("disabled",false);
+      }
+
+      selectedLogIDs = selectedLogs.join(", ");
+      $("#checkid").html("Selected log IDs: " + selectedLogIDs);
+      $("#inputIDs").val(selectedLogIDs);
+    });
+});
+</script>
 
 <script>
     function toggleAccessMode(accessMode) {

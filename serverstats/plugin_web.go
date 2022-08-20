@@ -86,7 +86,7 @@ func HandleStatsHtml(w http.ResponseWriter, r *http.Request, isPublicAccess bool
 
 	templateData["Config"] = config
 
-	if confDeprecated.GetBool() {
+	if confDeprecated.GetBool() || (!confDeprecated.GetBool() && activeGuild.MemberCount > 500) {
 		templateData.AddAlerts(web.WarningAlert("Serverstats are deprecated in favor of the superior discord server insights. Recording of new stats may stop at any time and stats will no longer be available next month."))
 	}
 

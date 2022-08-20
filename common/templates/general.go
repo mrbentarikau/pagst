@@ -279,27 +279,27 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			msg.AllowedMentions = *parsed
 		case "reply":
 			if val == nil {
 				continue
 			}
-			reference := &discordgo.MessageReference{
-				MessageID: ToInt64(val),
+
+			mID := ToInt64(val)
+			if mID <= 0 {
+				return nil, fmt.Errorf("invalid message reference ID %v", val)
 			}
-			msg.Reference = reference
+
+			msg.Reference = &discordgo.MessageReference{
+				MessageID: mID,
+			}
 		default:
 			return nil, errors.New(`invalid key "` + key + `" passed to send message builder`)
 		}
-
-		if msg.File != nil {
-			// We hardcode the extension to .txt to prevent possible abuse via .bat or other possible harmful/easily corruptable file formats
-			msg.File.Name = filename + ".txt"
-		}
-
 	}
 	if msg.File != nil {
-		// We hardcode the extension to .txt to prevent possible abuse via .bat or other possible harmful/easily corruptable file formats
+		// We hardcode the extension to .txt to prevent possible abuse via .bat or other possible harmful/easily corruptible file formats
 		msg.File.Name = filename + ".txt"
 	}
 
@@ -352,6 +352,16 @@ func CreateMessageEdit(values ...interface{}) (*discordgo.MessageEdit, error) {
 				}
 				msg.Embeds = []*discordgo.MessageEmbed{embed}
 			}
+		case "allowed_mentions":
+			if val == nil {
+				msg.AllowedMentions = discordgo.AllowedMentions{}
+				continue
+			}
+			parsed, err := parseAllowedMentions(val)
+			if err != nil {
+				return nil, err
+			}
+			msg.AllowedMentions = *parsed
 		default:
 			return nil, errors.New(`invalid key "` + key + `" passed to message edit builder`)
 		}
@@ -379,54 +389,100 @@ func parseAllowedMentions(Data interface{}) (*discordgo.AllowedMentions, error) 
 		case "parse":
 			var parseMentions []discordgo.AllowedMentionType
 			var parseSlice Slice
-			conv, err := parseSlice.AppendSlice(v)
-			if err != nil {
-				return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "Parse"`)
-			}
-			for _, elem := range conv.(Slice) {
-				elem_conv, _ := elem.(string)
-				if elem_conv != "users" && elem_conv != "roles" && elem_conv != "everyone" {
-					return nil, errors.New(`Allowed Mentions Parsing: invalid slice element in "Parse"`)
+
+			switch v.(type) {
+			case Slice, *Slice:
+				conv, err := parseSlice.AppendSlice(v)
+				if err != nil {
+					return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "parse"`)
 				}
-				parseMentions = append(parseMentions, discordgo.AllowedMentionType(elem_conv))
+				for _, elem := range conv.(Slice) {
+					elemConv, _ := elem.(string)
+					if elemConv != "users" && elemConv != "roles" && elemConv != "everyone" {
+						return nil, errors.New(`Allowed Mentions Parsing: invalid slice element in "parse"`)
+					}
+					parseMentions = append(parseMentions, discordgo.AllowedMentionType(elemConv))
+				}
+				allowedMentions.Parse = parseMentions
+			default:
+				if v.(string) != "users" && v.(string) != "roles" && v.(string) != "everyone" {
+					return nil, errors.New(`Allowed Mentions Parsing: invalid element for "Parse"`)
+				}
+
+				parseMentions = append(parseMentions, discordgo.AllowedMentionType(v.(string)))
+				allowedMentions.Parse = parseMentions
 			}
-			allowedMentions.Parse = parseMentions
+
 		case "users":
 			var newslice discordgo.IDSlice
 			var parseSlice Slice
-			conv, err := parseSlice.AppendSlice(v)
-			if err != nil {
-				return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "Users"`)
-			}
-			for _, elem := range conv.(Slice) {
-				if (ToInt64(elem)) == 0 {
-					return nil, errors.New(`Allowed Mentions Parsing: "Users" IDSlice: invalid ID passed-` + ToString(elem))
+
+			switch v.(type) {
+			case Slice, *Slice:
+				conv, err := parseSlice.AppendSlice(v)
+				if err != nil {
+					return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "Users"`)
 				}
-				newslice = append(newslice, ToInt64(elem))
+				for _, elem := range conv.(Slice) {
+					if ToInt64(elem) == 0 {
+						return nil, errors.New(`Allowed Mentions Parsing: "users" IDSlice: invalid ID passed-` + ToString(elem))
+					}
+					newslice = append(newslice, ToInt64(elem))
+				}
+				if len(newslice) > 100 {
+					newslice = newslice[:100]
+				}
+				allowedMentions.Users = newslice
+			default:
+				if ToInt64(v) == 0 {
+					return nil, errors.New(`Allowed Mentions Parsing: "users" IDSlice: invalid ID passed-` + ToString(v))
+				}
+
+				newslice = append(newslice, ToInt64(v))
+				allowedMentions.Users = newslice
 			}
-			if len(newslice) > 100 {
-				newslice = newslice[:100]
-			}
-			allowedMentions.Users = newslice
+
 		case "roles":
 			var newslice discordgo.IDSlice
 			var parseSlice Slice
-			conv, err := parseSlice.AppendSlice(v)
-			if err != nil {
-				return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "Roles"`)
-			}
-			for _, elem := range conv.(Slice) {
-				if (ToInt64(elem)) == 0 {
-					return nil, errors.New(`Allowed Mentions Parsing: "Roles" IDSlice: invalid ID passed-` + ToString(elem))
+
+			switch v.(type) {
+			case Slice, *Slice:
+				conv, err := parseSlice.AppendSlice(v)
+				if err != nil {
+					return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "roles"`)
 				}
-				newslice = append(newslice, ToInt64(elem))
+				for _, elem := range conv.(Slice) {
+					if (ToInt64(elem)) == 0 {
+						return nil, errors.New(`Allowed Mentions Parsing: "roles" IDSlice: invalid ID passed-` + ToString(elem))
+					}
+					newslice = append(newslice, ToInt64(elem))
+				}
+				if len(newslice) > 100 {
+					newslice = newslice[:100]
+				}
+				allowedMentions.Roles = newslice
+			default:
+				if (ToInt64(v)) == 0 {
+					return nil, errors.New(`Allowed Mentions Parsing: "roles" IDSlice: invalid ID passed-` + ToString(v))
+				}
+
+				newslice = append(newslice, ToInt64(v))
+				allowedMentions.Roles = newslice
 			}
-			if len(newslice) > 100 {
-				newslice = newslice[:100]
+
+		case "reply":
+			switch v := v.(type) {
+			case bool:
+				if v {
+					allowedMentions.RepliedUser = true
+				}
+			default:
+				return nil, errors.New(`Allowed Mentions Parsing: "reply" not a bool: ` + ToString(v))
 			}
-			allowedMentions.Roles = newslice
+
 		default:
-			return nil, errors.New(`Allowed Mentios Parsing : invalid key "` + k + `" for Allowed Mentions`)
+			return nil, errors.New(`Allowed Mentions Parsing : invalid key "` + k + `" for Allowed Mentions`)
 		}
 	}
 
@@ -831,8 +887,10 @@ func tmplMin(argX, argY interface{}) float64 {
 	return math.Min(xySlice[0], xySlice[1])
 }
 
-/*tmplLog is a function for templates using (log base of x = logarithm) as return value.
-It is using natural logarithm as default to change the base.*/
+/*
+tmplLog is a function for templates using (log base of x = logarithm) as return value.
+It is using natural logarithm as default to change the base.
+*/
 func tmplLog(arguments ...interface{}) (float64, error) {
 	var x, base, logarithm float64
 
@@ -858,7 +916,7 @@ func tmplLog(arguments ...interface{}) (float64, error) {
 	return logarithm, nil
 }
 
-//tmplHumanizeThousands comma separates thousands
+// tmplHumanizeThousands comma separates thousands
 func tmplHumanizeThousands(input interface{}, dot ...bool) string {
 	var f1, f2 string
 	separator := ","
@@ -890,7 +948,7 @@ func tmplHumanizeThousands(input interface{}, dot ...bool) string {
 	return f2
 }
 
-//tmplOrdinalize gives you English ordinal numbers
+// tmplOrdinalize gives you English ordinal numbers
 func tmplOrdinalize(input interface{}) string {
 	var ordinal string
 	i := tmplToInt(input)
@@ -1402,6 +1460,16 @@ func tmplJson(v interface{}) (string, error) {
 	return string(b), nil
 }
 
+func tmplJsonToSDict(v interface{}) (SDict, error) {
+	var toSdict SDict
+	err := json.Unmarshal([]byte(v.(string)), &toSdict)
+	if err != nil {
+		return nil, err
+	}
+
+	return toSdict, nil
+}
+
 func tmplFormatTime(t time.Time, args ...string) string {
 	layout := time.RFC822
 	if len(args) > 0 {
@@ -1440,7 +1508,6 @@ func callVariadic(f variadicFunc, skipNil bool, values ...reflect.Value) (reflec
 			vs = append(vs, v)
 		}
 	}
-
 	return f(vs)
 }
 

@@ -134,33 +134,18 @@ type IntegrationAccount struct {
 
 // IntegrationApplication https://discord.com/developers/docs/resources/guild#integration-application-object
 type IntegrationApplication struct {
-	ID          int64  `json:"id,string"`
-	Name        string `json:"name"`
-	Icon        string `json:"icon"`
-	Description string `json:"description"`
-	Summary     string `json:"summary"`
-	Bot         *User  `json:"bot"`
+	ID   int64  `json:"id,string"`
+	Name string `json:"name"`
+	// Icon        string `json:"icon"`
+	// Description string `json:"description"`
+	// Summary     string `json:"summary"`
+	// Bot         *User  `json:"bot"`
 }
 
 // A VoiceRegion stores data for a specific voice region server.
 type VoiceRegion struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Hostname string `json:"sample_hostname"`
-	Port     int    `json:"sample_port"`
-}
-
-// A VoiceICE stores data for voice ICE servers.
-type VoiceICE struct {
-	TTL     string       `json:"ttl"`
-	Servers []*ICEServer `json:"servers"`
-}
-
-// A ICEServer stores data for a specific voice ICE server.
-type ICEServer struct {
-	URL        string `json:"url"`
-	Username   string `json:"username"`
-	Credential string `json:"credential"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 // InviteTargetType indicates the type of target of an invite
@@ -169,8 +154,8 @@ type InviteTargetType uint8
 
 // Invite target types
 const (
-	InviteTargetStream             InviteTargetType = 1
-	InviteTargetEmbeddedAppliction InviteTargetType = 2
+	InviteTargetStream              InviteTargetType = 1
+	InviteTargetEmbeddedApplication InviteTargetType = 2
 )
 
 // A Invite stores all data related to a specific Discord Guild or Channel invite.
@@ -294,13 +279,26 @@ func (c *Channel) Mention() string {
 type ChannelEdit struct {
 	Name                 string                 `json:"name,omitempty"`
 	Topic                string                 `json:"topic,omitempty"`
-	NSFW                 bool                   `json:"nsfw,omitempty"`
+	NSFW                 *bool                  `json:"nsfw,omitempty"`
 	Position             *int                   `json:"position,omitempty"`
 	Bitrate              int                    `json:"bitrate,omitempty"`
 	UserLimit            int                    `json:"user_limit,omitempty"`
 	PermissionOverwrites []*PermissionOverwrite `json:"permission_overwrites,omitempty"`
 	ParentID             *null.String           `json:"parent_id,omitempty"`
 	RateLimitPerUser     *int                   `json:"rate_limit_per_user,omitempty"`
+
+	// NOTE: threads only
+
+	Archived            *bool `json:"archived,omitempty"`
+	AutoArchiveDuration int   `json:"auto_archive_duration,omitempty"`
+	Locked              *bool `json:"locked,omitempty"`
+	Invitable           *bool `json:"invitable,omitempty"`
+}
+
+// A ChannelFollow holds data returned after following a news channel
+type ChannelFollow struct {
+	ChannelID string `json:"channel_id"`
+	WebhookID string `json:"webhook_id"`
 }
 
 type RoleCreate struct {
@@ -311,6 +309,13 @@ type RoleCreate struct {
 	Mentionable bool   `json:"mentionable"`
 }
 
+type PermissionOverwriteType int
+
+const (
+	PermissionOverwriteTypeRole   PermissionOverwriteType = 0
+	PermissionOverwriteTypeMember PermissionOverwriteType = 1
+)
+
 // A PermissionOverwrite holds permission overwrite data for a Channel
 type PermissionOverwrite struct {
 	ID    int64                   `json:"id,string"`
@@ -318,19 +323,6 @@ type PermissionOverwrite struct {
 	Deny  int64                   `json:"deny,string"`
 	Allow int64                   `json:"allow,string"`
 }
-
-// A ChannelFollow holds data returned after following a news channel
-type ChannelFollow struct {
-	ChannelID string `json:"channel_id"`
-	WebhookID string `json:"webhook_id"`
-}
-
-type PermissionOverwriteType int
-
-const (
-	PermissionOverwriteTypeRole   PermissionOverwriteType = 0
-	PermissionOverwriteTypeMember PermissionOverwriteType = 1
-)
 
 // ThreadStart stores all parameters you can use with MessageThreadStartComplex or ThreadStartComplex
 type ThreadStart struct {
@@ -419,6 +411,62 @@ func (e *Emoji) APIName() string {
 		return e.Name
 	}
 	return StrID(e.ID)
+}
+
+// EmojiParams represents parameters needed to create or update an Emoji.
+type EmojiParams struct {
+	// Name of the emoji
+	Name string `json:"name,omitempty"`
+	// A base64 encoded emoji image, has to be smaller than 256KB.
+	// NOTE: can be only set on creation.
+	Image string `json:"image,omitempty"`
+	// Roles for which this emoji will be available.
+	Roles []string `json:"roles,omitempty"`
+}
+
+// StickerFormat is the file format of the Sticker.
+type StickerFormat int
+
+// Defines all known Sticker types.
+const (
+	StickerFormatTypePNG    StickerFormat = 1
+	StickerFormatTypeAPNG   StickerFormat = 2
+	StickerFormatTypeLottie StickerFormat = 3
+)
+
+// StickerType is the type of sticker.
+type StickerType int
+
+// Defines Sticker types.
+const (
+	StickerTypeStandard StickerType = 1
+	StickerTypeGuild    StickerType = 2
+)
+
+// Sticker represents a sticker object that can be sent in a Message.
+type Sticker struct {
+	ID          int64         `json:"id,string"`
+	PackID      int64         `json:"pack_id,string"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Tags        string        `json:"tags"`
+	Type        StickerType   `json:"type"`
+	FormatType  StickerFormat `json:"format_type"`
+	Available   bool          `json:"available"`
+	GuildID     int64         `json:"guild_id,string"`
+	User        *User         `json:"user"`
+	SortValue   int           `json:"sort_value"`
+}
+
+// StickerPack represents a pack of standard stickers.
+type StickerPack struct {
+	ID             int64     `json:"id,string"`
+	Stickers       []Sticker `json:"stickers"`
+	Name           string    `json:"name"`
+	SKUID          int64     `json:"sku_id,string"`
+	CoverStickerID int64     `json:"cover_sticker_id,string"`
+	Description    string    `json:"description"`
+	BannerAssetID  int64     `json:"banner_asset_id,string"`
 }
 
 // VerificationLevel type definition
@@ -826,6 +874,14 @@ type GuildTemplate struct {
 	IsDirty bool `json:"is_dirty"`
 }
 
+// GuildTemplateParams stores the data needed to create or update a GuildTemplate.
+type GuildTemplateParams struct {
+	// The name of the template (1-100 characters)
+	Name string `json:"name,omitempty"`
+	// The description of the template (0-120 characters)
+	Description string `json:"description,omitempty"`
+}
+
 // SystemChannelFlag is the type of flags in the system channel (see SystemChannelFlag* consts)
 // https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags
 type SystemChannelFlag int
@@ -838,11 +894,12 @@ const (
 
 // A UserGuild holds a brief version of a Guild
 type UserGuild struct {
-	ID          int64  `json:"id,string"`
-	Name        string `json:"name"`
-	Icon        string `json:"icon"`
-	Owner       bool   `json:"owner"`
-	Permissions int64  `json:"permissions,string"`
+	ID          int64          `json:"id,string"`
+	Name        string         `json:"name"`
+	Icon        string         `json:"icon"`
+	Owner       bool           `json:"owner"`
+	Permissions int64          `json:"permissions,string"`
+	Features    []GuildFeature `json:"features"`
 }
 
 // IconURL returns a URL to the guild's icon.
@@ -865,6 +922,34 @@ func (g *Guild) BannerURL() string {
 	}
 	return EndpointGuildBanner(g.ID, g.Banner)
 }
+
+// A Guild feature indicates the presence of a feature in a guild
+type GuildFeature string
+
+// Constants for GuildFeature
+const (
+	GuildFeatureAnimatedBanner                GuildFeature = "ANIMATED_BANNER"
+	GuildFeatureAnimatedIcon                  GuildFeature = "ANIMATED_ICON"
+	GuildFeatureAutoModeration                GuildFeature = "AUTO_MODERATION"
+	GuildFeatureBanner                        GuildFeature = "BANNER"
+	GuildFeatureCommunity                     GuildFeature = "COMMUNITY"
+	GuildFeatureDiscoverable                  GuildFeature = "DISCOVERABLE"
+	GuildFeatureFeaturable                    GuildFeature = "FEATURABLE"
+	GuildFeatureInviteSplash                  GuildFeature = "INVITE_SPLASH"
+	GuildFeatureMemberVerificationGateEnabled GuildFeature = "MEMBER_VERIFICATION_GATE_ENABLED"
+	GuildFeatureMonetizationEnabled           GuildFeature = "MONETIZATION_ENABLED"
+	GuildFeatureMoreStickers                  GuildFeature = "MORE_STICKERS"
+	GuildFeatureNews                          GuildFeature = "NEWS"
+	GuildFeaturePartnered                     GuildFeature = "PARTNERED"
+	GuildFeaturePreviewEnabled                GuildFeature = "PREVIEW_ENABLED"
+	GuildFeaturePrivateThreads                GuildFeature = "PRIVATE_THREADS"
+	GuildFeatureRoleIcons                     GuildFeature = "ROLE_ICONS"
+	GuildFeatureTicketedEventsEnabled         GuildFeature = "TICKETED_EVENTS_ENABLED"
+	GuildFeatureVanityUrl                     GuildFeature = "VANITY_URL"
+	GuildFeatureVerified                      GuildFeature = "VERIFIED"
+	GuildFeatureVipRegions                    GuildFeature = "VIP_REGIONS"
+	GuildFeatureWelcomeScreenEnabled          GuildFeature = "WELCOME_SCREEN_ENABLED"
+)
 
 // A GuildParams stores all the data needed to update discord guild settings
 type GuildParams struct {
@@ -915,6 +1000,20 @@ func (r *Role) Mention() string {
 		return "No such role"
 	}
 	return fmt.Sprintf("<@&%d>", r.ID)
+}
+
+// RoleParams represents the parameters needed to create or update a Role
+type RoleParams struct {
+	// The role's name
+	Name string `json:"name,omitempty"`
+	// The color the role should have (as a decimal, not hex)
+	Color *int `json:"color,omitempty"`
+	// Whether to display the role's users separately
+	Hoist *bool `json:"hoist,omitempty"`
+	// The overall permissions number of the role
+	Permissions *int64 `json:"permissions,omitempty,string"`
+	// Whether this role is mentionable
+	Mentionable *bool `json:"mentionable,omitempty"`
 }
 
 // Roles are a collection of Role
@@ -1003,6 +1102,8 @@ const (
 	GameTypeStreaming
 	GameTypeListening
 	GameTypeWatching
+	GameTypeCustom
+	GameTypeCompeting
 )
 
 // A Game struct holds the name of the "playing .." game for a user
@@ -1183,25 +1284,6 @@ func (m *Member) AvatarURL(size string) string {
 	return URL
 }
 
-// A Settings stores data for a specific users Discord client settings.
-type Settings struct {
-	RenderEmbeds           bool               `json:"render_embeds"`
-	InlineEmbedMedia       bool               `json:"inline_embed_media"`
-	InlineAttachmentMedia  bool               `json:"inline_attachment_media"`
-	EnableTtsCommand       bool               `json:"enable_tts_command"`
-	MessageDisplayCompact  bool               `json:"message_display_compact"`
-	ShowCurrentGame        bool               `json:"show_current_game"`
-	ConvertEmoticons       bool               `json:"convert_emoticons"`
-	Locale                 string             `json:"locale"`
-	Theme                  string             `json:"theme"`
-	GuildPositions         IDSlice            `json:"guild_positions"`
-	RestrictedGuilds       IDSlice            `json:"restricted_guilds"`
-	FriendSourceFlags      *FriendSourceFlags `json:"friend_source_flags"`
-	Status                 Status             `json:"status"`
-	DetectPlatformAccounts bool               `json:"detect_platform_accounts"`
-	DeveloperMode          bool               `json:"developer_mode"`
-}
-
 // Status type definition
 type Status string
 
@@ -1213,20 +1295,6 @@ const (
 	StatusInvisible    Status = "invisible"
 	StatusOffline      Status = "offline"
 )
-
-// FriendSourceFlags stores ... TODO :)
-type FriendSourceFlags struct {
-	All           bool `json:"all"`
-	MutualGuilds  bool `json:"mutual_guilds"`
-	MutualFriends bool `json:"mutual_friends"`
-}
-
-// A Relationship between the logged in user and Relationship.User
-type Relationship struct {
-	User *User  `json:"user"`
-	Type int    `json:"type"` // 1 = friend, 2 = blocked, 3 = incoming friend req, 4 = sent friend req
-	ID   string `json:"id"`
-}
 
 // A TooManyRequests struct holds information received from Discord
 // when receiving a HTTP 429 response.
@@ -1248,11 +1316,6 @@ type ReadState struct {
 	ID            int64 `json:"id,string"`
 }
 
-// An Ack is used to ack messages
-type Ack struct {
-	Token string `json:"token"`
-}
-
 // A GuildRole stores data for guild roles.
 type GuildRole struct {
 	Role    *Role `json:"role"`
@@ -1271,8 +1334,8 @@ type GuildBan struct {
 
 // A GuildEmbed stores data for a guild embed.
 type GuildEmbed struct {
-	Enabled   bool  `json:"enabled"`
-	ChannelID int64 `json:"channel_id,string"`
+	Enabled   bool  `json:"enabled,omitempty"`
+	ChannelID int64 `json:"channel_id,string,omitempty"`
 }
 
 // A GuildAuditLog stores data for a guild audit log.
@@ -1549,30 +1612,76 @@ const (
 	AuditLogActionApplicationCommandPermissionUpdate AuditLogAction = 121
 )
 
-// A UserGuildSettingsChannelOverride stores data for a channel override for a users guild settings.
-type UserGuildSettingsChannelOverride struct {
-	Muted                bool  `json:"muted"`
-	MessageNotifications int   `json:"message_notifications"`
-	ChannelID            int64 `json:"channel_id,string"`
+// GuildMemberParams stores data needed to update a member
+// https://discord.com/developers/docs/resources/guild#modify-guild-member
+type GuildMemberParams struct {
+	// Value to set user's nickname to.
+	Nick string `json:"nick,omitempty"`
+	// Array of role ids the member is assigned.
+	Roles *[]string `json:"roles,omitempty"`
+	// ID of channel to move user to (if they are connected to voice).
+	// Set to "" to remove user from a voice channel.
+	ChannelID *string `json:"channel_id,omitempty"`
+	// Whether the user is muted in voice channels.
+	Mute *bool `json:"mute,omitempty"`
+	// Whether the user is deafened in voice channels.
+	Deaf *bool `json:"deaf,omitempty"`
+	// When the user's timeout will expire and the user will be able
+	// to communicate in the guild again (up to 28 days in the future).
+	// Set to time.Time{} to remove timeout.
+	//CommunicationDisabledUntil string `json:"communication_disabled_until,omitempty"`
+	CommunicationDisabledUntil *time.Time `json:"communication_disabled_until,omitempty"`
 }
 
-// A UserGuildSettings stores data for a users guild settings.
-type UserGuildSettings struct {
-	SupressEveryone      bool                                `json:"suppress_everyone"`
-	Muted                bool                                `json:"muted"`
-	MobilePush           bool                                `json:"mobile_push"`
-	MessageNotifications int                                 `json:"message_notifications"`
-	GuildID              int64                               `json:"guild_id,string"`
-	ChannelOverrides     []*UserGuildSettingsChannelOverride `json:"channel_overrides"`
+// MarshalJSON is a helper function to marshal GuildMemberParams.
+func (p GuildMemberParams) MarshalJSON() (res []byte, err error) {
+	type guildMemberParams GuildMemberParams
+	v := struct {
+		guildMemberParams
+		ChannelID                  json.RawMessage `json:"channel_id,omitempty"`
+		CommunicationDisabledUntil json.RawMessage `json:"communication_disabled_until,omitempty"`
+	}{guildMemberParams: guildMemberParams(p)}
+
+	if p.ChannelID != nil {
+		if *p.ChannelID == "" {
+			v.ChannelID = json.RawMessage(`null`)
+		} else {
+			res, err = json.Marshal(p.ChannelID)
+			if err != nil {
+				return
+			}
+			v.ChannelID = res
+		}
+	}
+
+	if p.CommunicationDisabledUntil != nil {
+		if p.CommunicationDisabledUntil.IsZero() {
+			v.CommunicationDisabledUntil = json.RawMessage(`null`)
+		} else {
+			res, err = json.Marshal(p.CommunicationDisabledUntil)
+			if err != nil {
+				return
+			}
+			v.CommunicationDisabledUntil = res
+		}
+	}
+
+	return json.Marshal(v)
 }
 
-// A UserGuildSettingsEdit stores data for editing UserGuildSettings
-type UserGuildSettingsEdit struct {
-	SupressEveryone      bool                                         `json:"suppress_everyone"`
-	Muted                bool                                         `json:"muted"`
-	MobilePush           bool                                         `json:"mobile_push"`
-	MessageNotifications int                                          `json:"message_notifications"`
-	ChannelOverrides     map[string]*UserGuildSettingsChannelOverride `json:"channel_overrides"`
+// GuildMemberAddParams stores data needed to add a user to a guild.
+// NOTE: All fields are optional, except AccessToken.
+type GuildMemberAddParams struct {
+	// Valid access_token for the user.
+	AccessToken string `json:"access_token"`
+	// Value to set users nickname to.
+	Nick string `json:"nick,omitempty"`
+	// A list of role ID's to set on the member.
+	Roles []string `json:"roles,omitempty"`
+	// Whether the user is muted.
+	Mute bool `json:"mute,omitempty"`
+	// Whether the user is deafened.
+	Deaf bool `json:"deaf,omitempty"`
 }
 
 // An APIErrorMessage is an api error message returned from discord
@@ -1827,19 +1936,21 @@ func (a *ApplicationCommandInteractionDataOption) UnmarshalJSON(b []byte) error 
 }
 
 /*
-type InteractionResponse struct {
-	Kind InteractionResponseType                    `json:"type"` // the type of response
-	Data *InteractionApplicationCommandCallbackData `json:"data"` // an optional response message
-}
+	type InteractionResponse struct {
+		Kind InteractionResponseType                    `json:"type"` // the type of response
+		Data *InteractionApplicationCommandCallbackData `json:"data"` // an optional response message
+	}
 
 type InteractionResponseType int
 
 const (
+
 	InteractionResponseTypePong                             InteractionResponseType = 1 // ACK a Ping
 	InteractionResponseTypeAcknowledge                      InteractionResponseType = 2 // DEPRECATED ACK a command without sending a message, eating the user's input
 	InteractionResponseTypeChannelMessage                   InteractionResponseType = 3 // DEPRECATED respond with a message, eating the user's input
 	InteractionResponseTypeChannelMessageWithSource         InteractionResponseType = 4 // respond to an interaction with a message
 	InteractionResponseTypeDeferredChannelMessageWithSource InteractionResponseType = 5 // ACK an interaction and edit a response later, the user sees a loading state
+
 )
 */
 type InteractionApplicationCommandCallbackData struct {

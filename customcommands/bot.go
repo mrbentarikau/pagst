@@ -48,6 +48,7 @@ import (
 var (
 	CCExecLock        = keylock.NewKeyLock()
 	DelayedCCRunLimit = multiratelimit.NewMultiRatelimiter(0.1, 10)
+	CCDataLimit       = 1048576
 )
 
 type DelayedRunLimitKey struct {
@@ -64,7 +65,7 @@ var _ bot.BotInitHandler = (*Plugin)(nil)
 var _ commands.CommandProvider = (*Plugin)(nil)
 
 func (p *Plugin) AddCommands() {
-	commands.AddRootCommands(p, cmdListCommands, cmdFixCommands)
+	commands.AddRootCommands(p, cmdListCommands, cmdFixCommands, cmdEvalCommand)
 }
 
 func (p *Plugin) BotInit() {
@@ -118,6 +119,107 @@ type DelayedRunCCData struct {
 	UserKey interface{} `json:"user_key"`
 
 	IsExecedByLeaveMessage bool `json:"is_execed_by_leave_message"`
+}
+
+var cmdEvalCommand = &commands.YAGCommand{
+	CmdCategory:  commands.CategoryTool,
+	Name:         "Evalcc",
+	Description:  "executes small custom command code",
+	RequiredArgs: 1,
+	Arguments: []*dcmd.ArgDef{
+		{Name: "code", Type: dcmd.String},
+	},
+	SlashCommandEnabled: false,
+	DefaultEnabled:      true,
+	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		guildData := data.GuildData
+		channel := guildData.CS
+
+		// Disallow calling via exec / execAdmin
+		if data.Context().Value(commands.CtxKeyExecutedByCC) == true {
+			return "", nil
+		}
+
+		var hasCoreWriteRole bool
+		for _, r := range data.GuildData.MS.Member.Roles {
+			if common.ContainsInt64Slice((common.GetCoreServerConfCached(guildData.GS.ID)).AllowedWriteRoles, r) {
+				// we have a core-config allowed write role!
+				hasCoreWriteRole = true
+				break
+			}
+		}
+
+		adminOrPerms, err := bot.AdminOrPermMS(guildData.GS.ID, channel.ID, guildData.MS, discordgo.PermissionManageMessages)
+		if err != nil {
+			return nil, err
+		}
+
+		if !(adminOrPerms || hasCoreWriteRole) {
+			return "You need `Manage Messages` permissions or `Control Panel write access` for this command...", nil
+		}
+
+		tmplCtx := templates.NewContext(guildData.GS, channel, guildData.MS)
+		tmplCtx.IsExecedByEvalCC = true
+
+		// preapre message specific data
+		m := data.TraditionalTriggerData.Message
+
+		args := dcmd.SplitArgs(m.Content)
+		argsStr := make([]string, len(args))
+		for k, v := range args {
+			argsStr[k] = v.Str
+		}
+
+		tmplCtx.Data["Args"] = argsStr
+		tmplCtx.Data["StrippedMsg"] = data.Args[0].Str()
+		tmplCtx.Data["Cmd"] = argsStr[0]
+		if len(argsStr) > 1 {
+			tmplCtx.Data["CmdArgs"] = argsStr[1:]
+		} else {
+			tmplCtx.Data["CmdArgs"] = []string{}
+		}
+		tmplCtx.Data["Message"] = m
+
+		maxRunes := 500
+		if tmplCtx.IsPremium {
+			maxRunes = 1000
+		}
+
+		code := data.Args[0].Str()
+
+		code = parseCodeblock(code)
+
+		// Encourage only small code snippets being tested with this command
+		if utf8.RuneCountInString(code) > maxRunes {
+			return "Code is too long for in-place evaluation. Please use the control panel.", nil
+		}
+
+		if channel == nil {
+			return "Something weird happened... Contact the support server.", nil
+		}
+
+		out, err := tmplCtx.Execute(code)
+		if err != nil {
+			return "An error caused the custom command to stop:\n`" + err.Error() + "`", nil
+		}
+
+		return out, nil
+	},
+}
+
+var codeblockRegexp = regexp.MustCompile(`(?m)\A(?:\x60{2} ?\x60)(?:go(?:lang)?\n)?([\S\s]+)(?:\x60 ?\x60{2})\z`)
+
+// Parses code wrapped in Discord markdown code blocks.
+func parseCodeblock(input string) string {
+	parts := codeblockRegexp.FindStringSubmatch(input)
+
+	// No match found, input was not wrapped in (valid) codeblock markdown
+	// just dump it, don't bother fixing things for the user.
+	if parts == nil {
+		return input
+	}
+
+	return parts[1]
 }
 
 var cmdListCommands = &commands.YAGCommand{
@@ -804,6 +906,7 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 
 	tmplCtx.Name = "CC #" + strconv.Itoa(int(cmd.LocalID))
 	tmplCtx.Data["CCID"] = cmd.LocalID
+	tmplCtx.Data["CCNote"] = cmd.Note.String
 	tmplCtx.Data["CCRunCount"] = cmd.RunCount + 1
 	if cmd.TriggerType > 0 && cmd.TriggerType < 5 {
 		tmplCtx.Data["CCTrigger"] = cmd.RegexTrigger
@@ -858,11 +961,8 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	go analytics.RecordActiveUnit(cmd.GuildID, &Plugin{}, "executed_cc")
 
 	// pick a response and execute it
-	// f.Info("Custom command triggered")
 	f.Info("Custom command #", tmplCtx.Data["CCID"], " triggered")
-	// f.Debug("Custom command triggered")
 
-	// chanMsg := cmd.Responses[rand.Intn(len(cmd.Responses))]
 	chanMsg := cmd.Responses[0]
 	out, err := tmplCtx.Execute(chanMsg)
 
@@ -876,7 +976,7 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	if err != nil {
 		logger.WithField("guild", tmplCtx.GS.ID).WithError(err).Error("Error executing custom command")
 		if cmd.ShowErrors {
-			out += "\nAn error caused the execution of the custom command template to stop:\n"
+			out += "\nAn error caused the execution of the custom command " + tmplCtx.Name + " template to stop:\n"
 			out += formatCustomCommandRunErr(chanMsg, err)
 
 			config, configErr := moderation.GetConfig(cmd.GuildID)
@@ -895,6 +995,28 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	if err != nil {
 		return errors.WithStackIf(err)
 	}
+	// handle Response err the same way
+	/*if err != nil {
+		logger.WithField("guild", tmplCtx.GS.ID).WithError(err).Error("Error executing custom command")
+		if cmd.ShowErrors {
+			out += "\nAn error caused the execution of the custom command " + tmplCtx.Name + " template to send response:\n"
+			out += formatCustomCommandRunErr(chanMsg, err)
+
+			config, configErr := moderation.GetConfig(cmd.GuildID)
+			if configErr != nil {
+				return errors.WithMessage(configErr, "GetConfig")
+			}
+
+			if config.CCErrorChannel != "" {
+				_, _, _ = bot.SendMessage(cmd.GuildID, config.IntCCErrorChannel(), out)
+				return nil
+			}
+
+			_, _, _ = bot.SendMessage(cmd.GuildID, tmplCtx.CurrentFrame.CS.ID, out)
+			return nil
+		}
+	}*/
+
 	return nil
 }
 
