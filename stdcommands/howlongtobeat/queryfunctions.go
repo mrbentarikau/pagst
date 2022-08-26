@@ -1,7 +1,7 @@
 package howlongtobeat
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -54,7 +54,7 @@ func getGameData(searchTitle string) (string, error) {
 	r.Body.Close()
 	defer resp.Body.Close()
 
-	bytes, err := ioutil.ReadAll(resp.Body)
+	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

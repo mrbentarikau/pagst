@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -39,7 +39,7 @@ func (c *Client) do(method string, path string, body []byte, respData interface{
 	if respData != nil {
 		// decoder := json.NewDecoder(resp.Body)
 		// err = decoder.Decode(respData)
-		fullBody, err := ioutil.ReadAll(resp.Body)
+		fullBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}

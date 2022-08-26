@@ -31,7 +31,7 @@ func wordFromAPI(wrd string, synSwitch bool) string {
 		return response
 	}
 
-	req.Header.Set("User-Agent", "curlPAGST/7.65.1")
+	req.Header.Set("User-Agent", ConfBotUserAgent.GetString())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

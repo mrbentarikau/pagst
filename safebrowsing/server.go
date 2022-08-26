@@ -3,12 +3,13 @@ package safebrowsing
 import (
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/google/safebrowsing"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
-	"net/http"
 )
 
 var SafeBrowser *safebrowsing.SafeBrowser
@@ -49,7 +50,7 @@ func returnNoMatches(w http.ResponseWriter) {
 
 func handleCheckMessage(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		logrus.WithError(err).Error("[safebrowsing] failed reading request body")
 		return

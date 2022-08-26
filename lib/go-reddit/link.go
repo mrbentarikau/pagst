@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -170,7 +170,7 @@ func (c *Client) getLinks(subreddit string, sort, before, after string) ([]*Link
 
 	defer resp.Body.Close()
 
-	d, err := ioutil.ReadAll(resp.Body)
+	d, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (c *Client) LinksInfo(fullnames []string) ([]*Link, error) {
 
 	defer resp.Body.Close()
 
-	d, err := ioutil.ReadAll(resp.Body)
+	d, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

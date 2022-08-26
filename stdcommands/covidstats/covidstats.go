@@ -6,13 +6,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"time"
 
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 
@@ -187,7 +188,7 @@ func getData(query, loc, qtype string) ([]byte, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "curlPAGST/7.65.1")
+	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -200,7 +201,7 @@ func getData(query, loc, qtype string) ([]byte, error) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

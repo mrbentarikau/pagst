@@ -3,10 +3,10 @@ package codegen
 import (
 	"fmt"
 	"go/format"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
 	"github.com/viant/toolbox"
 )
 
@@ -130,7 +130,7 @@ func (g *Generator) writeCode() error {
 		return nil
 	}
 
-	return ioutil.WriteFile(g.options.Dest, code, 0644)
+	return os.WriteFile(g.options.Dest, code, 0644)
 }
 
 func (g *Generator) generatePrimitiveArray(field *Field) error {

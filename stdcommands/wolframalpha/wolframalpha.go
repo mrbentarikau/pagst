@@ -3,7 +3,7 @@ package wolframalpha
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -97,7 +97,7 @@ func requestWolframAPI(input, wolframID string) (string, error) {
 		return "", err
 	}
 
-	req.Header.Set("User-Agent", "curlPAGST/7.65.1")
+	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -109,7 +109,7 @@ func requestWolframAPI(input, wolframID string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
