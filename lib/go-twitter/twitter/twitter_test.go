@@ -1,7 +1,7 @@
 package twitter
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -71,7 +71,7 @@ func assertPostForm(t *testing.T, expected map[string]string, req *http.Request)
 
 // assertPostJSON tests that the Request has the expected JSON body.
 func assertPostJSON(t *testing.T, expected string, req *http.Request) {
-	data, err := ioutil.ReadAll(req.Body)
+	data, err := io.ReadAll(req.Body)
 	assert.Nil(t, err)
 	assert.Equal(t, expected, string(data))
 }

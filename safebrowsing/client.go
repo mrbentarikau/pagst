@@ -1,13 +1,14 @@
 package safebrowsing
 
 import (
-	"emperror.dev/errors"
 	"encoding/json"
-	"github.com/mrbentarikau/pagst/common/backgroundworkers"
-	"github.com/google/safebrowsing"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
+
+	"emperror.dev/errors"
+	"github.com/mrbentarikau/pagst/common/backgroundworkers"
+	"github.com/google/safebrowsing"
 )
 
 // CheckString checks a string against google safebrowsing for threats
@@ -48,9 +49,9 @@ func performRemoteLookup(input string) (*safebrowsing.URLThreat, error) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.WithMessage(err, "ioutil.ReadAll")
+		return nil, errors.WithMessage(err, "io.ReadAll")
 	}
 
 	var result [][]safebrowsing.URLThreat

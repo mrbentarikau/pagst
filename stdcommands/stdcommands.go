@@ -15,7 +15,8 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/calc"
 	"github.com/mrbentarikau/pagst/stdcommands/catfact"
 	"github.com/mrbentarikau/pagst/stdcommands/ccreqs"
-	"github.com/mrbentarikau/pagst/stdcommands/covidstats"
+
+	// "github.com/mrbentarikau/pagst/stdcommands/covidstats"
 	"github.com/mrbentarikau/pagst/stdcommands/createinvite"
 	"github.com/mrbentarikau/pagst/stdcommands/currentshard"
 	"github.com/mrbentarikau/pagst/stdcommands/currenttime"
@@ -96,7 +97,7 @@ func (p *Plugin) AddCommands() {
 		bashquotes.Command,
 		calc.Command,
 		catfact.Command,
-		covidstats.Command,
+		// covidstats.Command,
 		currenttime.Command,
 		customembed.Command,
 		dadjoke.Command,

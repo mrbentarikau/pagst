@@ -5,12 +5,12 @@
 package template_test
 
 import (
-	"github.com/mrbentarikau/pagst/lib/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/mrbentarikau/pagst/lib/template"
 )
 
 // templateFile defines the contents of a template to be stored in a file, for testing.
@@ -20,7 +20,7 @@ type templateFile struct {
 }
 
 func createTestDir(files []templateFile) string {
-	dir, err := ioutil.TempDir("", "template")
+	dir, err := os.MkdirTemp("", "template")
 	if err != nil {
 		log.Fatal(err)
 	}

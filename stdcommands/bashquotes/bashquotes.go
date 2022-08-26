@@ -2,7 +2,7 @@ package bashquotes
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -51,7 +51,7 @@ var Command = &commands.YAGCommand{
 
 		defer resp.Body.Close()
 
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return "", err
 		}

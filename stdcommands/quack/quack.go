@@ -1,10 +1,10 @@
-//Random duck image from random-d.uk API
+// Random duck image from random-d.uk API
 package quack
 
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 
@@ -55,7 +55,7 @@ func duckFromAPI() (string, error) {
 		return "", err
 	}
 
-	req.Header.Set("User-Agent", "curlPAGST/7.65.1")
+	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -68,7 +68,7 @@ func duckFromAPI() (string, error) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
