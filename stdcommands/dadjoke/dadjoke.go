@@ -2,14 +2,14 @@ package dadjoke
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 )
 
-//Create the struct that we will serialize the API response into.
+// Create the struct that we will serialize the API response into.
 type Joke struct {
 	ID     string `json:"id"`
 	Joke   string `json:"joke"`
@@ -44,7 +44,7 @@ var Command = &commands.YAGCommand{
 		defer apiResp.Body.Close()
 
 		//Read the API response.
-		bytes, err := ioutil.ReadAll(apiResp.Body)
+		bytes, err := io.ReadAll(apiResp.Body)
 		if err != nil {
 			return nil, err
 		}

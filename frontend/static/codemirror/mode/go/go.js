@@ -26,8 +26,8 @@ CodeMirror.defineMode("go", function(config) {
     "int64":true, "string":true, "uint8":true, "uint16":true, "uint32":true,
     "uint64":true, "int":true, "uint":true, "uintptr":true, "error": true,
     "rune":true,*/
-    "block":true, "break":true, "continue":true, "define":true, "else":true, "end":true,
-    "if":true,"range":true, "return":true, "template":true, "while":true, "with":true
+    "block":true, "break":true, "catch":true, "continue":true, "define":true, "else":true, "end":true,
+    "if":true,"range":true, "return":true, "template":true, "try":true, "while":true, "with":true
   };
 
   var atoms = {

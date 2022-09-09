@@ -156,6 +156,9 @@ type GuildState struct {
 	// The ID of the AFK voice channel.
 	AfkChannelID int64 `json:"afk_channel_id,string"`
 
+	// The hash of the guild's discovery splash.
+	DiscoverySplash string `json:"discovery_splash"`
+
 	// The hash of the guild's splash.
 	Splash string `json:"splash"`
 
@@ -199,6 +202,42 @@ type GuildState struct {
 
 	// The Channel ID to which system messages are sent (eg join and leave messages)
 	SystemChannelID string `json:"system_channel_id"`
+
+	// The System channel flags
+	SystemChannelFlags discordgo.SystemChannelFlag `json:"system_channel_flags"`
+
+	// The ID of the rules channel ID, used for rules.
+	RulesChannelID string `json:"rules_channel_id"`
+
+	// the vanity url code for the guild
+	VanityURLCode string `json:"vanity_url_code"`
+
+	// The hash of the guild's banner
+	Banner string `json:"banner"`
+
+	// The premium tier of the guild
+	PremiumTier discordgo.PremiumTier `json:"premium_tier"`
+
+	// The total number of users currently boosting this server
+	PremiumSubscriptionCount int `json:"premium_subscription_count"`
+
+	// The id of the channel where admins and moderators of guilds with the "PUBLIC" feature receive notices from Discord
+	PublicUpdatesChannelID string `json:"public_updates_channel_id"`
+
+	// The maximum amount of users in a video channel
+	MaxVideoChannelUsers int `json:"max_video_channel_users"`
+
+	// Approximate number of members in this guild, returned from the GET /guild/<id> endpoint when with_counts is true
+	ApproximateMemberCount int `json:"approximate_member_count"`
+
+	// Approximate number of non-offline members in this guild, returned from the GET /guild/<id> endpoint when with_counts is true
+	ApproximatePresenceCount int `json:"approximate_presence_count"`
+
+	// Permissions of our user
+	Permissions int64 `json:"permissions,string"`
+
+	// Stage instances in the guild
+	StageInstances []*discordgo.StageInstance `json:"stage_instances"`
 }
 
 type ChannelState struct {
@@ -245,6 +284,8 @@ type MemberFields struct {
 	Nick             string
 	Avatar           string
 	Pending          bool
+	PremiumSince     *time.Time
+	Permissions      int64
 	TimeoutExpiresAt *time.Time
 }
 
@@ -290,6 +331,8 @@ func MemberStateFromMember(member *discordgo.Member) *MemberState {
 			Nick:             member.Nick,
 			Avatar:           member.Avatar,
 			Pending:          member.Pending,
+			PremiumSince:     member.PremiumSince,
+			Permissions:      member.Permissions,
 			TimeoutExpiresAt: member.TimeoutExpiresAt,
 		},
 		Presence: nil,
@@ -312,6 +355,8 @@ func (ms *MemberState) DgoMember() *discordgo.Member {
 		TimeoutExpiresAt: ms.Member.TimeoutExpiresAt,
 		User:             &ms.User,
 		Pending:          ms.Member.Pending,
+		PremiumSince:     ms.Member.PremiumSince,
+		Permissions:      ms.Member.Permissions,
 	}
 
 	if ms.Member != nil {

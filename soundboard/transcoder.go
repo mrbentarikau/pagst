@@ -3,7 +3,6 @@ package soundboard
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -69,7 +68,7 @@ func transcoderLoop() {
 }
 
 func getQueue() []string {
-	files, err := ioutil.ReadDir("soundboard/queue")
+	files, err := os.ReadDir("soundboard/queue")
 	if err != nil {
 		logger.WithError(err).Error("Failed checking queue directory")
 		return []string{}

@@ -115,7 +115,7 @@ var (
 		"in":                 in,
 		"inFold":             inFold,
 		"json":               tmplJson,
-		"jsonToSdict":        tmplJsonToSDict,
+		"jsonToSdict":        tmplJSONToSDict,
 		"kindOf":             KindOf,
 		"noun":               common.RandomNoun,
 		"ordinalize":         tmplOrdinalize,
@@ -132,9 +132,10 @@ var (
 		"currentTime":     tmplCurrentTime,
 		"formatTime":      tmplFormatTime,
 		"loadLocation":    time.LoadLocation,
+		"newDate":         tmplNewDate,
 		"parseTime":       tmplParseTime,
 		"snowflakeToTime": tmplSnowflakeToTime,
-		"newDate":         tmplNewDate,
+		"timestampToTime": tmplTimestampToTime,
 		"weekNumber":      tmplWeekNumber,
 
 		"humanizeDurationHours":   tmplHumanizeDurationHours,
@@ -191,9 +192,10 @@ type Context struct {
 
 	CurrentFrame *ContextFrame
 
+	// See DelayedRunCCData.CallChain.
+	ExecCallChain          []time.Time
 	IsExecedByLeaveMessage bool
-
-	IsExecedByEvalCC bool
+	IsExecedByEvalCC       bool
 
 	contextFuncsAdded bool
 }
@@ -924,7 +926,7 @@ func (d SDict) HasKey(k string) (ok bool) {
 
 type Slice []interface{}
 
-/* testing ground
+/*
 func (s Slice) String() string {
 	fromStringSlice := make([]string, 0, len(s))
 
@@ -945,7 +947,7 @@ func (s Slice) String() string {
 	// for _, v := range s {
 	// 	stringSlice = append(stringSlice, fmt.Sprintf("%v", v))
 	// }
-	//stringSlice = append(stringSlice, fromStringSlice...)
+	// stringSlice = append(stringSlice, fromStringSlice...)
 
 	return strings.Join(fromStringSlice, " ")
 }

@@ -17,6 +17,14 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	whn "github.com/mrbentarikau/pagst/lib/when"
+	"github.com/mrbentarikau/pagst/lib/when/rules"
+	wcommon "github.com/mrbentarikau/pagst/lib/when/rules/common"
+	"github.com/mrbentarikau/pagst/lib/when/rules/en"
+	"github.com/mrbentarikau/pagst/rsvp"
+	"github.com/mrbentarikau/pagst/timezonecompanion"
+	"github.com/mrbentarikau/pagst/timezonecompanion/trules"
+
 	"github.com/jinzhu/gorm"
 
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
@@ -42,16 +50,17 @@ var cmds = []*commands.YAGCommand{
 	{
 		CmdCategory:  commands.CategoryTool,
 		Name:         "Remindme",
-		Description:  "Schedules a reminder, example: 'remindme 1h30min are you alive still?'\nSwitch -repeat will repeat the reminder starting with min duration of 1 hour.",
+		Description:  "Schedules a reminder, example: 'remindme 1h30min are you still alive?'\n\nSwitch -repeat will repeat the reminder starting with min duration of 1 hour.\nSwitch -time needs quoted date in either your registered time zone (using the `setz` command) or UTC. Adds first argument's duration and if repeat, sets duration to 24h. 'remindme 5m are you still alive? -time \"tomorrow 12:45\"'",
 		Aliases:      []string{"remind", "reminder"},
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			{Name: "Time", Type: &commands.DurationArg{}},
+			{Name: "Duration", Type: &commands.DurationArg{}},
 			{Name: "Message", Type: dcmd.String},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "channel", Type: dcmd.Channel},
 			{Name: "repeat", Help: "Repeat the reminder at set duration"},
+			{Name: "time", Help: "Exact time for the reminder", Type: dcmd.String},
 		},
 		SlashCommandEnabled: true,
 		DefaultEnabled:      true,
@@ -62,16 +71,50 @@ var cmds = []*commands.YAGCommand{
 			}
 
 			fromNow := parsed.Args[0].Value.(time.Duration)
+			durString := common.HumanizeDuration(common.DurationPrecisionSeconds, fromNow)
+			when := time.Now().Add(fromNow)
 
 			repeatDuration := time.Duration(0)
 			if parsed.Switch("repeat").Value != nil && parsed.Switch("repeat").Value.(bool) && fromNow.Hours() >= 1 {
 				repeatDuration = fromNow
 			}
 
-			durString := common.HumanizeDuration(common.DurationPrecisionSeconds, fromNow)
-			when := time.Now().Add(fromNow)
-			tUnix := fmt.Sprint(when.Unix())
+			switchTime := parsed.Switch("time")
+			if switchTime.Value != nil {
+				dateParser := whn.New(&rules.Options{
+					Distance:     10,
+					MatchByOrder: true})
 
+				dateParser.Add(
+					en.Weekday(rules.Override),
+					en.CasualDate(rules.Override),
+					en.CasualTime(rules.Override),
+					trules.Hour(rules.Override),
+					trules.HourMinute(rules.Override),
+					en.Deadline(rules.Override),
+					en.ExactMonthDate(rules.Override),
+				)
+				dateParser.Add(wcommon.All...)
+
+				if parsed.Switch("repeat").Value != nil && parsed.Switch("repeat").Value.(bool) {
+					repeatDuration = time.Duration(24 * time.Hour)
+				}
+				registeredTimezone := timezonecompanion.GetUserTimezone(parsed.Author.ID)
+				if registeredTimezone == nil || rsvp.UTCRegex.MatchString(switchTime.Str()) {
+					registeredTimezone = time.UTC
+				}
+
+				now := time.Now().In(registeredTimezone)
+				t, err := dateParser.Parse(switchTime.Str(), now)
+				if err != nil || t == nil {
+					return "Couldn't understand that time", err
+				}
+
+				when = t.Time.Add(fromNow)
+				durString = common.HumanizeDuration(common.DurationPrecisionSeconds, time.Until(when))
+			}
+
+			tUnix := fmt.Sprint(when.Unix())
 			if when.After(time.Now().Add(time.Hour * 24 * 366)) {
 				return "Can be max 365 days from now...", nil
 			}
@@ -399,7 +442,7 @@ func embedCreator(currentReminders []*Reminder, i, ml, flag int, parsed *dcmd.Da
 			}
 			repeat := ""
 			if v.Repeat > 0 {
-				repeat = "Repeated"
+				repeat = "`Repeated`"
 			}
 			t := time.Unix(v.When, 0)
 			tStr := t.Format(time.RFC822)
