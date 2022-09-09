@@ -89,6 +89,7 @@
     "loadLocation":true,
     "parseTime":true,
     "snowflakeToTime":true,
+    "timestampToTime":true,
     "newDate":true,
     "weekNumber":true,
     "humanizeDurationHours":true,
