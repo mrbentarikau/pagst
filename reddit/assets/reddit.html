@@ -8,6 +8,9 @@
 {{ template "cp_alerts" . }}
 
 <style>
+    html.dark .input-group-prepend > .input-group-text {
+        background-color: #1f1f1f!important;
+    }
     .reddit-item-disabled {
         background-color: #f003;
     }
@@ -63,13 +66,18 @@
             <div class="form-row">
                 <div class="form-group col">
                     <label for="new-subreddit-slow-{{.Slow}}">Subreddit</label>
-                    <input type="text" class="form-control" id="new-subreddit-slow-{{.Slow}}" name="subreddit"
+                    <div class="input-group mb-2">
+                        <div class="input-group-prepend" id="command-trigger-prepended-prefix">
+                            <div class="input-group-text">r/</div>
+                        </div>
+                        <input type="text" class="form-control" id="new-subreddit-slow-{{.Slow}}" name="subreddit"
                         placeholder="discord_irl">
                         {{$formatNewSlow := "disable-subreddit-search"}}
                         {{if .Slow}}
                              {{$formatNewSlow = "disable-subreddit-search-slow"}}
                          {{end}}
-                        {{checkbox "disable_subreddit_search" $formatNewSlow `<small class="mb-1 mt-1 mr-1 modal-basic">Disable subreddit search</small>` false}}
+                    </div>
+                    {{checkbox "disable_subreddit_search" $formatNewSlow `<small class="mb-1 mt-1 mr-1 modal-basic">Disable subreddit search</small>` false}}
                 </div>
                 <div class="form-group col">
                     <label for="new-channel-slow-{{.Slow}}">Server Channel</label>

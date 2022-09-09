@@ -1108,18 +1108,6 @@ func joinStrings(sep string, args ...interface{}) (string, error) {
 		case string:
 			builder.WriteString(t)
 
-		case []string:
-			for j, s := range t {
-				if j != 0 {
-					builder.WriteString(sep)
-				}
-
-				builder.WriteString(s)
-				if builder.Len() > MaxStringLength {
-					return "", ErrStringTooLong
-				}
-			}
-
 		case int, uint, int32, uint32, int64, uint64:
 			builder.WriteString(ToString(v))
 
@@ -1129,6 +1117,22 @@ func joinStrings(sep string, args ...interface{}) (string, error) {
 		case fmt.Stringer:
 			builder.WriteString(t.String())
 
+		default:
+			cast, ok := castToStringSlice(reflect.ValueOf(v))
+			if !ok {
+				break
+			}
+
+			for j, s := range cast {
+				if j != 0 {
+					builder.WriteString(sep)
+				}
+
+				builder.WriteString(s)
+				if builder.Len() > MaxStringLength {
+					return "", ErrStringTooLong
+				}
+			}
 		}
 
 		if builder.Len() > MaxStringLength {
@@ -1138,6 +1142,33 @@ func joinStrings(sep string, args ...interface{}) (string, error) {
 	}
 
 	return builder.String(), nil
+}
+
+var stringSliceType = reflect.TypeOf([]string(nil))
+
+func castToStringSlice(rv reflect.Value) ([]string, bool) {
+	rv, _ = indirect(rv)
+	switch rv.Kind() {
+	case reflect.Array, reflect.Slice:
+		// ok
+	default:
+		return nil, false
+	}
+
+	// fast path
+	if rv.Type() == stringSliceType {
+		return rv.Interface().([]string), true
+	}
+
+	ret := make([]string, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		irv, _ := indirect(rv.Index(i))
+		if irv.Kind() != reflect.String {
+			return nil, false
+		}
+		ret[i] = irv.String()
+	}
+	return ret, true
 }
 
 func sequence(start, stop int) ([]int, error) {
@@ -1460,14 +1491,14 @@ func tmplJson(v interface{}) (string, error) {
 	return string(b), nil
 }
 
-func tmplJsonToSDict(v interface{}) (SDict, error) {
-	var toSdict SDict
-	err := json.Unmarshal([]byte(v.(string)), &toSdict)
+func tmplJSONToSDict(v interface{}) (SDict, error) {
+	var toSDict SDict
+	err := json.Unmarshal([]byte(ToString(v)), &toSDict)
 	if err != nil {
 		return nil, err
 	}
 
-	return toSdict, nil
+	return toSDict, nil
 }
 
 func tmplFormatTime(t time.Time, args ...string) string {
@@ -1481,6 +1512,10 @@ func tmplFormatTime(t time.Time, args ...string) string {
 
 func tmplSnowflakeToTime(v interface{}) time.Time {
 	return bot.SnowflakeToTime(ToInt64(v)).UTC()
+}
+
+func tmplTimestampToTime(v interface{}) time.Time {
+	return time.Unix(ToInt64(v), 0).UTC()
 }
 
 type variadicFunc func([]reflect.Value) (reflect.Value, error)
@@ -1502,7 +1537,8 @@ func callVariadic(f variadicFunc, skipNil bool, values ...reflect.Value) (reflec
 			}
 		case v.Kind() == reflect.Array || v.Kind() == reflect.Slice:
 			for i := 0; i < v.Len(); i++ {
-				vs = append(vs, v.Index(i))
+				irv, _ := indirect(v.Index(i))
+				vs = append(vs, irv)
 			}
 		default:
 			vs = append(vs, v)

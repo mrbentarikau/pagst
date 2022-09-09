@@ -1252,6 +1252,12 @@ type Member struct {
 	// Is true while the member hasn't accepted the membership screen.
 	Pending bool `json:"pending"`
 
+	// When the user used their Nitro boost on the server
+	PremiumSince *time.Time `json:"premium_since"`
+
+	// Total permissions of the member in the channel, including overrides, returned when in the interaction object.
+	Permissions int64 `json:"permissions,string"`
+
 	// The time at which the member's timeout will expire.
 	// Time in the past or nil if the user is not timed out.
 	TimeoutExpiresAt *time.Time `json:"communication_disabled_until"`
@@ -1763,6 +1769,7 @@ const (
 	StageInstancePrivacyLevelGuildOnly StageInstancePrivacyLevel = 2
 )
 
+/*
 // Block contains Discord JSON Error Response codes
 const (
 	ErrCodeUnknownAccount     = 10001
@@ -1815,7 +1822,7 @@ const (
 	ErrCodeInviteAcceptedToGuildApplicationsBotNotIn = 50036
 
 	ErrCodeReactionBlocked = 90001
-)
+)*/
 
 // InviteUser is a partial user obejct from the invite event(s)
 type InviteUser struct {
@@ -1959,4 +1966,342 @@ type InteractionApplicationCommandCallbackData struct {
 	Embeds          []MessageEmbed   `json:"embeds,omitempty"`           // supports up to 10 embeds
 	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"` // allowed mentions object
 	Flags           int              `json:"flags,omitempty"`            //	set to 64 to make your response ephemeral
+}
+
+// Constants for the different bit offsets of text channel permissions
+const (
+	// Deprecated: PermissionReadMessages has been replaced with PermissionViewChannel for text and voice channels
+	PermissionReadMessages           int64 = 0x0000000000000400
+	PermissionSendMessages           int64 = 0x0000000000000800
+	PermissionSendTTSMessages        int64 = 0x0000000000001000
+	PermissionManageMessages         int64 = 0x0000000000002000
+	PermissionEmbedLinks             int64 = 0x0000000000004000
+	PermissionAttachFiles            int64 = 0x0000000000008000
+	PermissionReadMessageHistory     int64 = 0x0000000000010000
+	PermissionMentionEveryone        int64 = 0x0000000000020000
+	PermissionUseExternalEmojis      int64 = 0x0000000000040000
+	PermissionUseSlashCommands       int64 = 0x0000000080000000
+	PermissionUseApplicationCommands int64 = PermissionUseSlashCommands
+	PermissionManageThreads          int64 = 0x0000000400000000
+	PermissionCreatePublicThreads    int64 = 0x0000000800000000
+	PermissionUsePublicThreads       int64 = PermissionCreatePublicThreads
+	PermissionCreatePrivateThreads   int64 = 0x0000001000000000
+	PermissionUsePrivateThreads      int64 = PermissionCreatePrivateThreads
+	PermissionUseExternalStickers    int64 = 0x0000002000000000
+	PermissionSendMessagesInThreads  int64 = 0x0000004000000000
+)
+
+// Constants for the different bit offsets of voice permissions
+const (
+	PermissionVoicePrioritySpeaker  int64 = 0x0000000000000100
+	PermissionPrioritySpeaker       int64 = PermissionVoicePrioritySpeaker
+	PermissionVoiceStreamVideo      int64 = 0x0000000000000200
+	PermissionStream                int64 = PermissionVoiceStreamVideo
+	PermissionVoiceConnect          int64 = 0x0000000000100000
+	PermissionVoiceSpeak            int64 = 0x0000000000200000
+	PermissionVoiceMuteMembers      int64 = 0x0000000000400000
+	PermissionVoiceDeafenMembers    int64 = 0x0000000000800000
+	PermissionVoiceMoveMembers      int64 = 0x0000000001000000
+	PermissionVoiceUseVAD           int64 = 0x0000000002000000
+	PermissionVoiceRequestToSpeak   int64 = 0x0000000100000000
+	PermissionRequestToSpeak        int64 = PermissionVoiceRequestToSpeak
+	PermissionUseActivities         int64 = 0x0000008000000000
+	PermissionUseEmbeddedActivities int64 = PermissionUseActivities
+)
+
+// Constants for general management.
+const (
+	PermissionChangeNickname          int64 = 0x0000000004000000
+	PermissionManageNicknames         int64 = 0x0000000008000000
+	PermissionManageRoles             int64 = 0x0000000010000000
+	PermissionManageWebhooks          int64 = 0x0000000020000000
+	PermissionManageEmojis            int64 = 0x0000000040000000
+	PermissionManageEmojisAndStickers int64 = PermissionManageEmojis
+	PermissionManageEvents            int64 = 0x0000000200000000
+)
+
+// Constants for the different bit offsets of general permissions
+const (
+	PermissionCreateInstantInvite int64 = 0x0000000000000001
+	PermissionKickMembers         int64 = 0x0000000000000002
+	PermissionBanMembers          int64 = 0x0000000000000004
+	PermissionAdministrator       int64 = 0x0000000000000008
+	PermissionManageChannels      int64 = 0x0000000000000010
+	PermissionManageServer        int64 = 0x0000000000000020
+	PermissionManageGuild         int64 = PermissionManageServer
+	PermissionAddReactions        int64 = 0x0000000000000040
+	PermissionViewAuditLogs       int64 = 0x0000000000000080
+	PermissionViewChannel         int64 = 0x0000000000000400
+	PermissionViewGuildInsights   int64 = 0x0000000000080000
+	PermissionModerateMembers     int64 = 0x0000010000000000
+
+	PermissionAllText = PermissionViewChannel |
+		PermissionSendMessages |
+		PermissionSendTTSMessages |
+		PermissionManageMessages |
+		PermissionEmbedLinks |
+		PermissionAttachFiles |
+		PermissionReadMessageHistory |
+		PermissionMentionEveryone
+	PermissionAllVoice = PermissionViewChannel |
+		PermissionVoiceConnect |
+		PermissionVoiceSpeak |
+		PermissionVoiceMuteMembers |
+		PermissionVoiceDeafenMembers |
+		PermissionVoiceMoveMembers |
+		PermissionVoiceUseVAD |
+		PermissionVoicePrioritySpeaker
+	PermissionAllChannel = PermissionAllText |
+		PermissionAllVoice |
+		PermissionCreateInstantInvite |
+		PermissionManageRoles |
+		PermissionManageChannels |
+		PermissionAddReactions |
+		PermissionViewAuditLogs
+	PermissionAll = PermissionAllChannel |
+		PermissionKickMembers |
+		PermissionBanMembers |
+		PermissionManageServer |
+		PermissionAdministrator |
+		PermissionManageWebhooks |
+		PermissionManageEmojis
+)
+
+// Block contains Discord JSON Error Response codes
+const (
+	ErrCodeGeneralError = 0
+
+	ErrCodeUnknownAccount                        = 10001
+	ErrCodeUnknownApplication                    = 10002
+	ErrCodeUnknownChannel                        = 10003
+	ErrCodeUnknownGuild                          = 10004
+	ErrCodeUnknownIntegration                    = 10005
+	ErrCodeUnknownInvite                         = 10006
+	ErrCodeUnknownMember                         = 10007
+	ErrCodeUnknownMessage                        = 10008
+	ErrCodeUnknownOverwrite                      = 10009
+	ErrCodeUnknownProvider                       = 10010
+	ErrCodeUnknownRole                           = 10011
+	ErrCodeUnknownToken                          = 10012
+	ErrCodeUnknownUser                           = 10013
+	ErrCodeUnknownEmoji                          = 10014
+	ErrCodeUnknownWebhook                        = 10015
+	ErrCodeUnknownWebhookService                 = 10016
+	ErrCodeUnknownSession                        = 10020
+	ErrCodeUnknownBan                            = 10026
+	ErrCodeUnknownSKU                            = 10027
+	ErrCodeUnknownStoreListing                   = 10028
+	ErrCodeUnknownEntitlement                    = 10029
+	ErrCodeUnknownBuild                          = 10030
+	ErrCodeUnknownLobby                          = 10031
+	ErrCodeUnknownBranch                         = 10032
+	ErrCodeUnknownStoreDirectoryLayout           = 10033
+	ErrCodeUnknownRedistributable                = 10036
+	ErrCodeUnknownGiftCode                       = 10038
+	ErrCodeUnknownStream                         = 10049
+	ErrCodeUnknownPremiumServerSubscribeCooldown = 10050
+	ErrCodeUnknownGuildTemplate                  = 10057
+	ErrCodeUnknownDiscoveryCategory              = 10059
+	ErrCodeUnknownSticker                        = 10060
+	ErrCodeUnknownInteraction                    = 10062
+	ErrCodeUnknownApplicationCommand             = 10063
+	ErrCodeUnknownApplicationCommandPermissions  = 10066
+	ErrCodeUnknownStageInstance                  = 10067
+	ErrCodeUnknownGuildMemberVerificationForm    = 10068
+	ErrCodeUnknownGuildWelcomeScreen             = 10069
+	ErrCodeUnknownGuildScheduledEvent            = 10070
+	ErrCodeUnknownGuildScheduledEventUser        = 10071
+
+	ErrCodeBotsCannotUseEndpoint                                            = 20001
+	ErrCodeOnlyBotsCanUseEndpoint                                           = 20002
+	ErrCodeExplicitContentCannotBeSentToTheDesiredRecipients                = 20009
+	ErrCodeYouAreNotAuthorizedToPerformThisActionOnThisApplication          = 20012
+	ErrCodeThisActionCannotBePerformedDueToSlowmodeRateLimit                = 20016
+	ErrCodeOnlyTheOwnerOfThisAccountCanPerformThisAction                    = 20018
+	ErrCodeMessageCannotBeEditedDueToAnnouncementRateLimits                 = 20022
+	ErrCodeChannelHasHitWriteRateLimit                                      = 20028
+	ErrCodeTheWriteActionYouArePerformingOnTheServerHasHitTheWriteRateLimit = 20029
+	ErrCodeStageTopicContainsNotAllowedWordsForPublicStages                 = 20031
+	ErrCodeGuildPremiumSubscriptionLevelTooLow                              = 20035
+
+	ErrCodeMaximumGuildsReached                                    = 30001
+	ErrCodeMaximumPinsReached                                      = 30003
+	ErrCodeMaximumNumberOfRecipientsReached                        = 30004
+	ErrCodeMaximumGuildRolesReached                                = 30005
+	ErrCodeMaximumNumberOfWebhooksReached                          = 30007
+	ErrCodeMaximumNumberOfEmojisReached                            = 30008
+	ErrCodeTooManyReactions                                        = 30010
+	ErrCodeMaximumNumberOfGuildChannelsReached                     = 30013
+	ErrCodeMaximumNumberOfAttachmentsInAMessageReached             = 30015
+	ErrCodeMaximumNumberOfInvitesReached                           = 30016
+	ErrCodeMaximumNumberOfAnimatedEmojisReached                    = 30018
+	ErrCodeMaximumNumberOfServerMembersReached                     = 30019
+	ErrCodeMaximumNumberOfGuildDiscoverySubcategoriesReached       = 30030
+	ErrCodeGuildAlreadyHasATemplate                                = 30031
+	ErrCodeMaximumNumberOfThreadParticipantsReached                = 30033
+	ErrCodeMaximumNumberOfBansForNonGuildMembersHaveBeenExceeded   = 30035
+	ErrCodeMaximumNumberOfBansFetchesHasBeenReached                = 30037
+	ErrCodeMaximumNumberOfUncompletedGuildScheduledEventsReached   = 30038
+	ErrCodeMaximumNumberOfStickersReached                          = 30039
+	ErrCodeMaximumNumberOfPruneRequestsHasBeenReached              = 30040
+	ErrCodeMaximumNumberOfGuildWidgetSettingsUpdatesHasBeenReached = 30042
+	ErrCodeMaximumNumberOfEditsToMessagesOlderThanOneHourReached   = 30046
+
+	ErrCodeUnauthorized                           = 40001
+	ErrCodeActionRequiredVerifiedAccount          = 40002
+	ErrCodeOpeningDirectMessagesTooFast           = 40003
+	ErrCodeSendMessagesHasBeenTemporarilyDisabled = 40004
+	ErrCodeRequestEntityTooLarge                  = 40005
+	ErrCodeFeatureTemporarilyDisabledServerSide   = 40006
+	ErrCodeUserIsBannedFromThisGuild              = 40007
+	ErrCodeTargetIsNotConnectedToVoice            = 40032
+	ErrCodeMessageAlreadyCrossposted              = 40033
+	ErrCodeAnApplicationWithThatNameAlreadyExists = 40041
+	ErrCodeInteractionHasAlreadyBeenAcknowledged  = 40060
+
+	ErrCodeMissingAccess                                                = 50001
+	ErrCodeInvalidAccountType                                           = 50002
+	ErrCodeCannotExecuteActionOnDMChannel                               = 50003
+	ErrCodeEmbedDisabled                                                = 50004
+	ErrCodeGuildWidgetDisabled                                          = 50004
+	ErrCodeCannotEditFromAnotherUser                                    = 50005
+	ErrCodeCannotSendEmptyMessage                                       = 50006
+	ErrCodeCannotSendMessagesToThisUser                                 = 50007
+	ErrCodeCannotSendMessagesInVoiceChannel                             = 50008
+	ErrCodeChannelVerificationLevelTooHigh                              = 50009
+	ErrCodeOAuth2ApplicationDoesNotHaveBot                              = 50010
+	ErrCodeOAuth2ApplicationLimitReached                                = 50011
+	ErrCodeInvalidOAuthState                                            = 50012
+	ErrCodeMissingPermissions                                           = 50013
+	ErrCodeInvalidAuthenticationToken                                   = 50014
+	ErrCodeTooFewOrTooManyMessagesToDelete                              = 50016
+	ErrCodeCanOnlyPinMessageToOriginatingChannel                        = 50019
+	ErrCodeInviteCodeWasEitherInvalidOrTaken                            = 50020
+	ErrCodeCannotExecuteActionOnSystemMessage                           = 50021
+	ErrCodeCannotExecuteActionOnThisChannelType                         = 50024
+	ErrCodeInvalidOAuth2AccessTokenProvided                             = 50025
+	ErrCodeMissingRequiredOAuth2Scope                                   = 50026
+	ErrCodeInvalidWebhookTokenProvided                                  = 50027
+	ErrCodeInvalidRole                                                  = 50028
+	ErrCodeInvalidRecipients                                            = 50033
+	ErrCodeMessageProvidedTooOldForBulkDelete                           = 50034
+	ErrCodeInvalidFormBody                                              = 50035
+	ErrCodeInviteAcceptedToGuildApplicationsBotNotIn                    = 50036
+	ErrCodeInvalidAPIVersionProvided                                    = 50041
+	ErrCodeFileUploadedExceedsTheMaximumSize                            = 50045
+	ErrCodeInvalidFileUploaded                                          = 50046
+	ErrCodeInvalidGuild                                                 = 50055
+	ErrCodeInvalidMessageType                                           = 50068
+	ErrCodeCannotDeleteAChannelRequiredForCommunityGuilds               = 50074
+	ErrCodeInvalidStickerSent                                           = 50081
+	ErrCodePerformedOperationOnArchivedThread                           = 50083
+	ErrCodeBeforeValueIsEarlierThanThreadCreationDate                   = 50085
+	ErrCodeCommunityServerChannelsMustBeTextChannels                    = 50086
+	ErrCodeThisServerIsNotAvailableInYourLocation                       = 50095
+	ErrCodeThisServerNeedsMonetizationEnabledInOrderToPerformThisAction = 50097
+	ErrCodeThisServerNeedsMoreBoostsToPerformThisAction                 = 50101
+	ErrCodeTheRequestBodyContainsInvalidJSON                            = 50109
+
+	ErrCodeNoUsersWithDiscordTagExist = 80004
+
+	ErrCodeReactionBlocked = 90001
+
+	ErrCodeAPIResourceIsCurrentlyOverloaded = 130000
+
+	ErrCodeTheStageIsAlreadyOpen = 150006
+
+	ErrCodeCannotReplyWithoutPermissionToReadMessageHistory = 160002
+	ErrCodeThreadAlreadyCreatedForThisMessage               = 160004
+	ErrCodeThreadIsLocked                                   = 160005
+	ErrCodeMaximumNumberOfActiveThreadsReached              = 160006
+	ErrCodeMaximumNumberOfActiveAnnouncementThreadsReached  = 160007
+
+	ErrCodeInvalidJSONForUploadedLottieFile                    = 170001
+	ErrCodeUploadedLottiesCannotContainRasterizedImages        = 170002
+	ErrCodeStickerMaximumFramerateExceeded                     = 170003
+	ErrCodeStickerFrameCountExceedsMaximumOfOneThousandFrames  = 170004
+	ErrCodeLottieAnimationMaximumDimensionsExceeded            = 170005
+	ErrCodeStickerFrameRateOutOfRange                          = 170006
+	ErrCodeStickerAnimationDurationExceedsMaximumOfFiveSeconds = 170007
+
+	ErrCodeCannotUpdateAFinishedEvent             = 180000
+	ErrCodeFailedToCreateStageNeededForStageEvent = 180002
+)
+
+// Intent is the type of a Gateway Intent
+// https://discord.com/developers/docs/topics/gateway#gateway-intents
+type Intent int
+
+// Constants for the different bit offsets of intents
+const (
+	IntentGuilds                      Intent = 1 << 0
+	IntentGuildMembers                Intent = 1 << 1
+	IntentGuildBans                   Intent = 1 << 2
+	IntentGuildEmojis                 Intent = 1 << 3
+	IntentGuildIntegrations           Intent = 1 << 4
+	IntentGuildWebhooks               Intent = 1 << 5
+	IntentGuildInvites                Intent = 1 << 6
+	IntentGuildVoiceStates            Intent = 1 << 7
+	IntentGuildPresences              Intent = 1 << 8
+	IntentGuildMessages               Intent = 1 << 9
+	IntentGuildMessageReactions       Intent = 1 << 10
+	IntentGuildMessageTyping          Intent = 1 << 11
+	IntentDirectMessages              Intent = 1 << 12
+	IntentDirectMessageReactions      Intent = 1 << 13
+	IntentDirectMessageTyping         Intent = 1 << 14
+	IntentMessageContent              Intent = 1 << 15
+	IntentGuildScheduledEvents        Intent = 1 << 16
+	IntentAutoModerationConfiguration Intent = 1 << 20
+	IntentAutoModerationExecution     Intent = 1 << 21
+
+	// TODO: remove when compatibility is not needed
+
+	IntentsGuilds                 Intent = 1 << 0
+	IntentsGuildMembers           Intent = 1 << 1
+	IntentsGuildBans              Intent = 1 << 2
+	IntentsGuildEmojis            Intent = 1 << 3
+	IntentsGuildIntegrations      Intent = 1 << 4
+	IntentsGuildWebhooks          Intent = 1 << 5
+	IntentsGuildInvites           Intent = 1 << 6
+	IntentsGuildVoiceStates       Intent = 1 << 7
+	IntentsGuildPresences         Intent = 1 << 8
+	IntentsGuildMessages          Intent = 1 << 9
+	IntentsGuildMessageReactions  Intent = 1 << 10
+	IntentsGuildMessageTyping     Intent = 1 << 11
+	IntentsDirectMessages         Intent = 1 << 12
+	IntentsDirectMessageReactions Intent = 1 << 13
+	IntentsDirectMessageTyping    Intent = 1 << 14
+	IntentsMessageContent         Intent = 1 << 15
+	IntentsGuildScheduledEvents   Intent = 1 << 16
+
+	IntentsAllWithoutPrivileged = IntentGuilds |
+		IntentGuildBans |
+		IntentGuildEmojis |
+		IntentGuildIntegrations |
+		IntentGuildWebhooks |
+		IntentGuildInvites |
+		IntentGuildVoiceStates |
+		IntentGuildMessages |
+		IntentGuildMessageReactions |
+		IntentGuildMessageTyping |
+		IntentDirectMessages |
+		IntentDirectMessageReactions |
+		IntentDirectMessageTyping |
+		IntentGuildScheduledEvents |
+		IntentAutoModerationConfiguration |
+		IntentAutoModerationExecution
+
+	IntentsAll = IntentsAllWithoutPrivileged |
+		IntentGuildMembers |
+		IntentGuildPresences |
+		IntentMessageContent
+
+	IntentsNone Intent = 0
+)
+
+// MakeIntent used to help convert a gateway intent value for use in the Identify structure;
+// this was useful to help support the use of a pointer type when intents were optional.
+// This is now a no-op, and is not necessary to use.
+func MakeIntent(intents Intent) Intent {
+	return intents
 }

@@ -1201,7 +1201,7 @@ func (c *Context) tmplAddReactions(values ...reflect.Value) (reflect.Value, erro
 				return reflect.Value{}, ErrTooManyCalls
 			}
 
-			if err := common.BotSession.MessageReactionAdd(c.Msg.ChannelID, c.Msg.ID, fmt.Sprint(reaction)); err != nil {
+			if err := common.BotSession.MessageReactionAdd(c.Msg.ChannelID, c.Msg.ID, reaction.String()); err != nil {
 				return reflect.Value{}, err
 			}
 		}
@@ -1218,7 +1218,7 @@ func (c *Context) tmplAddResponseReactions(values ...reflect.Value) (reflect.Val
 				return reflect.Value{}, ErrTooManyCalls
 			}
 
-			c.CurrentFrame.AddResponseReactionNames = append(c.CurrentFrame.AddResponseReactionNames, fmt.Sprint(reaction))
+			c.CurrentFrame.AddResponseReactionNames = append(c.CurrentFrame.AddResponseReactionNames, reaction.String())
 		}
 		return reflect.ValueOf(""), nil
 	}
@@ -1261,7 +1261,7 @@ func (c *Context) tmplAddMessageReactions(values ...reflect.Value) (reflect.Valu
 				return reflect.Value{}, ErrTooManyCalls
 			}
 
-			if err := common.BotSession.MessageReactionAdd(cID, mID, fmt.Sprint(reaction)); err != nil {
+			if err := common.BotSession.MessageReactionAdd(cID, mID, reaction.String()); err != nil {
 				return reflect.Value{}, err
 			}
 			/*if reaction.Kind() == reflect.String {
