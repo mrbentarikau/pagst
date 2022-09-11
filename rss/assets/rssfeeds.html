@@ -72,15 +72,16 @@
                 <form class="" method="post" action="/manage/{{.Dot.ActiveGuild.ID}}/rssfeeds">
                     <div class="form-row mb-3">
                         <div class="form-group col mb-0">
-                            <p>Scans every 5 minutes for added RSS feed updates and default return is the first match in the feed aka <code>{{"{{.RSSFeedItem}}"}}</code>.<p><code>{{"{{.RSSFeed}}"}}</code> is the main struct and has more items which could also be new in the feed. For example <a href="https://hnrss.github.io/" target="_blank">Hacker News</a> has definitely more new items than only the first, so custom announce helps here to get more for output, eg. <code>{{"{{(index .RSSFeed.Items 1).Title}}"}}</code>.</p>
-                            <p><code>{{"{{.RSSName}}"}}</code> is the custom name you gave to the RSS feed and <code>{{"{{.SelectedRoleID}}"}}</code> is the selected role from drop-down menu.</p>
+                            <p>Scans every 5 minutes for added RSS feed updates and default return is the first match in the feed aka <code>{{"{{.RSSFeedItem}}"}}</code>.</p>
+                            <p><code>{{"{{.RSSFeed}}"}}</code> is the main struct and has more items which could also be new in the feed. For example <a href="https://hnrss.github.io/" target="_blank">Hacker News</a> has definitely more new items than only the first, so custom announce helps here to get more for output, eg. <code>{{"{{(index .RSSFeed.Items 1).Title}}"}}</code>.</p>
+                            <p><code>{{"{{.RSSEmbed}}"}}</code> is the default embed layout, <code>{{"{{.RSSName}}"}}</code> is the custom name you gave to the RSS feed and <code>{{"{{.SelectedRoleID}}"}}</code> is the selected role from drop-down menu.</p>
                             <p>Plugin uses <a href="https://github.com/mmcdole/gofeed" target="_blank">gofeed</a> library and its default mappings, only additional struct element is <code>{{"{{.RSSFeedItem}}"}}</code>.</p>
                         </div>
                         <div class="form-group col mb-0">
                             {{checkbox "AnnounceEnabled" "rss-announce-enabled" `<h2 class="card-title">Enable</h2>` .Dot.AnnounceEnabled}}
                             <label>RSS Feed Announce Message (<span class="announce-length-counter">{{toRune .Dot.RSSFeedAnnounceMsg|len}}</span>/2000)</label>
                             <textarea class="form-control" rows="5" id="rss-announce-msg" name="RSSFeedAnnounceMsg" oninput="onCCChanged(this)">{{.Dot.RSSFeedAnnounceMsg}}</textarea>
-                            <p class="help-block">Additional template data is:<code>{{"{{.RSSFeed}}"}}</code>,<code>{{"{{.RSSFeedItem}}"}}</code>,<code>{{"{{.RSSName}}"}}</code>,<code>{{"{{.SelectedRoleID}}"}}</code></p>
+                            <p class="help-block">Additional template data is:<code>{{"{{.RSSEmbed}}"}}</code>,<code>{{"{{.RSSFeed}}"}}</code>,<code>{{"{{.RSSFeedItem}}"}}</code>,<code>{{"{{.RSSName}}"}}</code>,<code>{{"{{.SelectedRoleID}}"}}</code></p>
                             <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstAnnounceSave" class="btn btn-sm btn-success btn-block" formaction="/manage/{{.Dot.ActiveGuild.ID}}/rssfeeds/handle_announce" data-async-form-alertsonly>Save</button>
                             </span>
                         </div>
