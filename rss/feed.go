@@ -218,6 +218,7 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 	}
 
 	rssEmbed = createRSSEmbed(feed, feedName)
+	ctx.Data["RSSEmbed"] = rssEmbed
 
 	webhookUsername := "RSS Feed • " + common.ConfBotName.GetString()
 	// not really good using current mqueue-webhooking
