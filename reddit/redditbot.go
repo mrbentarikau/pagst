@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -297,8 +298,10 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 	plainBody := ""
 	parentSpoiler := false
 
+	re := regexp.MustCompile(`&(amp;)?#x200B;`)
+
 	if post.IsSelf {
-		postSelftext := strings.ReplaceAll(post.Selftext, "&amp;#x200B;", " ")
+		postSelftext := re.ReplaceAllString(post.Selftext, " ")
 		plainBody = common.CutStringShort(html.UnescapeString(postSelftext), 250)
 	} else if post.CrosspostParent != "" && len(post.CrosspostParentList) > 0 {
 		// Handle cross posts
@@ -306,7 +309,7 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		plainBody += "**" + html.UnescapeString(parent.Title) + "**\n"
 
 		if parent.IsSelf {
-			parentSelftext := strings.ReplaceAll(post.CrosspostParentList[0].Selftext, "&amp;#x200B;", " ")
+			parentSelftext := re.ReplaceAllString(post.CrosspostParentList[0].Selftext, " ")
 			plainBody += common.CutStringShort(html.UnescapeString(parentSelftext), 250)
 		} else {
 			plainBody += parent.URL
@@ -352,7 +355,7 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 	if post.IsSelf {
 		//  Handle Self posts
 		embed.Footer.Text += "new self post"
-		postSelftext := strings.ReplaceAll(post.Selftext, "&amp;#x200B;", " ")
+		postSelftext := re.ReplaceAllString(post.Selftext, " ")
 		if post.Spoiler {
 			embed.Description += "|| " + common.CutStringShort(html.UnescapeString(postSelftext), 250) + " ||"
 		} else {
@@ -369,7 +372,7 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		if parent.IsSelf {
 			// Cropsspost was a self post
 			embed.Color = 0xc3fc7e
-			parentSelftext := strings.ReplaceAll(post.CrosspostParentList[0].Selftext, "&amp;#x200B;", " ")
+			parentSelftext := re.ReplaceAllString(post.CrosspostParentList[0].Selftext, " ")
 			if parent.Spoiler {
 				embed.Description += "|| " + common.CutStringShort(html.UnescapeString(parentSelftext), 250) + " ||"
 			} else {
