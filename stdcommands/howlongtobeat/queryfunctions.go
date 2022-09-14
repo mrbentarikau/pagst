@@ -1,30 +1,21 @@
 package howlongtobeat
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/jarowinkler"
 )
 
-func getGameData(searchTitle string) (string, error) {
-	data := url.Values{}
-	data.Set("queryString", searchTitle) //setting default request header query form data, the site uses
-	data.Add("t", "games")               // search type - for games, second option would be HLTB users
-	data.Add("sorthead", "popular")      // sort by release date,rating,popularity or name...  all parameters can be seen via header data, popular's the best
-	data.Add("sortd", "Normal Order")    // sorting, Normal or Reverse
-	data.Add("plat", "")                 // platform, empty string is for all
-	data.Add("length_type", "main")      // length range category, main is fine
-	data.Add("length_min", "")           // game length min
-	data.Add("length_max", "")           // game length max
-	data.Add("detail", "")               // extra information with user_stats ala speedruns, user rating etc...
-
+func getGameData(searchTitle string) ([]byte, error) {
 	u := &url.URL{
 		Scheme:   hltbScheme,
 		Host:     hltbHost,
@@ -35,72 +26,63 @@ func getGameData(searchTitle string) (string, error) {
 	urlStr := u.String()
 
 	client := &http.Client{}
-	r, _ := http.NewRequest("POST", urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
-	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	var jsonQuery HowlongToBeatQuery
+	jsonQuery.SearchTerms = []string{searchTitle}
+	jsonQuery.SearchType = "games"
+	jsonQuery.SearchPage = 1
+	jsonQuery.Size = 25
+	jsonQuery.SearchOptions.Games.SortCategory = "popular"
+	jsonQuery.SearchOptions.Games.RangeCategory = "main"
+
+	jsonData, err := json.Marshal(jsonQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	r, _ := http.NewRequest("POST", urlStr, strings.NewReader(string(jsonData))) // URL-encoded payload
+	r.Header.Add("Content-Type", "application/json")
 	r.Header.Add("Accept", "*/*")
-	r.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+	r.Header.Add("Content-Length", strconv.Itoa(len(jsonData)))
 	r.Header.Add("User-Agent", common.ConfBotUserAgent.GetString())
+	r.Header.Add("Authority", hltbURL)
 	r.Header.Add("Origin", hltbURL)
 	r.Header.Add("Referer", hltbURL)
 
 	resp, err := client.Do(r)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if resp.StatusCode != 200 {
-		return "", commands.NewPublicError("Unable to fetch data from howlongtobeat.com")
+		return nil, commands.NewPublicError("Unable to fetch data from howlongtobeat.com, status code:", resp.StatusCode)
 	}
 	r.Body.Close()
 	defer resp.Body.Close()
 
 	bytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
-	}
-
-	stringBody := string(bytes)
-
-	return stringBody, nil
-}
-
-func parseGameData(gameName string, toReader *strings.Reader) ([]hltb, error) {
-	var hltbQuery []hltb
-	var queryParsed hltb
-
-	parseData, err := goquery.NewDocumentFromReader(toReader)
-	if err != nil {
 		return nil, err
 	}
 
-	parseData.Find("li").Each(func(_ int, sel *goquery.Selection) {
-		queryParsed.ImageURL = sel.Find("img").AttrOr("src", "")
-		queryParsed.GameURL = hltbURL + sel.Find("a").AttrOr("href", "")
+	return bytes, nil
+}
 
-		queryParsed.GameTitle = strings.TrimSpace(sel.Find("h3").Text())
-		queryParsed.PureTitle = strings.TrimSpace(sel.Find("a").AttrOr("title", "")) //a tag has game title without &() etc
-		queryParsed.JaroWinklerSimilarity = jarowinkler.Similarity([]rune(gameName), []rune(queryParsed.PureTitle))
+func parseQueryData(hltbQuery []HowlongToBeatData, gameName string) []HowlongToBeatData {
 
-		/*if sel.Find(".search_list_tidbit_short").Length() > 0 { //maybe for future use
-			queryParsed.OnlineGame = true
-		}*/
+	for i, j := range hltbQuery {
+		hltbQuery[i].CompMainDur = time.Second * time.Duration(j.CompMain)
+		hltbQuery[i].CompPlusDur = time.Second * time.Duration(j.CompPlus)
+		hltbQuery[i].Comp100Dur = time.Second * time.Duration(j.Comp100)
 
-		sel.Find(".search_list_tidbit, .search_list_tidbit_short").Each(func(_ int, divSel *goquery.Selection) {
-			gameType := strings.TrimSpace(divSel.Text())
-			if gameType == "Main Story" || gameType == "Single-Player" || gameType == "Solo" {
-				queryParsed.MainStory = []string{gameType, strings.TrimSpace(divSel.Next().Text())}
-			}
+		hltbQuery[i].CompMainHumanize = common.HumanizeDurationShort(common.DurationPrecisionMinutes, hltbQuery[i].CompMainDur)
+		hltbQuery[i].CompPlusHumanize = common.HumanizeDurationShort(common.DurationPrecisionMinutes, hltbQuery[i].CompPlusDur)
+		hltbQuery[i].Comp100Humanize = common.HumanizeDurationShort(common.DurationPrecisionMinutes, hltbQuery[i].Comp100Dur)
 
-			if gameType == "Main + Extra" || gameType == "Co-Op" {
-				queryParsed.MainExtra = []string{gameType, strings.TrimSpace(divSel.Next().Text())}
-			}
+		hltbQuery[i].JaroWinklerSimilarity = jarowinkler.Similarity([]rune(gameName), []rune(j.GameName))
+		hltbQuery[i].GameURL = fmt.Sprintf("%sgame/%d", hltbURL, hltbQuery[i].GameID)
+		hltbQuery[i].ImageURL = fmt.Sprintf("%sgames/%s", hltbURL, hltbQuery[i].GameImage)
+	}
 
-			if gameType == "Completionist" || gameType == "Vs." {
-				queryParsed.Completionist = []string{gameType, strings.TrimSpace(divSel.Next().Text())}
-			}
-		})
-		hltbQuery = append(hltbQuery, queryParsed)
-
-	})
-	return hltbQuery, nil
+	return hltbQuery
 }
