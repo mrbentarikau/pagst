@@ -136,6 +136,24 @@ func (d DurationFormatPrecision) String() string {
 	return "Unknown"
 }
 
+func (d DurationFormatPrecision) Short() string {
+	switch d {
+	case DurationPrecisionSeconds:
+		return "s"
+	case DurationPrecisionMinutes:
+		return "m"
+	case DurationPrecisionHours:
+		return "h"
+	case DurationPrecisionDays:
+		return "d"
+	case DurationPrecisionWeeks:
+		return "w"
+	case DurationPrecisionYears:
+		return "y"
+	}
+	return "Unknown"
+}
+
 func (d DurationFormatPrecision) FromSeconds(in int64) int64 {
 	switch d {
 	case DurationPrecisionSeconds:
@@ -183,6 +201,37 @@ func HumanizeDuration(precision DurationFormatPrecision, in time.Duration) strin
 	for i := len(out) - 1; i >= 0; i-- {
 		if i == 0 && i != len(out)-1 {
 			outStr += " and "
+		} else if i != len(out)-1 {
+			outStr += " "
+		}
+		outStr += out[i]
+	}
+
+	if outStr == "" {
+		outStr = "less than 1 " + precision.String()
+	}
+
+	return outStr
+}
+
+func HumanizeDurationShort(precision DurationFormatPrecision, in time.Duration) string {
+	seconds := int64(in.Seconds())
+
+	out := make([]string, 0)
+
+	for i := int(precision); i < int(DurationPrecisionYears)+1; i++ {
+		curPrec := DurationFormatPrecision(i)
+		units := curPrec.FromSeconds(seconds)
+		if units > 0 {
+			out = append(out, fmt.Sprintf("%d%s", units, curPrec.Short()))
+		}
+	}
+
+	outStr := ""
+
+	for i := len(out) - 1; i >= 0; i-- {
+		if i == 0 && i != len(out)-1 {
+			outStr += " "
 		} else if i != len(out)-1 {
 			outStr += " "
 		}
