@@ -1,6 +1,7 @@
 package reminders
 
 import (
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -84,6 +85,7 @@ func (r *Reminder) Trigger() error {
 		embed := &discordgo.MessageEmbed{
 			Title:       "Reminder from " + common.ConfBotName.GetString(),
 			Description: common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
+			Color:       int(rand.Int63n(16777215)),
 		}
 
 		mqueue.QueueMessage(&mqueue.QueuedElement{

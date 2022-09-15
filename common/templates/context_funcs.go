@@ -170,16 +170,14 @@ func (c *Context) baseChannelArg(v interface{}) *dstate.ChannelState {
 			} else {
 				// Channel name, look for it
 				for _, v := range c.GS.Channels {
-					if strings.EqualFold(t, v.Name) && v.Type == discordgo.ChannelTypeGuildText {
+					if strings.EqualFold(t, v.Name) && (v.Type == discordgo.ChannelTypeGuildText || v.Type == discordgo.ChannelTypeGuildVoice || v.Type == discordgo.ChannelTypeGuildForum || v.Type == discordgo.ChannelTypeGuildNews) {
 						return &v
 					}
 				}
 				// Thread name, look for it
-				for _, vv := range c.GS.Threads {
-					if strings.EqualFold(t, vv.Name) &&
-						(vv.Type == discordgo.ChannelTypeGuildPublicThread ||
-							vv.Type == discordgo.ChannelTypeGuildPrivateThread) {
-						return &vv
+				for _, v := range c.GS.Threads {
+					if strings.EqualFold(t, v.Name) && (v.Type == discordgo.ChannelTypeGuildPublicThread || v.Type == discordgo.ChannelTypeGuildPrivateThread || v.Type == discordgo.ChannelTypeGuildNewsThread) {
+						return &v
 					}
 				}
 			}

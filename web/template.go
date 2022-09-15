@@ -245,6 +245,8 @@ func tmplChannelOptsMulti(channelTypes []discordgo.ChannelType) func(channels []
 				prefix = "#"
 			case discordgo.ChannelTypeGuildVoice:
 				prefix = "🔊"
+			case discordgo.ChannelTypeGuildForum:
+				prefix = "💬"
 			default:
 				prefix = ""
 			}
