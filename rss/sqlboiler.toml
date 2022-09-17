@@ -8,4 +8,4 @@ host="localhost"
 user="postgres"
 pass="123"
 sslmode="disable"
-whitelist=["rss_feeds"]
+whitelist=["rss_feeds","rss_announcements"]
