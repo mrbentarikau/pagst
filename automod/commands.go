@@ -198,7 +198,17 @@ func (p *Plugin) AddCommands() {
 			}
 
 			for name, count := range violations {
+
+				if common.ContainsEmoji(name) {
+					name = common.ReplaceEmojis(name, ":emoji:")
+				}
+
+				if len([]rune(name)) > 26 {
+					name = fmt.Sprintf("%s_", string([]rune(name)[:26]))
+				}
+
 				out += fmt.Sprintf("%-31s Count: %d\n", name, count)
+
 			}
 
 			if out == "" {

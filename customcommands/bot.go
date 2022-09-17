@@ -405,11 +405,22 @@ func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap m
 			group = string([]rune(group)[:9]) + "_"
 		}
 
-		if textTrigger = v.TextTrigger; len([]rune(textTrigger)) > 21 {
+		textTrigger = v.TextTrigger
+		regexTrigger = v.RegexTrigger
+
+		if common.ContainsEmoji(textTrigger) {
+			textTrigger = common.ReplaceEmojis(textTrigger)
+		}
+
+		if common.ContainsEmoji(regexTrigger) {
+			regexTrigger = common.ReplaceEmojis(regexTrigger)
+		}
+
+		if len([]rune(textTrigger)) > 21 {
 			textTrigger = string([]rune(textTrigger)[:21]) + "_"
 		}
 
-		if regexTrigger = v.RegexTrigger; len([]rune(regexTrigger)) > 21 {
+		if len([]rune(regexTrigger)) > 21 {
 			regexTrigger = string([]rune(regexTrigger)[:21]) + "_"
 		}
 
