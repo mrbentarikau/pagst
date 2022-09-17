@@ -99,18 +99,19 @@ func (p *Plugin) HandleRSS(w http.ResponseWriter, r *http.Request) (web.Template
 	}
 
 	templateData["RSSFeedAnnounceMsg"] = DefaultAnnounceMessage
+	templateData["AnnounceEnabled"] = false
 
 	dbAnnounceMsg, err := models.RSSAnnouncements(qm.Where("guild_id = ?", ag.ID)).OneG(ctx)
-	if err != nil {
-		return templateData, err
-	}
-
-	if dbAnnounceMsg.Announcement != "" {
+	if err == nil && dbAnnounceMsg.Announcement != "" {
 		templateData["RSSFeedAnnounceMsg"] = dbAnnounceMsg.Announcement
 	}
 
 	templateData["Subs"] = subs
-	templateData["AnnounceEnabled"] = dbAnnounceMsg.Enabled
+
+	if dbAnnounceMsg != nil {
+		templateData["AnnounceEnabled"] = dbAnnounceMsg.Enabled
+	}
+
 	templateData["VisibleURL"] = "/manage/" + discordgo.StrID(ag.ID) + "/rssfeeds"
 
 	return templateData, nil
