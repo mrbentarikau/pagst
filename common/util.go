@@ -11,14 +11,17 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"emperror.dev/errors"
 
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/forPelevin/gomoji"
 	"github.com/lib/pq"
 	"github.com/mediocregopher/radix/v3"
+	"github.com/rivo/uniseg"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/image/colornames"
 )
@@ -754,3 +757,37 @@ func FeedEnabled(pluginName string) bool {
 	return false
 }
 */
+
+func ContainsEmoji(s string) bool {
+	return gomoji.ContainsEmoji(s)
+}
+
+func ReplaceEmojis(s string, replace ...string) string {
+	cleanBuf := bytes.Buffer{}
+
+	gr := uniseg.NewGraphemes(s)
+	for gr.Next() {
+		if !gomoji.ContainsEmoji(gr.Str()) {
+			cleanBuf.Write(gr.Bytes())
+		} else {
+			if len(replace) > 0 {
+				cleanBuf.WriteString(replace[0])
+			} else {
+				replEmoji, _ := gomoji.GetInfo(gr.Str())
+				cleanBuf.WriteString(":" + replEmoji.Slug + ":")
+			}
+		}
+	}
+
+	res := cleanBuf
+	res.Reset()
+	for _, r := range cleanBuf.String() {
+		if !gomoji.ContainsEmoji(string(r)) {
+			res.WriteRune(r)
+		}
+	}
+
+	return strings.TrimFunc(res.String(), func(r rune) bool {
+		return unicode.IsSpace(r) || !unicode.IsGraphic(r) || !unicode.IsPrint(r) || unicode.In(r, unicode.Variation_Selector)
+	})
+}

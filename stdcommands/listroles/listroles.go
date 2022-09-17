@@ -107,9 +107,13 @@ var Command = &commands.YAGCommand{
 func toOut(r *discordgo.Role, raw bool, out *string) string {
 	me := r.Permissions&discordgo.PermissionAdministrator != 0 || r.Permissions&discordgo.PermissionMentionEveryone != 0
 	if !raw {
-		rowLength := 28
-		nameCut := common.CutStringShort(r.Name, 40)
-		*out += fmt.Sprintf("%-[1]*s `\n%-[3]*s%-16d #%-6x %-5t`\n", rowLength, nameCut, rowLength/2-1, "", r.ID, r.Color, me)
+		nameCut := r.Name
+		if common.ContainsEmoji(nameCut) {
+			nameCut = common.ReplaceEmojis(nameCut, ":emoji:")
+		}
+		nameCut = common.CutStringShort(nameCut, 12)
+
+		*out += fmt.Sprintf("%-12s %-19d#%-6x %-5t\n", nameCut, r.ID, r.Color, me)
 	} else {
 		*out += fmt.Sprintf("`%-25s: %-19d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
 	}
@@ -118,8 +122,8 @@ func toOut(r *discordgo.Role, raw bool, out *string) string {
 
 func embedCreator(outStringSlice []string, i, ml, counter int) *discordgo.MessageEmbed {
 	description := fmt.Sprintf("Total role count: %d\n(ME = mention everyone perms)\n\n", counter)
-	description += fmt.Sprintf("`%-28s %-3s%-6s  %-5s\n", "Rolename", "ID", "Color", "ME")
-	description += "---------------------------------------------`\n"
+	description += fmt.Sprintf("%-28s %-3s%-6s  %-5s\n", "Rolename", "ID", "Color", "ME")
+	description += "---------------------------------------------\n"
 
 	for k, v := range outStringSlice[i*ml:] {
 		if k < ml {
@@ -128,7 +132,7 @@ func embedCreator(outStringSlice []string, i, ml, counter int) *discordgo.Messag
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Description: description,
+		Description: fmt.Sprintf("`%s`", description),
 	}
 	return embed
 }

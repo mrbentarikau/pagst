@@ -18,5 +18,13 @@ CREATE TABLE IF NOT EXISTS rss_feeds (
 CREATE INDEX IF NOT EXISTS rss_feeds_guild_idx ON rss_feeds(guild_id);
 `, `
 CREATE INDEX IF NOT EXISTS rss_feeds_feeds_idx ON rss_feeds(feed_url);
+`, `
+CREATE TABLE IF NOT EXISTS rss_announcements (
+	guild_id BIGINT PRIMARY KEY,
+	announcement TEXT NOT NULL,
+	enabled BOOLEAN NOT NULL DEFAULT false
+);
+`, `
+CREATE INDEX IF NOT EXISTS rss_announcements_guild_idx ON rss_announcements(guild_id);
 `,
 }
