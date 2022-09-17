@@ -214,7 +214,6 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 	dbAnnounceMsg, err := models.RSSAnnouncements(qm.Where("guild_id = ?", guildID)).OneG(context.Background())
 	if err != nil {
 		logger.Error("rssFeed dbAnnounceMsg error:", err)
-		return
 	}
 
 	rssEmbed = createRSSEmbed(feed, feedName)
