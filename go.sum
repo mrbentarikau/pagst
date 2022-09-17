@@ -58,6 +58,8 @@ github.com/DATA-DOG/go-sqlmock v1.4.1 h1:ThlnYciV1iM/V0OSF/dtkqWb6xo5qITT1TJBG1M
 github.com/DATA-DOG/go-sqlmock v1.4.1/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/Joker/hpp v1.0.0/go.mod h1:8x5n+M1Hp5hC0g8okX3sR3vFQwynaX/UgSOM9MeBKzY=
 github.com/Joker/jade v1.0.1-0.20190614124447-d475f43051e7/go.mod h1:6E6s8o2AE4KhCrqr6GRJjdC/gNfTdxkIXvuGZZda2VM=
+github.com/KtorZPersonal/go-iso-codes v0.0.0-20160925135154-03678d5d921e h1:SEqRbUOwWH5ih2yHUekEGVHvcXpi1m2fL0NT2xikg70=
+github.com/KtorZPersonal/go-iso-codes v0.0.0-20160925135154-03678d5d921e/go.mod h1:OWfrvbXoEloZll6oYPbEEW+1LH7N3wXt0Pcst+AY1yg=
 github.com/Masterminds/go-fileserver v0.0.0-20150404113552-04d61ae6d130 h1:s/s8br9F7PuovScPkCcKN2Bw2e94paktwwkUTBR9V24=
 github.com/Masterminds/go-fileserver v0.0.0-20150404113552-04d61ae6d130/go.mod h1:NDhwmq+pirRWl3333MqTObQ8qLIOORrBgeiQWvoEoEc=
 github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
