@@ -27,6 +27,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/dogfact"
 	"github.com/mrbentarikau/pagst/stdcommands/editchannelpermissions"
 	"github.com/mrbentarikau/pagst/stdcommands/editrole"
+	"github.com/mrbentarikau/pagst/stdcommands/exchange"
 	"github.com/mrbentarikau/pagst/stdcommands/exportcustomcommands"
 	"github.com/mrbentarikau/pagst/stdcommands/exportuserdatabase"
 	"github.com/mrbentarikau/pagst/stdcommands/findserver"
@@ -105,6 +106,7 @@ func (p *Plugin) AddCommands() {
 		dogfact.Command,
 		editchannelpermissions.Command,
 		editrole.Command,
+		exchange.Command,
 		getiplocation.Command,
 		howlongtobeat.Command,
 		inspire.Command,

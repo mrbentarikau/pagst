@@ -211,9 +211,11 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 	ctx.Data["RSSName"] = feedName
 	ctx.Data["SelectedRoleID"] = mentionRole
 
+	var announceMsg AnnouncementMessage
 	dbAnnounceMsg, err := models.RSSAnnouncements(qm.Where("guild_id = ?", guildID)).OneG(context.Background())
-	if err != nil {
-		logger.Error("rssFeed dbAnnounceMsg error:", err)
+	if err == nil {
+		announceMsg.Enabled = dbAnnounceMsg.Enabled
+		announceMsg.Announcement = dbAnnounceMsg.Announcement
 	}
 
 	rssEmbed = createRSSEmbed(feed, feedName)
@@ -221,7 +223,7 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 
 	webhookUsername := "RSS Feed • " + common.ConfBotName.GetString()
 	// not really good using current mqueue-webhooking
-	if (feedName != "" && feedName != "No name") && !dbAnnounceMsg.Enabled {
+	if (feedName != "" && feedName != "No name") && !announceMsg.Enabled {
 		webhookUsername = "RSS Feed • " + feedName
 		rssEmbed.Footer.Text += " • " + common.ConfBotName.GetString()
 	}
@@ -231,9 +233,9 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 		webhookAvatarURL = feed.Image.URL
 	}
 
-	if dbAnnounceMsg.Enabled {
+	if announceMsg.Enabled {
 		rssEmbed = nil
-		content, err = ctx.Execute(dbAnnounceMsg.Announcement)
+		content, err = ctx.Execute(announceMsg.Announcement)
 		if err != nil {
 			logger.WithError(err).WithField("guild", guildID).Warn("Failed executing template on sendNewRSSFeedMessage")
 			return

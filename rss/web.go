@@ -101,7 +101,8 @@ func (p *Plugin) HandleRSS(w http.ResponseWriter, r *http.Request) (web.Template
 	templateData["RSSFeedAnnounceMsg"] = DefaultAnnounceMessage
 	templateData["AnnounceEnabled"] = false
 
-	dbAnnounceMsg, err := models.RSSAnnouncements(qm.Where("guild_id = ?", ag.ID)).OneG(ctx)
+	var dbAnnounceMsg *models.RSSAnnouncement
+	dbAnnounceMsg, err = models.RSSAnnouncements(qm.Where("guild_id = ?", ag.ID)).OneG(ctx)
 	if err == nil && dbAnnounceMsg.Announcement != "" {
 		templateData["RSSFeedAnnounceMsg"] = dbAnnounceMsg.Announcement
 	}
@@ -130,7 +131,7 @@ func (p *Plugin) HandleAnnouncement(w http.ResponseWriter, r *http.Request) (tem
 
 	err = dbAnnounceMsg.UpsertG(ctx, true, []string{"guild_id"}, boil.Infer(), boil.Infer())
 	if err != nil {
-		return nil, err
+		return templateData, err
 	}
 
 	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyFeedAnnouncement, &cplogs.Param{}))
