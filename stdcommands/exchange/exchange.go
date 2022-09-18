@@ -1,5 +1,7 @@
 package exchange
 
+//go:generate go run gen/symbols_gen.go -o exchange_symbols.go
+
 import (
 	"encoding/json"
 	"fmt"
@@ -7,8 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
-
-	"github.com/KtorZPersonal/go-iso-codes/currencies"
+	"time"
 
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
@@ -33,21 +34,25 @@ var Command = &commands.YAGCommand{
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		amount := fmt.Sprintf("%.2f", data.Args[0].Float64())
-		from := currencies.Lookup(currencies.Currency{Alpha3: strings.ToUpper(data.Args[1].Str())})
-		to := currencies.Lookup(currencies.Currency{Alpha3: strings.ToUpper(data.Args[2].Str())})
+
+		from := Symbols[strings.ToUpper(data.Args[1].Str())]
+		to := Symbols[strings.ToUpper(data.Args[2].Str())]
+		//from := currencies.Lookup(currencies.Currency{Alpha3: strings.ToUpper(data.Args[1].Str())})
+		//to := currencies.Lookup(currencies.Currency{Alpha3: strings.ToUpper(data.Args[2].Str())})
 		if len(to) == 0 || len(from) == 0 {
 			return "Invalid currency code.\nCheck out available codes on: <https://api.exchangerate.host/symbols>", nil
 		}
-		output, err := requestAPI("https://api.exchangerate.host/convert?from=" + from[0].Alpha3 + "&to=" + to[0].Alpha3 + "&amount=1")
+		output, err := requestAPI("https://api.exchangerate.host/convert?from=" + from["Code"] + "&to=" + to["Code"] + "&amount=1")
 		if err != nil {
 			return nil, err
 		}
 
 		embed := &discordgo.MessageEmbed{
 			Title:       "💱Currency Exhange Rate",
-			Description: fmt.Sprintf("\n%s **%s** (%s) is %0.3f **%s** (%s).", amount, from[0].Name, output.Query.From, data.Args[0].Float64()*output.Result, to[0].Name, output.Query.To),
+			Description: fmt.Sprintf("\n%s **%s** (%s) is %0.3f **%s** (%s).", amount, from["Description"], output.Query.From, data.Args[0].Float64()*output.Result, to["Description"], output.Query.To),
 			Color:       int(rand.Int63n(0xffffff)),
 			Footer:      &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Based on currency rate 1:%0.3f", output.Result)},
+			Timestamp:   time.Now().UTC().Format(time.RFC3339),
 		}
 
 		return embed, nil
