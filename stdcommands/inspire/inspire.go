@@ -26,15 +26,17 @@ var Command = &commands.YAGCommand{
 	SlashCommandEnabled: true,
 	Cooldown:            3,
 	Arguments: []*dcmd.ArgDef{
-		{Name: "Mindfulness", Type: &dcmd.IntArg{Min: 1, Max: 100}},
+		{Name: "Mindfulness", Type: &dcmd.IntArg{Min: 1, Max: 25}},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var pm *paginatedmessages.PaginatedMessage
+		var ID = time.Now().UTC().Unix()
+
 		if data.Args[0].Str() != "" {
 			wonkyErr := "InspireAPI wonky... ducks are sad : /"
 
-			result, err := inspireFromAPI(true)
+			result, err := inspireFromAPI(true, ID)
 			if err != nil {
 				return wonkyErr, err
 			}
@@ -45,7 +47,7 @@ var Command = &commands.YAGCommand{
 			pm, err = paginatedmessages.CreatePaginatedMessage(
 				data.GuildData.GS.ID, data.ChannelID, 1, data.Args[0].Int(), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					if page-1 == len(inspireArray) {
-						result, err := inspireFromAPI(true)
+						result, err := inspireFromAPI(true, ID)
 						if err != nil {
 							return nil, err
 						}
@@ -61,19 +63,20 @@ var Command = &commands.YAGCommand{
 		}
 
 		//Normal Image Inspire Output
-		inspData, err := inspireFromAPI(false)
+		inspData, err := inspireFromAPI(false, ID)
 		if err != nil {
 			return fmt.Sprintf("%s\nInspiroBot wonky... sad times :/", err), err
 		}
 		embed := createInspireEmbed(inspData, false)
+
 		return embed, nil
 	},
 }
 
-func inspireFromAPI(mindfulnessMode bool) (string, error) {
+func inspireFromAPI(mindfulnessMode bool, ID int64) (string, error) {
 	query := "https://inspirobot.me/api?generate=true"
 	if mindfulnessMode {
-		query = fmt.Sprintf("https://inspirobot.me/api?generateFlow=1&sessionID=%d", time.Now().UTC().Unix())
+		query = fmt.Sprintf("https://inspirobot.me/api?generateFlow=1&sessionID=%d", ID)
 	}
 
 	req, err := http.NewRequest("GET", query, nil)

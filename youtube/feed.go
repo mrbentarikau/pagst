@@ -147,14 +147,6 @@ func (p *Plugin) syncWebSubs() {
 	}))
 }
 
-/*func (p *Plugin) removeAllSubsForChannel(channel string) {
-	err := common.GORM.Where("youtube_channel_id = ?", channel).Delete(ChannelSubscription{}).Error
-	if err != nil {
-		logger.WithError(err).WithField("yt_channel", channel).Error("failed removing channel")
-	}
-	go p.MaybeRemoveChannelWatch(channel)
-}*/
-
 func (p *Plugin) sendNewVidMessage(guild, discordChannel, channelTitle, channelID, videoID, mentionRole, liveBroadcastContent string, mentionEveryone bool) {
 	var content string
 
@@ -177,10 +169,13 @@ func (p *Plugin) sendNewVidMessage(guild, discordChannel, channelTitle, channelI
 	ctx.Data["LiveStream"] = liveBroadcastContent
 	ctx.Data["SelectedRoleID"] = parseMentionRole
 
+	var dbAnnounceMsg YoutubeAnnouncements
 	var announceMsg AnnouncementMessage
-	err := common.GetRedisJson("youtube_announce_message:"+discordgo.StrID(parsedGuild), &announceMsg)
-	if err != nil {
-		return
+
+	err := common.GORM.Model(&YoutubeAnnouncements{}).Where("guild_id = ?", parsedGuild).First(&dbAnnounceMsg).Error
+	if err == nil {
+		announceMsg.Enabled = dbAnnounceMsg.Enabled
+		announceMsg.AnnounceMsg = dbAnnounceMsg.Announcement
 	}
 
 	if announceMsg.Enabled {
@@ -494,11 +489,6 @@ func (p *Plugin) CheckVideo(videoID string, channelID string) error {
 	}
 
 	item := resp.Items[0]
-
-	//if item.Snippet.LiveBroadcastContent != "none" {
-	// ignore livestreams for now, might enable them at some point
-	//		return nil
-	//	}
 
 	parsedPublishedAt, err := time.Parse(time.RFC3339, item.Snippet.PublishedAt)
 	if err != nil {
