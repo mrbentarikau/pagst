@@ -48,13 +48,13 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 func RegisterPlugin() {
 	p := &Plugin{}
 
-	common.GORM.AutoMigrate(ChannelSubscription{}, YoutubePlaylistID{})
+	common.GORM.AutoMigrate(ChannelSubscription{}, YoutubeAnnouncements{}, YoutubePlaylistID{})
 
 	mqueue.RegisterSource("youtube", p)
 
 	err := p.SetupClient()
 	if err != nil {
-		logger.WithError(err).Error("Failed setting up youtube plugin, youtube plugin will not be enabled.")
+		logger.WithError(err).Error("Failed setting up YouTube plugin, YouTube plugin will not be enabled.")
 		return
 	}
 
@@ -84,6 +84,12 @@ type ChannelSubscription struct {
 
 func (c *ChannelSubscription) TableName() string {
 	return "youtube_channel_subscriptions"
+}
+
+type YoutubeAnnouncements struct {
+	GuildID      int64 `gorm:"primary_key" sql:"AUTO_INCREMENT:false"`
+	Announcement string
+	Enabled      bool `sql:"DEFAULT:false"`
 }
 
 type YoutubePlaylistID struct {

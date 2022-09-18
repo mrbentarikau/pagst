@@ -134,6 +134,8 @@ func (p *ParsedArg) Float64() float64 {
 	}
 
 	switch t := p.Value.(type) {
+	case float64:
+		return t
 	case int:
 		return float64(t)
 	case uint:
@@ -639,7 +641,7 @@ func (f *FloatArg) ParseFromInteraction(def *ArgDef, data *Data, options *SlashC
 }
 
 func (f *FloatArg) HelpName() string {
-	return "Decimal number"
+	return "Floating point number"
 }
 
 func (f *FloatArg) SlashCommandOptions(def *ArgDef) []*discordgo.ApplicationCommandOption {
