@@ -219,24 +219,20 @@
                             </div>
                             <div id="cc-time-trigger-details" class="hidden col-sm-8">
                                 <div class="row">
-                                    <div class="col-sm-4">
+                                    <div class="col-sm-2">
+                                        <div class="form-group">
+                                            <label>Start time (UTC)</label>&nbsp;<sup><i class="fa-solid fa-info" title="Interval trigger first start. Will be next day, if set before current UTC-time."></i></sup>
+                                            <input type="time" min="00:00" max="23:59" class="form-control" name="time_trigger_starts_at" value="{{currentTime.Format `15:04`}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-2">
                                         <div class="form-group">
                                             <label>Interval</label>
                                             <input type="number" min="0" class="form-control" name="time_trigger_interval"
                                                 placeholder="" value="{{call $dot.GetCCInterval .CC}}">
                                         </div>
                                     </div>
-                                    <div class="col-sm-8">
-                                        <div class="form-group">
-                                            <label>Channel</label>
-                                            <select id="time-trigger-channel" name="context_channel" class="form-control">
-                                                {{textChannelOptions $g.Channels .CC.ContextChannel true "None"}}
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-6">
+                                   <div class="col-sm-2">
                                         <div class="form-group">
                                             <label for="trigger">Excluding hours (UTC)</label><br>
                                             <select name="time_trigger_excluding_hours" class="multiselect form-control"
@@ -248,7 +244,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
+                                    <div class="col-sm-4">
                                         <div class="form-group">
                                             <label for="trigger">Excluding weekdays (UTC)</label><br>
                                             <select name="time_trigger_excluding_days" class="multiselect form-control"
@@ -274,6 +270,16 @@
                                                 <option value="0"
                                                     {{if in .CC.TimeTriggerExcludingDays 0}}selected{{end}}>
                                                     Sunday</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-8">
+                                        <div class="form-group">
+                                            <label>Channel</label>
+                                            <select id="time-trigger-channel" name="context_channel" class="form-control">
+                                                {{textChannelOptions $g.Channels .CC.ContextChannel true "None"}}
                                             </select>
                                         </div>
                                     </div>
@@ -500,6 +506,10 @@
                                             id="command-channels" data-plugin-multiselect>
                                             {{textChannelOptionsMulti $g.Channels .CC.Channels}}
                                         </select>
+                                        <div>
+                                            <h4>Threads enabled</h4>
+                                            {{checkbox "threads_enabled" "threads_enabled" "" .CC.ThreadsEnabled}}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

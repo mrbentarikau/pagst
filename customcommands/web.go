@@ -50,6 +50,8 @@ type GroupForm struct {
 
 	WhitelistRoles []int64 `valid:"role,true"`
 	BlacklistRoles []int64 `valid:"role,true"`
+
+	ThreadsEnabled bool `valid:"threads_enabled,true"`
 }
 
 var (
@@ -254,8 +256,9 @@ func handleNewCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData,
 		GuildID: activeGuild.ID,
 		LocalID: localID,
 
-		Disabled:   true,
-		ShowErrors: true,
+		Disabled:       true,
+		ShowErrors:     true,
+		ThreadsEnabled: true,
 
 		TimeTriggerExcludingDays:  []int64{},
 		TimeTriggerExcludingHours: []int64{},
@@ -332,7 +335,27 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 		if err != nil {
 			web.CtxLogger(ctx).WithError(err).Error("failed retrieving full model")
 		} else {
-			err = UpdateCommandNextRunTime(fullModel, true, true)
+			triggerStartsAt := time.Now().UTC()
+			if cmd.TimeTriggerStartsAt != "" {
+				startsAtForm := cmd.TimeTriggerStartsAt
+				timeToFormat := fmt.Sprintf("%04d-%02d-%02d %s", triggerStartsAt.Year(), triggerStartsAt.Month(), triggerStartsAt.Day(), startsAtForm)
+				parsedTime, err := time.Parse("2006-01-02 15:04", timeToFormat)
+				if err != nil {
+					return templateData, err
+				}
+
+				if parsedTime.Format("15:04") == triggerStartsAt.Format("15:04") {
+					triggerStartsAt = parsedTime
+				} else if parsedTime.Before(triggerStartsAt) {
+					triggerStartsAt = triggerStartsAt.Add(24 * time.Hour)
+				} else {
+					triggerStartsAt = parsedTime
+				}
+			}
+			err = UpdateCommandNextRunTime(fullModel, true, true, triggerStartsAt)
+			if err != nil {
+				return templateData, err
+			}
 		}
 	} else {
 		err = DelNextRunEvent(activeGuild.ID, dbModel.LocalID)
@@ -427,8 +450,9 @@ func handleDuplicateCommand(w http.ResponseWriter, r *http.Request) (web.Templat
 		LocalID: localID,
 		GroupID: cmd.GroupID,
 
-		Disabled:   true,
-		ShowErrors: true,
+		Disabled:       true,
+		ShowErrors:     true,
+		ThreadsEnabled: true,
 
 		Categories:              cmd.Categories,
 		CategoriesWhitelistMode: cmd.CategoriesWhitelistMode,
@@ -463,6 +487,9 @@ func handleDuplicateCommand(w http.ResponseWriter, r *http.Request) (web.Templat
 			web.CtxLogger(ctx).WithError(err).Error("failed retrieving full model")
 		} else {
 			err = UpdateCommandNextRunTime(fullModel, true, true)
+			if err != nil {
+				return templateData, err
+			}
 		}
 	} else {
 		err = DelNextRunEvent(activeGuild.ID, dbModel.LocalID)
@@ -746,7 +773,7 @@ func queryCCsRan(ag int64, total bool) string {
 	return queryReturn
 }
 
-//HumanizeThousands comma separates thousands
+// HumanizeThousands comma separates thousands
 func humanizeThousands(input int64) string {
 	var f1, f2 string
 

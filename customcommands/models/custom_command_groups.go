@@ -33,6 +33,7 @@ type CustomCommandGroup struct {
 	WhitelistChannels   types.Int64Array `boil:"whitelist_channels" json:"whitelist_channels,omitempty" toml:"whitelist_channels" yaml:"whitelist_channels,omitempty"`
 	IgnoreCategories    types.Int64Array `boil:"ignore_categories" json:"ignore_categories,omitempty" toml:"ignore_categories" yaml:"ignore_categories,omitempty"`
 	WhitelistCategories types.Int64Array `boil:"whitelist_categories" json:"whitelist_categories,omitempty" toml:"whitelist_categories" yaml:"whitelist_categories,omitempty"`
+	ThreadsEnabled      bool             `boil:"threads_enabled" json:"threads_enabled" toml:"threads_enabled" yaml:"threads_enabled"`
 
 	R *customCommandGroupR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L customCommandGroupL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,6 +49,7 @@ var CustomCommandGroupColumns = struct {
 	WhitelistChannels   string
 	IgnoreCategories    string
 	WhitelistCategories string
+	ThreadsEnabled      string
 }{
 	ID:                  "id",
 	GuildID:             "guild_id",
@@ -58,6 +60,7 @@ var CustomCommandGroupColumns = struct {
 	WhitelistChannels:   "whitelist_channels",
 	IgnoreCategories:    "ignore_categories",
 	WhitelistCategories: "whitelist_categories",
+	ThreadsEnabled:      "threads_enabled",
 }
 
 var CustomCommandGroupTableColumns = struct {
@@ -70,6 +73,7 @@ var CustomCommandGroupTableColumns = struct {
 	WhitelistChannels   string
 	IgnoreCategories    string
 	WhitelistCategories string
+	ThreadsEnabled      string
 }{
 	ID:                  "custom_command_groups.id",
 	GuildID:             "custom_command_groups.guild_id",
@@ -80,6 +84,7 @@ var CustomCommandGroupTableColumns = struct {
 	WhitelistChannels:   "custom_command_groups.whitelist_channels",
 	IgnoreCategories:    "custom_command_groups.ignore_categories",
 	WhitelistCategories: "custom_command_groups.whitelist_categories",
+	ThreadsEnabled:      "custom_command_groups.threads_enabled",
 }
 
 // Generated where
@@ -154,6 +159,15 @@ func (w whereHelpertypes_Int64Array) GTE(x types.Int64Array) qm.QueryMod {
 func (w whereHelpertypes_Int64Array) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
 func (w whereHelpertypes_Int64Array) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
+type whereHelperbool struct{ field string }
+
+func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+
 var CustomCommandGroupWhere = struct {
 	ID                  whereHelperint64
 	GuildID             whereHelperint64
@@ -164,6 +178,7 @@ var CustomCommandGroupWhere = struct {
 	WhitelistChannels   whereHelpertypes_Int64Array
 	IgnoreCategories    whereHelpertypes_Int64Array
 	WhitelistCategories whereHelpertypes_Int64Array
+	ThreadsEnabled      whereHelperbool
 }{
 	ID:                  whereHelperint64{field: "\"custom_command_groups\".\"id\""},
 	GuildID:             whereHelperint64{field: "\"custom_command_groups\".\"guild_id\""},
@@ -174,6 +189,7 @@ var CustomCommandGroupWhere = struct {
 	WhitelistChannels:   whereHelpertypes_Int64Array{field: "\"custom_command_groups\".\"whitelist_channels\""},
 	IgnoreCategories:    whereHelpertypes_Int64Array{field: "\"custom_command_groups\".\"ignore_categories\""},
 	WhitelistCategories: whereHelpertypes_Int64Array{field: "\"custom_command_groups\".\"whitelist_categories\""},
+	ThreadsEnabled:      whereHelperbool{field: "\"custom_command_groups\".\"threads_enabled\""},
 }
 
 // CustomCommandGroupRels is where relationship names are stored.
@@ -204,9 +220,9 @@ func (r *customCommandGroupR) GetGroupCustomCommands() CustomCommandSlice {
 type customCommandGroupL struct{}
 
 var (
-	customCommandGroupAllColumns            = []string{"id", "guild_id", "name", "ignore_roles", "ignore_channels", "whitelist_roles", "whitelist_channels", "ignore_categories", "whitelist_categories"}
+	customCommandGroupAllColumns            = []string{"id", "guild_id", "name", "ignore_roles", "ignore_channels", "whitelist_roles", "whitelist_channels", "ignore_categories", "whitelist_categories", "threads_enabled"}
 	customCommandGroupColumnsWithoutDefault = []string{"guild_id", "name"}
-	customCommandGroupColumnsWithDefault    = []string{"id", "ignore_roles", "ignore_channels", "whitelist_roles", "whitelist_channels", "ignore_categories", "whitelist_categories"}
+	customCommandGroupColumnsWithDefault    = []string{"id", "ignore_roles", "ignore_channels", "whitelist_roles", "whitelist_channels", "ignore_categories", "whitelist_categories", "threads_enabled"}
 	customCommandGroupPrimaryKeyColumns     = []string{"id"}
 	customCommandGroupGeneratedColumns      = []string{}
 )

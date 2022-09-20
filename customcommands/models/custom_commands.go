@@ -54,6 +54,7 @@ type CustomCommand struct {
 	RegexTrigger              string            `boil:"regex_trigger" json:"regex_trigger" toml:"regex_trigger" yaml:"regex_trigger"`
 	RegexTriggerCaseSensitive bool              `boil:"regex_trigger_case_sensitive" json:"regex_trigger_case_sensitive" toml:"regex_trigger_case_sensitive" yaml:"regex_trigger_case_sensitive"`
 	Note                      null.String       `boil:"note" json:"note,omitempty" toml:"note" yaml:"note,omitempty"`
+	ThreadsEnabled            bool              `boil:"threads_enabled" json:"threads_enabled" toml:"threads_enabled" yaml:"threads_enabled"`
 
 	R *customCommandR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L customCommandL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -89,6 +90,7 @@ var CustomCommandColumns = struct {
 	RegexTrigger              string
 	RegexTriggerCaseSensitive string
 	Note                      string
+	ThreadsEnabled            string
 }{
 	LocalID:                   "local_id",
 	GuildID:                   "guild_id",
@@ -119,6 +121,7 @@ var CustomCommandColumns = struct {
 	RegexTrigger:              "regex_trigger",
 	RegexTriggerCaseSensitive: "regex_trigger_case_sensitive",
 	Note:                      "note",
+	ThreadsEnabled:            "threads_enabled",
 }
 
 var CustomCommandTableColumns = struct {
@@ -151,6 +154,7 @@ var CustomCommandTableColumns = struct {
 	RegexTrigger              string
 	RegexTriggerCaseSensitive string
 	Note                      string
+	ThreadsEnabled            string
 }{
 	LocalID:                   "custom_commands.local_id",
 	GuildID:                   "custom_commands.guild_id",
@@ -181,6 +185,7 @@ var CustomCommandTableColumns = struct {
 	RegexTrigger:              "custom_commands.regex_trigger",
 	RegexTriggerCaseSensitive: "custom_commands.regex_trigger_case_sensitive",
 	Note:                      "custom_commands.note",
+	ThreadsEnabled:            "custom_commands.threads_enabled",
 }
 
 // Generated where
@@ -231,15 +236,6 @@ func (w whereHelperint) NIN(slice []int) qm.QueryMod {
 	}
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
-
-type whereHelperbool struct{ field string }
-
-func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
 type whereHelpernull_Time struct{ field string }
 
@@ -363,6 +359,7 @@ var CustomCommandWhere = struct {
 	RegexTrigger              whereHelperstring
 	RegexTriggerCaseSensitive whereHelperbool
 	Note                      whereHelpernull_String
+	ThreadsEnabled            whereHelperbool
 }{
 	LocalID:                   whereHelperint64{field: "\"custom_commands\".\"local_id\""},
 	GuildID:                   whereHelperint64{field: "\"custom_commands\".\"guild_id\""},
@@ -393,6 +390,7 @@ var CustomCommandWhere = struct {
 	RegexTrigger:              whereHelperstring{field: "\"custom_commands\".\"regex_trigger\""},
 	RegexTriggerCaseSensitive: whereHelperbool{field: "\"custom_commands\".\"regex_trigger_case_sensitive\""},
 	Note:                      whereHelpernull_String{field: "\"custom_commands\".\"note\""},
+	ThreadsEnabled:            whereHelperbool{field: "\"custom_commands\".\"threads_enabled\""},
 }
 
 // CustomCommandRels is where relationship names are stored.
@@ -423,9 +421,9 @@ func (r *customCommandR) GetGroup() *CustomCommandGroup {
 type customCommandL struct{}
 
 var (
-	customCommandAllColumns            = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note"}
+	customCommandAllColumns            = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note", "threads_enabled"}
 	customCommandColumnsWithoutDefault = []string{"local_id", "guild_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "responses", "channels_whitelist_mode", "roles_whitelist_mode"}
-	customCommandColumnsWithDefault    = []string{"group_id", "last_run", "next_run", "channels", "roles", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note"}
+	customCommandColumnsWithDefault    = []string{"group_id", "last_run", "next_run", "channels", "roles", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note", "threads_enabled"}
 	customCommandPrimaryKeyColumns     = []string{"guild_id", "local_id"}
 	customCommandGeneratedColumns      = []string{}
 )

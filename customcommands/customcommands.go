@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"emperror.dev/errors"
+	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/customcommands/models"
@@ -142,6 +143,7 @@ type CustomCommand struct {
 	TimeTriggerInterval       int     `schema:"time_trigger_interval"`
 	TimeTriggerExcludingDays  []int64 `schema:"time_trigger_excluding_days"`
 	TimeTriggerExcludingHours []int64 `schema:"time_trigger_excluding_hours"`
+	TimeTriggerStartsAt       string  `schema:"time_trigger_starts_at"`
 
 	ReactionTriggerMode int `schema:"reaction_trigger_mode"`
 
@@ -159,7 +161,8 @@ type CustomCommand struct {
 
 	GroupID int64
 
-	ShowErrors bool `schema:"show_errors"`
+	ShowErrors     bool `schema:"show_errors"`
+	ThreadsEnabled bool `schema:"threads_enabled"`
 }
 
 var _ web.CustomValidator = (*CustomCommand)(nil)
@@ -256,6 +259,8 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 
 		ShowErrors: cc.ShowErrors,
 
+		ThreadsEnabled: cc.ThreadsEnabled,
+
 		DateUpdated: null.TimeFrom(time.Now()),
 	}
 
@@ -298,7 +303,7 @@ func CmdRunsInCategory(cc *models.CustomCommand, channel int64) bool {
 		}
 	}
 
-	// check command specifc restrictions
+	// check command specific restrictions
 	for _, v := range cc.Categories {
 		if v == channel {
 			return cc.CategoriesWhitelistMode
@@ -310,6 +315,8 @@ func CmdRunsInCategory(cc *models.CustomCommand, channel int64) bool {
 }
 
 func CmdRunsInChannel(cc *models.CustomCommand, channel int64) bool {
+	gs := bot.State.GetGuild(cc.GuildID)
+	cs := gs.GetChannelOrThread(channel)
 	if cc.GroupID.Valid {
 		// check group restrictions
 		if common.ContainsInt64Slice(cc.R.Group.IgnoreChannels, channel) {
@@ -323,11 +330,22 @@ func CmdRunsInChannel(cc *models.CustomCommand, channel int64) bool {
 		}
 	}
 
-	// check command specifc restrictions
+	// check command specific restrictions
 	for _, v := range cc.Channels {
 		if v == channel {
 			return cc.ChannelsWhitelistMode
 		}
+	}
+
+	if cs.Type.IsThread() {
+		isContained := common.ContainsInt64Slice(cc.Channels, common.ChannelOrThreadParentID(cs))
+		if cc.ChannelsWhitelistMode && !isContained {
+			return false
+		}
+		if !cc.ChannelsWhitelistMode && isContained {
+			return false
+		}
+		return cc.ThreadsEnabled
 	}
 
 	// Not found

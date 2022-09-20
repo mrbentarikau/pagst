@@ -119,7 +119,7 @@ func DelNextRunEvent(guildID int64, cmdID int64) error {
 }
 
 // TODO: Run this all in a transaction?
-func UpdateCommandNextRunTime(cc *models.CustomCommand, updateLastRun bool, clearOld bool) error {
+func UpdateCommandNextRunTime(cc *models.CustomCommand, updateLastRun bool, clearOld bool, triggerStartsAt ...time.Time) error {
 	if clearOld {
 		// remove the old events
 		err := DelNextRunEvent(cc.GuildID, cc.LocalID)
@@ -134,6 +134,9 @@ func UpdateCommandNextRunTime(cc *models.CustomCommand, updateLastRun bool, clea
 
 	// calculate the next run time
 	nextRun := CalcNextRunTime(cc, time.Now())
+	if len(triggerStartsAt) > 0 {
+		nextRun = CalcNextRunTime(cc, triggerStartsAt[0])
+	}
 	if nextRun.IsZero() {
 		return nil
 	}
