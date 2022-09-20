@@ -1,7 +1,6 @@
 // GENERATED using gen/symbols_gen.go
 
-// Custom event handlers that adds a redis connection to the handler
-// They will also recover from panics
+// Symbols from https://api.exchangerate.host/symbols
 
 package exchange
 
