@@ -281,7 +281,7 @@ func FallbackEmbed(embed *discordgo.MessageEmbed) string {
 }
 
 // CutStringShort stops a string at "l"-3 if it's longer than "l" and adds "..."
-func CutStringShort(s string, l int) string {
+func CutStringShort(s string, l int, sep ...string) string {
 	var mainBuf bytes.Buffer
 	var latestBuf bytes.Buffer
 
@@ -294,6 +294,9 @@ func CutStringShort(s string, l int) string {
 		}
 
 		if i >= l {
+			if len(sep) > 0 {
+				return mainBuf.String() + sep[0]
+			}
 			return mainBuf.String() + "..."
 		}
 		i++
