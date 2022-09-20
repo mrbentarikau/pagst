@@ -1,9 +1,8 @@
 //go:build ignore
 // +build ignore
 
-// Generates the wrapper event handlers for discordgo events
-// The wrappers adds an extra parameter to the handlers which is a redis connection
-// And will also recover from panic that occured inside them
+// Generates symbols file for API
+// and prevents additional requests during command exec
 // go get golang.org/x/tools/internal/gocommand@v0.1.11 etc...
 package main
 
@@ -23,8 +22,7 @@ import (
 
 const templateSource = `// GENERATED using gen/symbols_gen.go
 
-// Custom event handlers that adds a redis connection to the handler
-// They will also recover from panics
+// Symbols from https://api.exchangerate.host/symbols
 
 package exchange
 

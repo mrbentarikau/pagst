@@ -37,8 +37,7 @@ var Command = &commands.YAGCommand{
 
 		from := Symbols[strings.ToUpper(data.Args[1].Str())]
 		to := Symbols[strings.ToUpper(data.Args[2].Str())]
-		//from := currencies.Lookup(currencies.Currency{Alpha3: strings.ToUpper(data.Args[1].Str())})
-		//to := currencies.Lookup(currencies.Currency{Alpha3: strings.ToUpper(data.Args[2].Str())})
+
 		if len(to) == 0 || len(from) == 0 {
 			return "Invalid currency code.\nCheck out available codes on: <https://api.exchangerate.host/symbols>", nil
 		}
