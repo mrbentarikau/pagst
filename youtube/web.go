@@ -128,14 +128,16 @@ func (p *Plugin) HandleYoutube(w http.ResponseWriter, r *http.Request) (web.Temp
 	}
 
 	templateData["YoutubeAnnounceMsg"] = DefaultAnnounceMessage
-	var announceMsg AnnouncementMessage
-	err = common.GetRedisJson("youtube_announce_message:"+discordgo.StrID(ag.ID), &announceMsg)
-	if err == nil && announceMsg.AnnounceMsg != "" {
-		templateData["YoutubeAnnounceMsg"] = announceMsg.AnnounceMsg
+	templateData["AnnounceEnabled"] = false
+
+	var announceMsg YoutubeAnnouncements
+	err = common.GORM.Model(&YoutubeAnnouncements{}).Where("guild_id = ?", ag.ID).First(&announceMsg).Error
+	if err == nil && announceMsg.Announcement != "" {
+		templateData["YoutubeAnnounceMsg"] = announceMsg.Announcement
+		templateData["AnnounceEnabled"] = announceMsg.Enabled
 	}
 
 	templateData["Subs"] = subs
-	templateData["AnnounceEnabled"] = announceMsg.Enabled
 	templateData["VisibleURL"] = "/manage/" + discordgo.StrID(ag.ID) + "/youtube"
 
 	return templateData, nil
@@ -259,14 +261,19 @@ func (p *Plugin) HandleAnnouncement(w http.ResponseWriter, r *http.Request) (tem
 	guild, templateData := web.GetBaseCPContextData(ctx)
 	data := ctx.Value(common.ContextKeyParsedForm).(*Form)
 
-	var announceMsg AnnouncementMessage
-	announceMsg.AnnounceMsg = data.YoutubeAnnounceMsg
+	var announceMsg YoutubeAnnouncements
+	announceMsg.GuildID = guild.ID
+	announceMsg.Announcement = data.YoutubeAnnounceMsg
 	announceMsg.Enabled = data.AnnounceEnabled
-	err = common.SetRedisJson("youtube_announce_message:"+discordgo.StrID(guild.ID), announceMsg)
+
+	err = common.GORM.Model(&YoutubeAnnouncements{}).Where("guild_id = ?", guild.ID).Save(&announceMsg).Error
+	if err != nil {
+		return templateData, err
+	}
 
 	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyFeedAnnouncement, &cplogs.Param{}))
 
-	return
+	return templateData, nil
 }
 
 func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateData web.TemplateData, err error) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -296,15 +297,20 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 
 	plainBody := ""
 	parentSpoiler := false
+
+	re := regexp.MustCompile(`&(amp;)?#x200B;`)
+
 	if post.IsSelf {
-		plainBody = common.CutStringShort(html.UnescapeString(post.Selftext), 250)
+		postSelftext := re.ReplaceAllString(post.Selftext, " ")
+		plainBody = common.CutStringShort(html.UnescapeString(postSelftext), 250)
 	} else if post.CrosspostParent != "" && len(post.CrosspostParentList) > 0 {
 		// Handle cross posts
 		parent := post.CrosspostParentList[0]
 		plainBody += "**" + html.UnescapeString(parent.Title) + "**\n"
 
 		if parent.IsSelf {
-			plainBody += common.CutStringShort(html.UnescapeString(parent.Selftext), 250)
+			parentSelftext := re.ReplaceAllString(post.CrosspostParentList[0].Selftext, " ")
+			plainBody += common.CutStringShort(html.UnescapeString(parentSelftext), 250)
 		} else {
 			plainBody += parent.URL
 		}
@@ -349,10 +355,11 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 	if post.IsSelf {
 		//  Handle Self posts
 		embed.Footer.Text += "new self post"
+		postSelftext := re.ReplaceAllString(post.Selftext, " ")
 		if post.Spoiler {
-			embed.Description += "|| " + common.CutStringShort(html.UnescapeString(post.Selftext), 250) + " ||"
+			embed.Description += "|| " + common.CutStringShort(html.UnescapeString(postSelftext), 250) + " ||"
 		} else {
-			embed.Description += common.CutStringShort(html.UnescapeString(post.Selftext), 250)
+			embed.Description += common.CutStringShort(html.UnescapeString(postSelftext), 250)
 		}
 
 		embed.Color = 0xc3fc7e
@@ -365,10 +372,11 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		if parent.IsSelf {
 			// Cropsspost was a self post
 			embed.Color = 0xc3fc7e
+			parentSelftext := re.ReplaceAllString(post.CrosspostParentList[0].Selftext, " ")
 			if parent.Spoiler {
-				embed.Description += "|| " + common.CutStringShort(html.UnescapeString(parent.Selftext), 250) + " ||"
+				embed.Description += "|| " + common.CutStringShort(html.UnescapeString(parentSelftext), 250) + " ||"
 			} else {
-				embed.Description += common.CutStringShort(html.UnescapeString(parent.Selftext), 250)
+				embed.Description += common.CutStringShort(html.UnescapeString(parentSelftext), 250)
 			}
 		} else {
 			// cross post was a link most likely

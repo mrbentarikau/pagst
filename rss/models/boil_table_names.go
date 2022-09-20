@@ -4,7 +4,9 @@
 package models
 
 var TableNames = struct {
-	RSSFeeds string
+	RSSAnnouncements string
+	RSSFeeds         string
 }{
-	RSSFeeds: "rss_feeds",
+	RSSAnnouncements: "rss_announcements",
+	RSSFeeds:         "rss_feeds",
 }

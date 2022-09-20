@@ -1,6 +1,7 @@
 package reminders
 
 import (
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -54,9 +55,9 @@ func (r *Reminder) ChannelIDInt() (i int64) {
 }
 
 func (r *Reminder) Trigger() error {
-	reminderRepeat := "**Reminder**"
+	reminderRepeat := "**Reminder** for"
 	if r.Repeat > 0 {
-		reminderRepeat = "**Repeated reminder**"
+		reminderRepeat = "**Repeated reminder** for"
 		userID := r.UserIDInt()
 		repeatDuration := time.Duration(r.Repeat) * time.Nanosecond
 		when := time.Now().Add(repeatDuration)
@@ -67,6 +68,9 @@ func (r *Reminder) Trigger() error {
 			err = nil
 		}
 		err = scheduledevents2.ScheduleEvent("reminders_check_user", r.GuildID, when, userID)
+		if err != nil {
+			logger.Info("Reminders repeat scheduler:", err)
+		}
 	} else {
 		// remove the actual reminder
 		rows := common.GORM.Delete(r).RowsAffected
@@ -78,14 +82,20 @@ func (r *Reminder) Trigger() error {
 	logger.WithFields(logrus.Fields{"channel": r.ChannelID, "user": r.UserID, "message": r.Message, "id": r.ID}).Info("Triggered reminder")
 	member, _ := bot.GetMember(r.GuildID, r.UserIDInt())
 	if member != nil {
+		embed := &discordgo.MessageEmbed{
+			Title:       "Reminder from " + common.ConfBotName.GetString(),
+			Description: common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
+			Color:       int(rand.Int63n(16777215)),
+		}
+
 		mqueue.QueueMessage(&mqueue.QueuedElement{
 			Source:       "reminder",
 			SourceItemID: "",
 
-			GuildID:   r.GuildID,
-			ChannelID: r.ChannelIDInt(),
-
-			MessageStr: reminderRepeat + " <@" + r.UserID + ">: " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
+			GuildID:      r.GuildID,
+			ChannelID:    r.ChannelIDInt(),
+			MessageEmbed: embed,
+			MessageStr:   reminderRepeat + " <@" + r.UserID + ">", // : " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
 			AllowedMentions: discordgo.AllowedMentions{
 				Users: []int64{r.UserIDInt()},
 			},

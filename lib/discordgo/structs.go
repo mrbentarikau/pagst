@@ -85,6 +85,29 @@ type Session struct {
 	onceHandlers map[string][]*eventHandlerInstance
 }
 
+/*
+// Application stores values for a Discord Application
+type Application struct {
+	ID                  int64    `json:"id,omitempty,string"`
+	Name                string   `json:"name"`
+	Icon                string   `json:"icon,omitempty"`
+	Description         string   `json:"description,omitempty"`
+	RPCOrigins          []string `json:"rpc_origins,omitempty"`
+	BotPublic           bool     `json:"bot_public,omitempty"`
+	BotRequireCodeGrant bool     `json:"bot_require_code_grant,omitempty"`
+	TermsOfServiceURL   string   `json:"terms_of_service_url"`
+	PrivacyProxyURL     string   `json:"privacy_policy_url"`
+	Owner               *User    `json:"owner"`
+	Summary             string   `json:"summary"`
+	VerifyKey           string   `json:"verify_key"`
+	Team                *Team    `json:"team"`
+	GuildID             int64    `json:"guild_id,string"`
+	PrimarySKUID        int64    `json:"primary_sku_id,string"`
+	Slug                string   `json:"slug"`
+	CoverImage          string   `json:"cover_image"`
+	Flags               int      `json:"flags,omitempty"`
+}
+*/
 // UserConnection is a Connection returned from the UserConnections endpoint
 type UserConnection struct {
 	ID           string         `json:"id"`
@@ -198,11 +221,21 @@ const (
 	ChannelTypeGuildPublicThread  ChannelType = 11 // a temporary sub-channel within a GUILD_TEXT channel
 	ChannelTypeGuildPrivateThread ChannelType = 12 // a temporary sub-channel within a GUILD_TEXT channel that is only viewable by those invited and those with the MANAGE_THREADS permission
 	ChannelTypeGuildStageVoice    ChannelType = 13 // a voice channel for hosting events with an audience
+	ChannelTypeGuildForum         ChannelType = 15 // a channel that can only contain threads
 )
 
-func (t ChannelType) IsThread() bool {
-	return t == ChannelTypeGuildPrivateThread || t == ChannelTypeGuildPublicThread
-}
+// ChannelFlags represent flags of a channel/thread.
+type ChannelFlags int
+
+// Block containing known ChannelFlags values.
+const (
+	// ChannelFlagPinned indicates whether the thread is pinned in the forum channel.
+	// NOTE: forum threads only.
+	ChannelFlagPinned ChannelFlags = 1 << 1
+	// ChannelFlagRequireTag indicates whether a tag is required to be specified when creating a thread.
+	// NOTE: forum channels only.
+	ChannelFlagRequireTag ChannelFlags = 1 << 2
+)
 
 // A Channel holds all data related to an individual Discord channel.
 type Channel struct {
@@ -225,6 +258,15 @@ type Channel struct {
 	// The ID of the last message sent in the channel. This is not
 	// guaranteed to be an ID of a valid message.
 	LastMessageID int64 `json:"last_message_id,string"`
+
+	// The timestamp of the last pinned message in the channel.
+	// nil if the channel has no pinned messages.
+	LastPinTimestamp *time.Time `json:"last_pin_timestamp"`
+
+	// An approximate count of messages in a thread, stops counting at 50
+	MessageCount int `json:"message_count"`
+	// An approximate count of users in a thread, stops counting at 50
+	MemberCount int `json:"member_count"`
 
 	// Whether the channel is marked as NSFW.
 	NSFW bool `json:"nsfw"`
@@ -254,12 +296,36 @@ type Channel struct {
 	// The ID of the parent channel, if the channel is under a category
 	ParentID int64 `json:"parent_id,string"`
 
+	// Amount of seconds a user has to wait before sending another message or creating another thread (0-21600)
+	// bots, as well as users with the permission manage_messages or manage_channel, are unaffected
 	RateLimitPerUser int `json:"rate_limit_per_user"`
 
 	// ID of the creator of the group DM or thread
 	OwnerID int64 `json:"owner_id,string"`
 
+	// ApplicationID of the DM creator Zeroed if guild channel or not a bot user
+	ApplicationID int64 `json:"application_id"`
+
+	// Thread-specific fields not needed by other channels
 	ThreadMetadata *ThreadMetadata `json:"thread_metadata"`
+
+	// Thread member object for the current user, if they have joined the thread, only included on certain API endpoints
+	Member *ThreadMember `json:"thread_member"`
+
+	// All thread members. State channels only.
+	Members []*ThreadMember `json:"-"`
+
+	// Channel flags.
+	Flags ChannelFlags `json:"flags"`
+
+	// The set of tags that can be used in a forum channel.
+	AvailableTags []ForumTag `json:"available_tags"`
+
+	// The IDs of the set of tags that have been applied to a thread in a forum channel.
+	AppliedTags []string `json:"applied_tags"`
+
+	// Emoji to use as the default reaction to a forum post.
+	DefaultReactionEmoji DefaultReaction `json:"default_reaction_emoji"`
 }
 
 func (c *Channel) GetChannelID() int64 {
@@ -275,6 +341,10 @@ func (c *Channel) Mention() string {
 	return fmt.Sprintf("<#%d>", c.ID)
 }
 
+func (t ChannelType) IsThread() bool {
+	return t == ChannelTypeGuildPrivateThread || t == ChannelTypeGuildPublicThread
+}
+
 // A ChannelEdit holds Channel Feild data for a channel edit.
 type ChannelEdit struct {
 	Name                 string                 `json:"name,omitempty"`
@@ -286,6 +356,7 @@ type ChannelEdit struct {
 	PermissionOverwrites []*PermissionOverwrite `json:"permission_overwrites,omitempty"`
 	ParentID             *null.String           `json:"parent_id,omitempty"`
 	RateLimitPerUser     *int                   `json:"rate_limit_per_user,omitempty"`
+	Flags                *ChannelFlags          `json:"flags,omitempty"`
 
 	// NOTE: threads only
 
@@ -293,6 +364,14 @@ type ChannelEdit struct {
 	AutoArchiveDuration int   `json:"auto_archive_duration,omitempty"`
 	Locked              *bool `json:"locked,omitempty"`
 	Invitable           *bool `json:"invitable,omitempty"`
+
+	// NOTE: forum channels only
+
+	AvailableTags        *[]ForumTag      `json:"available_tags,omitempty"`
+	DefaultReactionEmoji *DefaultReaction `json:"default_reaction_emoji,omitempty"`
+
+	// NOTE: forum threads only
+	AppliedTags *[]string `json:"applied_tags,omitempty"`
 }
 
 // A ChannelFollow holds data returned after following a news channel
@@ -331,6 +410,9 @@ type ThreadStart struct {
 	Type                ChannelType `json:"type,omitempty"`
 	Invitable           bool        `json:"invitable"`
 	RateLimitPerUser    int         `json:"rate_limit_per_user,omitempty"`
+
+	// NOTE: forum threads only
+	AppliedTags []string `json:"applied_tags,omitempty"`
 }
 
 // ThreadMetadata contains a number of thread-specific channel fields that are not needed by other channel types.
@@ -372,6 +454,24 @@ type AddedThreadMember struct {
 	*ThreadMember
 	Member   *Member   `json:"member"`
 	Presence *Presence `json:"presence"`
+}
+
+// DefaultReaction specifies emoji to use as the default reaction to a forum post.
+// NOTE: Exactly one of EmojiID and EmojiName must be set.
+type DefaultReaction struct {
+	// The id of a guild's custom emoji.
+	EmojiID string `json:"emoji_id,omitempty"`
+	// The unicode character of the emoji.
+	EmojiName string `json:"emoji_name,omitempty"`
+}
+
+// ForumTag represents a tag that is able to be applied to a thread in a GUILD_FORUM channel.
+type ForumTag struct {
+	ID        string `json:"id,omitempty"`
+	Name      string `json:"name"`
+	Moderated bool   `json:"moderated"`
+	EmojiID   string `json:"emoji_id,omitempty"`
+	EmojiName string `json:"emoji_name,omitempty"`
 }
 
 // Emoji struct holds data related to Emoji's
@@ -1338,6 +1438,88 @@ type GuildBan struct {
 	User   *User  `json:"user"`
 }
 
+// AutoModerationRule stores data for an auto moderation rule.
+type AutoModerationRule struct {
+	ID              int64                          `json:"id,omitempty,string"`
+	GuildID         int64                          `json:"guild_id,omitempty,string"`
+	Name            string                         `json:"name,omitempty"`
+	CreatorID       int64                          `json:"creator_id,omitempty,string"`
+	EventType       AutoModerationRuleEventType    `json:"event_type,omitempty"`
+	TriggerType     AutoModerationRuleTriggerType  `json:"trigger_type,omitempty"`
+	TriggerMetadata *AutoModerationTriggerMetadata `json:"trigger_metadata,omitempty"`
+	Actions         []AutoModerationAction         `json:"actions,omitempty"`
+	Enabled         *bool                          `json:"enabled,omitempty"`
+	ExemptRoles     *[]string                      `json:"exempt_roles,omitempty"`
+	ExemptChannels  *[]string                      `json:"exempt_channels,omitempty"`
+}
+
+// AutoModerationRuleEventType indicates in what event context a rule should be checked.
+type AutoModerationRuleEventType int
+
+// Auto moderation rule event types.
+const (
+	// AutoModerationEventMessageSend is checked when a member sends or edits a message in the guild
+	AutoModerationEventMessageSend AutoModerationRuleEventType = 1
+)
+
+// AutoModerationRuleTriggerType represents the type of content which can trigger the rule.
+type AutoModerationRuleTriggerType int
+
+// Auto moderation rule trigger types.
+const (
+	AutoModerationEventTriggerKeyword       AutoModerationRuleTriggerType = 1
+	AutoModerationEventTriggerHarmfulLink   AutoModerationRuleTriggerType = 2
+	AutoModerationEventTriggerSpam          AutoModerationRuleTriggerType = 3
+	AutoModerationEventTriggerKeywordPreset AutoModerationRuleTriggerType = 4
+)
+
+// AutoModerationKeywordPreset represents an internally pre-defined wordset.
+type AutoModerationKeywordPreset uint
+
+// Auto moderation keyword presets.
+const (
+	AutoModerationKeywordPresetProfanity     AutoModerationKeywordPreset = 1
+	AutoModerationKeywordPresetSexualContent AutoModerationKeywordPreset = 2
+	AutoModerationKeywordPresetSlurs         AutoModerationKeywordPreset = 3
+)
+
+// AutoModerationTriggerMetadata represents additional metadata used to determine whether rule should be triggered.
+type AutoModerationTriggerMetadata struct {
+	// Substrings which will be searched for in content.
+	// NOTE: should be only used with keyword trigger type.
+	KeywordFilter []string `json:"keyword_filter,omitempty"`
+	// Internally pre-defined wordsets which will be searched for in content.
+	// NOTE: should be only used with keyword preset trigger type.
+	Presets []AutoModerationKeywordPreset `json:"presets,omitempty"`
+}
+
+// AutoModerationActionType represents an action which will execute whenever a rule is triggered.
+type AutoModerationActionType int
+
+// Auto moderation actions types.
+const (
+	AutoModerationRuleActionBlockMessage     AutoModerationActionType = 1
+	AutoModerationRuleActionSendAlertMessage AutoModerationActionType = 2
+	AutoModerationRuleActionTimeout          AutoModerationActionType = 3
+)
+
+// AutoModerationActionMetadata represents additional metadata needed during execution for a specific action type.
+type AutoModerationActionMetadata struct {
+	// Channel to which user content should be logged.
+	// NOTE: should be only used with send alert message action type.
+	ChannelID string `json:"channel_id,omitempty"`
+
+	// Timeout duration in seconds (maximum of 2419200 - 4 weeks).
+	// NOTE: should be only used with timeout action type.
+	Duration int `json:"duration_seconds,omitempty"`
+}
+
+// AutoModerationAction stores data for an auto moderation action.
+type AutoModerationAction struct {
+	Type     AutoModerationActionType      `json:"type"`
+	Metadata *AutoModerationActionMetadata `json:"metadata,omitempty"`
+}
+
 // A GuildEmbed stores data for a guild embed.
 type GuildEmbed struct {
 	Enabled   bool  `json:"enabled,omitempty"`
@@ -2111,6 +2293,7 @@ const (
 	ErrCodeUnknownGuildWelcomeScreen             = 10069
 	ErrCodeUnknownGuildScheduledEvent            = 10070
 	ErrCodeUnknownGuildScheduledEventUser        = 10071
+	ErrUnknownTag                                = 10087
 
 	ErrCodeBotsCannotUseEndpoint                                            = 20001
 	ErrCodeOnlyBotsCanUseEndpoint                                           = 20002
@@ -2124,28 +2307,30 @@ const (
 	ErrCodeStageTopicContainsNotAllowedWordsForPublicStages                 = 20031
 	ErrCodeGuildPremiumSubscriptionLevelTooLow                              = 20035
 
-	ErrCodeMaximumGuildsReached                                    = 30001
-	ErrCodeMaximumPinsReached                                      = 30003
-	ErrCodeMaximumNumberOfRecipientsReached                        = 30004
-	ErrCodeMaximumGuildRolesReached                                = 30005
-	ErrCodeMaximumNumberOfWebhooksReached                          = 30007
-	ErrCodeMaximumNumberOfEmojisReached                            = 30008
-	ErrCodeTooManyReactions                                        = 30010
-	ErrCodeMaximumNumberOfGuildChannelsReached                     = 30013
-	ErrCodeMaximumNumberOfAttachmentsInAMessageReached             = 30015
-	ErrCodeMaximumNumberOfInvitesReached                           = 30016
-	ErrCodeMaximumNumberOfAnimatedEmojisReached                    = 30018
-	ErrCodeMaximumNumberOfServerMembersReached                     = 30019
-	ErrCodeMaximumNumberOfGuildDiscoverySubcategoriesReached       = 30030
-	ErrCodeGuildAlreadyHasATemplate                                = 30031
-	ErrCodeMaximumNumberOfThreadParticipantsReached                = 30033
-	ErrCodeMaximumNumberOfBansForNonGuildMembersHaveBeenExceeded   = 30035
-	ErrCodeMaximumNumberOfBansFetchesHasBeenReached                = 30037
-	ErrCodeMaximumNumberOfUncompletedGuildScheduledEventsReached   = 30038
-	ErrCodeMaximumNumberOfStickersReached                          = 30039
-	ErrCodeMaximumNumberOfPruneRequestsHasBeenReached              = 30040
-	ErrCodeMaximumNumberOfGuildWidgetSettingsUpdatesHasBeenReached = 30042
-	ErrCodeMaximumNumberOfEditsToMessagesOlderThanOneHourReached   = 30046
+	ErrCodeMaximumGuildsReached                                     = 30001
+	ErrCodeMaximumPinsReached                                       = 30003
+	ErrCodeMaximumNumberOfRecipientsReached                         = 30004
+	ErrCodeMaximumGuildRolesReached                                 = 30005
+	ErrCodeMaximumNumberOfWebhooksReached                           = 30007
+	ErrCodeMaximumNumberOfEmojisReached                             = 30008
+	ErrCodeTooManyReactions                                         = 30010
+	ErrCodeMaximumNumberOfGuildChannelsReached                      = 30013
+	ErrCodeMaximumNumberOfAttachmentsInAMessageReached              = 30015
+	ErrCodeMaximumNumberOfInvitesReached                            = 30016
+	ErrCodeMaximumNumberOfAnimatedEmojisReached                     = 30018
+	ErrCodeMaximumNumberOfServerMembersReached                      = 30019
+	ErrCodeMaximumNumberOfGuildDiscoverySubcategoriesReached        = 30030
+	ErrCodeGuildAlreadyHasATemplate                                 = 30031
+	ErrCodeMaximumNumberOfThreadParticipantsReached                 = 30033
+	ErrCodeMaximumNumberOfBansForNonGuildMembersHaveBeenExceeded    = 30035
+	ErrCodeMaximumNumberOfBansFetchesHasBeenReached                 = 30037
+	ErrCodeMaximumNumberOfUncompletedGuildScheduledEventsReached    = 30038
+	ErrCodeMaximumNumberOfStickersReached                           = 30039
+	ErrCodeMaximumNumberOfPruneRequestsHasBeenReached               = 30040
+	ErrCodeMaximumNumberOfGuildWidgetSettingsUpdatesHasBeenReached  = 30042
+	ErrCodeMaximumNumberOfEditsToMessagesOlderThanOneHourReached    = 30046
+	ErrCodeMaximumNumberOfPinnedThreadsInForumChannelHasBeenReached = 30047
+	ErrCodeMaximumNumberOfTagsInForumChannelHasBeenReached          = 30048
 
 	ErrCodeUnauthorized                           = 40001
 	ErrCodeActionRequiredVerifiedAccount          = 40002
@@ -2158,6 +2343,7 @@ const (
 	ErrCodeMessageAlreadyCrossposted              = 40033
 	ErrCodeAnApplicationWithThatNameAlreadyExists = 40041
 	ErrCodeInteractionHasAlreadyBeenAcknowledged  = 40060
+	ErrCodeTagNamesMustBeUnique                   = 40061
 
 	ErrCodeMissingAccess                                                = 50001
 	ErrCodeInvalidAccountType                                           = 50002

@@ -20,6 +20,7 @@ require (
 	github.com/ericlagergren/decimal v0.0.0-20190729173012-f05d33913e5a
 	github.com/fatih/structs v1.1.0
 	github.com/fogleman/gg v1.3.0
+	github.com/forPelevin/gomoji v1.1.6
 	github.com/francoispqt/gojay v1.2.13
 	github.com/friendsofgo/errors v0.9.2
 	github.com/getsentry/sentry-go v0.7.0
@@ -50,6 +51,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
+	github.com/rivo/uniseg v0.3.4
 	github.com/russross/blackfriday v1.5.2
 	github.com/shirou/gopsutil v2.18.12+incompatible
 	github.com/shurcooL/github_flavored_markdown v0.0.0-20181002035957-2122de532470
@@ -130,7 +132,6 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.9.1 // indirect
 	github.com/prometheus/procfs v0.0.8 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/shurcooL/highlight_diff v0.0.0-20170515013008-09bb4053de1b // indirect

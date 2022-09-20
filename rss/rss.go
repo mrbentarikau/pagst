@@ -71,8 +71,8 @@ func RegisterPlugin() {
 }
 
 type AnnouncementMessage struct {
-	Enabled     bool
-	AnnounceMsg string `json:"rss_feed_announce_msg" valid:"template,2000"`
+	Enabled      bool
+	Announcement string `json:"rss_feed_announce_msg" valid:"template,2000"`
 }
 
 var _ mqueue.PluginWithSourceDisabler = (*Plugin)(nil)

@@ -1,6 +1,7 @@
 package howlongtobeat
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -12,27 +13,17 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
-type hltb struct {
-	GameTitle             string
-	PureTitle             string //useful for Levenshtein calculation, symbol clutter removed
-	GameURL               string
-	ImageURL              string
-	MainStory             []string
-	MainExtra             []string
-	Completionist         []string
-	JaroWinklerSimilarity float64
-	OnlineGame            bool
-}
-
 var (
-	hltbScheme   = "https"
-	hltbHost     = "howlongtobeat.com"
-	hltbURL      = fmt.Sprintf("%s://%s/", hltbScheme, hltbHost)
-	hltbHostPath = "search_results"
-	hltbRawQuery = "page=1"
+	hltbScheme = "https"
+	hltbHost   = "howlongtobeat.com"
+	hltbURL    = fmt.Sprintf("%s://%s/", hltbScheme, hltbHost)
+	//hltbHostPath = "search_results"
+	hltbHostPath = "api/search"
+	//hltbRawQuery = "page=1"
+	hltbRawQuery = ""
 )
 
-//Command var needs a comment for lint :)
+// Command var needs a comment for lint :)
 var Command = &commands.YAGCommand{
 	CmdCategory:         commands.CategoryFun,
 	Name:                "HowLongToBeat",
@@ -65,38 +56,37 @@ var Command = &commands.YAGCommand{
 		if err != nil {
 			return nil, err
 		}
-		toReader := strings.NewReader(getData)
 
-		hltbQuery, err := parseGameData(gameName, toReader)
-		if err != nil {
-			return nil, err
+		var hltbQuery HowlongToBeat
+		queryErr := json.Unmarshal(getData, &hltbQuery)
+		if queryErr != nil {
+			return nil, queryErr
 		}
 
-		if hltbQuery[0].GameTitle == "" {
-			return "No results", nil
-		}
+		parsedData := parseQueryData(hltbQuery.Data, gameName)
 
 		if compactView {
 			compactData := fmt.Sprintf("%s: %s | %s | %s | <%s>",
-				normaliseTitle(hltbQuery[0].GameTitle),
-				strings.Trim(fmt.Sprint(hltbQuery[0].MainStory), "[]"),
-				strings.Trim(fmt.Sprint(hltbQuery[0].MainExtra), "[]"),
-				strings.Trim(fmt.Sprint(hltbQuery[0].Completionist), "[]"),
-				hltbQuery[0].GameURL)
+				normaliseTitle(hltbQuery.Data[0].GameName),
+				parsedData[0].CompMainHumanize,
+				parsedData[0].CompPlusHumanize,
+				parsedData[0].Comp100Humanize,
+				parsedData[0].GameURL,
+			)
 			return compactData, nil
 		}
 
-		hltbEmbed := embedCreator(hltbQuery, 0, paginatedView)
+		hltbEmbed := embedCreator(parsedData, 0, paginatedView)
 
 		var pm *paginatedmessages.PaginatedMessage
 		if paginatedView {
 			pm, err = paginatedmessages.CreatePaginatedMessage(
-				data.GuildData.GS.ID, data.ChannelID, 1, len(hltbQuery), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				data.GuildData.GS.ID, data.ChannelID, 1, len(hltbQuery.Data), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
 					i := page - 1
-					sort.SliceStable(hltbQuery, func(i, j int) bool {
-						return hltbQuery[i].JaroWinklerSimilarity > hltbQuery[j].JaroWinklerSimilarity
+					sort.SliceStable(parsedData, func(i, j int) bool {
+						return parsedData[i].JaroWinklerSimilarity > parsedData[j].JaroWinklerSimilarity
 					})
-					paginatedEmbed := embedCreator(hltbQuery, i, paginatedView)
+					paginatedEmbed := embedCreator(parsedData, i, paginatedView)
 					return paginatedEmbed, nil
 				})
 			if err != nil {
@@ -110,33 +100,36 @@ var Command = &commands.YAGCommand{
 	},
 }
 
-func embedCreator(hltbQuery []hltb, i int, paginated bool) *discordgo.MessageEmbed {
-	hltbURL := fmt.Sprintf("%s://%s", hltbScheme, hltbHost)
+func embedCreator(hltbData []HowlongToBeatData, i int, paginated bool) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
-			Name: normaliseTitle(hltbQuery[i].GameTitle),
-			URL:  hltbQuery[i].GameURL,
+			Name: normaliseTitle(hltbData[i].GameName),
+			URL:  hltbData[i].GameURL,
 		},
 
 		Color: int(rand.Int63n(16777215)),
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: hltbURL + hltbQuery[i].ImageURL,
+			URL: hltbData[i].ImageURL,
 		},
 	}
-	if len(hltbQuery[i].MainStory) > 0 {
+	if hltbData[i].CompMain > 0 {
 		embed.Fields = append(embed.Fields,
-			&discordgo.MessageEmbedField{Name: hltbQuery[i].MainStory[0], Value: hltbQuery[i].MainStory[1]})
+			&discordgo.MessageEmbedField{Name: "Main Story", Value: hltbData[i].CompMainHumanize + fmt.Sprintf(" (%.2fh)", hltbData[i].CompMainDur.Hours())})
 	}
-	if len(hltbQuery[i].MainExtra) > 0 {
+	if hltbData[i].CompPlus > 0 {
 		embed.Fields = append(embed.Fields,
-			&discordgo.MessageEmbedField{Name: hltbQuery[i].MainExtra[0], Value: hltbQuery[i].MainExtra[1]})
+			&discordgo.MessageEmbedField{Name: "Main + Extra", Value: hltbData[i].CompPlusHumanize + fmt.Sprintf(" (%.2fh)", hltbData[i].CompPlusDur.Hours())})
 	}
-	if len(hltbQuery[i].Completionist) > 0 {
+	if hltbData[i].Comp100 > 0 {
 		embed.Fields = append(embed.Fields,
-			&discordgo.MessageEmbedField{Name: hltbQuery[i].Completionist[0], Value: hltbQuery[i].Completionist[1]})
+			&discordgo.MessageEmbedField{Name: "Completionist", Value: hltbData[i].Comp100Humanize + fmt.Sprintf(" (%.2fh)", hltbData[i].Comp100Dur.Hours())})
+	}
+	if hltbData[i].ReviewScore > 0 {
+		embed.Fields = append(embed.Fields,
+			&discordgo.MessageEmbedField{Name: "Review Score", Value: fmt.Sprintf("%d%%", hltbData[i].ReviewScore)})
 	}
 	if paginated {
-		embed.Description = fmt.Sprintf("Term similarity: %.1f%%", hltbQuery[i].JaroWinklerSimilarity*100)
+		embed.Description = fmt.Sprintf("Term similarity: %.1f%%", hltbData[i].JaroWinklerSimilarity*100)
 	}
 	return embed
 }

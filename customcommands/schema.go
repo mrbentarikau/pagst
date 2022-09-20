@@ -73,6 +73,10 @@ ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS ignore_categories BIG
 `, `
 ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS whitelist_categories BIGINT[];
 `, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS threads_enabled BOOLEAN NOT NULL DEFAULT true;
+`, `
+ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS threads_enabled BOOLEAN NOT NULL DEFAULT true;
+`, `
 CREATE TABLE IF NOT EXISTS templates_user_database (
 	id BIGSERIAL PRIMARY KEY,
 

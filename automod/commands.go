@@ -198,14 +198,24 @@ func (p *Plugin) AddCommands() {
 			}
 
 			for name, count := range violations {
-				out += fmt.Sprintf("Violation: %-20s Count: %d\n", name, count)
+
+				if common.ContainsEmoji(name) {
+					name = common.ReplaceEmojis(name, ":emoji:")
+				}
+
+				if len([]rune(name)) > 26 {
+					name = fmt.Sprintf("%s_", string([]rune(name)[:26]))
+				}
+
+				out += fmt.Sprintf("%-31s Count: %d\n", name, count)
+
 			}
 
 			if out == "" {
 				return "No Violations found with specified conditions", nil
 			}
 
-			out = "```" + out + fmt.Sprintf("%-31s Count: %d\n", "Total", len(listViolations)) + "```"
+			out = "```" + out + fmt.Sprintf("\n%-31s Count: %d\n", "Total", len(listViolations)) + "```"
 			return &discordgo.MessageEmbed{
 				Title:       "Violations Summary",
 				Description: out,

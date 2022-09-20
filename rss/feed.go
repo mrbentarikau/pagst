@@ -212,12 +212,14 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 	ctx.Data["SelectedRoleID"] = mentionRole
 
 	var announceMsg AnnouncementMessage
-	err = common.GetRedisJson(RedisRSSAnnounceMessage+":"+discordgo.StrID(guildID), &announceMsg)
-	if err != nil {
-		return
+	dbAnnounceMsg, err := models.RSSAnnouncements(qm.Where("guild_id = ?", guildID)).OneG(context.Background())
+	if err == nil {
+		announceMsg.Enabled = dbAnnounceMsg.Enabled
+		announceMsg.Announcement = dbAnnounceMsg.Announcement
 	}
 
 	rssEmbed = createRSSEmbed(feed, feedName)
+	ctx.Data["RSSEmbed"] = rssEmbed
 
 	webhookUsername := "RSS Feed • " + common.ConfBotName.GetString()
 	// not really good using current mqueue-webhooking
@@ -233,7 +235,7 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 
 	if announceMsg.Enabled {
 		rssEmbed = nil
-		content, err = ctx.Execute(announceMsg.AnnounceMsg)
+		content, err = ctx.Execute(announceMsg.Announcement)
 		if err != nil {
 			logger.WithError(err).WithField("guild", guildID).Warn("Failed executing template on sendNewRSSFeedMessage")
 			return

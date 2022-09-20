@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
@@ -97,7 +98,7 @@ func getData(query string) ([]byte, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "curlPAGST/7.65.1")
+	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
