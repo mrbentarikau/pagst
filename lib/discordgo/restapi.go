@@ -2756,6 +2756,100 @@ func (s *Session) ThreadStart(channelID int64, name string, typ ChannelType, arc
 	})
 }
 
+// ForumThreadStartComplex starts a new thread (creates a post) in a forum channel.
+// channelID : Channel to create thread in
+// threadData : Parameters of the thread
+// messageData : Parameters of the starting message
+func (s *Session) ForumThreadStartComplex(channelID int64, threadData *ThreadStart, messageData *MessageSend) (th *Channel, err error) {
+	endpoint := EndpointChannelThreads(channelID)
+
+	// TODO: Remove this when compatibility is not required.
+	if messageData.Embed != nil {
+		if messageData.Embeds == nil {
+			messageData.Embeds = []*MessageEmbed{messageData.Embed}
+		} else {
+			err = fmt.Errorf("cannot specify both Embed and Embeds")
+			return
+		}
+	}
+
+	for _, embed := range messageData.Embeds {
+		if embed.Type == "" {
+			embed.Type = "rich"
+		}
+	}
+
+	// TODO: Remove this when compatibility is not required.
+	files := messageData.Files
+	if messageData.File != nil {
+		if files == nil {
+			files = []*File{messageData.File}
+		} else {
+			err = fmt.Errorf("cannot specify both File and Files")
+			return
+		}
+	}
+
+	data := struct {
+		*ThreadStart
+		Message *MessageSend `json:"message"`
+	}{ThreadStart: threadData, Message: messageData}
+
+	var response []byte
+	if len(files) > 0 {
+		contentType, body, encodeErr := MultipartBodyWithJSON(data, files)
+		if encodeErr != nil {
+			return th, encodeErr
+		}
+
+		response, err = s.request("POST", endpoint, contentType, body, nil, endpoint)
+	} else {
+		response, err = s.RequestWithBucketID("POST", endpoint, data, nil, endpoint)
+	}
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(response, &th)
+	return
+}
+
+// ForumThreadStart starts a new thread (post) in a forum channel.
+// channelID       : Channel to create thread in.
+// name            : Name of the thread
+// archiveDuration : Auto archive duration
+// content         : Content of the starting message
+func (s *Session) ForumThreadStart(channelID int64, name string, archiveDuration int, content string) (th *Channel, err error) {
+	return s.ForumThreadStartComplex(channelID, &ThreadStart{
+		Name:                name,
+		AutoArchiveDuration: archiveDuration,
+	}, &MessageSend{Content: content})
+}
+
+// ForumThreadStartEmbed starts a new thread (post) in a forum channel.
+// channelID       : Channel to create thread in.
+// name            : Name of the thread
+// archiveDuration : Auto archive duration
+// embed           : Embed data of the starting message.
+func (s *Session) ForumThreadStartEmbed(channelID int64, name string, archiveDuration int, embed *MessageEmbed) (th *Channel, err error) {
+	return s.ForumThreadStartComplex(channelID, &ThreadStart{
+		Name:                name,
+		AutoArchiveDuration: archiveDuration,
+	}, &MessageSend{Embeds: []*MessageEmbed{embed}})
+}
+
+// ForumThreadStartEmbeds starts a new thread (post) in a forum channel.
+// channelID       : Channel to create thread in.
+// name            : Name of the thread
+// archiveDuration : Auto archive duration
+// embeds           : Embeds data of the starting message.
+func (s *Session) ForumThreadStartEmbeds(channelID int64, name string, archiveDuration int, embeds []*MessageEmbed) (th *Channel, err error) {
+	return s.ForumThreadStartComplex(channelID, &ThreadStart{
+		Name:                name,
+		AutoArchiveDuration: archiveDuration,
+	}, &MessageSend{Embeds: embeds})
+}
+
 // ThreadJoin adds current user to a thread
 func (s *Session) ThreadJoin(id int64) error {
 	endpoint := EndpointThreadMember(id, "@me")
@@ -3046,6 +3140,66 @@ func (s *Session) ApplicationCommands(appID, guildID int64) (cmd []*ApplicationC
 
 	err = unmarshal(body, &cmd)
 
+	return
+}
+
+// GuildApplicationCommandsPermissions returns permissions for application commands in a guild.
+// appID       : The application ID
+// guildID     : Guild ID to retrieve application commands permissions for.
+func (s *Session) GuildApplicationCommandsPermissions(appID, guildID int64) (permissions []*GuildApplicationCommandPermissions, err error) {
+	endpoint := EndpointApplicationCommandsGuildPermissions(appID, guildID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("GET", endpoint, nil, nil, endpoint)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &permissions)
+	return
+}
+
+// ApplicationCommandPermissions returns all permissions of an application command
+// appID       : The Application ID
+// guildID     : The guild ID containing the application command
+// cmdID       : The command ID to retrieve the permissions of
+func (s *Session) ApplicationCommandPermissions(appID, guildID, cmdID int64) (permissions *GuildApplicationCommandPermissions, err error) {
+	endpoint := EndpointApplicationCommandPermissions(appID, guildID, cmdID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("GET", endpoint, nil, nil, endpoint)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &permissions)
+	return
+}
+
+// ApplicationCommandPermissionsEdit edits the permissions of an application command
+// appID       : The Application ID
+// guildID     : The guild ID containing the application command
+// cmdID       : The command ID to edit the permissions of
+// permissions : An object containing a list of permissions for the application command
+//
+// NOTE: Requires OAuth2 token with applications.commands.permissions.update scope
+func (s *Session) ApplicationCommandPermissionsEdit(appID, guildID, cmdID int64, permissions *ApplicationCommandPermissionsList) (err error) {
+	endpoint := EndpointApplicationCommandPermissions(appID, guildID, cmdID)
+
+	_, err = s.RequestWithBucketID("PUT", endpoint, permissions, nil, endpoint)
+	return
+}
+
+// ApplicationCommandPermissionsBatchEdit edits the permissions of a batch of commands
+// appID       : The Application ID
+// guildID     : The guild ID to batch edit commands of
+// permissions : A list of permissions paired with a command ID, guild ID, and application ID per application command
+//
+// NOTE: This endpoint has been disabled with updates to command permissions (Permissions v2). Please use ApplicationCommandPermissionsEdit instead.
+func (s *Session) ApplicationCommandPermissionsBatchEdit(appID, guildID int64, permissions []*GuildApplicationCommandPermissions) (err error) {
+	endpoint := EndpointApplicationCommandsGuildPermissions(appID, guildID)
+
+	_, err = s.RequestWithBucketID("PUT", endpoint, permissions, nil, endpoint)
 	return
 }
 
@@ -3485,5 +3639,82 @@ func (s *Session) GuildScheduledEventUsers(guildID, eventID int64, limit int, wi
 	}
 
 	err = unmarshal(body, &st)
+	return
+}
+
+// ----------------------------------------------------------------------
+// Functions specific to auto moderation
+// ----------------------------------------------------------------------
+
+// AutoModerationRules returns a list of auto moderation rules.
+// guildID : ID of the guild
+func (s *Session) AutoModerationRules(guildID int64) (st []*AutoModerationRule, err error) {
+	endpoint := EndpointGuildAutoModerationRules(guildID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("GET", endpoint, nil, nil, endpoint)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &st)
+	return
+}
+
+// AutoModerationRule returns an auto moderation rule.
+// guildID : ID of the guild
+// ruleID  : ID of the auto moderation rule
+func (s *Session) AutoModerationRule(guildID, ruleID int64) (st *AutoModerationRule, err error) {
+	endpoint := EndpointGuildAutoModerationRule(guildID, ruleID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("GET", endpoint, nil, nil, endpoint)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &st)
+	return
+}
+
+// AutoModerationRuleCreate creates an auto moderation rule with the given data and returns it.
+// guildID : ID of the guild
+// rule    : Rule data
+func (s *Session) AutoModerationRuleCreate(guildID int64, rule *AutoModerationRule) (st *AutoModerationRule, err error) {
+	endpoint := EndpointGuildAutoModerationRules(guildID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("POST", endpoint, rule, nil, endpoint)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &st)
+	return
+}
+
+// AutoModerationRuleEdit edits and returns the updated auto moderation rule.
+// guildID : ID of the guild
+// ruleID  : ID of the auto moderation rule
+// rule    : New rule data
+func (s *Session) AutoModerationRuleEdit(guildID, ruleID int64, rule *AutoModerationRule) (st *AutoModerationRule, err error) {
+	endpoint := EndpointGuildAutoModerationRule(guildID, ruleID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("PATCH", endpoint, rule, nil, endpoint)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &st)
+	return
+}
+
+// AutoModerationRuleDelete deletes an auto moderation rule.
+// guildID : ID of the guild
+// ruleID  : ID of the auto moderation rule
+func (s *Session) AutoModerationRuleDelete(guildID, ruleID int64) (err error) {
+	endpoint := EndpointGuildAutoModerationRule(guildID, ruleID)
+	_, err = s.RequestWithBucketID("DELETE", endpoint, nil, nil, endpoint)
 	return
 }

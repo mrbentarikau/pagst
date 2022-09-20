@@ -452,6 +452,41 @@ type InviteDelete struct {
 	Code      string `json:"code"`
 }
 
+// ApplicationCommandPermissionsUpdate is the data for an ApplicationCommandPermissionsUpdate event
+type ApplicationCommandPermissionsUpdate struct {
+	*GuildApplicationCommandPermissions
+}
+
+// AutoModerationRuleCreate is the data for an AutoModerationRuleCreate event.
+type AutoModerationRuleCreate struct {
+	*AutoModerationRule
+}
+
+// AutoModerationRuleUpdate is the data for an AutoModerationRuleUpdate event.
+type AutoModerationRuleUpdate struct {
+	*AutoModerationRule
+}
+
+// AutoModerationRuleDelete is the data for an AutoModerationRuleDelete event.
+type AutoModerationRuleDelete struct {
+	*AutoModerationRule
+}
+
+// AutoModerationActionExecution is the data for an AutoModerationActionExecution event.
+type AutoModerationActionExecution struct {
+	GuildID              int64                         `json:"guild_id,string"`
+	Action               AutoModerationAction          `json:"action"`
+	RuleID               int64                         `json:"rule_id,string"`
+	RuleTriggerType      AutoModerationRuleTriggerType `json:"rule_trigger_type"`
+	UserID               int64                         `json:"user_id,string"`
+	ChannelID            int64                         `json:"channel_id,string"`
+	MessageID            int64                         `json:"message_id,string"`
+	AlertSystemMessageID int64                         `json:"alert_system_message_id,string"`
+	Content              string                        `json:"content"`
+	MatchedKeyword       string                        `json:"matched_keyword"`
+	MatchedContent       string                        `json:"matched_content"`
+}
+
 type IntegrationCreate struct {
 	*Integration
 }

@@ -17,20 +17,58 @@ package discordgo
 type Application struct {
 	ID                  int64     `json:"id,string,omitempty"`
 	Name                string    `json:"name"`
-	Description         string    `json:"description,omitempty"`
 	Icon                string    `json:"icon,omitempty"`
+	Description         string    `json:"description,omitempty"`
+	RPCOrigins          []string  `json:"rpc_origins,omitempty"`
+	BotPublic           bool      `json:"bot_public,omitempty"`
+	BotRequireCodeGrant bool      `json:"bot_require_code_grant,omitempty"`
+	TermsOfServiceURL   string    `json:"terms_of_service_url"`
+	PrivacyProxyURL     string    `json:"privacy_policy_url"`
+	Owner               *User     `json:"owner"`
 	Secret              string    `json:"secret,omitempty"`
 	RedirectURIs        *[]string `json:"redirect_uris,omitempty"`
-	BotRequireCodeGrant bool      `json:"bot_require_code_grant,omitempty"`
-	BotPublic           bool      `json:"bot_public,omitempty"`
 	RPCApplicationState int       `json:"rpc_application_state,omitempty"`
 	Flags               int       `json:"flags,omitempty"`
-	Owner               *User     `json:"owner"`
 	Bot                 *User     `json:"bot"`
+	Summary             string    `json:"summary"`
+	VerifyKey           string    `json:"verify_key"`
+	Team                *Team     `json:"team"`
+	GuildID             int64     `json:"guild_id,string"`
+	PrimarySKUID        string    `json:"primary_sku_id"`
+	Slug                string    `json:"slug"`
+	CoverImage          string    `json:"cover_image"`
+}
+
+// The MembershipState represents whether the user is in the team or has been invited into it
+type MembershipState int
+
+// Constants for the different stages of the MembershipState
+const (
+	MembershipStateInvited  MembershipState = 1
+	MembershipStateAccepted MembershipState = 2
+)
+
+// A TeamMember struct stores values for a single Team Member, extending the normal User data - note that the user field is partial
+type TeamMember struct {
+	User            *User           `json:"user"`
+	TeamID          int64           `json:"team_id,string"`
+	MembershipState MembershipState `json:"membership_state"`
+	Permissions     []string        `json:"permissions"`
+}
+
+// A Team struct stores the members of a Discord Developer Team as well as some metadata about it
+type Team struct {
+	ID          int64         `json:"id,string"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Icon        string        `json:"icon"`
+	OwnerID     int64         `json:"owner_user_id,int64"`
+	Members     []*TeamMember `json:"members"`
 }
 
 // Application returns an Application structure of a specific Application
-//   appID : The ID of an Application
+//
+//	appID : The ID of an Application
 func (s *Session) Application(appID int64) (st *Application, err error) {
 
 	body, err := s.RequestWithBucketID("GET", EndpointApplication(appID), nil, nil, EndpointApplication(0))
@@ -67,8 +105,9 @@ func (s *Session) Applications() (st []*Application, err error) {
 }
 
 // ApplicationCreate creates a new Application
-//    name : Name of Application / Bot
-//    uris : Redirect URIs (Not required)
+//
+//	name : Name of Application / Bot
+//	uris : Redirect URIs (Not required)
 func (s *Session) ApplicationCreate(ap *Application) (st *Application, err error) {
 
 	data := struct {
@@ -87,7 +126,8 @@ func (s *Session) ApplicationCreate(ap *Application) (st *Application, err error
 }
 
 // ApplicationUpdate updates an existing Application
-//   var : desc
+//
+//	var : desc
 func (s *Session) ApplicationUpdate(appID int64, ap *Application) (st *Application, err error) {
 
 	data := struct {
@@ -106,7 +146,8 @@ func (s *Session) ApplicationUpdate(appID int64, ap *Application) (st *Applicati
 }
 
 // ApplicationDelete deletes an existing Application
-//   appID : The ID of an Application
+//
+//	appID : The ID of an Application
 func (s *Session) ApplicationDelete(appID int64) (err error) {
 
 	_, err = s.RequestWithBucketID("DELETE", EndpointApplication(appID), nil, nil, EndpointApplication(0))
@@ -123,7 +164,7 @@ func (s *Session) ApplicationDelete(appID int64) (err error) {
 
 // ApplicationBotCreate creates an Application Bot Account
 //
-//   appID : The ID of an Application
+//	appID : The ID of an Application
 //
 // NOTE: func name may change, if I can think up something better.
 func (s *Session) ApplicationBotCreate(appID int64) (st *User, err error) {

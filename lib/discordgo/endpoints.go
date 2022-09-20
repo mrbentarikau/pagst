@@ -82,16 +82,19 @@ var (
 	EndpointUserDevices       = func(uID string) string { return "" }
 	EndpointUserNotes         = func(uID int64) string { return "" }
 
-	EndpointGuild              = func(gID int64) string { return "" }
-	EndpointGuildThreads       = func(gID int64) string { return "" }
-	EndpointGuildActiveThreads = func(gID int64) string { return "" }
-	EndpointGuildPreview       = func(gID int64) string { return "" }
-	EndpointGuildChannels      = func(gID int64) string { return "" }
-	EndpointGuildMembers       = func(gID int64) string { return "" }
-	EndpointGuildMembersSearch = func(gID int64) string { return "" }
-	EndpointGuildMember        = func(gID int64, uID int64) string { return "" }
-	EndpointGuildMemberRole    = func(gID, uID, rID int64) string { return "" }
-	EndpointGuildMemberMe      = func(gID int64) string { return "" } // prolly defunct
+	EndpointGuild                    = func(gID int64) string { return "" }
+	EndpointGuildAutoModeration      = func(gID int64) string { return "" }
+	EndpointGuildAutoModerationRules = func(gID int64) string { return "" }
+	EndpointGuildAutoModerationRule  = func(gID, rID int64) string { return "" }
+	EndpointGuildThreads             = func(gID int64) string { return "" }
+	EndpointGuildActiveThreads       = func(gID int64) string { return "" }
+	EndpointGuildPreview             = func(gID int64) string { return "" }
+	EndpointGuildChannels            = func(gID int64) string { return "" }
+	EndpointGuildMembers             = func(gID int64) string { return "" }
+	EndpointGuildMembersSearch       = func(gID int64) string { return "" }
+	EndpointGuildMember              = func(gID int64, uID int64) string { return "" }
+	EndpointGuildMemberRole          = func(gID, uID, rID int64) string { return "" }
+	EndpointGuildMemberMe            = func(gID int64) string { return "" } // prolly defunct
 
 	EndpointGuildBans            = func(gID int64) string { return "" }
 	EndpointGuildBan             = func(gID, uID int64) string { return "" }
@@ -171,6 +174,8 @@ var (
 	EndpointApplicationGuildCommand             = func(aID int64, gID int64, cmdID int64) string { return "" }
 	EndpointApplicationGuildCommandsPermissions = func(aID int64, gID int64) string { return "" }
 	EndpointApplicationGuildCommandPermissions  = func(aID int64, gID int64, cmdID int64) string { return "" }
+	EndpointApplicationCommandPermissions       = func(aID, gID, cID int64) string { return "" }
+	EndpointApplicationCommandsGuildPermissions = func(aID, gID int64) string { return "" }
 
 	EndpointInteraction                = func(aID int64, iToken string) string { return "" }
 	EndpointInteractionResponse        = func(iID int64, iToken string) string { return "" }
@@ -295,6 +300,9 @@ func CreateEndpoints(base string) {
 	}
 
 	EndpointGuild = func(gID int64) string { return EndpointGuilds + StrID(gID) }
+	EndpointGuildAutoModeration = func(gID int64) string { return EndpointGuild(gID) + "/auto-moderation" }
+	EndpointGuildAutoModerationRules = func(gID int64) string { return EndpointGuildAutoModeration(gID) + "/rules" }
+	EndpointGuildAutoModerationRule = func(gID, rID int64) string { return EndpointGuildAutoModerationRules(gID) + "/" + StrID(rID) }
 	EndpointGuildThreads = func(gID int64) string { return EndpointGuild(gID) + "/threads" }
 	EndpointGuildActiveThreads = func(gID int64) string { return EndpointGuildThreads(gID) + "/active" }
 	EndpointGuildPreview = func(gID int64) string { return EndpointGuilds + StrID(gID) + "/preview" }
@@ -402,7 +410,12 @@ func CreateEndpoints(base string) {
 	EndpointApplicationGuildCommandPermissions = func(aID int64, gID int64, cmdID int64) string {
 		return EndpointApplicationGuildCommand(aID, gID, cmdID) + "/permissions"
 	}
-
+	EndpointApplicationCommandPermissions = func(aID, gID, cID int64) string {
+		return EndpointApplicationGuildCommand(aID, gID, cID) + "/permissions"
+	}
+	EndpointApplicationCommandsGuildPermissions = func(aID, gID int64) string {
+		return EndpointApplicationGuildCommands(aID, gID) + "/permissions"
+	}
 	EndpointInteraction = func(aID int64, iToken string) string {
 		return EndpointAPI + "interactions/" + StrID(aID) + "/" + iToken
 	}
