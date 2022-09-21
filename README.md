@@ -31,7 +31,8 @@ some of the code here. not merged to YAG yet, has been made by YAGPDB contributo
 • [l-zeuch](https://github.com/l-zeuch)  
 • [lemm-e](https://github.com/lemm-e/)  
 • [Pedro-Pessoa](https://github.com/Pedro-Pessoa)   
-• [Satty9361](https://github.com/Satty9361)  
+• [Satty9361](https://github.com/Satty9361)
+• [Shadow21AR](https://github.com/shadow21ar)   
 
 and
    
