@@ -196,22 +196,23 @@ var (
 	EndpointEmojiAnimated = func(eID int64) string { return "" }
 
 	EndpointApplications    = ""
+	EndpointApplicationsMe  = ""
 	EndpointApplication     = func(aID int64) string { return "" }
 	EndpointApplicationMe   = "" // prolly defunct
 	EndpointApplicationsBot = func(aID int64) string { return "" }
 
-	EndpointOauth2                  = ""
-	EndpointOauth2Applications      = ""
-	EndpointOauth2Application       = func(aID int64) string { return "" }
-	EndpointOauth2ApplicationsBot   = func(aID int64) string { return "" }
-	EndpointOauth2ApplicationAssets = func(aID int64) string { return "" }
+	EndpointOAuth2                  = ""
+	EndpointOAuth2Applications      = ""
+	EndpointOAuth2Application       = func(aID int64) string { return "" }
+	EndpointOAuth2ApplicationsBot   = func(aID int64) string { return "" }
+	EndpointOAuth2ApplicationAssets = func(aID int64) string { return "" }
 
 	// prolly defunct section
 	EndpointRelationships       = func() string { return "" }          // prolly defunct
 	EndpointRelationship        = func(uID int64) string { return "" } // prolly defunct
 	EndpointRelationshipsMutual = func(uID int64) string { return "" } // prolly defunct
 
-	EndpointApplicationNonOauth2 = func(aID int64) string { return "" }
+	EndpointApplicationNonOAuth2 = func(aID int64) string { return "" }
 	EndpointApplicationCommands  = func(aID int64) string { return "" }
 	EndpointApplicationCommand   = func(aID int64, cmdID int64) string { return "" }
 
@@ -399,7 +400,7 @@ func CreateEndpoints(base string) {
 	EndpointApplicationGlobalCommands = func(aID int64) string { return EndpointApplication(aID) + "/commands" }
 	EndpointApplicationGlobalCommand = func(aID, cID int64) string { return EndpointApplicationGlobalCommands(aID) + "/" + StrID(cID) }
 	EndpointApplicationGuildCommands = func(aID int64, gID int64) string {
-		return EndpointApplicationNonOauth2(aID) + "/guilds/" + StrID(gID) + "/commands"
+		return EndpointApplicationNonOAuth2(aID) + "/guilds/" + StrID(gID) + "/commands"
 	}
 	EndpointApplicationGuildCommand = func(aID int64, gID int64, cmdID int64) string {
 		return EndpointApplicationGuildCommands(aID, gID) + "/" + StrID(cmdID)
@@ -441,26 +442,27 @@ func CreateEndpoints(base string) {
 	EndpointEmoji = func(eID int64) string { return EndpointAPI + "emojis/" + StrID(eID) + ".png" }
 	EndpointEmojiAnimated = func(eID int64) string { return EndpointAPI + "emojis/" + StrID(eID) + ".gif" }
 
-	EndpointOauth2 = EndpointAPI + "oauth2/"
-	EndpointOauth2Applications = EndpointAPI + "applications"
-	EndpointOauth2Application = func(aID int64) string { return EndpointOauth2Applications + "/" + StrID(aID) }
-	EndpointOauth2ApplicationsBot = func(aID int64) string { return EndpointOauth2Applications + "/" + StrID(aID) + "/bot" }
-	EndpointOauth2ApplicationAssets = func(aID int64) string { return EndpointOauth2Applications + "/" + StrID(aID) + "/assets" }
+	EndpointOAuth2 = EndpointAPI + "oauth2/"
+	EndpointOAuth2Applications = EndpointAPI + "applications"
+	EndpointOAuth2Application = func(aID int64) string { return EndpointOAuth2Applications + "/" + StrID(aID) }
+	EndpointOAuth2ApplicationsBot = func(aID int64) string { return EndpointOAuth2Applications + "/" + StrID(aID) + "/bot" }
+	EndpointOAuth2ApplicationAssets = func(aID int64) string { return EndpointOAuth2Applications + "/" + StrID(aID) + "/assets" }
 
-	EndpointApplications = EndpointOauth2 + "applications"
+	EndpointApplicationsMe = EndpointOAuth2 + "applications"
+	EndpointApplications = EndpointAPI + "applications"
 	EndpointApplication = func(aID int64) string { return EndpointApplications + "/" + StrID(aID) }
-	EndpointApplicationMe = EndpointApplications + "/@me"
-	EndpointApplicationsBot = func(aID int64) string { return EndpointApplications + "/" + StrID(aID) + "/bot" }
+	EndpointApplicationMe = EndpointApplicationsMe + "/@me"
+	EndpointApplicationsBot = func(aID int64) string { return EndpointApplicationsMe + "/" + StrID(aID) + "/bot" }
 
 	// prolly defunct section
 	EndpointRelationships = func() string { return EndpointUsers + "@me" + "/relationships" }                     // prolly defunct
 	EndpointRelationship = func(uID int64) string { return EndpointRelationships() + "/" + StrID(uID) }           // prolly defunct
 	EndpointRelationshipsMutual = func(uID int64) string { return EndpointUsers + StrID(uID) + "/relationships" } // prolly defunct
 
-	EndpointApplicationNonOauth2 = func(aID int64) string { return EndpointAPI + "applications/" + StrID(aID) }
-	EndpointApplicationCommands = func(aID int64) string { return EndpointApplicationNonOauth2(aID) + "/commands" }
+	EndpointApplicationNonOAuth2 = func(aID int64) string { return EndpointAPI + "applications/" + StrID(aID) }
+	EndpointApplicationCommands = func(aID int64) string { return EndpointApplicationNonOAuth2(aID) + "/commands" }
 	EndpointApplicationCommand = func(aID int64, cmdID int64) string {
-		return EndpointApplicationNonOauth2(aID) + "/commands/" + StrID(cmdID)
+		return EndpointApplicationNonOAuth2(aID) + "/commands/" + StrID(cmdID)
 	}
 
 	EndpointInteractions = EndpointAPI + "interactions"

@@ -3143,6 +3143,19 @@ func (s *Session) ApplicationCommands(appID, guildID int64) (cmd []*ApplicationC
 	return
 }
 
+// GetGlobalApplicationCommands fetches all of the global commands for your application. Returns an array of ApplicationCommand objects.
+// GET /applications/{application.id}/commands
+func (s *Session) GetGlobalApplicationCommands(applicationID int64) (st []*ApplicationCommand, err error) {
+	body, err := s.RequestWithBucketID("GET", EndpointApplicationCommands(applicationID), nil, nil, EndpointApplicationCommands(0))
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &st)
+
+	return
+}
+
 // GuildApplicationCommandsPermissions returns permissions for application commands in a guild.
 // appID       : The application ID
 // guildID     : Guild ID to retrieve application commands permissions for.
@@ -3200,19 +3213,6 @@ func (s *Session) ApplicationCommandPermissionsBatchEdit(appID, guildID int64, p
 	endpoint := EndpointApplicationCommandsGuildPermissions(appID, guildID)
 
 	_, err = s.RequestWithBucketID("PUT", endpoint, permissions, nil, endpoint)
-	return
-}
-
-// GetGlobalApplicationCommands fetches all of the global commands for your application. Returns an array of ApplicationCommand objects.
-// GET /applications/{application.id}/commands
-func (s *Session) GetGlobalApplicationCommands(applicationID int64) (st []*ApplicationCommand, err error) {
-	body, err := s.RequestWithBucketID("GET", EndpointApplicationCommands(applicationID), nil, nil, EndpointApplicationCommands(0))
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &st)
-
 	return
 }
 
