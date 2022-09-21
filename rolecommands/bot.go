@@ -150,8 +150,8 @@ func (p *Plugin) AddCommands() {
 	menuContainer.Description = "Command for managing role menus"
 
 	const notFoundMessage = "Unknown rolemenu command, if you've used this before it was recently revamped.\nTry almost the same command but `rolemenu create ...` and `rolemenu update ...` instead (replace '...' with the rest of the command).\nSee `help rolemenu` for all rolemenu commands."
-	//menuContainer.NotFound = commands.CommonContainerNotFoundHandler(menuContainer, notFoundMessage)
-	menuContainer.NotFound = commands.CommonContainerNotFoundHandler(menuContainer, "")
+	menuContainer.NotFound = commands.CommonContainerNotFoundHandler(menuContainer, notFoundMessage)
+	//menuContainer.NotFound = commands.CommonContainerNotFoundHandler(menuContainer, "")
 
 	menuContainer.AddCommand(cmdCreate, cmdCreate.GetTrigger())
 	menuContainer.AddCommand(cmdRemoveRoleMenu, cmdRemoveRoleMenu.GetTrigger())

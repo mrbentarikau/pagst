@@ -16,6 +16,7 @@ import (
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	tzModels "github.com/mrbentarikau/pagst/timezonecompanion/models"
 
 	"golang.org/x/exp/slices"
 )
@@ -2187,7 +2188,7 @@ func (c *Context) tmplGuildMemberMove(channel interface{}, target interface{}) (
 		return "", ErrTooManyAPICalls
 	}
 
-	if c.IncreaseCheckCallCounter("guild_integrations", 3) {
+	if c.IncreaseCheckCallCounter("guild_membermove", 3) {
 		return "", ErrTooManyCalls
 	}
 
@@ -2225,7 +2226,7 @@ func (c *Context) tmplCountMembers(isBot bool) func() (int, error) {
 			return 0, ErrTooManyAPICalls
 		}
 
-		if c.IncreaseCheckCallCounter("guild_integrations", 2) {
+		if c.IncreaseCheckCallCounter("guild_membercount", 2) {
 			return 0, ErrTooManyCalls
 		}
 
@@ -2287,7 +2288,7 @@ func (c *Context) tmplGetUser(target interface{}) (*discordgo.User, error) {
 		return nil, ErrTooManyAPICalls
 	}
 
-	if c.IncreaseCheckCallCounter("guild_integrations", 3) {
+	if c.IncreaseCheckCallCounter("guild_getuser", 3) {
 		return nil, ErrTooManyCalls
 	}
 
@@ -2303,4 +2304,53 @@ func (c *Context) tmplGetUser(target interface{}) (*discordgo.User, error) {
 
 	return user, nil
 
+}
+
+func (c *Context) tmplGetMemberTimezone(target ...interface{}) (*time.Location, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_member_timezone", 3) {
+		return nil, ErrTooManyCalls
+	}
+
+	uID := c.MS.User.ID
+	if len(target) > 0 {
+		uID = targetUserID(target[0])
+		if uID == 0 {
+			return nil, nil
+		}
+	}
+
+	serverTZ := time.Now().UTC().Location()
+	m, err := tzModels.FindUserTimezoneG(context.Background(), uID)
+	if err != nil {
+		return serverTZ, nil
+	}
+
+	loc, err := time.LoadLocation(m.TimezoneName)
+	if err != nil {
+		logger.WithError(err).Error("failed loading location")
+		return serverTZ, nil
+	}
+
+	return loc, nil
+}
+
+func (c *Context) tmplGetApplicationCommands() ([]*discordgo.ApplicationCommand, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_applicationcommands", 1) {
+		return nil, ErrTooManyCalls
+	}
+
+	applications, err := common.BotSession.GetGlobalApplicationCommands(c.BotUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return applications, nil
 }
