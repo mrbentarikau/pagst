@@ -95,7 +95,7 @@ func createOwlbotDefinitionEmbed(res *OwlbotResult, def *OwlbotDefinition) *disc
 		Title:       title,
 		Description: common.CutStringShort(capitalizeSentences(normalizeOutput(def.Definition)), 2048),
 		Color:       0x07AB99,
-		Timestamp:   time.Now().Format(time.RFC3339),
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
 	}
 
 	if def.ImageURL != nil {
