@@ -316,16 +316,16 @@ type Channel struct {
 	Members []*ThreadMember `json:"-"`
 
 	// Channel flags.
-	Flags ChannelFlags `json:"flags"`
+	// Flags ChannelFlags `json:"flags"`
 
 	// The set of tags that can be used in a forum channel.
-	AvailableTags []ForumTag `json:"available_tags"`
+	// AvailableTags []ForumTag `json:"available_tags"`
 
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
-	AppliedTags []string `json:"applied_tags"`
+	// AppliedTags []int64 `json:"applied_tags"`
 
 	// Emoji to use as the default reaction to a forum post.
-	DefaultReactionEmoji DefaultReaction `json:"default_reaction_emoji"`
+	// DefaultReactionEmoji DefaultReaction `json:"default_reaction_emoji"`
 }
 
 func (c *Channel) GetChannelID() int64 {
@@ -367,11 +367,11 @@ type ChannelEdit struct {
 
 	// NOTE: forum channels only
 
-	AvailableTags        *[]ForumTag      `json:"available_tags,omitempty"`
-	DefaultReactionEmoji *DefaultReaction `json:"default_reaction_emoji,omitempty"`
+	// AvailableTags        *[]ForumTag      `json:"available_tags,omitempty"`
+	// DefaultReactionEmoji *DefaultReaction `json:"default_reaction_emoji,omitempty"`
 
 	// NOTE: forum threads only
-	AppliedTags *[]string `json:"applied_tags,omitempty"`
+	// AppliedTags *[]string `json:"applied_tags,omitempty"`
 }
 
 // A ChannelFollow holds data returned after following a news channel
@@ -460,17 +460,17 @@ type AddedThreadMember struct {
 // NOTE: Exactly one of EmojiID and EmojiName must be set.
 type DefaultReaction struct {
 	// The id of a guild's custom emoji.
-	EmojiID string `json:"emoji_id,omitempty"`
+	EmojiID int64 `json:"emoji_id,string,omitempty"`
 	// The unicode character of the emoji.
 	EmojiName string `json:"emoji_name,omitempty"`
 }
 
 // ForumTag represents a tag that is able to be applied to a thread in a GUILD_FORUM channel.
 type ForumTag struct {
-	ID        string `json:"id,omitempty"`
+	ID        int64  `json:"id,string,omitempty"`
 	Name      string `json:"name"`
 	Moderated bool   `json:"moderated"`
-	EmojiID   string `json:"emoji_id,omitempty"`
+	EmojiID   int64  `json:"emoji_id,string,omitempty"`
 	EmojiName string `json:"emoji_name,omitempty"`
 }
 
