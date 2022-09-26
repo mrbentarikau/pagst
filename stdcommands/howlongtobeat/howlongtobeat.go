@@ -63,6 +63,10 @@ var Command = &commands.YAGCommand{
 			return nil, queryErr
 		}
 
+		if len(hltbQuery.Data) == 0 {
+			return "No results", nil
+		}
+
 		parsedData := parseQueryData(hltbQuery.Data, gameName)
 
 		if compactView {
