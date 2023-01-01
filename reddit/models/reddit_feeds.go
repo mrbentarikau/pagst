@@ -24,67 +24,72 @@ import (
 
 // RedditFeed is an object representing the database table.
 type RedditFeed struct {
-	ID          int64            `boil:"id" json:"id" toml:"id" yaml:"id"`
-	GuildID     int64            `boil:"guild_id" json:"guild_id" toml:"guild_id" yaml:"guild_id"`
-	ChannelID   int64            `boil:"channel_id" json:"channel_id" toml:"channel_id" yaml:"channel_id"`
-	Subreddit   string           `boil:"subreddit" json:"subreddit" toml:"subreddit" yaml:"subreddit"`
-	FilterNSFW  int              `boil:"filter_nsfw" json:"filter_nsfw" toml:"filter_nsfw" yaml:"filter_nsfw"`
-	MinUpvotes  int              `boil:"min_upvotes" json:"min_upvotes" toml:"min_upvotes" yaml:"min_upvotes"`
-	UseEmbeds   bool             `boil:"use_embeds" json:"use_embeds" toml:"use_embeds" yaml:"use_embeds"`
-	Slow        bool             `boil:"slow" json:"slow" toml:"slow" yaml:"slow"`
-	Disabled    bool             `boil:"disabled" json:"disabled" toml:"disabled" yaml:"disabled"`
-	MentionRole types.Int64Array `boil:"mention_role" json:"mention_role,omitempty" toml:"mention_role" yaml:"mention_role,omitempty"`
+	ID           int64            `boil:"id" json:"id" toml:"id" yaml:"id"`
+	GuildID      int64            `boil:"guild_id" json:"guild_id" toml:"guild_id" yaml:"guild_id"`
+	ChannelID    int64            `boil:"channel_id" json:"channel_id" toml:"channel_id" yaml:"channel_id"`
+	Subreddit    string           `boil:"subreddit" json:"subreddit" toml:"subreddit" yaml:"subreddit"`
+	FilterNSFW   int              `boil:"filter_nsfw" json:"filter_nsfw" toml:"filter_nsfw" yaml:"filter_nsfw"`
+	MinUpvotes   int              `boil:"min_upvotes" json:"min_upvotes" toml:"min_upvotes" yaml:"min_upvotes"`
+	UseEmbeds    bool             `boil:"use_embeds" json:"use_embeds" toml:"use_embeds" yaml:"use_embeds"`
+	Slow         bool             `boil:"slow" json:"slow" toml:"slow" yaml:"slow"`
+	Disabled     bool             `boil:"disabled" json:"disabled" toml:"disabled" yaml:"disabled"`
+	MentionRole  types.Int64Array `boil:"mention_role" json:"mention_role,omitempty" toml:"mention_role" yaml:"mention_role,omitempty"`
+	ShowSpoilers bool             `boil:"show_spoilers" json:"show_spoilers" toml:"show_spoilers" yaml:"show_spoilers"`
 
 	R *redditFeedR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L redditFeedL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var RedditFeedColumns = struct {
-	ID          string
-	GuildID     string
-	ChannelID   string
-	Subreddit   string
-	FilterNSFW  string
-	MinUpvotes  string
-	UseEmbeds   string
-	Slow        string
-	Disabled    string
-	MentionRole string
+	ID           string
+	GuildID      string
+	ChannelID    string
+	Subreddit    string
+	FilterNSFW   string
+	MinUpvotes   string
+	UseEmbeds    string
+	Slow         string
+	Disabled     string
+	MentionRole  string
+	ShowSpoilers string
 }{
-	ID:          "id",
-	GuildID:     "guild_id",
-	ChannelID:   "channel_id",
-	Subreddit:   "subreddit",
-	FilterNSFW:  "filter_nsfw",
-	MinUpvotes:  "min_upvotes",
-	UseEmbeds:   "use_embeds",
-	Slow:        "slow",
-	Disabled:    "disabled",
-	MentionRole: "mention_role",
+	ID:           "id",
+	GuildID:      "guild_id",
+	ChannelID:    "channel_id",
+	Subreddit:    "subreddit",
+	FilterNSFW:   "filter_nsfw",
+	MinUpvotes:   "min_upvotes",
+	UseEmbeds:    "use_embeds",
+	Slow:         "slow",
+	Disabled:     "disabled",
+	MentionRole:  "mention_role",
+	ShowSpoilers: "show_spoilers",
 }
 
 var RedditFeedTableColumns = struct {
-	ID          string
-	GuildID     string
-	ChannelID   string
-	Subreddit   string
-	FilterNSFW  string
-	MinUpvotes  string
-	UseEmbeds   string
-	Slow        string
-	Disabled    string
-	MentionRole string
+	ID           string
+	GuildID      string
+	ChannelID    string
+	Subreddit    string
+	FilterNSFW   string
+	MinUpvotes   string
+	UseEmbeds    string
+	Slow         string
+	Disabled     string
+	MentionRole  string
+	ShowSpoilers string
 }{
-	ID:          "reddit_feeds.id",
-	GuildID:     "reddit_feeds.guild_id",
-	ChannelID:   "reddit_feeds.channel_id",
-	Subreddit:   "reddit_feeds.subreddit",
-	FilterNSFW:  "reddit_feeds.filter_nsfw",
-	MinUpvotes:  "reddit_feeds.min_upvotes",
-	UseEmbeds:   "reddit_feeds.use_embeds",
-	Slow:        "reddit_feeds.slow",
-	Disabled:    "reddit_feeds.disabled",
-	MentionRole: "reddit_feeds.mention_role",
+	ID:           "reddit_feeds.id",
+	GuildID:      "reddit_feeds.guild_id",
+	ChannelID:    "reddit_feeds.channel_id",
+	Subreddit:    "reddit_feeds.subreddit",
+	FilterNSFW:   "reddit_feeds.filter_nsfw",
+	MinUpvotes:   "reddit_feeds.min_upvotes",
+	UseEmbeds:    "reddit_feeds.use_embeds",
+	Slow:         "reddit_feeds.slow",
+	Disabled:     "reddit_feeds.disabled",
+	MentionRole:  "reddit_feeds.mention_role",
+	ShowSpoilers: "reddit_feeds.show_spoilers",
 }
 
 // Generated where
@@ -192,27 +197,29 @@ func (w whereHelpertypes_Int64Array) IsNull() qm.QueryMod    { return qmhelper.W
 func (w whereHelpertypes_Int64Array) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var RedditFeedWhere = struct {
-	ID          whereHelperint64
-	GuildID     whereHelperint64
-	ChannelID   whereHelperint64
-	Subreddit   whereHelperstring
-	FilterNSFW  whereHelperint
-	MinUpvotes  whereHelperint
-	UseEmbeds   whereHelperbool
-	Slow        whereHelperbool
-	Disabled    whereHelperbool
-	MentionRole whereHelpertypes_Int64Array
+	ID           whereHelperint64
+	GuildID      whereHelperint64
+	ChannelID    whereHelperint64
+	Subreddit    whereHelperstring
+	FilterNSFW   whereHelperint
+	MinUpvotes   whereHelperint
+	UseEmbeds    whereHelperbool
+	Slow         whereHelperbool
+	Disabled     whereHelperbool
+	MentionRole  whereHelpertypes_Int64Array
+	ShowSpoilers whereHelperbool
 }{
-	ID:          whereHelperint64{field: "\"reddit_feeds\".\"id\""},
-	GuildID:     whereHelperint64{field: "\"reddit_feeds\".\"guild_id\""},
-	ChannelID:   whereHelperint64{field: "\"reddit_feeds\".\"channel_id\""},
-	Subreddit:   whereHelperstring{field: "\"reddit_feeds\".\"subreddit\""},
-	FilterNSFW:  whereHelperint{field: "\"reddit_feeds\".\"filter_nsfw\""},
-	MinUpvotes:  whereHelperint{field: "\"reddit_feeds\".\"min_upvotes\""},
-	UseEmbeds:   whereHelperbool{field: "\"reddit_feeds\".\"use_embeds\""},
-	Slow:        whereHelperbool{field: "\"reddit_feeds\".\"slow\""},
-	Disabled:    whereHelperbool{field: "\"reddit_feeds\".\"disabled\""},
-	MentionRole: whereHelpertypes_Int64Array{field: "\"reddit_feeds\".\"mention_role\""},
+	ID:           whereHelperint64{field: "\"reddit_feeds\".\"id\""},
+	GuildID:      whereHelperint64{field: "\"reddit_feeds\".\"guild_id\""},
+	ChannelID:    whereHelperint64{field: "\"reddit_feeds\".\"channel_id\""},
+	Subreddit:    whereHelperstring{field: "\"reddit_feeds\".\"subreddit\""},
+	FilterNSFW:   whereHelperint{field: "\"reddit_feeds\".\"filter_nsfw\""},
+	MinUpvotes:   whereHelperint{field: "\"reddit_feeds\".\"min_upvotes\""},
+	UseEmbeds:    whereHelperbool{field: "\"reddit_feeds\".\"use_embeds\""},
+	Slow:         whereHelperbool{field: "\"reddit_feeds\".\"slow\""},
+	Disabled:     whereHelperbool{field: "\"reddit_feeds\".\"disabled\""},
+	MentionRole:  whereHelpertypes_Int64Array{field: "\"reddit_feeds\".\"mention_role\""},
+	ShowSpoilers: whereHelperbool{field: "\"reddit_feeds\".\"show_spoilers\""},
 }
 
 // RedditFeedRels is where relationship names are stored.
@@ -232,9 +239,9 @@ func (*redditFeedR) NewStruct() *redditFeedR {
 type redditFeedL struct{}
 
 var (
-	redditFeedAllColumns            = []string{"id", "guild_id", "channel_id", "subreddit", "filter_nsfw", "min_upvotes", "use_embeds", "slow", "disabled", "mention_role"}
+	redditFeedAllColumns            = []string{"id", "guild_id", "channel_id", "subreddit", "filter_nsfw", "min_upvotes", "use_embeds", "slow", "disabled", "mention_role", "show_spoilers"}
 	redditFeedColumnsWithoutDefault = []string{"guild_id", "channel_id", "subreddit", "filter_nsfw", "min_upvotes", "use_embeds", "slow"}
-	redditFeedColumnsWithDefault    = []string{"id", "disabled", "mention_role"}
+	redditFeedColumnsWithDefault    = []string{"id", "disabled", "mention_role", "show_spoilers"}
 	redditFeedPrimaryKeyColumns     = []string{"id"}
 	redditFeedGeneratedColumns      = []string{}
 )

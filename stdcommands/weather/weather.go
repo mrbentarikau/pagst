@@ -9,7 +9,6 @@ import (
 	"unicode"
 
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/lunixbochs/vtclean"
 )
@@ -30,8 +29,8 @@ var Command = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Where", Type: dcmd.String},
 	},
-	DefaultEnabled:      true,
-	SlashCommandEnabled: true,
+	DefaultEnabled:            true,
+	ApplicationCommandEnabled: true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		where := data.Args[0].Str()
 
@@ -40,7 +39,7 @@ var Command = &commands.YAGCommand{
 			return nil, err
 		}
 
-		req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
+		req.Header.Set("User-Agent", "curl 7.65.1")
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {

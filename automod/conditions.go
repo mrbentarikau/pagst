@@ -55,7 +55,7 @@ func (mrc *MemberRolesCondition) Description() string {
 
 func (mrc *MemberRolesCondition) UserSettings() []*SettingDef {
 	settings := []*SettingDef{
-		&SettingDef{
+		{
 			Name: "Roles",
 			Key:  "Roles",
 			Kind: SettingTypeMultiRole,
@@ -397,7 +397,7 @@ func (cd *ChannelCategoriesCondition) IsMet(data *TriggeredRuleData, settings in
 			return false, nil
 		}
 
-		parentID = threadParent.ID
+		parentID = threadParent.ParentID
 	}
 
 	if common.ContainsInt64Slice(settingsCast.Categories, parentID) {

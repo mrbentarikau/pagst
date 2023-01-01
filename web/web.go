@@ -3,6 +3,7 @@ package web
 import (
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"html/template"
 	"io/fs"
 	"net/http"
@@ -330,6 +331,11 @@ func setupRoutes() *goji.Mux {
 	return RootMux
 }
 
+func AddServer(w http.ResponseWriter, r *http.Request) {
+	url := fmt.Sprintf("https://discordapp.com/oauth2/authorize?client_id=%s&scope=bot%%20identify%%20guilds%%20applications.commands&permissions=1101658455543&response_type=code&redirect_uri=https://%s/manage", common.ConfClientID.GetString(), common.ConfHost.GetString())
+	http.Redirect(w, r, url, http.StatusMovedPermanently)
+}
+
 func NotFound() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -345,8 +351,6 @@ func NotFound() func(http.Handler) http.Handler {
 }
 
 var StaticFilesFS fs.FS = frontend.StaticFiles
-
-//var StaticFileserverDir = "."
 
 func setupRootMux() {
 	mux := goji.NewMux()
@@ -365,7 +369,6 @@ func setupRootMux() {
 	}
 
 	// Setup fileserver
-	//mux.Handle(pat.Get("/static/*"), http.FileServer(http.FS(StaticFilesFS)))
 	mux.Handle(pat.Get("/static"), fileserver.FileServer(http.FS(StaticFilesFS)))
 	mux.Handle(pat.Get("/static/*"), fileserver.FileServer(http.FS(StaticFilesFS)))
 	mux.Handle(pat.Get("/robots.txt"), http.HandlerFunc(handleRobotsTXT))
@@ -385,6 +388,7 @@ func setupRootMux() {
 	mux.HandleFunc(pat.Get("/login"), HandleLogin)
 	mux.HandleFunc(pat.Get("/confirm_login"), HandleConfirmLogin)
 	mux.HandleFunc(pat.Get("/logout"), HandleLogout)
+	mux.HandleFunc(pat.Get("/invite"), AddServer)
 }
 
 func httpsRedirHandler(w http.ResponseWriter, r *http.Request) {

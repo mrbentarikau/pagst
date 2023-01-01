@@ -67,7 +67,6 @@ func (c *Container) Descriptions(data *Data) (string, string) {
 }
 
 func (c *Container) Run(data *Data) (interface{}, error) {
-
 	var matchingCmd *RegisteredCommand
 
 	switch data.TriggerType {
@@ -85,7 +84,50 @@ func (c *Container) Run(data *Data) (interface{}, error) {
 			options = options[0].Options
 		}
 
-		matchingCmd, _ = c.FindCommand(name)
+		var appCmdNotSlash bool
+		if data.SlashCommandTriggerData.Interaction.Type != 0 {
+			appCmdNotSlash = true
+		}
+
+		matchingCmd, _ = c.FindCommand(name, appCmdNotSlash)
+
+		// KRAAKA this is SlashCommands2ContextMenuCommand
+		if data.SlashCommandTriggerData.Interaction.DataCommand.AppCmdType == discordgo.UserApplicationCommand &&
+			len(data.SlashCommandTriggerData.Interaction.DataCommand.Options) > 0 {
+
+			defs, _, _ := matchingCmd.Command.(CmdWithArgDefs).ArgDefs(nil)
+			arg := &discordgo.ApplicationCommandInteractionDataOption{
+				Name: strings.ToLower(defs[0].Name),
+				//Type:  4,
+				Value: data.SlashCommandTriggerData.Interaction.DataCommand.TargetID,
+			}
+			data.SlashCommandTriggerData.Interaction.DataCommand.Options[0] = arg
+		} else if data.SlashCommandTriggerData.Interaction.DataCommand.AppCmdType == discordgo.MessageApplicationCommand &&
+			len(data.SlashCommandTriggerData.Interaction.DataCommand.Options) > 0 {
+
+			message, err := data.Session.ChannelMessage(data.GuildData.CS.ID, data.SlashCommandTriggerData.Interaction.DataCommand.TargetID)
+			if err != nil {
+				return nil, err
+			}
+
+			defs, _, _ := matchingCmd.Command.(CmdWithArgDefs).ArgDefs(nil)
+			arg := &discordgo.ApplicationCommandInteractionDataOption{
+				Name:  strings.ToLower(defs[0].Name),
+				Type:  3,
+				Value: message.Content,
+			}
+			data.SlashCommandTriggerData.Interaction.DataCommand.Options[0] = arg
+		} else if data.SlashCommandTriggerData.Interaction.Type == discordgo.InteractionModalSubmit {
+			matchingCmd, _ = c.FindCommand(data.SlashCommandTriggerData.Interaction.ModalSubmitData().CustomID, appCmdNotSlash)
+			defs, _, _ := matchingCmd.Command.(CmdWithArgDefs).ArgDefs(nil)
+
+			arg := &discordgo.ApplicationCommandInteractionDataOption{
+				Name:  strings.ToLower(defs[0].Name),
+				Type:  3,
+				Value: data.SlashCommandTriggerData.Interaction.ModalSubmitData().Components[1].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value,
+			}
+			data.SlashCommandTriggerData.Interaction.DataCommand.Options[0] = arg
+		}
 
 		// add to the container chain and set the parse helper
 		data.ContainerChain = append(data.ContainerChain, c)
@@ -158,6 +200,7 @@ func (c *Container) Run(data *Data) (interface{}, error) {
 	// Were extra smart about extracting the options so that we can
 	// provide more commands than there actually are (e.g by-id and by-user subcommands that resolve to the same command)
 	if data.TriggerType == TriggerTypeSlashCommands && len(data.SlashCommandTriggerData.Options) == 1 && data.SlashCommandTriggerData.Options[0].Type == discordgo.ApplicationCommandOptionSubCommand {
+
 		data.SlashCommandTriggerData.Options = data.SlashCommandTriggerData.Options[0].Options
 	}
 
@@ -193,10 +236,14 @@ func (c *Container) shouldIgnore(data *Data) bool {
 	return false
 }
 
-func (c *Container) FindCommand(searchStr string) (cmd *RegisteredCommand, rest string) {
+func (c *Container) FindCommand(searchStr string, appCmdNotSlash ...bool) (cmd *RegisteredCommand, rest string) {
 	split := strings.SplitN(searchStr, " ", 2)
 	if len(split) < 1 {
 		return
+	}
+
+	if len(appCmdNotSlash) > 0 {
+		split = []string{searchStr}
 	}
 
 	// Start looking for matches in all subcommands
@@ -341,6 +388,8 @@ func (c *Container) BuildMiddlewareChains(containerChain []*Container) {
 }
 
 // The regex provided for validation from the discord docs
+// https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-naming
+// ^[-_\p{L}\p{N}\p{Devanagari}\p{Thai}]{1,32}$
 var CmdNameRegex = regexp.MustCompile(`^[\w-]{1,32}$`)
 
 func ValidateCommandPanic(cmd Cmd, trigger *Trigger) {
@@ -350,8 +399,9 @@ func ValidateCommandPanic(cmd Cmd, trigger *Trigger) {
 }
 
 func ValidateCommand(cmd Cmd, trigger *Trigger) error {
-	if !CmdNameRegex.MatchString(trigger.Names[0]) {
-		return errors.New("Name dosen't match legal regex")
+	// KRAAKA IMPORTANT
+	if !CmdNameRegex.MatchString(trigger.Names[0]) && !trigger.AppCommandNotSlash {
+		return errors.New("Name doesn't match legal regex")
 	}
 
 	argDefsCommand, argDefsOk := cmd.(CmdWithArgDefs)

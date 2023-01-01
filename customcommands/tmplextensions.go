@@ -201,6 +201,10 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			return "", err
 		}
 
+		if opts.Cmd.Disabled {
+			return "", errors.New("custom command is disabled")
+		}
+
 		actualDelay := templates.ToInt64(delaySeconds)
 		if actualDelay <= 0 {
 			currentStackDepthI := ctx.Data["StackDepth"]
@@ -228,6 +232,9 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 
 		expectedCallTime := time.Now().Add(opts.Delay)
 		newCallChain, err := updateCallChain(ctx.ExecCallChain, expectedCallTime)
+		if err != nil {
+			return "", err
+		}
 
 		m := &DelayedRunCCData{
 			ChannelID: opts.CS.ID,
@@ -580,7 +587,20 @@ func tmplDBGet(ctx *templates.Context) interface{} {
 			return nil, nil
 		}
 
-		return ToLightDBEntry(m)
+		dbEntry, err := ToLightDBEntry(m)
+		if err != nil {
+			return nil, err
+		}
+
+		member, err := bot.GetMember(ctx.GS.ID, dbEntry.UserID)
+		if err != nil {
+			//	ctx.LogEntry().WithError(err).Error("[cc] dbGet failed retrieving member")
+			return dbEntry, nil
+		}
+
+		dbEntry.User = member.User
+
+		return dbEntry, nil
 	}
 }
 

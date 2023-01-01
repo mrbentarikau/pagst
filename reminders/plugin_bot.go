@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/mrbentarikau/pagst/bot"
+	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
@@ -37,9 +38,19 @@ var _ commands.CommandProvider = (*Plugin)(nil)
 
 func (p *Plugin) AddCommands() {
 	commands.AddRootCommands(p, cmds...)
+	commands.AddRootCommands(p, p.createRemindMeModal())
 }
 
 func (p *Plugin) BotInit() {
+	//eventsystem.AddHandlerAsyncLastLegacy(p, handleInteractionCreate, eventsystem.EventInteractionCreate)
+	eventsystem.AddHandlerAsyncLastLegacy(p, func(evt *eventsystem.EventData) {
+		ic := evt.EvtInterface.(*discordgo.InteractionCreate)
+		if ic.GuildID == 0 {
+			return
+		}
+		go p.handleRemindmeInteractionCreate(ic)
+	}, eventsystem.EventInteractionCreate)
+
 	// scheduledevents.RegisterEventHandler("reminders_check_user", checkUserEvtHandlerLegacy)
 	scheduledevents2.RegisterHandler("reminders_check_user", int64(0), checkUserScheduledEvent)
 	scheduledevents2.RegisterLegacyMigrater("reminders_check_user", migrateLegacyScheduledEvents)
@@ -62,8 +73,8 @@ var cmds = []*commands.YAGCommand{
 			{Name: "repeat", Help: "Repeat the reminder at set duration"},
 			{Name: "time", Help: "Exact time for the reminder", Type: dcmd.String},
 		},
-		SlashCommandEnabled: true,
-		DefaultEnabled:      true,
+		ApplicationCommandEnabled: true,
+		DefaultEnabled:            true,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			currentReminders, _ := GetUserReminders(parsed.Author.ID)
 			if len(currentReminders) >= 25 {
@@ -81,21 +92,7 @@ var cmds = []*commands.YAGCommand{
 
 			switchTime := parsed.Switch("time")
 			if switchTime.Value != nil {
-				dateParser := whn.New(&rules.Options{
-					Distance:     10,
-					MatchByOrder: true})
-
-				dateParser.Add(
-					en.Weekday(rules.Override),
-					en.CasualDate(rules.Override),
-					en.CasualTime(rules.Override),
-					trules.Hour(rules.Override),
-					trules.HourMinute(rules.Override),
-					en.Deadline(rules.Override),
-					en.ExactMonthDate(rules.Override),
-				)
-				dateParser.Add(wcommon.All...)
-
+				dateParser := createDateParser()
 				if parsed.Switch("repeat").Value != nil && parsed.Switch("repeat").Value.(bool) {
 					repeatDuration = time.Duration(24 * time.Hour)
 				}
@@ -122,7 +119,7 @@ var cmds = []*commands.YAGCommand{
 			id := parsed.ChannelID
 
 			if c := parsed.Switch("channel"); c.Value != nil {
-				hasPerms, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, id, parsed.GuildData.MS, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages)
+				hasPerms, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, id, parsed.GuildData.MS, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel)
 				if err != nil {
 					return "Failed checking permissions, please try again or join the support server.", err
 				}
@@ -144,11 +141,11 @@ var cmds = []*commands.YAGCommand{
 		},
 	},
 	{
-		CmdCategory:         commands.CategoryTool,
-		Name:                "Reminders",
-		Description:         "Lists your active reminders",
-		SlashCommandEnabled: true,
-		DefaultEnabled:      true,
+		CmdCategory:               commands.CategoryTool,
+		Name:                      "Reminders",
+		Description:               "Lists your active reminders",
+		ApplicationCommandEnabled: true,
+		DefaultEnabled:            true,
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "raw", Help: "Raw, legacy output"},
 		},
@@ -172,26 +169,32 @@ var cmds = []*commands.YAGCommand{
 				return out, nil
 			}
 
-			pm, err := paginatedmessages.CreatePaginatedMessage(
-				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
-					i := page - 1
-					paginatedEmbed := embedCreator(currentReminders, i, maxLength, 0, parsed)
-					return paginatedEmbed, nil
-				})
-			if err != nil {
-				return fmt.Sprintf("Something went wrong: %s", err), nil
+			var pm *paginatedmessages.PaginatedMessage
+			if len(currentReminders) > 0 {
+				pm, err = paginatedmessages.CreatePaginatedMessage(
+					parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
+						i := page - 1
+						paginatedEmbed := embedCreator(currentReminders, i, maxLength, 0, parsed)
+						return paginatedEmbed, nil
+					})
+				if err != nil {
+					return fmt.Sprintf("Something went wrong: %s", err), nil
+				}
+			} else {
+				paginatedEmbed := embedCreator(currentReminders, 0, maxLength, 0, parsed)
+				return paginatedEmbed, nil
 			}
 
 			return pm, nil
 		},
 	},
 	{
-		CmdCategory:         commands.CategoryTool,
-		Name:                "CReminders",
-		Aliases:             []string{"channelreminders"},
-		Description:         "Lists reminders in channel, only users with 'manage channel' permissions can use this.",
-		SlashCommandEnabled: true,
-		DefaultEnabled:      true,
+		CmdCategory:               commands.CategoryTool,
+		Name:                      "CReminders",
+		Aliases:                   []string{"channelreminders"},
+		Description:               "Lists reminders in channel, only users with 'manage channel' permissions can use this.",
+		ApplicationCommandEnabled: true,
+		DefaultEnabled:            true,
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "raw", Help: "Raw, legacy output"},
 		},
@@ -224,7 +227,7 @@ var cmds = []*commands.YAGCommand{
 			}
 
 			pm, err := paginatedmessages.CreatePaginatedMessage(
-				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 					i := page - 1
 					paginatedEmbed := embedCreator(currentReminders, i, maxLength, 1, parsed)
 					return paginatedEmbed, nil
@@ -249,8 +252,8 @@ var cmds = []*commands.YAGCommand{
 			{Name: "a", Help: "All"},
 			{Name: "userid", Type: dcmd.Int, Default: 0, Help: "userID"},
 		},
-		SlashCommandEnabled: true,
-		DefaultEnabled:      true,
+		ApplicationCommandEnabled: true,
+		DefaultEnabled:            true,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			var reminder Reminder
 
@@ -417,19 +420,19 @@ func limitString(s string) string {
 }
 
 func embedCreator(currentReminders []*Reminder, i, ml, flag int, parsed *dcmd.Data) *discordgo.MessageEmbed {
-	//var username string
 	member := parsed.GuildData.MS
 	embedTitle := []string{"Your reminders:", "Reminders in this channel:"}
 	embedDescription := []string{"Remove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above.\nTo clear all reminders, use `delreminder` with the `-a` switch.", "Remove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above."}
 
 	embed := &discordgo.MessageEmbed{
-		Title:       embedTitle[flag],
+		Title:       fmt.Sprintf("%s count %d", embedTitle[flag], len(currentReminders)),
 		Color:       int(rand.Int63n(16777215)),
 		Description: embedDescription[flag],
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: discordgo.EndpointUserAvatar(member.User.ID, member.User.Avatar),
 		},
 	}
+
 	for k, v := range currentReminders[i*ml:] {
 		var username string
 		if k < ml {
@@ -451,4 +454,23 @@ func embedCreator(currentReminders []*Reminder, i, ml, flag int, parsed *dcmd.Da
 		}
 	}
 	return embed
+}
+
+func createDateParser() *whn.Parser {
+	dateParser := whn.New(&rules.Options{
+		Distance:     10,
+		MatchByOrder: true})
+
+	dateParser.Add(
+		en.Weekday(rules.Override),
+		en.CasualDate(rules.Override),
+		en.CasualTime(rules.Override),
+		trules.Hour(rules.Override),
+		trules.HourMinute(rules.Override),
+		en.Deadline(rules.Override),
+		en.ExactMonthDate(rules.Override),
+	)
+	dateParser.Add(wcommon.All...)
+
+	return dateParser
 }

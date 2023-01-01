@@ -46,7 +46,7 @@ var Command = &commands.YAGCommand{
 		var pm *paginatedmessages.PaginatedMessage
 		if paginatedView {
 			pm, err = paginatedmessages.CreatePaginatedMessage(
-				data.GuildData.GS.ID, data.ChannelID, 1, len(qResp.Results), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				data.GuildData.GS.ID, data.ChannelID, 1, len(qResp.Results), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 					i := page - 1
 
 					paginatedEmbed := embedCreator(qResp.Results, i)
@@ -74,9 +74,15 @@ func embedCreator(udResult []urbandictionary.Result, i int) *discordgo.MessageEm
 	if len(definition) > 2000 {
 		definition = common.CutStringShort(definition, 2000) + "\n\n(definition too long)"
 	}
+
 	example := "None given"
 	if len(udResult[i].Example) > 0 {
 		example = common.CutStringShort(linkReferencedTerms(udResult[i].Example), 768)
+	}
+
+	author := "Unknown"
+	if len(udResult[i].Author) > 0 {
+		author = udResult[i].Author
 	}
 
 	embed := &discordgo.MessageEmbed{
@@ -87,9 +93,9 @@ func embedCreator(udResult []urbandictionary.Result, i int) *discordgo.MessageEm
 		Description: fmt.Sprintf("**Definition**: %s", linkReferencedTerms(definition)),
 		Color:       int(rand.Int63n(16777215)),
 		Fields: []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{Name: "Example:", Value: example},
-			&discordgo.MessageEmbedField{Name: "Author:", Value: udResult[i].Author},
-			&discordgo.MessageEmbedField{Name: "Votes:", Value: fmt.Sprintf("Upvotes: %d\nDownvotes: %d", udResult[i].Upvote, udResult[i].Downvote)},
+			{Name: "Example:", Value: example},
+			{Name: "Author:", Value: author},
+			{Name: "Votes:", Value: fmt.Sprintf("Upvotes: %d\nDownvotes: %d", udResult[i].Upvote, udResult[i].Downvote)},
 		},
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/UD_logo-01.svg/512px-UD_logo-01.svg.png",

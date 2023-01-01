@@ -77,6 +77,8 @@ ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS threads_enabled BOOLEAN NOT
 `, `
 ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS threads_enabled BOOLEAN NOT NULL DEFAULT true;
 `, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS normalize_unicode BOOL NOT NULL DEFAULT false;
+`, `
 CREATE TABLE IF NOT EXISTS templates_user_database (
 	id BIGSERIAL PRIMARY KEY,
 

@@ -37,9 +37,9 @@ func (p *Plugin) AddCommands() {
 			Arguments: []*dcmd.ArgDef{
 				{Name: "Role", Type: dcmd.String},
 			},
-			SlashCommandEnabled: true,
-			DefaultEnabled:      true,
-			RunFunc:             CmdFuncRole,
+			ApplicationCommandEnabled: true,
+			DefaultEnabled:            true,
+			RunFunc:                   CmdFuncRole,
 		})
 
 	cmdCreate := &commands.YAGCommand{

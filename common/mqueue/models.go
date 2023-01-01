@@ -27,6 +27,9 @@ type QueuedElement struct {
 	// The actual message as an embed
 	MessageEmbed *discordgo.MessageEmbed `json:",omitempty"`
 
+	// The actual message as an embeds KRAAKA might look at it later for optimization
+	MessageEmbeds []*discordgo.MessageEmbed `json:",omitempty"`
+
 	UseWebhook      bool
 	WebhookUsername string
 

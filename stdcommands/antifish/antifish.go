@@ -13,14 +13,14 @@ import (
 var backSlashReplacer = strings.NewReplacer("\\", "")
 
 var Command = &commands.YAGCommand{
-	CmdCategory:         commands.CategoryFun,
-	Name:                "AntiPhish",
-	Aliases:             []string{"antifish", "af", "ap"},
-	Description:         "Anti-Fish API information from anti-fish.bitflow.dev (abbr. BAF),\nSinking Yachts Phishing API from phish.sinking.yachts (abbr. SY),\nGoogle Transparency Report (abbr. GTR).",
-	DefaultEnabled:      true,
-	RequireDiscordPerms: []int64{discordgo.PermissionManageGuild},
-	RequiredArgs:        1,
-	SlashCommandEnabled: false,
+	CmdCategory:               commands.CategoryFun,
+	Name:                      "AntiPhish",
+	Aliases:                   []string{"antifish", "af", "ap"},
+	Description:               "Anti-Fish API information from anti-fish.bitflow.dev (abbr. BAF),\nSinking Yachts Phishing API from phish.sinking.yachts (abbr. SY),\nGoogle Transparency Report (abbr. GTR).",
+	DefaultEnabled:            true,
+	RequireDiscordPerms:       []int64{discordgo.PermissionManageGuild},
+	RequiredArgs:              1,
+	ApplicationCommandEnabled: false,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "URL", Type: dcmd.String},
 	},

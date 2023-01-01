@@ -16,13 +16,12 @@ import (
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory:         commands.CategoryTool,
-	Name:                "EditRole",
-	Aliases:             []string{"ERole"},
-	Description:         "Edits a role",
-	LongDescription:     "\nRequires the manage roles permission and the bot and your highest role being above the edited role.\nRole permissions follow Discord's standard [encoding](https://discordapp.com/developers/docs/topics/permissions) and can be calculated on websites like [this](https://discordapi.com/permissions.html).",
-	RequiredArgs:        1,
-	SlashCommandEnabled: false,
+	CmdCategory:     commands.CategoryTool,
+	Name:            "EditRole",
+	Aliases:         []string{"ERole"},
+	Description:     "Edits a role",
+	LongDescription: "\nRequires the manage roles permission and the bot and your highest role being above the edited role.\nRole permissions follow Discord's standard [encoding](https://discordapp.com/developers/docs/topics/permissions) and can be calculated on websites like [this](https://discordapi.com/permissions.html).",
+	RequiredArgs:    1,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Role", Type: dcmd.String},
 	},

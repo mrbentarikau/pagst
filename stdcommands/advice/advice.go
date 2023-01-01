@@ -18,15 +18,15 @@ var Command = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "What", Type: dcmd.String},
 	},
-	DefaultEnabled:      true,
-	SlashCommandEnabled: true,
+	DefaultEnabled:            true,
+	ApplicationCommandEnabled: true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		//return "The API this command used has been shut down :(", nil
 		random := true
 		addr := "http://api.adviceslip.com/advice"
 		if data.Args[0].Str() != "" {
 			random = false
-			addr = "http://api.adviceslip.com/advice/search/" + url.QueryEscape(data.Args[0].Str())
+			addr = addr + "/search/" + url.QueryEscape(data.Args[0].Str())
 		}
 
 		resp, err := http.Get(addr)

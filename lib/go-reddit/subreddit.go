@@ -113,3 +113,38 @@ func (c *Client) getSubreddits(where string) ([]*Subreddit, error) {
 
 	return subreddits, nil
 }
+
+func (c *Client) IsThereSubredditName(where string) (bool, error) {
+	var redditStruct struct {
+		Data struct {
+			Dist     int `json:"dist"`
+			Children []struct {
+			}
+		} `json:"data"`
+	}
+
+	//query := "https://old.reddit.com/subreddits/search.api?q=" + strings.ToLower(data)
+	url := fmt.Sprintf("%s/subreddits/search.json?q=%s&include_over_18=on", baseURL, where)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return false, err
+	}
+
+	req.Header.Add("User-Agent", c.userAgent)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	queryErr := json.NewDecoder(resp.Body).Decode(&redditStruct)
+	if queryErr != nil {
+		return false, err
+	}
+
+	if redditStruct.Data.Dist == 0 || len(redditStruct.Data.Children) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}

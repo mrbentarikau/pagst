@@ -16,14 +16,19 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/safebrowsing"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
+var tChain = transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 var forwardSlashReplacer = strings.NewReplacer("\\", "")
 
 /////////////////////////////////////////////////////////////
 
 type BaseRegexTriggerData struct {
-	Regex string `valid:",1,250"`
+	Regex            string `valid:",1,250"`
+	NormalizeUnicode bool
 }
 
 type BaseRegexTrigger struct {
@@ -46,6 +51,12 @@ func (r BaseRegexTrigger) UserSettings() []*SettingDef {
 			Kind: SettingTypeString,
 			Min:  1,
 			Max:  250,
+		},
+		{
+			Name:    "Normalize Unicode accents & confusables",
+			Key:     "NormalizeUnicode",
+			Kind:    SettingTypeBool,
+			Default: false,
 		},
 	}
 }
@@ -146,7 +157,8 @@ type WordListTrigger struct {
 	Blacklist bool
 }
 type WorldListTriggerData struct {
-	ListID int64
+	ListID           int64
+	NormalizeUnicode bool
 }
 
 func (wl *WordListTrigger) Kind() RulePartType {
@@ -180,6 +192,12 @@ func (wl *WordListTrigger) UserSettings() []*SettingDef {
 			Key:  "ListID",
 			Kind: SettingTypeList,
 		},
+		{
+			Name:    "Normalize Unicode accents & confusables",
+			Key:     "NormalizeUnicode",
+			Kind:    SettingTypeBool,
+			Default: false,
+		},
 	}
 }
 
@@ -194,6 +212,11 @@ func (wl *WordListTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.C
 	messageFields := strings.Fields(mdStripped)
 
 	for _, mf := range messageFields {
+		if dataCast.NormalizeUnicode {
+			mf = common.NormalizeAccents(mf)
+			mf = common.NormalizeConfusables(mf)
+		}
+
 		contained := false
 		for _, w := range list.Content {
 			if strings.EqualFold(mf, w) {
@@ -991,7 +1014,14 @@ func (r *MessageRegexTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstat
 	}
 
 	re := item.Value().(*regexp.Regexp)
-	if re.MatchString(m.Content) {
+
+	mContent := m.Content
+	if dataCast.NormalizeUnicode {
+		mContent = common.NormalizeAccents(mContent)
+		mContent = common.NormalizeConfusables(mContent)
+	}
+
+	if re.MatchString(mContent) {
 		if r.BaseRegexTrigger.Inverse {
 			return false, nil
 		}
@@ -1108,8 +1138,9 @@ type NameRegexTrigger struct {
 }
 
 type NameRegexTriggerData struct {
-	Regex           string `valid:",1,250"`
-	ExcludeUsername bool
+	Regex            string `valid:",1,250"`
+	ExcludeUsername  bool
+	NormalizeUnicode bool
 }
 
 func (nr NameRegexTrigger) Kind() RulePartType {
@@ -1151,6 +1182,12 @@ func (nr *NameRegexTrigger) UserSettings() []*SettingDef {
 			Kind:    SettingTypeBool,
 			Default: false,
 		},
+		{
+			Name:    "Normalize Unicode accents & confusables",
+			Key:     "NormalizeUnicode",
+			Kind:    SettingTypeBool,
+			Default: false,
+		},
 	}
 }
 
@@ -1172,6 +1209,13 @@ func (nr *NameRegexTrigger) CheckName(t *TriggerContext) (bool, error) {
 
 	username := t.MS.User.Username
 	nickname := t.MS.Member.Nick
+
+	if dataCast.NormalizeUnicode {
+		username = common.NormalizeAccents(username)
+		nickname = common.NormalizeAccents(nickname)
+		username = common.NormalizeConfusables(username)
+		nickname = common.NormalizeConfusables(nickname)
+	}
 
 	if dataCast.ExcludeUsername {
 		username = ""
@@ -1200,8 +1244,9 @@ type NameWordlistTrigger struct {
 	Blacklist bool
 }
 type NameWordlistTriggerData struct {
-	ListID          int64
-	ExcludeUsername bool
+	ListID           int64
+	ExcludeUsername  bool
+	NormalizeUnicode bool
 }
 
 func (nwl *NameWordlistTrigger) Kind() RulePartType {
@@ -1241,6 +1286,12 @@ func (nwl *NameWordlistTrigger) UserSettings() []*SettingDef {
 			Kind:    SettingTypeBool,
 			Default: false,
 		},
+		{
+			Name:    "Normalize Unicode accents & confusables",
+			Key:     "NormalizeUnicode",
+			Kind:    SettingTypeBool,
+			Default: false,
+		},
 	}
 }
 
@@ -1263,6 +1314,11 @@ func (nwl *NameWordlistTrigger) CheckName(t *TriggerContext) (bool, error) {
 
 	var contained bool
 	for _, mf := range fields {
+		if dataCast.NormalizeUnicode {
+			mf = common.NormalizeAccents(mf)
+			mf = common.NormalizeConfusables(mf)
+		}
+
 		for _, w := range list.Content {
 			if strings.EqualFold(mf, w) {
 				if nwl.Blacklist {
@@ -1324,8 +1380,14 @@ func (r *UsernameRegexTrigger) CheckUsername(t *TriggerContext) (bool, error) {
 		return false, nil
 	}
 
+	username := t.MS.User.Username
+	if dataCast.NormalizeUnicode {
+		username = common.NormalizeAccents(username)
+		username = common.NormalizeConfusables(username)
+	}
+
 	re := item.Value().(*regexp.Regexp)
-	if re.MatchString(t.MS.User.Username) {
+	if re.MatchString(username) {
 		if r.BaseRegexTrigger.Inverse {
 			return false, nil
 		}
@@ -1347,7 +1409,8 @@ type UsernameWordlistTrigger struct {
 	Blacklist bool
 }
 type UsernameWorldlistData struct {
-	ListID int64
+	ListID           int64
+	NormalizeUnicode bool
 }
 
 func (uwl *UsernameWordlistTrigger) Kind() RulePartType {
@@ -1381,6 +1444,12 @@ func (uwl *UsernameWordlistTrigger) UserSettings() []*SettingDef {
 			Key:  "ListID",
 			Kind: SettingTypeList,
 		},
+		{
+			Name:    "Normalize Unicode accents & confusables",
+			Key:     "NormalizeUnicode",
+			Kind:    SettingTypeBool,
+			Default: false,
+		},
 	}
 }
 
@@ -1395,6 +1464,11 @@ func (uwl *UsernameWordlistTrigger) CheckUsername(t *TriggerContext) (bool, erro
 	fields := strings.Fields(PrepareMessageForWordCheck(t.MS.User.Username))
 
 	for _, mf := range fields {
+		if dataCast.NormalizeUnicode {
+			mf = common.NormalizeAccents(mf)
+			mf = common.NormalizeConfusables(mf)
+		}
+
 		contained := false
 		for _, w := range list.Content {
 			if strings.EqualFold(mf, w) {

@@ -41,16 +41,18 @@ type CreateForm struct {
 	MinUpvotes             int     `schema:"min_upvotes" valid:"0,"`
 	MentionRole            []int64 `schema:"mention_role" valid:"role,true"`
 	DisableSubredditSearch bool    `schema:"disable_subreddit_search"`
+	ShowSpoilers           bool    `schema:"show_spoilers"`
 }
 
 type UpdateForm struct {
-	Channel     int64   `schema:"channel" valid:"channel,true"`
-	ID          int64   `schema:"id"`
-	UseEmbeds   bool    `schema:"use_embeds"`
-	NSFWMode    int     `schema:"nsfw_filter"`
-	MinUpvotes  int     `schema:"min_upvotes" valid:"0,"`
-	MentionRole []int64 `schema:"mention_role" valid:"role,true"`
-	FeedEnabled bool    `schema:"feed_enabled"`
+	Channel      int64   `schema:"channel" valid:"channel,true"`
+	ID           int64   `schema:"id"`
+	UseEmbeds    bool    `schema:"use_embeds"`
+	NSFWMode     int     `schema:"nsfw_filter"`
+	MinUpvotes   int     `schema:"min_upvotes" valid:"0,"`
+	MentionRole  []int64 `schema:"mention_role" valid:"role,true"`
+	FeedEnabled  bool    `schema:"feed_enabled"`
+	ShowSpoilers bool    `schema:"show_spoilers"`
 }
 
 var (
@@ -76,12 +78,15 @@ func (p *Plugin) InitWeb() {
 	redditMux.Use(web.RequirePermMW(discordgo.PermissionManageWebhooks))
 	redditMux.Use(baseData)
 
-	redditMux.Handle(pat.Get("/"), web.RenderHandler(HandleReddit, "cp_reddit"))
-	redditMux.Handle(pat.Get(""), web.RenderHandler(HandleReddit, "cp_reddit"))
+	mainGetHandler := web.ControllerHandler(p.HandleReddit, "cp_reddit")
+	addHandler := web.ControllerPostHandler(p.HandleNew, mainGetHandler, CreateForm{})
+
+	redditMux.Handle(pat.Get("/"), mainGetHandler)
+	redditMux.Handle(pat.Get(""), mainGetHandler)
 
 	// If only html forms allowed patch and delete.. if only
-	redditMux.Handle(pat.Post(""), web.FormParserMW(web.RenderHandler(HandleNew, "cp_reddit"), CreateForm{}))
-	redditMux.Handle(pat.Post("/"), web.FormParserMW(web.RenderHandler(HandleNew, "cp_reddit"), CreateForm{}))
+	redditMux.Handle(pat.Post(""), addHandler)
+	redditMux.Handle(pat.Post("/"), addHandler)
 	redditMux.Handle(pat.Post("/:item/update"), web.FormParserMW(web.RenderHandler(HandleModify, "cp_reddit"), UpdateForm{}))
 	redditMux.Handle(pat.Post("/:item/delete"), web.RenderHandler(HandleRemove, "cp_reddit"))
 }
@@ -108,17 +113,18 @@ func baseData(inner http.Handler) http.Handler {
 	return http.HandlerFunc(mw)
 }
 
-func HandleReddit(w http.ResponseWriter, r *http.Request) interface{} {
+// func HandleReddit(w http.ResponseWriter, r *http.Request) interface{}
+func (p *Plugin) HandleReddit(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
 	ctx := r.Context()
 	_, templateData := web.GetBaseCPContextData(ctx)
 
 	currentConfig := ctx.Value(CurrentConfig).(models.RedditFeedSlice)
 	templateData["RedditConfig"] = currentConfig
 
-	return templateData
+	return templateData, nil
 }
 
-func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
+func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
 	ctx := r.Context()
 	activeGuild, templateData := web.GetBaseCPContextData(ctx)
 
@@ -129,32 +135,33 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 	newElem := ctx.Value(common.ContextKeyParsedForm).(*CreateForm)
 
 	if !newElem.DisableSubredditSearch {
-		if ok, err := SearchSubreddits(newElem.Subreddit); !ok {
+		if ok, err := p.redditClient.IsThereSubredditName(strings.ToLower(newElem.Subreddit)); !ok {
 			if err != nil {
-				return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Error quering Reddit %s", err)))
+				return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Error quering Reddit %s", err))), err
 			}
-			return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf(`No such subreddit r/%s<span class="ui-pnotify-text">Could be case-sensitive or try disabling the search...</span>`, newElem.Subreddit)))
+			return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf(`No such subreddit r/%s<span class="ui-pnotify-text">Could be case-sensitive or try disabling the search...</span>`, newElem.Subreddit))), err
 		}
 	}
 
 	ok := ctx.Value(common.ContextKeyFormOk).(bool)
 	if !ok {
-		return templateData
+		return templateData, nil
 	}
 
 	maxFeeds := MaxFeedForCtx(ctx)
 	if len(currentConfig) >= maxFeeds {
-		return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Max %d feeds allowed (or %d for premium servers)", GuildMaxFeedsNormal, GuildMaxFeedsPremium)))
+		return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Max %d feeds allowed (or %d for premium servers)", GuildMaxFeedsNormal, GuildMaxFeedsPremium))), nil
 	}
 
 	watchItem := &models.RedditFeed{
-		GuildID:     activeGuild.ID,
-		ChannelID:   newElem.Channel,
-		Subreddit:   strings.ToLower(strings.TrimSpace(newElem.Subreddit)),
-		UseEmbeds:   newElem.UseEmbeds,
-		FilterNSFW:  newElem.NSFWMode,
-		MentionRole: newElem.MentionRole,
-		Disabled:    false,
+		GuildID:      activeGuild.ID,
+		ChannelID:    newElem.Channel,
+		Subreddit:    strings.ToLower(strings.TrimSpace(newElem.Subreddit)),
+		UseEmbeds:    newElem.UseEmbeds,
+		FilterNSFW:   newElem.NSFWMode,
+		MentionRole:  newElem.MentionRole,
+		Disabled:     false,
+		ShowSpoilers: newElem.ShowSpoilers,
 	}
 
 	if newElem.Slow {
@@ -169,7 +176,7 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 
 	err := watchItem.InsertG(ctx, boil.Infer())
 	if web.CheckErr(templateData, err, "Failed saving item :'(", web.CtxLogger(ctx).Error) {
-		return templateData
+		return templateData, err
 	}
 	currentConfig = append(currentConfig, watchItem)
 	sort.Slice(currentConfig, func(i, j int) bool {
@@ -185,7 +192,7 @@ func HandleNew(w http.ResponseWriter, r *http.Request) interface{} {
 		Slow:      newElem.Slow,
 	})
 
-	return templateData
+	return templateData, err
 }
 
 func HandleModify(w http.ResponseWriter, r *http.Request) interface{} {
@@ -210,6 +217,7 @@ func HandleModify(w http.ResponseWriter, r *http.Request) interface{} {
 	item.UseEmbeds = updated.UseEmbeds
 	item.FilterNSFW = updated.NSFWMode
 	item.MentionRole = updated.MentionRole
+	item.ShowSpoilers = updated.ShowSpoilers
 	item.Disabled = !updated.FeedEnabled
 	if item.Slow {
 		item.MinUpvotes = updated.MinUpvotes
@@ -219,7 +227,7 @@ func HandleModify(w http.ResponseWriter, r *http.Request) interface{} {
 	if item.ChannelID == 0 {
 		item.Disabled = true
 	}
-	_, err := item.UpdateG(ctx, boil.Whitelist("channel_id", "use_embeds", "filter_nsfw", "min_upvotes", "disabled", "mention_role"))
+	_, err := item.UpdateG(ctx, boil.Whitelist("channel_id", "use_embeds", "filter_nsfw", "min_upvotes", "disabled", "mention_role", "show_spoilers"))
 
 	if web.CheckErr(templateData, err, "Failed saving item :'(", web.CtxLogger(ctx).Error) {
 		return templateData

@@ -772,7 +772,7 @@ func tmplFDiv(args ...interface{}) interface{} {
 
 func tmplSqrt(arg interface{}) float64 {
 	switch arg.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return math.Sqrt(ToFloat64(arg))
 	default:
 		return math.Sqrt(-1)
@@ -781,7 +781,7 @@ func tmplSqrt(arg interface{}) float64 {
 
 func tmplCbrt(arg interface{}) float64 {
 	switch arg.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return math.Cbrt(ToFloat64(arg))
 	default:
 		return math.NaN()
@@ -790,7 +790,7 @@ func tmplCbrt(arg interface{}) float64 {
 
 func tmplExp(arg interface{}) float64 {
 	switch arg.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return math.Exp(ToFloat64(arg))
 	default:
 		return math.NaN()
@@ -799,7 +799,7 @@ func tmplExp(arg interface{}) float64 {
 
 func tmplExp2(arg interface{}) float64 {
 	switch arg.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return math.Exp2(ToFloat64(arg))
 	default:
 		return math.NaN()
@@ -808,7 +808,7 @@ func tmplExp2(arg interface{}) float64 {
 
 func tmplCos(arg interface{}) float64 {
 	switch arg.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return math.Cos(ToFloat64(arg))
 	default:
 		return math.NaN()
@@ -817,7 +817,7 @@ func tmplCos(arg interface{}) float64 {
 
 func tmplSin(arg interface{}) float64 {
 	switch arg.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return math.Sin(ToFloat64(arg))
 	default:
 		return math.NaN()
@@ -826,7 +826,7 @@ func tmplSin(arg interface{}) float64 {
 
 func tmplTan(arg interface{}) float64 {
 	switch arg.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return math.Tan(ToFloat64(arg))
 	default:
 		return math.NaN()
@@ -841,7 +841,7 @@ func tmplPow(argX, argY interface{}) float64 {
 
 	for _, v := range switchSlice {
 		switch v.(type) {
-		case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 			xyValue = ToFloat64(v)
 		default:
 			xyValue = math.NaN()
@@ -859,7 +859,7 @@ func tmplMax(argX, argY interface{}) float64 {
 
 	for _, v := range switchSlice {
 		switch v.(type) {
-		case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 			xyValue = ToFloat64(v)
 		default:
 			xyValue = math.NaN()
@@ -877,7 +877,7 @@ func tmplMin(argX, argY interface{}) float64 {
 
 	for _, v := range switchSlice {
 		switch v.(type) {
-		case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 			xyValue = ToFloat64(v)
 		default:
 			xyValue = math.NaN()
@@ -1015,7 +1015,7 @@ func randFloat(args ...interface{}) (float64, error) {
 		min = ToFloat64(args[0])
 		max = ToFloat64(args[1])
 	} else if len(args) == 1 {
-		max = ToFloat64(args[0])
+		max = tmplAbs(args[0])
 	}
 	diff := max - min
 	if diff <= 0 {
@@ -1033,7 +1033,7 @@ func randInt(args ...interface{}) (int, error) {
 		min = ToInt64(args[0])
 		max = ToInt64(args[1])
 	} else if len(args) == 1 {
-		max = ToInt64(args[0])
+		max = ToInt64(tmplAbs(args[0]))
 	}
 	diff := max - min
 	if diff <= 0 {
@@ -1046,15 +1046,10 @@ func randInt(args ...interface{}) (int, error) {
 
 func tmplAbs(arg interface{}) float64 {
 	var toAbs float64
-	var err error
+
 	switch arg.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, string:
 		toAbs = ToFloat64(arg)
-	case string:
-		toAbs, err = strconv.ParseFloat(ToString(arg), 64)
-		if err != nil {
-			toAbs = math.NaN()
-		}
 	default:
 		toAbs = math.NaN()
 	}
@@ -1108,7 +1103,7 @@ func joinStrings(sep string, args ...interface{}) (string, error) {
 		case string:
 			builder.WriteString(t)
 
-		case int, uint, int32, uint32, int64, uint64:
+		case int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64:
 			builder.WriteString(ToString(v))
 
 		case float64:
@@ -1171,10 +1166,39 @@ func castToStringSlice(rv reflect.Value) ([]string, bool) {
 	return ret, true
 }
 
-func sequence(start, stop int) ([]int, error) {
+func tmplNormalizeAccents(arg interface{}) string {
+	msg := ToString(arg)
+	return common.NormalizeAccents(msg)
+}
+
+func tmplNormalizeConfusables(arg interface{}) string {
+	msg := ToString(arg)
+	return common.NormalizeConfusables(msg)
+}
+
+func tmplReplaceEmojis(msg, repl string) string {
+	if common.ContainsEmoji(msg) {
+		msg = common.ReplaceEmojis(msg, repl)
+	}
+	return msg
+}
+
+func sequence(args ...interface{}) ([]int, error) {
+	start := int(0)
+	stop := int(10)
 
 	if stop < start {
 		return nil, errors.New("stop is less than start?")
+	}
+
+	if len(args) >= 2 {
+		start = tmplToInt(args[0])
+		stop = tmplToInt(args[1])
+	} else if len(args) == 1 {
+		stop = tmplToInt(args[0])
+		if stop < 0 {
+			start, stop = stop, start
+		}
 	}
 
 	if stop-start > 100000 {
@@ -1228,6 +1252,10 @@ func tmplToInt(from interface{}) int {
 	switch t := from.(type) {
 	case int:
 		return t
+	case int8:
+		return int(t)
+	case int16:
+		return int(t)
 	case int32:
 		return int(t)
 	case int64:
@@ -1239,6 +1267,8 @@ func tmplToInt(from interface{}) int {
 	case uint:
 		return int(t)
 	case uint8:
+		return int(t)
+	case uint16:
 		return int(t)
 	case uint32:
 		return int(t)
@@ -1262,6 +1292,10 @@ func ToInt64(from interface{}) int64 {
 	switch t := from.(type) {
 	case int:
 		return int64(t)
+	case int8:
+		return int64(t)
+	case int16:
+		return int64(t)
 	case int32:
 		return int64(t)
 	case int64:
@@ -1273,6 +1307,8 @@ func ToInt64(from interface{}) int64 {
 	case uint:
 		return int64(t)
 	case uint8:
+		return int64(t)
+	case uint16:
 		return int64(t)
 	case uint32:
 		return int64(t)
@@ -1297,6 +1333,12 @@ func ToInt64Base16(from interface{}) int64 {
 	case int:
 		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
+	case int8:
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
+		return parsed
+	case int16:
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
+		return parsed
 	case int32:
 		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
@@ -1313,6 +1355,9 @@ func ToInt64Base16(from interface{}) int64 {
 		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case uint8:
+		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
+		return parsed
+	case uint16:
 		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
 		return parsed
 	case uint32:
@@ -1339,6 +1384,10 @@ func ToString(from interface{}) string {
 	switch t := from.(type) {
 	case int:
 		return strconv.Itoa(t)
+	case int8:
+		return strconv.FormatInt(int64(t), 10)
+	case int16:
+		return strconv.FormatInt(int64(t), 10)
 	case int32:
 		return strconv.FormatInt(int64(t), 10)
 	case int64:
@@ -1350,6 +1399,8 @@ func ToString(from interface{}) string {
 	case uint:
 		return strconv.FormatUint(uint64(t), 10)
 	case uint8:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint16:
 		return strconv.FormatUint(uint64(t), 10)
 	case uint32:
 		return strconv.FormatUint(uint64(t), 10)
@@ -1372,6 +1423,10 @@ func ToFloat64(from interface{}) float64 {
 	switch t := from.(type) {
 	case int:
 		return float64(t)
+	case int8:
+		return float64(t)
+	case int16:
+		return float64(t)
 	case int32:
 		return float64(t)
 	case int64:
@@ -1383,6 +1438,8 @@ func ToFloat64(from interface{}) float64 {
 	case uint:
 		return float64(t)
 	case uint8:
+		return float64(t)
+	case uint16:
 		return float64(t)
 	case uint32:
 		return float64(t)
@@ -1404,7 +1461,7 @@ func ToFloat64(from interface{}) float64 {
 
 func ToDuration(from interface{}) time.Duration {
 	switch t := from.(type) {
-	case int, int32, int64, float32, float64, uint, uint32, uint64:
+	case int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64:
 		return time.Duration(ToInt64(t))
 	case string:
 		parsed, err := common.ParseDuration(t)
@@ -1421,7 +1478,7 @@ func ToDuration(from interface{}) time.Duration {
 
 func ToRune(from interface{}) []rune {
 	switch t := from.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return []rune(ToString(t))
 	case fmt.Stringer:
 		return []rune(t.String())
@@ -1434,7 +1491,7 @@ func ToRune(from interface{}) []rune {
 
 func ToByte(from interface{}) []byte {
 	switch t := from.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return []byte(ToString(t))
 	case fmt.Stringer:
 		return []byte(t.String())
@@ -1455,7 +1512,7 @@ func ToSHA256(from interface{}) string {
 
 func HexToDecimal(from interface{}) (int, error) {
 	switch t := from.(type) {
-	case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		return tmplToInt(t), nil
 	default:
 		raw := strings.TrimPrefix(ToString(t), "#")

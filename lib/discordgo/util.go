@@ -8,8 +8,21 @@ import (
 	"mime/multipart"
 	"net/textproto"
 	"reflect"
+	"strconv"
 	"strings"
+	"time"
 )
+
+// SnowflakeTimestamp returns the creation time of a Snowflake ID relative to the creation of Discord.
+func SnowflakeTimestamp(ID string) (t time.Time, err error) {
+	i, err := strconv.ParseInt(ID, 10, 64)
+	if err != nil {
+		return
+	}
+	timestamp := (i >> 22) + 1420070400000
+	t = time.Unix(0, timestamp*1000000)
+	return
+}
 
 // MultipartBodyWithJSON returns the contentType and body for a discord request
 // data  : The object to encode for payload_json in the multipart request
@@ -40,7 +53,7 @@ func MultipartBodyWithJSON(data interface{}, files []*File) (requestContentType 
 
 	for i, file := range files {
 		h := make(textproto.MIMEHeader)
-		h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file%d"; filename="%s"`, i, quoteEscaper.Replace(file.Name)))
+		h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file[%d]"; filename="%s"`, i, quoteEscaper.Replace(file.Name)))
 		contentType := file.ContentType
 		if contentType == "" {
 			contentType = "application/octet-stream"

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
@@ -16,6 +15,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/serverstats/messagestatscollector"
 	"github.com/mrbentarikau/pagst/web"
+	"github.com/mediocregopher/radix/v3"
 )
 
 func MarkGuildAsToBeChecked(guildID int64) {

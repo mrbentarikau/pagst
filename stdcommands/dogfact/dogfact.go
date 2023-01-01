@@ -2,69 +2,77 @@ package dogfact
 
 import (
 	"encoding/json"
-	"io"
 	"math/rand"
-	"net/http"
 
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
-var Command = &commands.YAGCommand{
-	CmdCategory:         commands.CategoryFun,
-	Name:                "DogFact",
-	Aliases:             []string{"dog", "dogfacts"},
-	Description:         "Dog Facts from local database or dog-api.kinduff.com API",
-	SlashCommandEnabled: true,
-	DefaultEnabled:      true,
-	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		request := rand.Intn(2)
-		if request > 0 {
-			df, err := dogFactFromAPI()
-			if err == nil && len(df) > 0 {
-				return df[0], nil
-			}
-		}
-		df := dogfacts[rand.Intn(len(dogfacts))]
-		return df, nil
-	},
+type DogStuff struct {
+	Facts   []string `json:"facts"`
+	Message string   `json:"message"`
 }
 
-func dogFactFromAPI() ([]string, error) {
-	var df struct {
-		Facts   []string `json:"facts"`
-		Success bool     `json:"success"`
-	}
+var Command = &commands.YAGCommand{
+	CmdCategory:               commands.CategoryFun,
+	Name:                      "DogFact",
+	Aliases:                   []string{"dog", "dogfacts"},
+	Description:               "Dog Facts from local database or dog-api.kinduff.com API",
+	ApplicationCommandEnabled: true,
+	DefaultEnabled:            true,
+	ArgSwitches: []*dcmd.ArgDef{
+		{Name: "raw", Help: "Raw output"},
+	},
 
-	query := "https://dog-api.kinduff.com/api/facts"
-	req, err := http.NewRequest("GET", query, nil)
-	if err != nil {
-		return nil, err
-	}
+	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		var dogStuff *DogStuff
+		var df, dPicLink string
+		var err error
 
-	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
+		queryFact := "https://dog-api.kinduff.com/api/facts"
+		queryPic := "https://dog.ceo/api/breeds/image/random"
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
+		df = dogfacts[rand.Intn(len(dogfacts))]
 
-	if resp.StatusCode != 200 {
-		return nil, commands.NewPublicError("Not 200!")
-	}
+		request := rand.Intn(2)
+		if request > 0 {
+			dogStuffBody, err := util.RequestFromAPI(queryFact)
+			if err != nil {
+				return df, nil
+			}
 
-	defer resp.Body.Close()
+			bodyErr := json.Unmarshal([]byte(dogStuffBody), &dogStuff)
+			if bodyErr == nil && len(dogStuff.Facts) > 0 {
+				df = dogStuff.Facts[0]
+			}
+		}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+			return df, nil
+		}
 
-	queryErr := json.Unmarshal([]byte(body), &df)
-	if queryErr != nil {
-		return nil, err
-	}
+		dogStuffBody, err := util.RequestFromAPI(queryPic)
+		if err != nil {
+			return df, nil
+		}
 
-	return df.Facts, nil
+		queryErr := json.Unmarshal([]byte(dogStuffBody), &dogStuff)
+		if queryErr == nil {
+			dPicLink = dogStuff.Message
+		} else {
+			return df, nil
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Description: df,
+			Color:       int(rand.Int63n(0xffffff)),
+			Image: &discordgo.MessageEmbedImage{
+				URL: dPicLink,
+			},
+		}
+
+		return embed, nil
+	},
 }

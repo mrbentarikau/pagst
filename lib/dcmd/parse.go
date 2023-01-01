@@ -40,7 +40,6 @@ func ParseCmdArgs(data *Data) error {
 
 func ParseCmdArgsFromInteraction(data *Data) error {
 	sorted := SortInteractionOptions(data)
-
 	// 	ParseFromInteraction(def *ArgDef, data *Data, options *SlashCommandsParseOptions) (val interface{}, err error)
 
 	// Helper map to ease parsing of args
@@ -67,9 +66,8 @@ func ParseCmdArgsFromInteraction(data *Data) error {
 			if def.required {
 				return ErrNotEnoughArguments
 			}
-			// not a reuired arg, just skip parsing it
+			// not a required arg, just skip parsing it
 		} else {
-
 			if def.def.Type == nil {
 				parsed, err := opts.ExpectBool(def.def.Name)
 				if err != nil {

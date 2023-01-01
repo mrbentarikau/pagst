@@ -21,6 +21,7 @@ import (
 	yagtemplate "github.com/mrbentarikau/pagst/common/templates"
 	"github.com/mrbentarikau/pagst/customcommands/models"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/web"
 	"github.com/mediocregopher/radix/v3"
@@ -160,6 +161,12 @@ func handleGetCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData,
 		return templateData, errors.WithStackIf(err)
 	}
 
+	modConfig, _ := moderation.GetConfig(activeGuild.ID)
+	if modConfig.IntCCErrorChannel() > 0 {
+		templateData["CCErrorChannelName"] = activeGuild.GetChannelOrThread(modConfig.IntCCErrorChannel()).Name
+		templateData["CCErrorChannelID"] = modConfig.IntCCErrorChannel()
+	}
+
 	templateData["CC"] = cc
 	templateData["Commands"] = true
 
@@ -256,7 +263,7 @@ func handleNewCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData,
 		GuildID: activeGuild.ID,
 		LocalID: localID,
 
-		Disabled:       true,
+		Disabled:       false,
 		ShowErrors:     true,
 		ThreadsEnabled: true,
 
@@ -368,6 +375,26 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyUpdatedCommand, &cplogs.Param{Type: cplogs.ParamTypeInt, Value: dbModel.LocalID}))
 
 	pubsub.EvictCacheSet(cachedCommandsMessage, activeGuild.ID)
+
+	var limiter *CCLimits
+	limiter, _ = CCTriggerLimitFinder(ctx, cmd.ID, activeGuild.ID, templateData["User"].(*discordgo.User).ID)
+
+	if limiter != nil && limiter.LenMatched == limiter.Limit {
+		/*
+			cookie := &http.Cookie{
+
+				// The old cookie name can safely be used after the old format has been phased out (after a day in use)
+				Name:   "customCommands_activeCmdLimits",
+				Value:  strconv.Itoa(limit),
+				MaxAge: 3153600000,
+				Path:   "/",
+			}
+
+			http.SetCookie(w, cookie)
+		*/
+		return templateData.AddAlerts(web.CCLimitWarningAlert(fmt.Sprintf("BETA™ This trigger may be hitting limit of %d command actions... Conflicting with CCs: %s", limiter.Limit, limiter.CCIDs))), err
+	}
+
 	return templateData, err
 }
 
@@ -540,6 +567,11 @@ func handleRunCommandNow(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 	cmd, err := models.CustomCommands(qm.Where("guild_id = ? AND local_id = ? AND trigger_type = 5", activeGuild.ID, cmdID)).OneG(context.Background())
 	if err != nil {
 		return templateData, err
+	}
+
+	if cmd.Disabled {
+		templateData.AddAlerts(web.ErrorAlert("This command is disabled, cannot run a disabled command"))
+		return templateData, nil
 	}
 
 	ok, err := checkSetCooldown(activeGuild.ID, member.User.ID)
