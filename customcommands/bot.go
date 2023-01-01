@@ -26,6 +26,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/keylock"
 	"github.com/mrbentarikau/pagst/common/multiratelimit"
+	prfx "github.com/mrbentarikau/pagst/common/prefix"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
@@ -136,8 +137,8 @@ var cmdEvalCommand = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "code", Type: dcmd.String},
 	},
-	SlashCommandEnabled: false,
-	DefaultEnabled:      true,
+	ApplicationCommandEnabled: false,
+	DefaultEnabled:            true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		guildData := data.GuildData
 		channel := guildData.CS
@@ -239,8 +240,8 @@ var cmdListCommands = &commands.YAGCommand{
 		{Name: "ID", Type: dcmd.Int},
 		{Name: "Trigger", Type: dcmd.String},
 	},
-	SlashCommandEnabled: true,
-	DefaultEnabled:      false,
+	ApplicationCommandEnabled: true,
+	DefaultEnabled:            false,
 	ArgSwitches: []*dcmd.ArgDef{
 		{Name: "file", Help: "Send responses in file"},
 		{Name: "color", Help: "Use syntax highlighting (Go)"},
@@ -287,7 +288,7 @@ var cmdListCommands = &commands.YAGCommand{
 				return title + list, nil
 			}
 			pm, err := paginatedmessages.CreatePaginatedMessage(
-				data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(ccs))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(ccs))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 					i := page - 1
 					paginatedEmbed := embedCreator(ccs, i, maxLength, title, groupMap)
 					return paginatedEmbed, nil
@@ -363,8 +364,8 @@ var cmdListCommands = &commands.YAGCommand{
 
 		if ccFile != nil {
 			msg = &discordgo.MessageSend{
-				Content: fmt.Sprintf("#%d - %s%s - Group: `%s`\n%s",
-					cc.LocalID, CommandTriggerType(cc.TriggerType), caseSensitiveTrigger, groupMap[cc.GroupID.Int64], restrictions),
+				Content: fmt.Sprintf("#%d - %s%s - Group: `%s`\nCommand Disabled: `%t` - %s",
+					cc.LocalID, CommandTriggerType(cc.TriggerType), caseSensitiveTrigger, groupMap[cc.GroupID.Int64], cc.Disabled, restrictions),
 				Files: []*discordgo.File{
 					ccFile,
 				},
@@ -386,8 +387,8 @@ var cmdListCommands = &commands.YAGCommand{
 		if !raw {
 			ccResponsesString = common.CutStringShort(ccResponsesString, 1744)
 		}
-		response = fmt.Sprintf("#%d - %s%s%s - Group: `%s`\n%s```%s\n%s",
-			cc.LocalID, CommandTriggerType(cc.TriggerType), intervalText, caseSensitiveTrigger, groupMap[cc.GroupID.Int64], restrictions,
+		response = fmt.Sprintf("#%d - %s%s%s - Group: `%s`\nCommand Disabled: `%t` - %s```%s\n%s",
+			cc.LocalID, CommandTriggerType(cc.TriggerType), intervalText, caseSensitiveTrigger, groupMap[cc.GroupID.Int64], cc.Disabled, restrictions,
 			highlight, ccResponsesString)
 		return response + "\n```" + link, nil
 	},
@@ -428,6 +429,11 @@ func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap m
 			finalTrigger = textTrigger
 		} else {
 			finalTrigger = regexTrigger
+		}
+
+		if v.Disabled {
+			v.TriggerType = 10
+			finalTrigger = "CC DISABLED"
 		}
 
 		if k <= ml-1 {
@@ -497,6 +503,10 @@ func handleDelayedRunCC(evt *schEventsModels.ScheduledEvent, data interface{}) (
 		return false, errors.WrapIf(err, "find_command")
 	}
 
+	if cmd.Disabled {
+		return false, errors.New("custom command is disabled")
+	}
+
 	if !DelayedCCRunLimit.AllowN(DelayedRunLimitKey{GuildID: evt.GuildID, ChannelID: dataCast.ChannelID}, time.Now(), 1) {
 		logger.WithField("guild", cmd.GuildID).Warn("went above delayed cc run ratelimit")
 		return false, nil
@@ -562,6 +572,10 @@ func handleNextRunScheduledEVent(evt *schEventsModels.ScheduledEvent, data inter
 	cmd, err := models.CustomCommands(qm.Where("guild_id = ? AND local_id = ?", evt.GuildID, (data.(*NextRunScheduledEvent)).CmdID)).OneG(context.Background())
 	if err != nil {
 		return false, errors.WrapIf(err, "find_command")
+	}
+
+	if cmd.Disabled {
+		return false, errors.New("custom command is disabled")
 	}
 
 	if time.Until(cmd.NextRun.Time) > time.Second*5 {
@@ -743,7 +757,7 @@ func HandleMessageCreate(evt *eventsystem.EventData) {
 		matchedCustomCommands, err = findMessageTriggerCustomCommands(evt.Context(), cs, member, evt)
 	})
 	if err != nil {
-		logger.WithError(err).Error("Error mathching custom commands")
+		logger.WithError(err).Error("Error matching custom commands")
 		return
 	}
 
@@ -782,7 +796,7 @@ func findMessageTriggerCustomCommands(ctx context.Context, cs *dstate.ChannelSta
 	var matched []*TriggeredCC
 	for _, cmd := range cmds {
 		//if !CmdRunsInCategory(cmd, cs.ParentID) || !CmdRunsInChannel(cmd, common.ChannelOrThreadParentID(cs)) || !CmdRunsForUser(cmd, ms) {
-		if !CmdRunsInCategory(cmd, cs.ParentID) || !CmdRunsInChannel(cmd, cs.ID) || !CmdRunsForUser(cmd, ms) {
+		if cmd.Disabled || !CmdRunsInCategory(cmd, cs.ParentID) || !CmdRunsInChannel(cmd, cs.ID) || !CmdRunsForUser(cmd, ms) {
 			continue
 		}
 
@@ -818,7 +832,7 @@ func findReactionTriggerCustomCommands(ctx context.Context, cs *dstate.ChannelSt
 
 	var matched []*TriggeredCC
 	for _, cmd := range cmds {
-		if !CmdRunsInCategory(cmd, cs.ParentID) || !CmdRunsInChannel(cmd, common.ChannelOrThreadParentID(cs)) {
+		if cmd.Disabled || !CmdRunsInCategory(cmd, cs.ParentID) || !CmdRunsInChannel(cmd, common.ChannelOrThreadParentID(cs)) {
 			continue
 		}
 
@@ -1236,10 +1250,10 @@ func CheckMatch(globalPrefix string, cmd *models.CustomCommand, msg string) (mat
 	}
 
 	cmdMatch := "(?m)"
-	if !cmd.TextTriggerCaseSensitive {
+	if !cmd.TextTriggerCaseSensitive && cmd.TriggerType == 0 {
 		cmdMatch += "(?i)"
 	}
-	if !cmd.RegexTriggerCaseSensitive {
+	if !cmd.RegexTriggerCaseSensitive && cmd.TriggerType != 0 {
 		cmdMatch += "(?i)"
 	}
 
@@ -1251,7 +1265,7 @@ func CheckMatch(globalPrefix string, cmd *models.CustomCommand, msg string) (mat
 	case CommandTriggerStartsWith:
 		cmdMatch += `\A` + regexp.QuoteMeta(regexTrigger)
 	case CommandTriggerContains:
-		cmdMatch += `.*` + regexp.QuoteMeta(regexTrigger)
+		cmdMatch += regexp.QuoteMeta(regexTrigger)
 	case CommandTriggerRegex:
 		cmdMatch += regexTrigger
 	case CommandTriggerExact:
@@ -1274,6 +1288,11 @@ func CheckMatch(globalPrefix string, cmd *models.CustomCommand, msg string) (mat
 	}
 
 	re := item.Value().(*regexp.Regexp)
+
+	if cmd.TriggerType != 0 && cmd.NormalizeUnicode {
+		msg = common.NormalizeAccents(msg)
+		msg = common.NormalizeConfusables(msg)
+	}
 
 	idx := re.FindStringIndex(msg)
 	if idx == nil {
@@ -1356,4 +1375,167 @@ var cmdFixCommands = &commands.YAGCommand{
 
 		return fmt.Sprintf("Doneso! fixed %d commands!", len(ccs)), nil
 	}),
+}
+
+type CCLimits struct {
+	LenMatched int
+	Limit      int
+	CCIDs      string
+}
+
+func CCTriggerLimitFinder(ctx context.Context, ccmdID, guildID, userID int64) (*CCLimits, error) {
+	// retrieving CC to be saved from database
+	cc, err := models.CustomCommands(qm.Where("guild_id = ? AND local_id = ?", guildID, ccmdID), qm.Load("Group")).OneG(ctx)
+	if err != nil {
+		return nil, errors.WrapIf(err, "retrieving full custom command model for limiter")
+	}
+
+	if cc.TriggerType == 10 || cc.TriggerType == 5 {
+		return nil, nil
+	}
+
+	cmds, err := BotCachedGetCommandsWithMessageTriggers(guildID, ctx)
+	if err != nil {
+		return nil, errors.WrapIf(err, "BotCachedGetCommandsWithMessageTriggers")
+	}
+
+	prefix, err := prfx.GetCommandPrefixRedis(guildID)
+	if err != nil {
+		return nil, errors.WrapIf(err, "GetCommandPrefix")
+	}
+
+	var matched []*TriggeredCC
+	for _, cmd := range cmds {
+		gs := bot.State.GetGuild(guildID)
+		ms, _ := bot.GetMember(guildID, common.BotUser.ID)
+
+		if !CmdRunsForUser(cmd, ms) {
+			continue
+		}
+
+		checkmatch := true
+
+		// check group restrictions
+		if cc.GroupID.Valid && cmd.GroupID.Valid {
+			for _, groupIgnCatgr := range cc.R.Group.IgnoreCategories {
+				if !common.ContainsInt64Slice(cmd.R.Group.IgnoreCategories, groupIgnCatgr) {
+					checkmatch = false
+					continue
+				}
+			}
+
+			for _, groupWLCatgr := range cc.R.Group.WhitelistCategories {
+				if !common.ContainsInt64Slice(cmd.R.Group.WhitelistCategories, groupWLCatgr) {
+					checkmatch = false
+					continue
+				}
+			}
+		}
+
+		// if cc.ChannelsWhitelistMode || cc.RolesWhitelistMode || cc.CategoriesWhitelistMode {
+		if len(cc.Channels) > 0 || len(cc.Roles) > 0 || len(cc.Categories) > 0 {
+
+			for _, chanl := range cc.Channels {
+				cs := gs.GetChannel(chanl)
+				if !CmdRunsInCategory(cmd, cs.ParentID) || !CmdRunsInChannel(cmd, cs.ID) {
+					checkmatch = false
+					continue
+				}
+
+				if common.ContainsInt64Slice(cmd.Channels, chanl) && cmd.ChannelsWhitelistMode {
+					break
+				} else if common.ContainsInt64Slice(cmd.Channels, chanl) && !cmd.ChannelsWhitelistMode {
+					checkmatch = false
+				}
+			}
+
+			for _, role := range cc.Roles {
+				if common.ContainsInt64Slice(cmd.Roles, role) && cmd.RolesWhitelistMode {
+					break
+				} else if common.ContainsInt64Slice(cmd.Roles, role) && !cmd.RolesWhitelistMode {
+					checkmatch = false
+				}
+			}
+
+			for _, catgr := range cc.Categories {
+				var cmdCategories = []int64{}
+				if cmd.GroupID.Valid {
+					cmdCategories = append(cmdCategories, cmd.R.Group.IgnoreCategories...)
+					cmdCategories = append(cmdCategories, cmd.R.Group.WhitelistCategories...)
+				}
+
+				cmdCategories = append(cmdCategories, cmd.Categories...)
+
+				if common.ContainsInt64Slice(cmdCategories, catgr) && cmd.CategoriesWhitelistMode {
+					break
+				} else if common.ContainsInt64Slice(cmdCategories, catgr) && !cmd.CategoriesWhitelistMode {
+					checkmatch = false
+				}
+			}
+
+		}
+
+		if cc.TriggerType == 6 && checkmatch {
+			var reaction *discordgo.MessageReaction
+			var add bool
+
+			if cc.ReactionTriggerMode < 2 {
+				add = true
+			}
+
+			if didMatch := CheckMatchReaction(cmd, reaction, add); didMatch {
+				matched = append(matched, &TriggeredCC{
+					CC: cmd,
+				})
+			}
+
+		} else if checkmatch {
+			var ccTrigger, ccMsg string
+			if cc.TriggerType == 0 {
+				ccTrigger = cc.TextTrigger
+				ccMsg = fmt.Sprintf("%s%s %s", prefix, ccTrigger, common.BotUser.Username)
+			} else {
+				ccTrigger = cc.RegexTrigger
+				if cc.TriggerType == 4 {
+					ccMsg = ccTrigger
+				} else {
+					ccMsg = fmt.Sprintf("%s %s", ccTrigger, common.BotUser.Username)
+				}
+			}
+
+			if didMatch, _, _ := CheckMatch(prefix, cmd, ccMsg); didMatch {
+				matched = append(matched, &TriggeredCC{
+					CC: cmd,
+				})
+			}
+		}
+	}
+
+	sortTriggeredCCs(matched)
+
+	limit := CCMessageExecLimitNormal
+	if isPremium, _ := premium.IsGuildPremiumCached(guildID); isPremium {
+		limit = CCMessageExecLimitPremium
+	}
+
+	if len(matched) > limit {
+		matched = matched[:limit]
+	}
+
+	var ccIDs string
+	for _, match := range matched {
+		ccIDs = fmt.Sprintf("%s #%d", ccIDs, match.CC.LocalID)
+		if match.CC.LocalID == cc.LocalID {
+			return nil, nil
+		}
+	}
+
+	limiter := CCLimits{
+		LenMatched: len(matched),
+		Limit:      limit,
+		CCIDs:      ccIDs,
+	}
+
+	return &limiter, nil
+
 }

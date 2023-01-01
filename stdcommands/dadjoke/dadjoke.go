@@ -17,12 +17,12 @@ type Joke struct {
 }
 
 var Command = &commands.YAGCommand{
-	Cooldown:            5,
-	CmdCategory:         commands.CategoryFun,
-	Name:                "DadJoke",
-	Description:         "Generates a dad joke using the API from icanhazdadjoke.",
-	DefaultEnabled:      true,
-	SlashCommandEnabled: true,
+	Cooldown:                  5,
+	CmdCategory:               commands.CategoryFun,
+	Name:                      "DadJoke",
+	Description:               "Generates a dad joke using the API from icanhazdadjoke.",
+	DefaultEnabled:            true,
+	ApplicationCommandEnabled: true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		//Define the request and website we will navigate to.
 		req, err := http.NewRequest("GET", "https://icanhazdadjoke.com", nil)

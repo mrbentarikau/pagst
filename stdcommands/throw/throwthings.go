@@ -1,18 +1,5 @@
 package throw
 
-import (
-	"math/rand"
-
-	"github.com/mrbentarikau/pagst/common"
-)
-
-func randomThing() string {
-	if rand.Intn(2) > 0 {
-		return common.RandomNoun()
-	}
-	return throwThings[rand.Intn(len(throwThings))]
-}
-
 // If you want somthing added submit a pr
 var throwThings = []string{
 	"anime girls",

@@ -294,7 +294,7 @@ func RefreshStatus(session *discordgo.Session) {
 	var activity string
 	var idleState *discordgo.UpdateStatusData
 	var now = 0
-	var gameType discordgo.GameType
+	var gameType discordgo.ActivityType
 
 	err1 := common.RedisPool.Do(radix.Cmd(&streamingURL, "GET", "status_streaming"))
 	err2 := common.RedisPool.Do(radix.Cmd(&status, "GET", "status_name"))
@@ -314,27 +314,17 @@ func RefreshStatus(session *discordgo.Session) {
 	}
 
 	if streamingURL != "" {
-		gameType = discordgo.GameTypeStreaming
+		gameType = discordgo.ActivityTypeStreaming
 		//session.UpdateStreamingStatus(0, status, streamingURL)
 	} else {
 		activity = strings.ToLower(activity)
 		if activity == "listening" {
-			gameType = discordgo.GameTypeListening
+			gameType = discordgo.ActivityTypeListening
 		} else if activity == "watching" {
-			gameType = discordgo.GameTypeWatching
+			gameType = discordgo.ActivityTypeWatching
 		} else {
-			gameType = discordgo.GameTypeGame
+			gameType = discordgo.ActivityTypeGame
 		}
-		/*timeMod := math.Mod(float64(time.Now().Hour()), 3)
-		if timeMod == 0 {
-			//session.UpdateStatus(0, status)
-			gameType = discordgo.GameTypeGame
-		} else if timeMod == 1 {
-			//session.UpdateListeningStatus(status)
-			gameType = discordgo.GameTypeListening
-		} else {
-			gameType = discordgo.GameTypeWatching
-		}*/
 	}
 
 	if idle != "" {
@@ -345,7 +335,8 @@ func RefreshStatus(session *discordgo.Session) {
 		idleState = &discordgo.UpdateStatusData{Status: "online"}
 		idleState.IdleSince = &now
 	}
-	idleState.Game = &discordgo.Game{Name: status, Type: gameType, URL: streamingURL}
+
+	idleState.Game = &discordgo.Activity{Name: status, Type: gameType, URL: streamingURL}
 	session.UpdateStatusComplex(*idleState)
 }
 

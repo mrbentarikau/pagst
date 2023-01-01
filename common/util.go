@@ -24,6 +24,12 @@ import (
 	"github.com/rivo/uniseg"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/image/colornames"
+
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
+
+	"github.com/oragono/confusables"
 )
 
 func KeyGuild(guildID int64) string         { return "guild:" + discordgo.StrID(guildID) }
@@ -793,4 +799,15 @@ func ReplaceEmojis(s string, replace ...string) string {
 	return strings.TrimFunc(res.String(), func(r rune) bool {
 		return unicode.IsSpace(r) || !unicode.IsGraphic(r) || !unicode.IsPrint(r) || unicode.In(r, unicode.Variation_Selector)
 	})
+}
+
+func NormalizeAccents(msg string) string {
+	tChain := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+	msg, _, _ = transform.String(tChain, msg)
+	return msg
+}
+
+func NormalizeConfusables(msg string) string {
+	msg = confusables.SkeletonTweaked(msg)
+	return msg
 }

@@ -72,9 +72,9 @@
                 <form class="" method="post" action="/manage/{{.Dot.ActiveGuild.ID}}/rssfeeds">
                     <div class="form-row mb-3">
                         <div class="form-group col mb-0">
-                            <p>Scans every 5 minutes for added RSS feed updates and default return is the first match in the feed aka <code>{{"{{.RSSFeedItem}}"}}</code>.</p>
+                            <p>Scans every 5 minutes for added RSS feed updates and default return is max 10 new feeds in RSS in last 30 mins, aka each is part of <code>{{"{{.RSSFeedItemsFiltered }}"}}</code> and last feed being <code>{{"{{.RSSFeedItem }}"}}</code></p>
                             <p><code>{{"{{.RSSFeed}}"}}</code> is the main struct and has more items which could also be new in the feed. For example <a href="https://hnrss.github.io/" target="_blank">Hacker News</a> has definitely more new items than only the first, so custom announce helps here to get more for output, eg. <code>{{"{{(index .RSSFeed.Items 1).Title}}"}}</code>.</p>
-                            <p><code>{{"{{.RSSEmbed}}"}}</code> is the default embed layout, <code>{{"{{.RSSName}}"}}</code> is the custom name you gave to the RSS feed and <code>{{"{{.SelectedRoleID}}"}}</code> is the selected role from drop-down menu.</p>
+                            <p><code>{{"{{.RSSEmbed}}"}}</code> is the default embed layout filled with last feed's data, <code>{{"{{.RSSName}}"}}</code> is the custom name you gave to the RSS feed and <code>{{"{{.SelectedRoleID}}"}}</code> is the selected role from drop-down menu.</p>
                             <p>Plugin uses <a href="https://github.com/mmcdole/gofeed" target="_blank">gofeed</a> library and its default mappings, only additional struct element is <code>{{"{{.RSSFeedItem}}"}}</code>.</p>
                         </div>
                         <div class="form-group col mb-0">

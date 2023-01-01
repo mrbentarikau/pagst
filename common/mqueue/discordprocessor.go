@@ -98,8 +98,8 @@ func maybeDisableFeed(source PluginWithSourceDisabler, elem *QueuedElement, err 
 }
 
 func trySendNormal(l *logrus.Entry, elem *QueuedElement) (err error) {
-	if elem.MessageStr == "" && elem.MessageEmbed == nil {
-		l.Error("Both MessageEmbed and MessageStr empty")
+	if elem.MessageStr == "" && elem.MessageEmbed == nil && elem.MessageEmbeds == nil {
+		l.Error("Both MessageEmbed(s) and MessageStr empty")
 		return
 	}
 
@@ -110,6 +110,10 @@ func trySendNormal(l *logrus.Entry, elem *QueuedElement) (err error) {
 	}
 	if elem.MessageEmbed != nil {
 		msg.Embeds = []*discordgo.MessageEmbed{elem.MessageEmbed}
+	}
+
+	if elem.MessageEmbeds != nil {
+		msg.Embeds = elem.MessageEmbeds
 	}
 	_, err = common.BotSession.ChannelMessageSendComplex(elem.ChannelID, msg)
 	if err != nil {
@@ -122,8 +126,8 @@ func trySendNormal(l *logrus.Entry, elem *QueuedElement) (err error) {
 var errGuildNotFound = errors.New("Guild not found")
 
 func trySendWebhook(l *logrus.Entry, elem *QueuedElement) (err error) {
-	if elem.MessageStr == "" && elem.MessageEmbed == nil {
-		l.Error("Both MessageEmbed and MessageStr empty")
+	if elem.MessageStr == "" && elem.MessageEmbed == nil && elem.MessageEmbeds == nil {
+		l.Error("Both MessageEmbed(s) and MessageStr empty")
 		return
 	}
 
@@ -167,6 +171,10 @@ func trySendWebhook(l *logrus.Entry, elem *QueuedElement) (err error) {
 
 	if elem.MessageEmbed != nil {
 		webhookParams.Embeds = []*discordgo.MessageEmbed{elem.MessageEmbed}
+	}
+
+	if elem.MessageEmbeds != nil {
+		webhookParams.Embeds = elem.MessageEmbeds
 	}
 
 	err = webhookSession.WebhookExecute(wh.ID, wh.Token, true, webhookParams)

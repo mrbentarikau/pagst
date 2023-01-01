@@ -8,13 +8,15 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/common/config"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/logs/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,10 +26,13 @@ import (
 var (
 	ErrChannelBlacklisted = errors.New("Channel blacklisted from creating message logs")
 
-	logger = common.GetPluginLogger(&Plugin{})
+	confRestrictLogsThirtyDays = config.RegisterOption("yagpdb.enable_restrict_logs", "Enable restricting logs to 30 days", false)
+	logger                     = common.GetPluginLogger(&Plugin{})
 )
 
-type Plugin struct{}
+type Plugin struct {
+	stopWorkers chan *sync.WaitGroup
+}
 
 func (p *Plugin) PluginInfo() *common.PluginInfo {
 	return &common.PluginInfo{
@@ -40,7 +45,9 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 func RegisterPlugin() {
 	common.InitSchemas("logs", DBSchemas...)
 
-	p := &Plugin{}
+	p := &Plugin{
+		stopWorkers: make(chan *sync.WaitGroup),
+	}
 	common.RegisterPlugin(p)
 }
 
@@ -281,7 +288,7 @@ func GetNicknames(ctx context.Context, userID, guildID int64, limit, offset int)
 		qm.Offset(offset)).AllG(ctx)
 }
 
-//DeleteNicknames deletes users' nicks from current server
+// DeleteNicknames deletes users' nicks from current server
 func DeleteNicknames(ctx context.Context, guildID, userID int64, nickname string) (int64, error) {
 	dbQueryForID, err := models.NicknameListings(qm.Select("id"), qm.Where("guild_id = ? AND user_id = ?",
 		guildID, userID), qm.OrderBy("id DESC")).One(context.Background(), common.PQ)

@@ -45,23 +45,25 @@ var (
 		"toString":          ToString, // don't ask why we have 2 of these
 
 		// string manipulation
-		"hasPrefix":   strings.HasPrefix,
-		"hasSuffix":   strings.HasSuffix,
-		"joinStr":     joinStrings,
-		"lower":       strings.ToLower,
-		"print":       withOutputLimit(fmt.Sprint, MaxStringLength),
-		"println":     withOutputLimit(fmt.Sprintln, MaxStringLength),
-		"printf":      withOutputLimitf(fmt.Sprintf, MaxStringLength),
-		"slice":       slice,
-		"split":       strings.Split,
-		"title":       cases.Title(language.Und).String,
-		"trim":        trimString(""),
-		"trimLeft":    trimString("left"),
-		"trimRight":   trimString("right"),
-		"trimSpace":   strings.TrimSpace,
-		"upper":       strings.ToUpper,
-		"urlescape":   url.PathEscape,
-		"urlunescape": url.PathUnescape,
+		"hasPrefix":            strings.HasPrefix,
+		"hasSuffix":            strings.HasSuffix,
+		"joinStr":              joinStrings,
+		"lower":                strings.ToLower,
+		"normalizeAccents":     tmplNormalizeAccents,
+		"normalizeConfusables": tmplNormalizeConfusables,
+		"print":                withOutputLimit(fmt.Sprint, MaxStringLength),
+		"println":              withOutputLimit(fmt.Sprintln, MaxStringLength),
+		"printf":               withOutputLimitf(fmt.Sprintf, MaxStringLength),
+		"slice":                slice,
+		"split":                strings.Split,
+		"title":                cases.Title(language.Und).String,
+		"trim":                 trimString(""),
+		"trimLeft":             trimString("left"),
+		"trimRight":            trimString("right"),
+		"trimSpace":            strings.TrimSpace,
+		"upper":                strings.ToUpper,
+		"urlescape":            url.PathEscape,
+		"urlunescape":          url.PathUnescape,
 
 		// regexp
 		"reQuoteMeta": regexp.QuoteMeta,
@@ -135,6 +137,7 @@ var (
 		"loadLocation":    time.LoadLocation,
 		"newDate":         tmplNewDate,
 		"parseTime":       tmplParseTime,
+		"parseDate":       tmplParseTime,
 		"snowflakeToTime": tmplSnowflakeToTime,
 		"timestampToTime": tmplTimestampToTime,
 		"weekNumber":      tmplWeekNumber,
@@ -145,6 +148,7 @@ var (
 		"humanizeTimeSinceDays":   tmplHumanizeTimeSinceDays,
 
 		// testing grounds
+		"replaceEmojis": tmplReplaceEmojis,
 	}
 
 	contextSetupFuncs = []ContextSetupFunc{}
@@ -296,7 +300,7 @@ func (c *Context) setupBaseData() {
 		"EmbedLinks":         discordgo.PermissionEmbedLinks,
 		"ManageMessages":     discordgo.PermissionManageMessages,
 		"MentionEveryone":    discordgo.PermissionMentionEveryone,
-		"ReadMessages":       discordgo.PermissionReadMessages,
+		"ReadMessages":       discordgo.PermissionViewChannel,
 		"ReadMessageHistory": discordgo.PermissionReadMessageHistory,
 		"SendMessages":       discordgo.PermissionSendMessages,
 		"SendTTSMessages":    discordgo.PermissionSendTTSMessages,
@@ -664,8 +668,9 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
 	c.addContextFunc("editMessage", c.tmplEditMessage(true))
 	c.addContextFunc("editMessageNoEscape", c.tmplEditMessage(false))
-	c.addContextFunc("getAllMessageReactions", c.tmplGetAllMessageReactions)
+	c.addContextFunc("getAllMessageReactions", c.tmplGetMessageReactions)
 	c.addContextFunc("getMessage", c.tmplGetMessage)
+	c.addContextFunc("getMessageReactions", c.tmplGetMessageReactions)
 	c.addContextFunc("getPinCount", c.tmplGetChannelPins(true))
 	c.addContextFunc("lastMessages", c.tmplLastMessages)
 	c.addContextFunc("pinMessage", c.tmplPinMessage(false))
@@ -921,33 +926,6 @@ func (d SDict) HasKey(k string) (ok bool) {
 }
 
 type Slice []interface{}
-
-/*
-func (s Slice) String() string {
-	fromStringSlice := make([]string, 0, len(s))
-
-	for _, Sliceval := range s {
-		switch t := Sliceval.(type) {
-		case string:
-			fromStringSlice = append(fromStringSlice, t)
-		case fmt.Stringer:
-			fromStringSlice = append(fromStringSlice, t.String())
-		case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
-			fromStringSlice = append(fromStringSlice, ToString(t))
-		default:
-			fromStringSlice = append(fromStringSlice, fmt.Sprintf("%+v", t))
-		}
-	}
-
-	// stringSlice := make([]string, 0, len(s))
-	// for _, v := range s {
-	// 	stringSlice = append(stringSlice, fmt.Sprintf("%v", v))
-	// }
-	// stringSlice = append(stringSlice, fromStringSlice...)
-
-	return strings.Join(fromStringSlice, " ")
-}
-*/
 
 func (s Slice) Append(item interface{}) (interface{}, error) {
 	if len(s)+1 > 10000 {

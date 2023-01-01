@@ -141,10 +141,13 @@ type YAGCommand struct {
 	// e.g if the command does not require a role in one channel, but it requires one in another channel, then the required permission for the slash command will be none set,
 	// note that these settings are still checked when the command is run, but they just show the command in the client even if you can't use it in this case, so its just a visual limitation of slash commands.
 	//
-	// If it's disabled in all chanels, then for default_enabled = true commands, it adds the everyone role to the blacklist, otherwise it adds no role to the whitelist (does this even work? can i use the everyone role in this context?)
-	SlashCommandEnabled bool
+	// If it's disabled in all channels, then for default_enabled = true commands, it adds the everyone role to the blacklist, otherwise it adds no role to the whitelist (does this even work? can i use the everyone role in this context?)
 
-	// Wether the command is enabled in all guilds by default or not
+	ApplicationCommandEnabled bool                             // renamed from SlashCommandEnabled because other types are involved
+	ApplicationCommandType    discordgo.ApplicationCommandType // defaults to 0x1 as slash command
+	NameLocalizations         *map[discordgo.Locale]string
+
+	// Whether the command is enabled in all guilds by default or not
 	DefaultEnabled bool
 
 	// If default enabled = false
@@ -156,6 +159,10 @@ type YAGCommand struct {
 	slashCommandID int64
 
 	IsResponseEphemeral bool
+	IsResponseModal     bool
+	NSFW                bool
+
+	CmdNoRun bool
 }
 
 // CmdWithCategory puts the command in a category, mostly used for the help generation
@@ -182,6 +189,10 @@ var metricsExcecutedCommands = promauto.NewCounterVec(prometheus.CounterOpts{
 
 func (yc *YAGCommand) Run(data *dcmd.Data) (interface{}, error) {
 	if !yc.RunInDM && data.Source == dcmd.TriggerSourceDM {
+		return nil, nil
+	}
+
+	if yc.CmdNoRun && data.TraditionalTriggerData != nil {
 		return nil, nil
 	}
 
@@ -440,7 +451,7 @@ func (yc *YAGCommand) checkCanExecuteCommand(data *dcmd.Data, channelID int64) (
 		guild := data.GuildData.GS
 
 		if data.TriggerType != dcmd.TriggerTypeSlashCommands {
-			if hasPerms, _ := bot.BotHasPermissionGS(guild, data.ChannelID, discordgo.PermissionReadMessages|discordgo.PermissionSendMessages); !hasPerms {
+			if hasPerms, _ := bot.BotHasPermissionGS(guild, data.ChannelID, discordgo.PermissionViewChannel|discordgo.PermissionSendMessages); !hasPerms {
 				return false, nil, nil, nil
 			}
 		}
@@ -449,7 +460,16 @@ func (yc *YAGCommand) checkCanExecuteCommand(data *dcmd.Data, channelID int64) (
 			parentID := data.GuildData.GS.GetChannelOrThread(channelID).ParentID
 			settings, err = yc.GetSettings(data.ContainerChain, channelID, parentID, guild.ID)
 		} else {
-			settings, err = yc.GetSettings(data.ContainerChain, data.GuildData.CS.ID, data.GuildData.CS.ParentID, guild.ID)
+			channel_id := data.GuildData.CS.ID
+			parent_id := data.GuildData.CS.ParentID
+
+			if data.GuildData.CS.Type.IsThread() {
+				channel := data.GuildData.GS.GetChannel(parent_id)
+				channel_id = channel.ID
+				parent_id = channel.ParentID
+			}
+
+			settings, err = yc.GetSettings(data.ContainerChain, channel_id, parent_id, guild.ID)
 		}
 
 		if err != nil {
@@ -923,8 +943,9 @@ func (cs *YAGCommand) SetCooldownGuild(cc []*dcmd.Container, guildID int64) erro
 }
 
 func (yc *YAGCommand) Logger(data *dcmd.Data) *logrus.Entry {
-	l := logger.WithField("cmd", yc.FindNameFromContainerChain(data.ContainerChain))
+	var l *logrus.Entry
 	if data != nil {
+		l = logger.WithField("cmd", yc.FindNameFromContainerChain(data.ContainerChain))
 		if data.Author != nil {
 			l = l.WithField("user_n", data.Author.Username)
 			l = l.WithField("user_id", data.Author.ID)

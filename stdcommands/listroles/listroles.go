@@ -92,7 +92,7 @@ var Command = &commands.YAGCommand{
 		//outSlice := strings.Split((strings.Replace(out, "`", "", -1)), "\n")
 		outSlice := strings.Split(out, "\n")
 		pm, err := paginatedmessages.CreatePaginatedMessage(
-			data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(outSlice))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+			data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(outSlice))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 				i := page - 1
 				paginatedEmbed := embedCreator(outSlice, i, maxLength, counter)
 				return paginatedEmbed, nil
@@ -113,17 +113,17 @@ func toOut(r *discordgo.Role, raw bool, out *string) string {
 		}
 		nameCut = common.CutStringShort(nameCut, 12)
 
-		*out += fmt.Sprintf("%-12s %-19d#%-6x %-5t\n", nameCut, r.ID, r.Color, me)
+		*out += fmt.Sprintf("%-12s %-20d#%-6x %-5t\n", nameCut, r.ID, r.Color, me)
 	} else {
-		*out += fmt.Sprintf("`%-25s: %-19d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
+		*out += fmt.Sprintf("`%-25s: %-20d #%-6x  ME:%5t`\n", r.Name, r.ID, r.Color, me)
 	}
 	return ""
 }
 
 func embedCreator(outStringSlice []string, i, ml, counter int) *discordgo.MessageEmbed {
-	description := fmt.Sprintf("Total role count: %d\n(ME = mention everyone perms)\n\n", counter)
-	description += fmt.Sprintf("%-28s %-3s%-6s  %-5s\n", "Rolename", "ID", "Color", "ME")
-	description += "---------------------------------------------\n"
+	introText := fmt.Sprintf("Total role count: `%d`\n(ME = mention everyone perms)\n\n", counter)
+	description := fmt.Sprintf("%-12s %-20s%-6s  %-5s\n", "Rolename", "ID", "Color", "ME")
+	description += "----------------------------------------------\n"
 
 	for k, v := range outStringSlice[i*ml:] {
 		if k < ml {
@@ -132,7 +132,7 @@ func embedCreator(outStringSlice []string, i, ml, counter int) *discordgo.Messag
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Description: fmt.Sprintf("`%s`", description),
+		Description: fmt.Sprintf("%s```%s```", introText, description),
 	}
 	return embed
 }

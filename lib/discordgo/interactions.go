@@ -30,16 +30,16 @@ const (
 
 // ApplicationCommand represents an application's slash command.
 type ApplicationCommand struct {
-	ID                int64                  `json:"id,string,omitempty"`
+	ID                int64                  `json:"id,omitempty,string"`
 	ApplicationID     int64                  `json:"application_id,string,omitempty"`
-	GuildID           int64                  `json:"guild_id,string,omitempty"`
+	GuildID           int64                  `json:"guild_id,omitempty,string"`
 	Version           string                 `json:"version,omitempty"`
 	Type              ApplicationCommandType `json:"type,omitempty"`
 	Name              string                 `json:"name"`
 	NameLocalizations *map[Locale]string     `json:"name_localizations,omitempty"`
 	// NOTE: DefaultPermission will be soon deprecated. Use DefaultMemberPermissions and DMPermission instead.
 	DefaultPermission        *bool  `json:"default_permission,omitempty"`
-	DefaultMemberPermissions *int64 `json:"default_member_permissions,string,omitempty"`
+	DefaultMemberPermissions *int64 `json:"default_member_permissions,omitempty,string"`
 	DMPermission             *bool  `json:"dm_permission,omitempty"`
 
 	// NOTE: Chat commands only. Otherwise it mustn't be set.
@@ -47,6 +47,7 @@ type ApplicationCommand struct {
 	Description              string                      `json:"description,omitempty"`
 	DescriptionLocalizations *map[Locale]string          `json:"description_localizations,omitempty"`
 	Options                  []*ApplicationCommandOption `json:"options"`
+	NSFW                     bool                        `json:"nsfw,omitempty"`
 }
 
 // ApplicationCommandOptionType indicates the type of a slash command's option.
@@ -235,6 +236,7 @@ type Interaction struct {
 	Version int    `json:"version"`
 
 	DataCommand *ApplicationCommandInteractionData
+	DataModal   *ModalSubmitInteractionData
 }
 
 type interaction Interaction
@@ -280,6 +282,10 @@ func (i *Interaction) UnmarshalJSON(raw []byte) error {
 			return err
 		}
 		i.Data = v
+		err = json.Unmarshal(tmp.Data, &i.DataModal)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -318,10 +324,10 @@ type InteractionData interface {
 
 // ApplicationCommandInteractionData contains the data of application command interaction.
 type ApplicationCommandInteractionData struct {
-	ID       int64                                      `json:"id,string"`
-	Name     string                                     `json:"name"`
-	Resolved *ApplicationCommandInteractionDataResolved `json:"resolved"`
-
+	ID         int64                                      `json:"id,string"`
+	Name       string                                     `json:"name"`
+	Resolved   *ApplicationCommandInteractionDataResolved `json:"resolved"`
+	AppCmdType ApplicationCommandType                     `json:"type"`
 	// Slash command options
 	Options []*ApplicationCommandInteractionDataOption `json:"options"`
 	// Target (user/message) id on which context menu command was called.

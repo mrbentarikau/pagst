@@ -93,7 +93,7 @@ func (p *Plugin) HandleRSS(w http.ResponseWriter, r *http.Request) (web.Template
 	ctx := r.Context()
 	ag, templateData := web.GetBaseCPContextData(ctx)
 
-	subs, err := models.RSSFeeds(models.RSSFeedWhere.GuildID.EQ(ag.ID), qm.OrderBy("id asc")).AllG(ctx)
+	subs, err := models.RSSFeeds(models.RSSFeedWhere.GuildID.EQ(ag.ID), qm.OrderBy("id desc")).AllG(ctx)
 	if err != nil {
 		return templateData, err
 	}

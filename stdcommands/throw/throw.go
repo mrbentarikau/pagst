@@ -5,8 +5,10 @@ import (
 	"math/rand"
 
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 var Command = &commands.YAGCommand{
@@ -16,26 +18,48 @@ var Command = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Target", Type: dcmd.User},
 	},
-	DefaultEnabled:      true,
-	SlashCommandEnabled: true,
-	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+	DefaultEnabled: true,
 
+	ApplicationCommandEnabled: true,
+	ApplicationCommandType:    2,
+
+	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		target := "a random person nearby"
+		thrower := data.GuildData.MS.User
 		if data.Args[0].Value != nil {
-			target = data.Args[0].Value.(*discordgo.User).Username
+			if thrower.ID == data.Args[0].Value.(*discordgo.User).ID {
+				target = "themself"
+			} else {
+				target = data.Args[0].Value.(*discordgo.User).Username
+			}
 		}
 
-		resp := ""
+		var resp string
 
 		rng := rand.Intn(100)
 		if rng < 5 {
-			resp = fmt.Sprintf("TRIPLE THROW! Threw **%s**, **%s** and **%s** at **%s**", randomThing(), randomThing(), randomThing(), target)
+			resp = fmt.Sprintf("TRIPLE THROW!!! **%s** threw **%s**, **%s** and **%s** at **%s**", thrower.Username, randomThing(), randomThing(), randomThing(), target)
 		} else if rng < 15 {
-			resp = fmt.Sprintf("DOUBLE THROW! Threw **%s** and **%s** at **%s**", randomThing(), randomThing(), target)
+			resp = fmt.Sprintf("DOUBLE THROW!! **%s** threw **%s** and **%s** at **%s**", thrower.Username, randomThing(), randomThing(), target)
 		} else {
-			resp = fmt.Sprintf("Threw **%s** at **%s**", randomThing(), target)
+			resp = fmt.Sprintf("**%s** threw **%s** at **%s**", thrower.Username, randomThing(), target)
 		}
 
 		return resp, nil
 	},
+}
+
+func randomThing() string {
+	var query = "https://roger.redevised.com/api/v1/"
+	randNum := rand.Intn(3)
+
+	if randNum > 1 {
+		return common.RandomNoun()
+	} else if randNum > 0 {
+		if qrt, err := util.RequestFromAPI(query); err == nil {
+			return string(qrt)
+		}
+	}
+
+	return throwThings[rand.Intn(len(throwThings))]
 }

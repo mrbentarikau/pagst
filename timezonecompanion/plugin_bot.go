@@ -16,6 +16,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/jarowinkler"
 	"github.com/mrbentarikau/pagst/timezonecompanion/models"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
@@ -98,11 +99,11 @@ func (p *Plugin) AddCommands() {
 				}
 
 				out = "More than 1 result, reuse the command for fine tuning with a one of the following:\n"
-				levDistance := 1000
+				levDistance := float64(1000)
 				for _, v := range zones {
 					if s := StrZone(v); s != "" {
 						re := regexp.MustCompile(`.*` + userInput + `.*:`)
-						if levD := levenshtein([]rune(userInput), []rune(re.FindString(s))); levD <= levDistance {
+						if levD := jarowinkler.Similarity([]rune(userInput), []rune(re.FindString(s))); levD <= levDistance {
 							levDistance = levD
 							manyZones = v
 						}
@@ -147,7 +148,7 @@ func (p *Plugin) AddCommands() {
 		Description:         "Toggles automatic time conversion for people with registered timezones (setz) in this channel, it's on by default, toggle all channels by giving it `all`",
 		RequireDiscordPerms: []int64{discordgo.PermissionManageMessages, discordgo.PermissionManageServer},
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "flags", Type: dcmd.String},
+			{Name: "flags", Type: dcmd.String},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			allStr := parsed.Args[0].Str()
@@ -237,8 +238,8 @@ func StrZone(zone string) string {
 	return fmt.Sprintf("`%s`: %s", zone, name)
 }
 
-func paginatedTimezones(timezones []string) func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
-	return func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+func paginatedTimezones(timezones []string) func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
+	return func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 		numSkip := (page - 1) * 10
 
 		out := ""

@@ -45,7 +45,7 @@ func (c *Client) GetUserInfo(username string) (*Account, error) {
 
 	req.Header.Add("User-Agent", c.userAgent)
 
-	resp, err := c.http.Get(url)
+	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *Client) GetUserInfo(username string) (*Account, error) {
 
 	var result struct {
 		Kind string  `json:"kind"`
-		Data Account `json:data"`
+		Data Account `json:"data"`
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&result)

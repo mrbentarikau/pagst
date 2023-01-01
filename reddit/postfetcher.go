@@ -99,11 +99,11 @@ func (p *PostFetcher) initCursor() (int64, error) {
 	var storedID int64
 	common.RedisPool.Do(radix.Cmd(&storedID, "GET", p.LastScannedPostIDKey))
 	if storedID != 0 {
-		p.log.Info("reddit feed continuing from ", storedID)
+		p.log.Info("Reddit feed continuing from ", storedID)
 		return storedID, nil
 	}
 
-	p.log.Warn("reddit plugin failed resuming, starting from most recent post")
+	p.log.Warn("Reddit plugin failed resuming, starting from most recent post")
 
 	// Start from new
 	newPosts, err := p.redditClient.GetNewLinks("all", "", "")

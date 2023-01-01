@@ -50,13 +50,13 @@ var (
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory:         commands.CategoryTool,
-	Name:                "CoronaStatistics",
-	Aliases:             []string{"coronastats", "cstats", "cst"},
-	Description:         "Shows COVID-19 statistics sourcing Worldometer statistics. Location is country name or their ISO2/3 shorthand.\nIf nothing is added, shows World's total.\nListings are sorted by count of total cases not deaths.",
-	RunInDM:             true,
-	DefaultEnabled:      true,
-	SlashCommandEnabled: true,
+	CmdCategory:               commands.CategoryTool,
+	Name:                      "CoronaStatistics",
+	Aliases:                   []string{"coronastats", "cstats", "cst"},
+	Description:               "Shows COVID-19 statistics sourcing Worldometer statistics. Location is country name or their ISO2/3 shorthand.\nIf nothing is added, shows World's total.\nListings are sorted by count of total cases not deaths.",
+	RunInDM:                   true,
+	DefaultEnabled:            true,
+	ApplicationCommandEnabled: true,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Location", Type: dcmd.String},
 	},
@@ -167,7 +167,7 @@ var Command = &commands.YAGCommand{
 		var pm *paginatedmessages.PaginatedMessage
 		if pagination {
 			pm, err = paginatedmessages.CreatePaginatedMessage(
-				data.GuildData.GS.ID, data.ChannelID, pageInit, len(cConts)-1, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				data.GuildData.GS.ID, data.ChannelID, pageInit, len(cConts)-1, func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 					embed = embedCreator(cConts, queryType, whatDay, page-1)
 					return embed, nil
 				})
@@ -214,13 +214,13 @@ func embedCreator(cConts []coronaWorldWideStruct, queryType, whatDay string, i i
 		Description: fmt.Sprintf("Showing corona statistics for " + whatDay + ":"),
 		Color:       0x7b0e4e,
 		Fields: []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{Name: "Population", Value: p.Sprintf("%d", cConts[i].Population), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Total Cases", Value: p.Sprintf("%d", cConts[i].Cases), Inline: true},
-			&discordgo.MessageEmbedField{Name: "New Cases", Value: p.Sprintf("%d", cConts[i].TodayCases), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Total Deaths", Value: p.Sprintf("%d", cConts[i].Deaths), Inline: true},
-			&discordgo.MessageEmbedField{Name: "New Deaths", Value: p.Sprintf("%d", cConts[i].TodayDeaths), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Recovered", Value: p.Sprintf("%d", cConts[i].Recovered), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Active", Value: p.Sprintf("%d", cConts[i].Active), Inline: true},
+			{Name: "Population", Value: p.Sprintf("%d", cConts[i].Population), Inline: true},
+			{Name: "Total Cases", Value: p.Sprintf("%d", cConts[i].Cases), Inline: true},
+			{Name: "New Cases", Value: p.Sprintf("%d", cConts[i].TodayCases), Inline: true},
+			{Name: "Total Deaths", Value: p.Sprintf("%d", cConts[i].Deaths), Inline: true},
+			{Name: "New Deaths", Value: p.Sprintf("%d", cConts[i].TodayDeaths), Inline: true},
+			{Name: "Recovered", Value: p.Sprintf("%d", cConts[i].Recovered), Inline: true},
+			{Name: "Active", Value: p.Sprintf("%d", cConts[i].Active), Inline: true},
 		},
 		Footer:    &discordgo.MessageEmbedFooter{Text: "Stay safe, protect yourself and others!", IconURL: footerImage},
 		Timestamp: time.Now().Format(time.RFC3339),
@@ -234,15 +234,15 @@ func embedCreator(cConts []coronaWorldWideStruct, queryType, whatDay string, i i
 		&discordgo.MessageEmbedField{Name: "Total Tests", Value: p.Sprintf("%.0f", cConts[i].Tests), Inline: true})
 	switch queryType {
 	case "all":
-		embed.Title = fmt.Sprintf("Whole world")
+		embed.Title = "Whole world"
 		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
 			URL: globeImage}
 	case "countries":
 		embed.Title = fmt.Sprintf("%s (%s)", cConts[i].Country, cConts[i].CountryInfo.Iso2)
 		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-			URL: fmt.Sprintf("%s", cConts[i].CountryInfo.Flag)}
+			URL: cConts[i].CountryInfo.Flag}
 	case "continents":
-		embed.Title = fmt.Sprintf("%s", cConts[i].Continent)
+		embed.Title = cConts[i].Continent
 		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
 			URL: continentImages[cConts[i].Continent]}
 	case "states":

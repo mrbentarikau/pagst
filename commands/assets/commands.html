@@ -304,10 +304,10 @@
         <header class="card-header">
             <h4 class="card-title m-0">
                 <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#cmd-accordion-{{.Parent.ID}}"
-                    href="#cmd-accordion-{{.Parent.ID}}-{{if .Override}}{{.Override.ID}}{{else}}new{{end}}"
+                    href="#cmd-accordion-{{.Parent.ID}}-{{if .Override}}{{.Override.ID}}{{else}}new{{end}}" title="Affected commands: {{if .Override}}{{joinStr `, ` .Override.Commands}}{{end}}"
                     aria-expanded="false">
                     {{if .Override}}
-                    Cmd Override #{{add .Index 1}}
+                    Cmd Override #{{add .Index 1}} <span>Affects {{($len := len .Override.Commands)}}: <span style="font-size:75%">{{if le $len 13}}{{joinStr `, ` .Override.Commands}}{{else}}{{print (joinStr `, ` (slice .Override.Commands 0 13)) "..."}}{{end}}</span></span>
                     {{else}}
                     New command override
                     {{end}}

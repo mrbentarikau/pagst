@@ -13,21 +13,10 @@
 
     <!-- start: search & user box -->
     <div class="header-right">
-
-        <!-- <form action="pages-search-results.html" class="search nav-form">
-            <div class="input-group">
-                <input type="text" class="form-control" name="q" id="q" placeholder="Search...">
-                <span class="input-group-append">
-                    <button class="btn btn-default" type="submit"><i class="fas fa-search"></i></button>
-                </span>
-            </div>
-        </form> -->
-
         <span class="separator"></span>
-
         <ul class="notifications">
            <li>
-                <a href="/chat" class="notification-icon" data-toggle="tooltip" data-placement="bottom" title="IRC support-chat" data-original-title="IRC support-chat">
+                <a href="https://discord.gg/jTVVgGHvuU" target="_blank" class="notification-icon" data-toggle="tooltip" data-placement="bottom" title="Ministry of Wrongthink" data-original-title="Ministry of Wrongthink">
                     <i class="fa-brands fa-discord"></i>
                 </a>
             </li>
@@ -35,18 +24,6 @@
                 <a href="/manage" class="notification-icon" data-toggle="tooltip" data-placement="bottom" title=""
                     data-original-title="News and updates">
                     <i class="far fa-newspaper"></i>
-                </a>
-            </li>
-            <li>
-                 <a href="https://github.com/mrbentarikau/pagstrtfm/" class="notification-icon" target="_blank" data-toggle="tooltip"
-                    data-placement="bottom" title="" data-original-title="Template Documentation">
-                    <i class="fas fa-book" aria-hidden="true"></i>
-                </a>
-            </li>
-            <li>
-                <a href="https://docs.yagpdb.xyz/" class="notification-icon" target="_blank" data-toggle="tooltip"
-                    data-placement="bottom" title="" data-original-title="Documentation">
-                    <i class="fas fa-question"></i>
                 </a>
             </li>
             <li>
@@ -125,10 +102,14 @@
                 <ul class="list-unstyled mb-2">
                     <li class="divider"></li>
                     <li>
-                        <a role="menuitem" tabindex="-1" href="/logout"><i class="fas fa-power-off"></i> Logout</a>
+                        <a role="menuitem" tabindex="-1" href="#/" onclick="javascript:alert('light mode, really? lol, nice try : )')"><i class="fa-regular fa-lightbulb"></i> Light mode</a>
                     </li>
                     <li>
                         <a role="menuitem" tabindex="-1" href="/premium"><i class="fa-solid fa-star"></i> Premium</a>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <a role="menuitem" tabindex="-1" href="/logout"><i class="fas fa-power-off"></i> Logout</a>
                     </li>
                 </ul>
             </div>
@@ -307,7 +288,8 @@
         {{range $index, $element := .ManagedGuilds -}}{{if not $element.Connected -}}
         <li>
             <a
-                href="https://discordapp.com/oauth2/authorize?client_id={{$clientid}}&scope=applications.commands%20bot&permissions=2146827767&guild_id={{$element.ID}}&response_type=code&redirect_uri={{joinStr "" $baseURL "/manage"}}"><i
+                href="https://discordapp.com/oauth2/authorize?client_id={{$clientid}}&scope=applications.commands%20bot&permissions=1101658455543
+                &guild_id={{$element.ID}}&response_type=code&redirect_uri={{joinStr "" $baseURL "/manage"}}"><i
                     class="fas fa-plus"></i>{{$element.Name}}</a>
         </li>
         {{end}}{{end}}

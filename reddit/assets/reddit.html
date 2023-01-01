@@ -108,11 +108,10 @@
             </div>
             <div class="form-row mb-2">
                 <div class="form-group col">
-                {{$formatNewSlow := "format-new-slow-"}}
-                {{if .Slow}}
-                    {{$formatNewSlow = "format-new-slow-active-"}}
-                {{end}}
-                {{checkbox "use_embeds" (joinStr "" $formatNewSlow .Slow) `Use embeds<small class="ml-2">(Videos won't be attached, but just linked)</small>` true}}
+                    {{checkbox "use_embeds" (printf "format-new-slow-%t" .Slow) `Use embeds<small class="ml-2">(Videos won't be attached, but just linked)</small>` true}}
+                </div>
+                <div class="form-group col">
+                    {{checkbox "show_spoilers" (printf "format-new-show-spoilers-%t" .ShowSpoilers) `Show spoilers<small class="ml-2">(Posts tagged as spoiler, will be shown)</small>` false}}
                 </div>
             </div>
             <button type="submit" class="btn btn-success btn-block">Add</button>
@@ -157,7 +156,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg">
+        <div class="col-sm-2">
             <div class="form-row">
                 <div class="form-group col">
                     <label>NSFW Filtering</label>
@@ -168,22 +167,25 @@
                     </select>
                 </div>
                 {{if .Slow}}<div class="form-group col">
-                    <label>Minimum needed score</label>
+                    <label>Minimum score</label>
                     <input type="number" min="0" name="min_upvotes" value="{{.MinUpvotes}}" class="form-control">
                 </div>{{end}}
             </div>
         </div>
-        <div class="col-lg">
+        <div class="col-lg-4">
             <div class="form-row">
                 <div class="col d-flex flex-column">
-                    <Span class="mb-2">Use embed</span>
+                    <span class="mb-2">Use embeds</span>
                     {{checkbox "use_embeds" (joinStr "" "format-" .ID) `` .UseEmbeds}}
                 </div>
                 <div class="col d-flex flex-column">
-                    <Span class="mb-2">Enabled</span>
+                    <span class="mb-2">Show spoilers</span>
+                    {{checkbox "show_spoilers" (joinStr "" "format-new-show-spoilers-" .ID) `` .ShowSpoilers}}
+                </div>
+                <div class="col d-flex flex-column">
+                    <span class="mb-2">Enabled</span>
                     {{checkbox "feed_enabled" (joinStr "" "feed-enabled-" .ID) `` (not .Disabled)}}
                 </div>
-
                 <div class="form-group col">
                     <div class="btn-group mt-4">
                         <button form="feed-item-{{.ID}}" type="submit" class="btn btn-success ml-sm-3"

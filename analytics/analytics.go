@@ -3,9 +3,9 @@ package analytics
 import (
 	"sync"
 
-	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
+	"github.com/mediocregopher/radix/v3"
 )
 
 var logger = common.GetPluginLogger(&Plugin{})

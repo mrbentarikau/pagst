@@ -172,7 +172,7 @@ func YAGCommandMiddleware(inner dcmd.RunFunc) dcmd.RunFunc {
 			guildID = data.GuildData.GS.ID
 		}
 
-		if data.TriggerType == dcmd.TriggerTypeSlashCommands {
+		if data.TriggerType == dcmd.TriggerTypeSlashCommands && !yc.IsResponseModal {
 			// Acknowledge the interaction
 			response := discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
@@ -236,7 +236,6 @@ func YAGCommandMiddleware(inner dcmd.RunFunc) dcmd.RunFunc {
 		}
 
 		data = data.WithContext(context.WithValue(data.Context(), CtxKeyCmdSettings, settings))
-
 		err = dcmd.ParseCmdArgs(data)
 		if err != nil {
 			if dcmd.IsUserError(err) {
@@ -285,6 +284,13 @@ func FilterResp(in interface{}, guildID int64) interface{} {
 func AddRootCommands(p common.Plugin, cmds ...*YAGCommand) {
 	for _, v := range cmds {
 		v.Plugin = p
+		// KRAAKA IMPORTANT sets boolean true to application commands which are not slash to have spaces in name in dmcd.Container
+		if v.ApplicationCommandEnabled && v.ApplicationCommandType != 0 {
+			t := v.GetTrigger()
+			t.SetAppCommandNotSlash(true)
+			CommandSystem.Root.AddCommand(v, t)
+			continue
+		}
 		CommandSystem.Root.AddCommand(v, v.GetTrigger())
 	}
 }
@@ -323,7 +329,7 @@ func handleMsgCreate(evt *eventsystem.EventData) {
 		}
 	}
 
-	CommandSystem.CheckMessageWtihPrefetchedPrefix(common.BotSession, evt.MessageCreate(), prefix)
+	CommandSystem.CheckMessageWithPrefetchedPrefix(common.BotSession, evt.MessageCreate(), prefix)
 	// CommandSystem.HandleMessageCreate(common.BotSession, evt.MessageCreate())
 }
 

@@ -3,10 +3,9 @@ package inspire
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
-	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
@@ -14,44 +13,85 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory:         commands.CategoryFun,
-	Name:                "Inspire",
-	Aliases:             []string{"insp"},
-	Description:         "Shows 'inspirational' quotes from inspirobot.me...",
-	RunInDM:             false,
-	DefaultEnabled:      true,
-	SlashCommandEnabled: true,
-	Cooldown:            3,
-	Arguments: []*dcmd.ArgDef{
-		{Name: "Mindfulness", Type: &dcmd.IntArg{Min: 1, Max: 25}},
+	CmdCategory:               commands.CategoryFun,
+	Name:                      "Inspire",
+	Aliases:                   []string{"insp"},
+	Description:               "Shows 'inspirational' quotes from inspirobot.me...",
+	RunInDM:                   false,
+	DefaultEnabled:            true,
+	ApplicationCommandEnabled: true,
+	Cooldown:                  3,
+	ArgSwitches: []*dcmd.ArgDef{
+		{Name: "mindfulness", Help: "Generates Mindful Quotes!"},
+		{Name: "season", Help: "Request for specific season (xmas)", Type: dcmd.String},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var pm *paginatedmessages.PaginatedMessage
-		var ID = time.Now().UTC().Unix()
+		var paginatedView bool
 
-		if data.Args[0].Str() != "" {
+		availableSeasons := map[string]bool{"xmas": true}
+
+		query := "https://inspirobot.me/api?generate=true"
+
+		if data.Switches["mindfulness"].Value != nil && data.Switches["mindfulness"].Value.(bool) {
+			paginatedView = true
+		}
+
+		switchSeason := data.Switch("season")
+		if switchSeason.Value != nil {
+			if !availableSeasons[switchSeason.Str()] {
+				aSeasons := make([]string, len(availableSeasons))
+
+				i := 0
+				for s := range availableSeasons {
+					aSeasons[i] = s
+					i++
+				}
+				seasons := strings.Join(strings.Split(strings.Trim(fmt.Sprintf("%v", aSeasons), "[]"), " "), ", ")
+
+				return fmt.Sprintf("Available seasons for Inspirobot: `%s`", seasons), nil
+			}
+			query = query + "&season=" + switchSeason.Str()
+		}
+
+		if paginatedView {
+			var ID = time.Now().UTC().Unix()
+
+			query = fmt.Sprintf("https://inspirobot.me/api?generateFlow=1&sessionID=%d", ID)
 			wonkyErr := "InspireAPI wonky... ducks are sad : /"
 
-			result, err := inspireFromAPI(true, ID)
+			requestBody, err := util.RequestFromAPI(query)
+			if err != nil {
+				return wonkyErr, err
+			}
+
+			mindfulness, err := handleRequestBody(requestBody)
 			if err != nil {
 				return wonkyErr, err
 			}
 
 			inspireArray := []string{}
-			inspireArray = arrayMaker(inspireArray, result)
+			inspireArray = arrayMaker(inspireArray, mindfulness)
 
 			pm, err = paginatedmessages.CreatePaginatedMessage(
-				data.GuildData.GS.ID, data.ChannelID, 1, data.Args[0].Int(), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+				data.GuildData.GS.ID, data.ChannelID, 1, 25, func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 					if page-1 == len(inspireArray) {
-						result, err := inspireFromAPI(true, ID)
+						requestBody, err := util.RequestFromAPI(query)
 						if err != nil {
 							return nil, err
 						}
-						inspireArray = arrayMaker(inspireArray, result)
+
+						mindfulness, err := handleRequestBody(requestBody)
+						if err != nil {
+							return nil, err
+						}
+
+						inspireArray = arrayMaker(inspireArray, mindfulness)
 					}
 					return createInspireEmbed(inspireArray[page-1], true), nil
 				})
@@ -63,67 +103,36 @@ var Command = &commands.YAGCommand{
 		}
 
 		//Normal Image Inspire Output
-		inspData, err := inspireFromAPI(false, ID)
+		inspData, err := util.RequestFromAPI(query)
 		if err != nil {
 			return fmt.Sprintf("%s\nInspiroBot wonky... sad times :/", err), err
 		}
-		embed := createInspireEmbed(inspData, false)
+		embed := createInspireEmbed(string(inspData), false)
 
 		return embed, nil
 	},
 }
 
-func inspireFromAPI(mindfulnessMode bool, ID int64) (string, error) {
-	query := "https://inspirobot.me/api?generate=true"
-	if mindfulnessMode {
-		query = fmt.Sprintf("https://inspirobot.me/api?generateFlow=1&sessionID=%d", ID)
-	}
+func handleRequestBody(rBody []byte) (string, error) {
+	var mindful MindfulnessMode
+	var mindfulness string
 
-	req, err := http.NewRequest("GET", query, nil)
+	err := json.Unmarshal(rBody, &mindful)
 	if err != nil {
 		return "", err
 	}
 
-	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	if resp.StatusCode != 200 {
-		return "", commands.NewPublicError("HTTP err: ", resp.StatusCode)
-	}
-
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	if mindfulnessMode {
-		var mindful MindfulnessMode
-		var mindfulness string
-
-		err := json.Unmarshal([]byte(body), &mindful)
-		if err != nil {
-			return "", err
+	for _, i := range mindful.Data {
+		if i.Text != "" {
+			mindfulness = i.Text
 		}
-
-		for _, i := range mindful.Data {
-			if i.Text != "" {
-				mindfulness = i.Text
-			}
-		}
-
-		if len(mindfulness) > 4000 {
-			mindfulness = common.CutStringShort(mindfulness, 4000)
-		}
-
-		return mindfulness, nil
 	}
 
-	return string(body), nil
+	if len(mindfulness) > 4000 {
+		mindfulness = common.CutStringShort(mindfulness, 4000)
+	}
+
+	return mindfulness, nil
 }
 
 func createInspireEmbed(data string, mindfulness bool) *discordgo.MessageEmbed {

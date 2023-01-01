@@ -10,13 +10,13 @@ import (
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory:         commands.CategoryTool,
-	Name:                "EditChannelPermissions",
-	Aliases:             []string{"EditChannel", "EChannel", "Ecpo"},
-	Description:         "Edits channel permission overwrites",
-	LongDescription:     "\nRequires the manage channels permission.\nOverwrite permissions follow Discord's standard [encoding](https://discordapp.com/developers/docs/topics/permissions) and can be calculated on websites like [this](https://discordapi.com/permissions.html).",
-	RequiredArgs:        1,
-	SlashCommandEnabled: false,
+	CmdCategory:     commands.CategoryTool,
+	Name:            "EditChannelPermissions",
+	Aliases:         []string{"EditChannel", "EChannel", "Ecpo"},
+	Description:     "Edits channel permission overwrites",
+	LongDescription: "\nRequires the manage channels permission.\nOverwrite permissions follow Discord's standard [encoding](https://discordapp.com/developers/docs/topics/permissions) and can be calculated on websites like [this](https://discordapi.com/permissions.html).",
+	RequiredArgs:    1,
+
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Channel", Type: dcmd.Channel},
 	},

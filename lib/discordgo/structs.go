@@ -234,7 +234,7 @@ const (
 	ChannelFlagPinned ChannelFlags = 1 << 1
 	// ChannelFlagRequireTag indicates whether a tag is required to be specified when creating a thread.
 	// NOTE: forum channels only.
-	ChannelFlagRequireTag ChannelFlags = 1 << 2
+	ChannelFlagRequireTag ChannelFlags = 1 << 4
 )
 
 // A Channel holds all data related to an individual Discord channel.
@@ -316,16 +316,17 @@ type Channel struct {
 	Members []*ThreadMember `json:"-"`
 
 	// Channel flags.
+	// KRAAKA: Below stuff commented out due forums
 	// Flags ChannelFlags `json:"flags"`
 
 	// The set of tags that can be used in a forum channel.
 	// AvailableTags []ForumTag `json:"available_tags"`
 
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
-	// AppliedTags []int64 `json:"applied_tags"`
+	// AppliedTags []string `json:"applied_tags"`
 
 	// Emoji to use as the default reaction to a forum post.
-	// DefaultReactionEmoji DefaultReaction `json:"default_reaction_emoji"`
+	// DefaultReactionEmoji ForumDefaultReaction `json:"default_reaction_emoji"`
 }
 
 func (c *Channel) GetChannelID() int64 {
@@ -366,9 +367,10 @@ type ChannelEdit struct {
 	Invitable           *bool `json:"invitable,omitempty"`
 
 	// NOTE: forum channels only
+	// KRAAKA below stuff commented out due forums
 
 	// AvailableTags        *[]ForumTag      `json:"available_tags,omitempty"`
-	// DefaultReactionEmoji *DefaultReaction `json:"default_reaction_emoji,omitempty"`
+	// DefaultReactionEmoji *ForumDefaultReaction `json:"default_reaction_emoji,omitempty"`
 
 	// NOTE: forum threads only
 	// AppliedTags *[]string `json:"applied_tags,omitempty"`
@@ -456,11 +458,11 @@ type AddedThreadMember struct {
 	Presence *Presence `json:"presence"`
 }
 
-// DefaultReaction specifies emoji to use as the default reaction to a forum post.
+// ForumDefaultReaction specifies emoji to use as the default reaction to a forum post.
 // NOTE: Exactly one of EmojiID and EmojiName must be set.
-type DefaultReaction struct {
+type ForumDefaultReaction struct {
 	// The id of a guild's custom emoji.
-	EmojiID int64 `json:"emoji_id,string,omitempty"`
+	EmojiID int64 `json:"emoji_id,omitempty,string"`
 	// The unicode character of the emoji.
 	EmojiName string `json:"emoji_name,omitempty"`
 }
@@ -470,7 +472,7 @@ type ForumTag struct {
 	ID        int64  `json:"id,string,omitempty"`
 	Name      string `json:"name"`
 	Moderated bool   `json:"moderated"`
-	EmojiID   int64  `json:"emoji_id,string,omitempty"`
+	EmojiID   int64  `json:"emoji_id,omitempty"`
 	EmojiName string `json:"emoji_name,omitempty"`
 }
 
@@ -908,13 +910,13 @@ type GuildScheduledEventStatus int
 
 const (
 	// GuildScheduledEventStatusScheduled represents the current event is in scheduled state
-	GuildScheduledEventStatusScheduled = 1
+	GuildScheduledEventStatusScheduled GuildScheduledEventStatus = 1
 	// GuildScheduledEventStatusActive represents the current event is in active state
-	GuildScheduledEventStatusActive = 2
+	GuildScheduledEventStatusActive GuildScheduledEventStatus = 2
 	// GuildScheduledEventStatusCompleted represents the current event is in completed state
-	GuildScheduledEventStatusCompleted = 3
+	GuildScheduledEventStatusCompleted GuildScheduledEventStatus = 3
 	// GuildScheduledEventStatusCanceled represents the current event is in canceled state
-	GuildScheduledEventStatusCanceled = 4
+	GuildScheduledEventStatusCanceled GuildScheduledEventStatus = 4
 )
 
 // GuildScheduledEventEntityType is the type of entity associated with a guild scheduled event.
@@ -923,11 +925,11 @@ type GuildScheduledEventEntityType int
 
 const (
 	// GuildScheduledEventEntityTypeStageInstance represents a stage channel
-	GuildScheduledEventEntityTypeStageInstance = 1
+	GuildScheduledEventEntityTypeStageInstance GuildScheduledEventEntityType = 1
 	// GuildScheduledEventEntityTypeVoice represents a voice channel
-	GuildScheduledEventEntityTypeVoice = 2
+	GuildScheduledEventEntityTypeVoice GuildScheduledEventEntityType = 2
 	// GuildScheduledEventEntityTypeExternal represents an external event
-	GuildScheduledEventEntityTypeExternal = 3
+	GuildScheduledEventEntityTypeExternal GuildScheduledEventEntityType = 3
 )
 
 // GuildScheduledEventUser is a user subscribed to a scheduled event.
@@ -988,8 +990,10 @@ type SystemChannelFlag int
 
 // Block containing known SystemChannelFlag values
 const (
-	SystemChannelFlagsSuppressJoin    SystemChannelFlag = 1 << 0
-	SystemChannelFlagsSuppressPremium SystemChannelFlag = 1 << 1
+	SystemChannelFlagsSuppressJoin         SystemChannelFlag = 1 << 0
+	SystemChannelFlagsSuppressPremium      SystemChannelFlag = 1 << 1
+	SystemChannelFlagsSupressGuildReminder SystemChannelFlag = 1 << 2
+	SystemChannelFlagsSupressJoinReplies   SystemChannelFlag = 1 << 3
 )
 
 // A UserGuild holds a brief version of a Guild
@@ -1057,11 +1061,22 @@ type GuildParams struct {
 	Region                      string             `json:"region,omitempty"`
 	VerificationLevel           *VerificationLevel `json:"verification_level,omitempty"`
 	DefaultMessageNotifications int                `json:"default_message_notifications,omitempty"` // TODO: Separate type?
+	ExplicitContentFilter       int                `json:"explicit_content_filter,omitempty"`
 	AfkChannelID                int64              `json:"afk_channel_id,omitempty,string"`
 	AfkTimeout                  int                `json:"afk_timeout,omitempty"`
 	Icon                        string             `json:"icon,omitempty"`
 	OwnerID                     int64              `json:"owner_id,omitempty,string"`
 	Splash                      string             `json:"splash,omitempty"`
+	DiscoverSplash              string             `json:"discovery_splash,omitempty"`
+	Banner                      string             `json:"banner,omitempty"`
+	SystemChannelID             int64              `json:"system_channel_id,omitempty,string"`
+	SystemChannelFlags          SystemChannelFlag  `json:"system_channel_flags,omitempty"`
+	RulesChannelID              int64              `json:"rules_channel_id,omitempty,string"`
+	PublicUpdatesChannelID      int64              `json:"public_updates_channel_id,omitempty,string"`
+	PreferredLocale             string             `json:"preferred_locale,omitempty"`
+	Features                    []GuildFeature     `json:"features,omitempty"`
+	Description                 string             `json:"description,omitempty"`
+	PremiumProgressBarEnabled   bool               `json:"premium_progress_bar_enabled,omitempty"`
 }
 
 // A Role stores information about Discord guild member roles.
@@ -1178,86 +1193,6 @@ func (p *Presence) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
 }
 
 func (p *Presence) NKeys() int {
-	return 0
-}
-
-type Activities []*Game
-
-func (a *Activities) UnmarshalJSONArray(dec *gojay.Decoder) error {
-	instance := Game{}
-	err := dec.Object(&instance)
-	if err != nil {
-		return err
-	}
-	*a = append(*a, &instance)
-	return nil
-}
-
-// GameType is the type of "game" (see GameType* consts) in the Game struct
-type GameType int
-
-// Valid GameType values
-const (
-	GameTypeGame GameType = iota
-	GameTypeStreaming
-	GameTypeListening
-	GameTypeWatching
-	GameTypeCustom
-	GameTypeCompeting
-)
-
-// A Game struct holds the name of the "playing .." game for a user
-type Game struct {
-	Name          string     `json:"name"`
-	Type          GameType   `json:"type"`
-	URL           string     `json:"url,omitempty"`
-	Details       string     `json:"details,omitempty"`
-	State         string     `json:"state,omitempty"`
-	TimeStamps    TimeStamps `json:"timestamps,omitempty"`
-	Assets        Assets     `json:"assets,omitempty"`
-	ApplicationID string     `json:"application_id,omitempty"`
-	Instance      int8       `json:"instance,omitempty"`
-	// TODO: Party and Secrets (unknown structure)
-}
-
-// implement gojay.UnmarshalerJSONObject
-func (g *Game) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
-	switch key {
-	case "name":
-		return dec.String(&g.Name)
-	case "type":
-		return dec.Int((*int)(&g.Type))
-	case "url":
-		return dec.String(&g.URL)
-	case "details":
-		return dec.String(&g.Details)
-	case "state":
-		return dec.String(&g.State)
-	case "timestamps":
-		return dec.Object(&g.TimeStamps)
-	case "assets":
-	case "application_id":
-		var i interface{}
-		err := dec.Interface(&i)
-		if err != nil {
-			return err
-		}
-		switch t := i.(type) {
-		case int64:
-			g.ApplicationID = strconv.FormatInt(t, 10)
-		case int32:
-			g.ApplicationID = strconv.FormatInt(int64(t), 10)
-		case string:
-			g.ApplicationID = t
-		}
-	case "instance":
-		return dec.Int8(&g.Instance)
-	}
-
-	return nil
-}
-
-func (g *Game) NKeys() int {
 	return 0
 }
 
@@ -1908,6 +1843,280 @@ type SessionStartLimit struct {
 	ResetAfter int64 `json:"reset_after,omitempty"`
 }
 
+// SessionInformation provides the information for max concurrency sharding
+type SessionInformation struct {
+	Total          int `json:"total,omitempty"`
+	Remaining      int `json:"remaining,omitempty"`
+	ResetAfter     int `json:"reset_after,omitempty"`
+	MaxConcurrency int `json:"max_concurrency,omitempty"`
+}
+
+// GatewayStatusUpdate is sent by the client to indicate a presence or status update
+// https://discord.com/developers/docs/topics/gateway#update-status-gateway-status-update-structure
+type GatewayStatusUpdate struct {
+	Since  int      `json:"since"`
+	Game   Activity `json:"game"`
+	Status string   `json:"status"`
+	AFK    bool     `json:"afk"`
+}
+
+// Activities and GameType is Jonas' add-on
+type Activities []*Activity
+
+func (a *Activities) UnmarshalJSONArray(dec *gojay.Decoder) error {
+	instance := Activity{}
+	err := dec.Object(&instance)
+	if err != nil {
+		return err
+	}
+	*a = append(*a, &instance)
+	return nil
+}
+
+// GameType is the type of "game" (see GameType* consts) in the Game struct
+type GameType int
+
+// Valid GameType values
+const (
+	GameTypeGame GameType = iota
+	GameTypeStreaming
+	GameTypeListening
+	GameTypeWatching
+	GameTypeCustom
+	GameTypeCompeting
+)
+
+// A Game struct holds the name of the "playing .." game for a user
+type Game struct {
+	Name          string     `json:"name"`
+	Type          GameType   `json:"type"`
+	URL           string     `json:"url,omitempty"`
+	Details       string     `json:"details,omitempty"`
+	State         string     `json:"state,omitempty"`
+	TimeStamps    TimeStamps `json:"timestamps,omitempty"`
+	Assets        Assets     `json:"assets,omitempty"`
+	ApplicationID string     `json:"application_id,omitempty"`
+	Instance      int8       `json:"instance,omitempty"`
+	// TODO: Party and Secrets (unknown structure)
+}
+
+// implement gojay.UnmarshalerJSONObject
+func (g *Game) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
+	switch key {
+	case "name":
+		return dec.String(&g.Name)
+	case "type":
+		return dec.Int((*int)(&g.Type))
+	case "url":
+		return dec.String(&g.URL)
+	case "details":
+		return dec.String(&g.Details)
+	case "state":
+		return dec.String(&g.State)
+	case "timestamps":
+		return dec.Object(&g.TimeStamps)
+	case "assets":
+	case "application_id":
+		var i interface{}
+		err := dec.Interface(&i)
+		if err != nil {
+			return err
+		}
+		switch t := i.(type) {
+		case int64:
+			g.ApplicationID = strconv.FormatInt(t, 10)
+		case int32:
+			g.ApplicationID = strconv.FormatInt(int64(t), 10)
+		case string:
+			g.ApplicationID = t
+		}
+	case "instance":
+		return dec.Int8(&g.Instance)
+	}
+
+	return nil
+}
+
+func (g *Game) NKeys() int {
+	return 0
+}
+
+// Activity defines the Activity sent with GatewayStatusUpdate
+// https://discord.com/developers/docs/topics/gateway#activity-object
+type Activity struct {
+	Name          string       `json:"name"`
+	Type          ActivityType `json:"type"`
+	URL           string       `json:"url,omitempty"`
+	CreatedAt     time.Time    `json:"created_at"`
+	ApplicationID string       `json:"application_id,omitempty"`
+	State         string       `json:"state,omitempty"`
+	Details       string       `json:"details,omitempty"`
+	Timestamps    TimeStamps   `json:"timestamps,omitempty"`
+	Emoji         Emoji        `json:"emoji,omitempty"`
+	Party         Party        `json:"party,omitempty"`
+	Assets        Assets       `json:"assets,omitempty"`
+	Secrets       Secrets      `json:"secrets,omitempty"`
+	Instance      bool         `json:"instance,omitempty"`
+	Flags         int          `json:"flags,omitempty"`
+	// Buttons       []*ActivityButton `json:"buttons,omitempty"`
+}
+
+// implement gojay.UnmarshalerJSONObject
+func (a *Activity) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
+	switch key {
+	case "name":
+		return dec.String(&a.Name)
+	case "type":
+		return dec.Int((*int)(&a.Type))
+	case "url":
+		return dec.String(&a.URL)
+	case "details":
+		return dec.String(&a.Details)
+	case "state":
+		return dec.String(&a.State)
+	case "timestamps":
+		return dec.Object(&a.Timestamps)
+	case "assets":
+	case "application_id":
+		var i interface{}
+		err := dec.Interface(&i)
+		if err != nil {
+			return err
+		}
+		switch t := i.(type) {
+		case int64:
+			a.ApplicationID = strconv.FormatInt(t, 10)
+		case int32:
+			a.ApplicationID = strconv.FormatInt(int64(t), 10)
+		case string:
+			a.ApplicationID = t
+		}
+	case "instance":
+		return dec.Bool(&a.Instance)
+	case "flags":
+		return dec.Int(&a.Flags)
+	case "buttons":
+	}
+
+	return nil
+}
+
+func (a *Activity) NKeys() int {
+	return 0
+}
+
+// UnmarshalJSON is a custom unmarshaljson to make CreatedAt a time.Time instead of an int
+func (activity *Activity) UnmarshalJSON(b []byte) error {
+	temp := struct {
+		Name          string       `json:"name"`
+		Type          ActivityType `json:"type"`
+		URL           string       `json:"url,omitempty"`
+		CreatedAt     int64        `json:"created_at"`
+		ApplicationID string       `json:"application_id,omitempty"`
+		State         string       `json:"state,omitempty"`
+		Details       string       `json:"details,omitempty"`
+		Timestamps    TimeStamps   `json:"timestamps,omitempty"`
+		Emoji         Emoji        `json:"emoji,omitempty"`
+		Party         Party        `json:"party,omitempty"`
+		Assets        Assets       `json:"assets,omitempty"`
+		Secrets       Secrets      `json:"secrets,omitempty"`
+		Instance      bool         `json:"instance,omitempty"`
+		Flags         int          `json:"flags,omitempty"`
+		// Buttons       []*ActivityButton `json:"buttons,omitempty"`
+	}{}
+	err := Unmarshal(b, &temp)
+	if err != nil {
+		return err
+	}
+	activity.CreatedAt = time.Unix(0, temp.CreatedAt*1000000)
+	activity.ApplicationID = temp.ApplicationID
+	activity.Assets = temp.Assets
+	activity.Details = temp.Details
+	activity.Emoji = temp.Emoji
+	activity.Flags = temp.Flags
+	activity.Instance = temp.Instance
+	activity.Name = temp.Name
+	activity.Party = temp.Party
+	activity.Secrets = temp.Secrets
+	activity.State = temp.State
+	activity.Timestamps = temp.Timestamps
+	activity.Type = temp.Type
+	activity.URL = temp.URL
+	// activity.Buttons = temp.Buttons
+	return nil
+}
+
+type ActivityButton struct {
+	Label string `json:"label,omitempty"`
+	URL   string `json:"url,omitempty"`
+}
+
+func (ab *ActivityButton) UnmarshalJSONArray(dec *gojay.Decoder, key string) error {
+	switch key {
+	case "label":
+		return dec.String(&ab.Label)
+	case "url":
+		return dec.String(&ab.URL)
+	}
+
+	return nil
+}
+
+func (ab *ActivityButton) NKeys() int {
+	return 0
+}
+
+// Party defines the Party field in the Activity struct
+// https://discord.com/developers/docs/topics/gateway#activity-object
+type Party struct {
+	ID   string `json:"id,omitempty"`
+	Size []int  `json:"size,omitempty"`
+}
+
+// Secrets defines the Secrets field for the Activity struct
+// https://discord.com/developers/docs/topics/gateway#activity-object
+type Secrets struct {
+	Join     string `json:"join,omitempty"`
+	Spectate string `json:"spectate,omitempty"`
+	Match    string `json:"match,omitempty"`
+}
+
+// ActivityType is the type of Activity (see ActivityType* consts) in the Activity struct
+// https://discord.com/developers/docs/topics/gateway#activity-object-activity-types
+type ActivityType int
+
+// Valid ActivityType values
+const (
+	ActivityTypeGame      ActivityType = 0
+	ActivityTypeStreaming ActivityType = 1
+	ActivityTypeListening ActivityType = 2
+	ActivityTypeWatching  ActivityType = 3
+	ActivityTypeCustom    ActivityType = 4
+	ActivityTypeCompeting ActivityType = 5
+)
+
+// Identify is sent during initial handshake with the discord gateway.
+// https://discord.com/developers/docs/topics/gateway#identify
+type Identify struct {
+	Token          string              `json:"token"`
+	Properties     IdentifyProperties  `json:"properties"`
+	Compress       bool                `json:"compress"`
+	LargeThreshold int                 `json:"large_threshold"`
+	Shard          *[2]int             `json:"shard,omitempty"`
+	Presence       GatewayStatusUpdate `json:"presence,omitempty"`
+	Intents        Intent              `json:"intents"`
+}
+
+// IdentifyProperties contains the "properties" portion of an Identify packet
+// https://discord.com/developers/docs/topics/gateway#identify-identify-connection-properties
+type IdentifyProperties struct {
+	OS              string `json:"$os"`
+	Browser         string `json:"$browser"`
+	Device          string `json:"$device"`
+	Referer         string `json:"$referer"`
+	ReferringDomain string `json:"$referring_domain"`
+}
+
 // StageInstance holds information about a live stage.
 // https://discord.com/developers/docs/resources/stage-instance#stage-instance-resource
 type StageInstance struct {
@@ -2015,10 +2224,12 @@ type InviteUser struct {
 }
 
 type CreateApplicationCommandRequest struct {
-	Name              string                      `json:"name"`                         // 1-32 character name matching ^[\w-]{1,32}$
-	Description       string                      `json:"description"`                  // 1-100 character description
+	Name              string                      `json:"name"`        // 1-32 character name matching ^[\w-]{1,32}$
+	Description       string                      `json:"description"` // 1-100 character description
+	Type              ApplicationCommandType      `json:"type,omitempty"`
 	Options           []*ApplicationCommandOption `json:"options"`                      // the parameters for the command
 	DefaultPermission *bool                       `json:"default_permission,omitempty"` // (default true)	whether the command is enabled by default when the app is added to a guild
+	NSFW              bool                        `json:"nsfw,omitempty"`               // marks a command as age-restricted
 }
 
 func (a *ApplicationCommandInteractionDataResolved) UnmarshalJSON(b []byte) error {

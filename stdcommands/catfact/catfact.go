@@ -2,71 +2,76 @@ package catfact
 
 import (
 	"encoding/json"
-	"io"
 	"math/rand"
-	"net/http"
 
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
-var Command = &commands.YAGCommand{
-	CmdCategory:         commands.CategoryFun,
-	Name:                "CatFact",
-	Aliases:             []string{"cf", "cat", "catfacts"},
-	Description:         "Cat Facts from local database or catfact.ninja API",
-	DefaultEnabled:      true,
-	SlashCommandEnabled: true,
-
-	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		var cf string
-		var err error
-		request := rand.Intn(2)
-		if request > 0 {
-			cf, err = catFactFromAPI()
-			if err == nil {
-				return cf, nil
-			}
-		}
-		cf = Catfacts[rand.Intn(len(Catfacts))]
-		return cf, nil
-	},
+type CatStuff struct {
+	Fact string `json:"fact"`
+	File string `json:"file"`
 }
 
-func catFactFromAPI() (string, error) {
-	var cf struct {
-		Fact string `json:"fact"`
-	}
+var Command = &commands.YAGCommand{
+	CmdCategory:               commands.CategoryFun,
+	Name:                      "CatFact",
+	Aliases:                   []string{"cf", "cat", "catfacts"},
+	Description:               "Cat Facts from local database or catfact.ninja API",
+	DefaultEnabled:            true,
+	ApplicationCommandEnabled: true,
+	ArgSwitches: []*dcmd.ArgDef{
+		{Name: "raw", Help: "Raw output"},
+	},
 
-	query := "https://catfact.ninja/fact"
-	req, err := http.NewRequest("GET", query, nil)
-	if err != nil {
-		return "", err
-	}
+	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		var catStuff *CatStuff
+		var cf, cPicLink string
 
-	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
+		queryFact := "https://catfact.ninja/fact"
+		queryPic := "https://aws.random.cat/meow"
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
+		cf = Catfacts[rand.Intn(len(Catfacts))]
 
-	if resp.StatusCode != 200 {
-		return "", commands.NewPublicError("Not 200!")
-	}
+		request := rand.Intn(2)
+		if request > 0 {
+			catStuffBody, err := util.RequestFromAPI(queryFact)
+			if err != nil {
+				return cf, nil
+			}
 
-	defer resp.Body.Close()
+			queryErr := json.Unmarshal([]byte(catStuffBody), &catStuff)
+			if queryErr == nil {
+				cf = catStuff.Fact
+			}
+		}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
+		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+			return cf, nil
+		}
 
-	queryErr := json.Unmarshal([]byte(body), &cf)
-	if queryErr != nil {
-		return "", err
-	}
+		catStuffBody, err := util.RequestFromAPI(queryPic)
+		if err != nil {
+			return cf, nil
+		}
 
-	return cf.Fact, nil
+		queryErr := json.Unmarshal([]byte(catStuffBody), &catStuff)
+		if queryErr == nil {
+			cPicLink = catStuff.File
+		} else {
+			return cf, nil
+		}
+
+		embed := &discordgo.MessageEmbed{
+			Description: cf,
+			Color:       int(rand.Int63n(0xffffff)),
+			Image: &discordgo.MessageEmbedImage{
+				URL: cPicLink,
+			},
+		}
+
+		return embed, nil
+	},
 }

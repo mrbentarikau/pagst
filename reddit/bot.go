@@ -56,13 +56,15 @@ func (p *Plugin) AddCommands() {
 			}
 
 			handlerSlow := &PostHandlerImpl{
-				Slow:        true,
-				ratelimiter: NewRatelimiter(),
+				Slow:         true,
+				ratelimiter:  NewRatelimiter(),
+				redditClient: p.redditClient,
 			}
 
 			handlerFast := &PostHandlerImpl{
-				Slow:        false,
-				ratelimiter: NewRatelimiter(),
+				Slow:         false,
+				ratelimiter:  NewRatelimiter(),
+				redditClient: p.redditClient,
 			}
 
 			err1 := handlerSlow.handlePost(resp[0], data.GuildData.GS.ID)

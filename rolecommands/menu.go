@@ -31,10 +31,11 @@ var recentMenusTracker = NewRecentMenusTracker(time.Minute * 10)
 
 func cmdFuncRoleMenuCreate(parsed *dcmd.Data) (interface{}, error) {
 	name := parsed.Args[0].Str()
+	panelURL := fmt.Sprintf("https://%s/manage/%d/rolecommands/", common.ConfHost.GetString(), parsed.GuildData.GS.ID)
 	group, err := models.RoleGroups(qm.Where("guild_id=?", parsed.GuildData.GS.ID), qm.Where("name ILIKE ?", name), qm.Load("RoleCommands")).OneG(parsed.Context())
 	if err != nil {
 		if errors.Cause(err) == sql.ErrNoRows {
-			const genericHelpMessage = "Did not find the role command group specified, make sure you typed it right, if you haven't set one up yet you can do so in the control panel."
+			var genericHelpMessage = fmt.Sprintf("Did not find the role command group specified, make sure you typed it right, if you haven't set one up yet you can do so in the control panel: <%s>.", panelURL)
 
 			groups, err := models.RoleGroups(models.RoleGroupWhere.GuildID.EQ(parsed.GuildData.GS.ID), qm.Select(models.RoleGroupColumns.Name)).AllG(parsed.Context())
 			if err != nil {
