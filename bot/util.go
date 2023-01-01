@@ -9,12 +9,12 @@ import (
 
 	"emperror.dev/errors"
 
+	"github.com/bwmarrin/snowflake"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
-	"github.com/bwmarrin/snowflake"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -120,7 +120,7 @@ func SnowflakeToTime(i int64) time.Time {
 
 func SetStatus(streaming, status, idle string, activity string) {
 	if status == "" {
-		r, _ := regexp.Compile(`\d+\.\d+\.\d+`)
+		r, _ := regexp.Compile(`\d+\.\d+(\.\d+)?`)
 		status = "v" + r.FindString(common.VERSION) + " :)"
 	}
 
