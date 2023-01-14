@@ -1,6 +1,7 @@
 package reminders
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
@@ -14,7 +15,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Plugin struct{}
+type ModalData struct {
+	AuthorID  int64
+	ChannelID int64
+	Content   string
+	GuildID   int64
+	MessageID int64
+}
+
+type Plugin struct {
+	RemindmeData ModalData
+}
 
 func RegisterPlugin() {
 	err := common.GORM.AutoMigrate(&Reminder{}).Error
@@ -36,12 +47,13 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 
 type Reminder struct {
 	gorm.Model
-	UserID    string
-	ChannelID string
-	GuildID   int64
-	Message   string
-	When      int64
-	Repeat    int64
+	UserID     string
+	ChannelID  string
+	GuildID    int64
+	Message    string
+	When       int64
+	Repeat     int64
+	AppCommand bool
 }
 
 func (r *Reminder) UserIDInt() (i int64) {
@@ -83,25 +95,60 @@ func (r *Reminder) Trigger() error {
 	member, _ := bot.GetMember(r.GuildID, r.UserIDInt())
 	if member != nil {
 		embed := &discordgo.MessageEmbed{
-			Title:       "Reminder from " + common.ConfBotName.GetString(),
+			Title:       fmt.Sprintf("Reminder #%d from %s", r.Model.ID, common.ConfBotName.GetString()),
 			Description: common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
 			Color:       int(rand.Int63n(16777215)),
+			Timestamp:   time.Now().Format(time.RFC3339),
 		}
 
-		mqueue.QueueMessage(&mqueue.QueuedElement{
-			Source:       "reminder",
-			SourceItemID: "",
+		var sendDM bool
+		channelID := r.ChannelIDInt()
+		if r.AppCommand {
+			sendDM = true
+			channel, err := common.BotSession.UserChannelCreate(r.UserIDInt())
+			if err != nil {
+				return err
+			}
 
-			GuildID:      r.GuildID,
-			ChannelID:    r.ChannelIDInt(),
-			MessageEmbed: embed,
-			MessageStr:   reminderRepeat + " <@" + r.UserID + ">", // : " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
-			AllowedMentions: discordgo.AllowedMentions{
-				Users: []int64{r.UserIDInt()},
-			},
+			msgSend := &discordgo.MessageSend{
+				AllowedMentions: discordgo.AllowedMentions{
+					Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeUsers},
+				},
+			}
 
-			Priority: 10, // above all feeds
-		})
+			gs := bot.State.GetGuild(r.GuildID)
+			gIcon := discordgo.EndpointGuildIcon(gs.ID, gs.Icon)
+			embedInfo := fmt.Sprintf("DM from the server %s", gs.Name)
+
+			embed.Footer = &discordgo.MessageEmbedFooter{
+				Text:    embedInfo,
+				IconURL: gIcon,
+			}
+
+			msgSend.Embeds = []*discordgo.MessageEmbed{embed}
+
+			_, err = common.BotSession.ChannelMessageSendComplex(channel.ID, msgSend)
+			if err != nil {
+				embed.Footer = &discordgo.MessageEmbedFooter{}
+				sendDM = false
+			}
+		}
+		if !sendDM {
+			mqueue.QueueMessage(&mqueue.QueuedElement{
+				Source:       "reminder",
+				SourceItemID: "",
+
+				GuildID:      r.GuildID,
+				ChannelID:    channelID,
+				MessageEmbed: embed,
+				MessageStr:   reminderRepeat + " <@" + r.UserID + ">", // : " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
+				AllowedMentions: discordgo.AllowedMentions{
+					Users: []int64{r.UserIDInt()},
+				},
+
+				Priority: 10, // above all feeds
+			})
+		}
 	}
 	return nil
 }
@@ -122,15 +169,22 @@ func GetChannelReminders(channel int64) (results []*Reminder, err error) {
 	return
 }
 
-func NewReminder(userID int64, guildID int64, channelID int64, message string, when time.Time, repeatDuration time.Duration) (*Reminder, error) {
+func NewReminder(userID int64, guildID int64, channelID int64, message string, when time.Time, repeatDuration time.Duration, isAppCmd ...bool) (*Reminder, error) {
+	var appCmd bool
 	whenUnix := when.Unix()
+
+	if len(isAppCmd) > 0 {
+		appCmd = true
+	}
+
 	reminder := &Reminder{
-		UserID:    discordgo.StrID(userID),
-		ChannelID: discordgo.StrID(channelID),
-		Message:   message,
-		When:      whenUnix,
-		GuildID:   guildID,
-		Repeat:    repeatDuration.Nanoseconds(),
+		UserID:     discordgo.StrID(userID),
+		ChannelID:  discordgo.StrID(channelID),
+		Message:    message,
+		When:       whenUnix,
+		GuildID:    guildID,
+		Repeat:     repeatDuration.Nanoseconds(),
+		AppCommand: appCmd,
 	}
 
 	err := common.GORM.Create(reminder).Error

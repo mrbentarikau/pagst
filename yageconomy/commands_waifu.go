@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lib/pq"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
@@ -14,8 +16,6 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/yageconomy/models"
-	"github.com/lib/pq"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -27,13 +27,13 @@ var (
 		Name:        "waifuTop",
 		Description: "Shows top waifus",
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Page", Type: dcmd.Int, Default: 1},
+			{Name: "Page", Type: dcmd.Int, Default: 1},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			conf := CtxConfig(parsed.Context())
 
 			_, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, parsed.Args[0].Int(), 0,
-				func(p *paginatedmessages.PaginatedMessage, newPage int) (*discordgo.MessageEmbed, error) {
+				func(p *paginatedmessages.PaginatedMessage, newPage int) (interface{}, error) {
 
 					offset := (newPage - 1) * 10
 					items, err := models.EconomyUsers(
@@ -76,7 +76,7 @@ var (
 		Name:        "waifuInfo",
 		Description: "Shows waifu stats of you or your targets",
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			target := parsed.Author
@@ -156,31 +156,31 @@ var (
 			}
 
 			embed.Fields = []*discordgo.MessageEmbedField{
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "Price (for you)",
 					Value: conf.CurrencySymbol + strconv.FormatInt(WaifuCost(originAccount, account), 10),
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "Claimed By",
 					Value: claimedByStr,
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "Likes",
 					Value: affinityStr,
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "Changes of hearth",
 					Value: strconv.Itoa(account.WaifuAffinityChanges),
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "Divorces",
 					Value: strconv.Itoa(account.WaifuDivorces),
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "Gifts",
 					Value: itemsBuf.String(),
 				},
-				&discordgo.MessageEmbedField{
+				{
 					Name:  "Waifus (" + strconv.Itoa(len(account.Waifus)) + ")",
 					Value: claimedBuf.String(),
 				},
@@ -195,8 +195,8 @@ var (
 		Description:  "Claims the target as your waifu, using your wallet money, if no amount is specified it will use the lowest",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
-			&dcmd.ArgDef{Name: "Money", Type: &AmountArg{}},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Money", Type: &AmountArg{}},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			u := parsed.Author
@@ -312,8 +312,8 @@ var (
 		Description:  "Transfer the ownership of one of your waifus to another user. You must pay 10% of your waifu's value.",
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Waifu", Type: dcmd.AdvUserNoMember},
-			&dcmd.ArgDef{Name: "New-Owner", Type: dcmd.AdvUserNoMember},
+			{Name: "Waifu", Type: dcmd.AdvUserNoMember},
+			{Name: "New-Owner", Type: dcmd.AdvUserNoMember},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			u := parsed.Author
@@ -391,7 +391,7 @@ var (
 		Description:  "Releases your claim on a specific waifu. You will get some of the money you've spent back unless that waifu has an affinity towards you. 6 hours cooldown.",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Waifu", Type: dcmd.AdvUserNoMember},
+			{Name: "Waifu", Type: dcmd.AdvUserNoMember},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			u := parsed.Author
@@ -449,7 +449,7 @@ var (
 		Name:        "waifuAffinity",
 		Description: "Sets your affinity towards someone you want to be claimed by. Setting affinity will reduce their claim on you by 20%. Provide no parameters to clear your affinity.",
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			account := CtxUser(parsed.Context())
@@ -510,8 +510,8 @@ var (
 		Name:        "waifuGift",
 		Description: "Gift an item to someone. This will increase their waifu value by 50% of the gifted item's value if you are not their waifu, or 95% if you are. Provide no parameters to see a list of items that you can gift.",
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Item", Type: dcmd.String},
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Item", Type: dcmd.String},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			account := CtxUser(parsed.Context())
@@ -597,12 +597,12 @@ quantity = economy_users_waifu_items.quantity + 1`, parsed.GuildData.GS.ID, targ
 		Description:  "Adds an item to the waifu shop, only economy adins can use this",
 		RequiredArgs: 3,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Price", Type: dcmd.Int},
-			&dcmd.ArgDef{Name: "Icon", Type: dcmd.String},
-			&dcmd.ArgDef{Name: "Name", Type: dcmd.String},
+			{Name: "Price", Type: dcmd.Int},
+			{Name: "Icon", Type: dcmd.String},
+			{Name: "Name", Type: dcmd.String},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "boost", Help: "Gambling boost", Type: dcmd.Int},
+			{Name: "boost", Help: "Gambling boost", Type: dcmd.Int},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			localID, err := common.GenLocalIncrID(parsed.GuildData.GS.ID, "economy_item")
@@ -640,10 +640,10 @@ quantity = economy_users_waifu_items.quantity + 1`, parsed.GuildData.GS.ID, targ
 		Description:  "Edits an item in the waifu shop",
 		RequiredArgs: 4,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Item", Type: dcmd.String},
-			&dcmd.ArgDef{Name: "Price", Type: dcmd.Int},
-			&dcmd.ArgDef{Name: "Icon", Type: dcmd.String},
-			&dcmd.ArgDef{Name: "Name", Type: dcmd.String},
+			{Name: "Item", Type: dcmd.String},
+			{Name: "Price", Type: dcmd.Int},
+			{Name: "Icon", Type: dcmd.String},
+			{Name: "Name", Type: dcmd.String},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 
@@ -675,7 +675,7 @@ quantity = economy_users_waifu_items.quantity + 1`, parsed.GuildData.GS.ID, targ
 		Description:  "Removes a item from the waifu shop",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Item", Type: dcmd.String},
+			{Name: "Item", Type: dcmd.String},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 
@@ -743,7 +743,7 @@ func WaifuCost(from, target *models.EconomyUser) int64 {
 }
 
 func ListWaifuItems(guildID, channelID int64, u *discordgo.User, currentMoney int64, currencySymbol string) (*discordgo.MessageEmbed, error) {
-	_, err := paginatedmessages.CreatePaginatedMessage(guildID, channelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, newPage int) (*discordgo.MessageEmbed, error) {
+	_, err := paginatedmessages.CreatePaginatedMessage(guildID, channelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, newPage int) (interface{}, error) {
 
 		offset := (newPage - 1) * 12
 

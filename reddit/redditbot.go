@@ -86,11 +86,11 @@ func (p *Plugin) runBot() {
 	feedLock.Lock()
 
 	if os.Getenv("YAGPDB_REDDIT_FAST_FEED_DISABLED") == "" {
-		fastFeed = NewPostFetcher(p.redditClient, false, NewPostHandler(false))
+		fastFeed = NewPostFetcher(p.redditClient, false, NewPostHandler(false, p.redditClient))
 		go fastFeed.Run()
 	}
 
-	slowFeed = NewPostFetcher(p.redditClient, true, NewPostHandler(true))
+	slowFeed = NewPostFetcher(p.redditClient, true, NewPostHandler(true, p.redditClient))
 	go slowFeed.Run()
 
 	feedLock.Unlock()
@@ -102,17 +102,19 @@ type KeyFastFeeds string
 var configCache sync.Map
 
 type PostHandlerImpl struct {
-	Slow        bool
-	ratelimiter *Ratelimiter
+	Slow         bool
+	ratelimiter  *Ratelimiter
+	redditClient *reddit.Client
 }
 
-func NewPostHandler(slow bool) PostHandler {
+func NewPostHandler(slow bool, redditClient *reddit.Client) PostHandler {
 	rl := NewRatelimiter()
 	go rl.RunGCLoop()
 
 	return &PostHandlerImpl{
-		Slow:        slow,
-		ratelimiter: rl,
+		Slow:         slow,
+		ratelimiter:  rl,
+		redditClient: redditClient,
 	}
 }
 
@@ -196,12 +198,20 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 		"subreddit":    post.Subreddit,
 	}).Debug("Found matched Reddit post")
 
-	message, embed := CreatePostMessage(post)
+	messageShowSpoilers, messageWithSpoilers, embedShowSpoilers, embedWithSpoilers := p.createPostMessage(post)
+	//messageWithSpoilers, embedWithSpoilers := p.createPostMessage(post, false)
 
 	for _, item := range filteredItems {
+		message := messageWithSpoilers
+		embed := embedWithSpoilers
+		if item.ShowSpoilers {
+			message = messageShowSpoilers
+			embed = embedShowSpoilers
+		}
+
 		idStr := strconv.FormatInt(item.ID, 10)
 
-		webhookUsername := "r/" + post.Subreddit + " • PAGSTDB"
+		webhookUsername := "Reddit • " + common.ConfBotName.GetString()
 
 		var content string
 		parseMentions := []discordgo.AllowedMentionType{}
@@ -265,7 +275,7 @@ OUTER:
 			limit = confMaxPostsHourSlow.GetInt()
 		}
 
-		// apply ratelimiting
+		// apply rate-limiting
 		if !p.ratelimiter.CheckIncrement(time.Now(), c.GuildID, limit) {
 			continue
 		}
@@ -291,7 +301,7 @@ OUTER:
 	return filteredItems
 }
 
-func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
+func (p *PostHandlerImpl) createPostMessage(post *reddit.Link) (string, string, *discordgo.MessageEmbed, *discordgo.MessageEmbed) {
 	plainMessage := fmt.Sprintf("**%s**\n*by %s (<%s>)*\n",
 		html.UnescapeString(post.Title), post.Author, "https://redd.it/"+post.ID)
 
@@ -322,10 +332,24 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		plainBody = post.URL
 	}
 
+	plainMessageSpoilers := plainMessage
+	plainMessage += plainBody
+
 	if post.Spoiler || parentSpoiler {
-		plainMessage += "|| " + plainBody + " ||"
+		plainMessageSpoilers += "|| " + plainBody + " ||"
 	} else {
-		plainMessage += plainBody
+		plainMessageSpoilers += plainBody
+	}
+
+	feedSpeed := "Fast feed"
+	if p.Slow {
+		feedSpeed = "Slow feed"
+	}
+
+	var subredditIcon, authorIcon string
+	subredditInfo, err := p.redditClient.GetSubredditInfo(post.Subreddit)
+	if err == nil {
+		subredditIcon = html.UnescapeString(subredditInfo.CommunityIcon)
 	}
 
 	embed := &discordgo.MessageEmbed{
@@ -340,7 +364,8 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 		//Description: "**" + html.UnescapeString(post.Title) + "**\n",
 		Description: "",
 		Footer: &discordgo.MessageEmbedFooter{
-			Text: "Type: ",
+			Text:    feedSpeed + " of type: ",
+			IconURL: subredditIcon,
 		},
 		Timestamp: time.Unix(int64(post.CreatedUtc), 0).UTC().Format(time.RFC3339),
 	}
@@ -352,41 +377,56 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 	embed.Title += common.CutStringShort(html.UnescapeString(post.Title), 240)
 	embed.URL = "https://redd.it/" + post.ID
 
+	embedSpoilers := *embed
+
 	if post.IsSelf {
 		//  Handle Self posts
 		embed.Footer.Text += "new self post"
+		embedSpoilers = *embed
+
 		postSelftext := re.ReplaceAllString(post.Selftext, " ")
 		if post.Spoiler {
-			embed.Description += "|| " + common.CutStringShort(html.UnescapeString(postSelftext), 250) + " ||"
+			embedSpoilers.Description += "|| " + common.CutStringShort(html.UnescapeString(postSelftext), 512) + " ||"
 		} else {
-			embed.Description += common.CutStringShort(html.UnescapeString(postSelftext), 250)
+			embedSpoilers.Description += common.CutStringShort(html.UnescapeString(postSelftext), 512)
 		}
+		embed.Description += common.CutStringShort(html.UnescapeString(postSelftext), 512)
 
 		embed.Color = 0xc3fc7e
+		embedSpoilers.Color = embed.Color
+
 	} else if post.CrosspostParent != "" && len(post.CrosspostParentList) > 0 {
 		//  Handle crossposts
 		embed.Footer.Text += "new crosspost"
 
 		parent := post.CrosspostParentList[0]
 		embed.Description += "**" + html.UnescapeString(parent.Title) + "**\n"
+		embedSpoilers = *embed
+
 		if parent.IsSelf {
 			// Cropsspost was a self post
 			embed.Color = 0xc3fc7e
+			embedSpoilers.Color = embed.Color
+
 			parentSelftext := re.ReplaceAllString(post.CrosspostParentList[0].Selftext, " ")
 			if parent.Spoiler {
-				embed.Description += "|| " + common.CutStringShort(html.UnescapeString(parentSelftext), 250) + " ||"
+				embedSpoilers.Description += "|| " + common.CutStringShort(html.UnescapeString(parentSelftext), 512) + " ||"
 			} else {
-				embed.Description += common.CutStringShort(html.UnescapeString(parentSelftext), 250)
+				embedSpoilers.Description += common.CutStringShort(html.UnescapeString(parentSelftext), 512)
 			}
+			embed.Description += common.CutStringShort(html.UnescapeString(parentSelftext), 512)
+
 		} else {
 			// cross post was a link most likely
 			embed.Color = 0x88c0d0
 			embed.Description += parent.URL
+
 			if parent.Media.Type == "" && !parent.Spoiler && parent.PostHint == "image" {
 				embed.Image = &discordgo.MessageEmbedImage{
 					URL: parent.URL,
 				}
 			}
+			embedSpoilers = *embed
 		}
 	} else {
 		//  Handle Link posts
@@ -399,9 +439,38 @@ func CreatePostMessage(post *reddit.Link) (string, *discordgo.MessageEmbed) {
 				URL: post.URL,
 			}
 		}
+		embedSpoilers = *embed
 	}
 
-	return plainMessage, embed
+	var authorInfo *reddit.Account
+	if len(embed.Description) >= 140 {
+		authorInfo, err = p.redditClient.GetUserInfo(post.Author)
+		if err == nil {
+			authorIcon = html.UnescapeString(authorInfo.IconImg)
+		}
+
+		embed.Author.IconURL = authorIcon
+		embedSpoilers.Author.IconURL = authorIcon
+
+	}
+
+	if len(embed.Description) >= 280 {
+		embed.Author.IconURL = ""
+		embedSpoilers.Author.IconURL = ""
+
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: html.UnescapeString(authorInfo.IconImg)}
+		embedSpoilers.Thumbnail = embed.Thumbnail
+	}
+
+	if post.Ups > 1 {
+		embed.Footer.Text += fmt.Sprintf("\nRating: %d ⬆ %d ⬇\nr/%s", post.Ups, post.Downs, post.Subreddit)
+		embedSpoilers.Footer.Text = embed.Footer.Text
+	} else {
+		embed.Footer.Text += "\nr/" + post.Subreddit
+		embedSpoilers.Footer.Text = embed.Footer.Text
+	}
+
+	return plainMessage, plainMessageSpoilers, embed, &embedSpoilers
 }
 
 type RedditIdSlice []string

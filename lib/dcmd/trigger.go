@@ -9,6 +9,8 @@ type Trigger struct {
 	EnableInDM            bool
 	EnableInGuildChannels bool
 	EnableInThreads       bool
+	// KRAAKA IMPORTANT
+	AppCommandNotSlash bool
 }
 
 func NewTrigger(name string, aliases ...string) *Trigger {
@@ -42,6 +44,11 @@ func (t *Trigger) SetEnableInGuildChannels(enable bool) *Trigger {
 
 func (t *Trigger) SetEnabledInThreads(enable bool) *Trigger {
 	t.EnableInThreads = enable
+	return t
+}
+
+func (t *Trigger) SetAppCommandNotSlash(enable bool) *Trigger {
+	t.AppCommandNotSlash = enable
 	return t
 }
 

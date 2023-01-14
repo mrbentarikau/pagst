@@ -1,6 +1,7 @@
 package dstate
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -8,7 +9,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
-// The state system for yags
+// The state system for pagst
 // You are safe to read everything returned
 // You are NOT safe to modify anything returned, as that can cause race conditions
 type StateTracker interface {
@@ -267,6 +268,13 @@ func (c *ChannelState) IsPrivate() bool {
 	return false
 }
 
+func (c *ChannelState) Mention() (string, error) {
+	if c == nil {
+		return "", errors.New("channel not found")
+	}
+	return "<#" + discordgo.StrID(c.ID) + ">", nil
+}
+
 // A fully cached member
 type MemberState struct {
 	// All the sparse fields are always available
@@ -302,8 +310,9 @@ const (
 
 type PresenceFields struct {
 	// Activity here
-	Game   *LightGame
-	Status PresenceStatus
+	Game     *LightGame
+	Activity *LightGame
+	Status   PresenceStatus
 }
 
 type LightGame struct {
@@ -312,7 +321,7 @@ type LightGame struct {
 	Details string `json:"details,omitempty"`
 	State   string `json:"state,omitempty"`
 
-	Type discordgo.GameType `json:"type"`
+	Type discordgo.ActivityType `json:"type"`
 }
 
 func MemberStateFromMember(member *discordgo.Member) *MemberState {

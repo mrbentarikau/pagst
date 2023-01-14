@@ -44,6 +44,13 @@ var (
 	ErrTokenInvalid            = errors.New("Invalid token provided, it has been marked as invalid")
 )
 
+var (
+	// Marshal defines function used to encode JSON payloads
+	Marshal func(v interface{}) ([]byte, error) = json.Marshal
+	// Unmarshal defines function used to decode JSON payloads
+	Unmarshal func(src []byte, v interface{}) error = json.Unmarshal
+)
+
 // Request is the same as RequestWithBucketID but the bucket id is the same as the urlStr
 func (s *Session) Request(method, urlStr string, data interface{}, extraHeaders map[string]string) (response []byte, err error) {
 	return s.RequestWithBucketID(method, urlStr, data, extraHeaders, strings.SplitN(urlStr, "?", 2)[0])
@@ -1993,7 +2000,19 @@ func (s *Session) ChannelMessageEditComplex(msg *MessageEdit) (st *Message, err 
 	}*/
 	msg.Embeds = ValidateComplexMessageEmbeds(msg.Embeds)
 
-	response, err := s.RequestWithBucketID("PATCH", EndpointChannelMessage(msg.Channel, msg.ID), msg, nil, EndpointChannelMessage(msg.Channel, 0))
+	//response, err := s.RequestWithBucketID("PATCH", EndpointChannelMessage(msg.Channel, msg.ID), msg, nil, EndpointChannelMessage(msg.Channel, 0))
+	endpoint := EndpointChannelMessage(msg.Channel, msg.ID)
+
+	var response []byte
+	if len(msg.Files) > 0 {
+		contentType, body, encodeErr := MultipartBodyWithJSON(msg, msg.Files)
+		if encodeErr != nil {
+			return st, encodeErr
+		}
+		response, err = s.request("PATCH", endpoint, contentType, body, nil, EndpointChannelMessage(msg.Channel, 0))
+	} else {
+		response, err = s.RequestWithBucketID("PATCH", endpoint, msg, nil, EndpointChannelMessage(msg.Channel, 0))
+	}
 	if err != nil {
 		return
 	}
@@ -3143,6 +3162,19 @@ func (s *Session) ApplicationCommands(appID, guildID int64) (cmd []*ApplicationC
 	return
 }
 
+// GetGlobalApplicationCommands fetches all of the global commands for your application. Returns an array of ApplicationCommand objects.
+// GET /applications/{application.id}/commands
+func (s *Session) GetGlobalApplicationCommands(applicationID int64) (st []*ApplicationCommand, err error) {
+	body, err := s.RequestWithBucketID("GET", EndpointApplicationCommands(applicationID), nil, nil, EndpointApplicationCommands(0))
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &st)
+
+	return
+}
+
 // GuildApplicationCommandsPermissions returns permissions for application commands in a guild.
 // appID       : The application ID
 // guildID     : Guild ID to retrieve application commands permissions for.
@@ -3200,19 +3232,6 @@ func (s *Session) ApplicationCommandPermissionsBatchEdit(appID, guildID int64, p
 	endpoint := EndpointApplicationCommandsGuildPermissions(appID, guildID)
 
 	_, err = s.RequestWithBucketID("PUT", endpoint, permissions, nil, endpoint)
-	return
-}
-
-// GetGlobalApplicationCommands fetches all of the global commands for your application. Returns an array of ApplicationCommand objects.
-// GET /applications/{application.id}/commands
-func (s *Session) GetGlobalApplicationCommands(applicationID int64) (st []*ApplicationCommand, err error) {
-	body, err := s.RequestWithBucketID("GET", EndpointApplicationCommands(applicationID), nil, nil, EndpointApplicationCommands(0))
-	if err != nil {
-		return
-	}
-
-	err = unmarshal(body, &st)
-
 	return
 }
 
@@ -3407,6 +3426,33 @@ func (s *Session) BatchEditGuildApplicationCommandsPermissions(applicationID int
 
 	return
 }
+
+/* KRAAKA START CHANGING MAYBE
+// InteractionRespond creates the response to an interaction.
+// interaction : Interaction instance.
+// resp        : Response message data.
+func (s *Session) InteractionRespond(interaction *Interaction, resp *InteractionResponse) error {
+	s.httpInteractionsMu.Lock()
+	if respondFunc, ok := s.httpInteractions[interaction.ID]; ok {
+		s.httpInteractionsMu.Unlock()
+		return respondFunc(resp)
+	}
+	s.httpInteractionsMu.Unlock()
+
+	endpoint := EndpointInteractionResponse(interaction.ID, interaction.Token)
+
+	if resp.Data != nil && len(resp.Data.Files) > 0 {
+		contentType, body, err := MultipartBodyWithJSON(resp, resp.Data.Files)
+		if err != nil {
+			return err
+		}
+		_, err = s.request("POST", endpoint, contentType, body, endpoint, 0)
+		return err
+	}
+	_, err := s.RequestWithBucketID("POST", endpoint, *resp, endpoint)
+	return err
+}
+*/
 
 // CreateInteractionResponse Create a response to an Interaction from the gateway. Takes an Interaction response.
 // POST /interactions/{interaction.id}/{interaction.token}/callback

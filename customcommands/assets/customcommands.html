@@ -84,7 +84,7 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <button type="submit" class="btn btn-success">Save group settings</button>
+                                    <button type="submit" class="btn btn-success btn-block">Save group settings</button>
                                 </div>
                             </div>
                             <div class="row" style="width:33%">
@@ -131,14 +131,13 @@
                         </div>
                     </form>
                     {{end}}
-                    <p>You have created <code>{{.CCCount}}</code> custom commands against the total limit of <code>{{.CCLimit}}</code>. {{.AdditionalMessage}}</p>
+                    <p>You have created <code>{{.CCCount}}</code> custom commands against the total limit of <code>{{.CCLimit}}</code><br/>CC count in this group: <code>{{len .CustomCommands}}</code><br/>{{.AdditionalMessage}}</p>
                     <form method="post" action="/manage/{{.ActiveGuild.ID}}/customcommands/commands/new" id="pagstNewCommand">
                         <script type="text/javascript" src="/static/js/shortcuts.js"></script>
                             <script>shortcut.add("shift+alt+c",function(){document.getElementById('pagstNewCommand').submit();});</script>
                         <input type="text" name="GroupID" hidden
                             value="{{if .CurrentCommandGroup}}{{.CurrentCommandGroup.ID}}{{end}}">
-                        <button type="submit" class="btn btn-success" {{if ge .CCCount .CCLimit}}disabled{{end}}>Create
-                            a new Custom Command</button>
+                        <button type="submit" class="btn btn-success" {{if ge .CCCount .CCLimit}}disabled{{end}}>Create a new Custom Command</button>
                     </form>
                 </div>
             </div>
@@ -155,7 +154,7 @@
         <div class="card-header clearfix">
             <form class="form-horizontal" method="post" method="post" action="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/update" data-async-form>
                 <div class="pull-right">
-                    {{if eq .TriggerType 5}}
+                    {{if and (eq .TriggerType 5) (not .Disabled)}}
                     <button type="submit" class="btn btn-secondary" title="This will trigger this custom command immediately"
                         formaction="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/run_now" style="margin: 5px 5px 5px 0px!important">Run now</button>
                     {{end}}
@@ -281,7 +280,7 @@
     {{else if eq .insideDot.TriggerType 6}}
         {{$triggerStyleClasses = "cc-trigger-reaction"}}
     {{end}}
-    <a style="padding:15px 20px 10px 20px" data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown"><span title="Run count: {{humanizeThousands .insideDot.RunCount}}">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType -}}</span>
+    <a {{if .insideDot.Disabled}}style="background-color:#5a2c26!important;padding:15px 20px 10px 20px" title="{{printf `Custom Command #%d disabled...` .insideDot.LocalID}}"{{else}} style="padding:15px 20px 10px 20px"{{end}} data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown"><span title="Run count: {{humanizeThousands .insideDot.RunCount}}">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType -}}</span>
 {{end}}
 
 {{define "cc_restrictions"}}

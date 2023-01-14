@@ -5,9 +5,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ei14/calc/compute"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/ei14/calc/compute"
 )
 
 var (
@@ -27,8 +27,8 @@ var Command = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Expression", Type: dcmd.String},
 	},
-	SlashCommandEnabled: true,
-	DefaultEnabled:      true,
+	ApplicationCommandEnabled: true,
+	DefaultEnabled:            true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		computeLock.Lock()
 		defer computeLock.Unlock()

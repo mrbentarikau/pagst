@@ -26,7 +26,7 @@ const (
 )
 
 var ShopCommands = []*commands.YAGCommand{
-	&commands.YAGCommand{
+	{
 		CmdCategory: CategoryEconomy,
 		Name:        "Shop",
 		Description: "Shows the items available in the server shop",
@@ -35,7 +35,7 @@ var ShopCommands = []*commands.YAGCommand{
 			account := CtxUser(parsed.Context())
 			conf := CtxConfig(parsed.Context())
 
-			_, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, 1, 0, func(p *paginatedmessages.PaginatedMessage, newPage int) (*discordgo.MessageEmbed, error) {
+			_, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, 1, 0, func(p *paginatedmessages.PaginatedMessage, newPage int) (interface{}, error) {
 				offset := (newPage - 1) * 12
 
 				items, err := models.EconomyShopItems(
@@ -90,13 +90,13 @@ var ShopCommands = []*commands.YAGCommand{
 			return nil, err
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "Buy",
 		Description:  "Buys an item from the server shop",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "item", Type: dcmd.Int},
+			{Name: "item", Type: dcmd.Int},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			u := parsed.Author
@@ -187,15 +187,15 @@ RETURNING value;`
 }
 
 var ShopAdminCommands = []*commands.YAGCommand{
-	&commands.YAGCommand{
+	{
 		CmdCategory:     CategoryEconomy,
 		Name:            "ShopAdd",
 		Description:     "Adds an item to the shop, only economy admins can use this command",
 		LongDescription: "Types are 'role', 'list' and 'gamblingboostx[percentage]' where percentage is the gambling boost percentage\n\nExample: -shopadd gamblingboostx10 1000 10% gambling income increase\nThat will add a item with 10% gambling income increase and with the name '10% gambling income increase'",
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Type", Type: dcmd.String},
-			&dcmd.ArgDef{Name: "Price", Type: dcmd.Int},
-			&dcmd.ArgDef{Name: "Name", Type: dcmd.String},
+			{Name: "Type", Type: dcmd.String},
+			{Name: "Price", Type: dcmd.Int},
+			{Name: "Name", Type: dcmd.String},
 		},
 		RequiredArgs: 3,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
@@ -263,14 +263,14 @@ var ShopAdminCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Added **%s** to the shop.", name), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "ShopListAdd",
 		Description:  "Adds a item to a shop list, only economy admin can use this command",
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "List-ID", Type: dcmd.Int},
-			&dcmd.ArgDef{Name: "Item", Type: dcmd.String},
+			{Name: "List-ID", Type: dcmd.Int},
+			{Name: "Item", Type: dcmd.String},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			u := parsed.Author
@@ -307,14 +307,14 @@ var ShopAdminCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Added to the list **%s**", shopItem.Name), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "ShopRem",
 		Aliases:      []string{"ShopDel"},
 		Description:  "Removes a item from the shop, only economy admins can use this command",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "ID", Type: dcmd.Int},
+			{Name: "ID", Type: dcmd.Int},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 

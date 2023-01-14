@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
+	"strings"
 	"time"
 
 	"emperror.dev/errors"
@@ -28,7 +28,11 @@ var _ bot.BotInitHandler = (*Plugin)(nil)
 var _ commands.CommandProvider = (*Plugin)(nil)
 
 func (p *Plugin) AddCommands() {
-	commands.AddRootCommands(p, cmdLogs, cmdWhois, cmdNicknames, cmdUsernames, cmdClearNames)
+	if confEnableUsernameTracking.GetBool() {
+		commands.AddRootCommands(p, cmdLogs, cmdWhois, cmdNicknames, cmdUsernames, cmdClearNames)
+	} else {
+		commands.AddRootCommands(p, cmdLogs, cmdWhois)
+	}
 }
 
 func (p *Plugin) BotInit() {
@@ -55,8 +59,8 @@ var cmdLogs = &commands.YAGCommand{
 	ArgSwitches: []*dcmd.ArgDef{
 		{Name: "channel", Help: "Optional channel to log instead", Type: dcmd.Channel},
 	},
-	SlashCommandEnabled: true,
-	DefaultEnabled:      false,
+	ApplicationCommandEnabled: true,
+	DefaultEnabled:            false,
 	RunFunc: func(cmd *dcmd.Data) (interface{}, error) {
 		num := cmd.Args[0].Int()
 
@@ -96,8 +100,9 @@ var cmdWhois = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "User", Type: &commands.MemberArg{}},
 	},
-	SlashCommandEnabled: true,
-	DefaultEnabled:      false,
+	ApplicationCommandEnabled: true,
+	ApplicationCommandType:    2,
+	DefaultEnabled:            false,
 	RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 		config, err := GetConfig(common.PQ, parsed.Context(), parsed.GuildData.GS.ID)
 		if err != nil {
@@ -105,8 +110,15 @@ var cmdWhois = &commands.YAGCommand{
 		}
 
 		var member *dstate.MemberState
+
 		if parsed.Args[0].Value != nil {
 			member = parsed.Args[0].Value.(*dstate.MemberState)
+			if parsed.SlashCommandTriggerData != nil {
+				if sm := bot.State.GetMember(parsed.GuildData.GS.ID, member.User.ID); sm != nil {
+					// Prefer state member over the one provided in the message, since it may have presence data
+					member = sm
+				}
+			}
 		} else {
 			member = parsed.GuildData.MS
 			if sm := bot.State.GetMember(parsed.GuildData.GS.ID, member.User.ID); sm != nil {
@@ -114,12 +126,16 @@ var cmdWhois = &commands.YAGCommand{
 				member = sm
 			}
 		}
+
 		var nick, joinedAtStr, joinedAtDurStr string
+		var joinedAtUnix int64
+
 		if member.Member == nil {
 			joinedAtStr = "Couldn't find out"
 			joinedAtDurStr = "Couldn't find out"
 		} else {
 			parsedJoinedAt, _ := member.Member.JoinedAt.Parse()
+			joinedAtUnix = parsedJoinedAt.Unix()
 			joinedAtStr = parsedJoinedAt.UTC().Format(time.RFC822)
 			dur := time.Since(parsedJoinedAt)
 			joinedAtDurStr = common.HumanizeDuration(common.DurationPrecisionHours, dur)
@@ -156,7 +172,7 @@ var cmdWhois = &commands.YAGCommand{
 			}
 		}
 
-		onlineStatus := "Offline/Invisible"
+		onlineStatus := ""
 		if member.Presence != nil {
 			switch member.Presence.Status {
 			case 0:
@@ -196,8 +212,27 @@ var cmdWhois = &commands.YAGCommand{
 			}
 		}
 
+		if onlineStatus != "" {
+			onlineStatus = "(" + onlineStatus + ")"
+		}
+
+		target, err := bot.GetMember(parsed.GuildData.GS.ID, member.User.ID)
+		if err != nil {
+			fmt.Println((fmt.Errorf("unknown member")).Error())
+		}
+
+		perms, err := parsed.GuildData.GS.GetMemberPermissions(parsed.GuildData.CS.ID, member.User.ID, target.Member.Roles)
+		if err != nil {
+			fmt.Println((fmt.Errorf("unable to calculate perms")).Error())
+		}
+
+		var humanized []string
+		if perms > 0 {
+			humanized = common.HumanizePermissions(int64(perms))
+		}
+
 		embed := &discordgo.MessageEmbed{
-			Title: fmt.Sprintf("%s#%s%s (%s)", member.User.Username, member.User.Discriminator, nick, onlineStatus),
+			Title: fmt.Sprintf("%s#%s%s %s", member.User.Username, member.User.Discriminator, nick, onlineStatus),
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "ID",
@@ -211,21 +246,21 @@ var cmdWhois = &commands.YAGCommand{
 				},
 				{
 					Name:   "Account Created",
-					Value:  t.UTC().Format(time.RFC822),
+					Value:  fmt.Sprintf("<t:%d>\n*%s*", t.UTC().Unix(), t.UTC().Format(time.RFC822)),
 					Inline: true,
 				},
 				{
-					Name:   "Account Age",
+					Name:   "Account Age (UTC)",
 					Value:  createdDurStr,
 					Inline: true,
 				},
 				{
 					Name:   "Joined Server At",
-					Value:  joinedAtStr,
+					Value:  fmt.Sprintf("<t:%d>\n*%s*", joinedAtUnix, joinedAtStr),
 					Inline: true,
 				},
 				{
-					Name:   "Join Server Age",
+					Name:   "Join Server Age (UTC)",
 					Value:  joinedAtDurStr,
 					Inline: true,
 				},
@@ -234,13 +269,19 @@ var cmdWhois = &commands.YAGCommand{
 					Value:  memberStatus,
 					Inline: true,
 				},
+				{
+					Name:   fmt.Sprintf("Permissions in:\n#%s", parsed.GuildData.CS.Name),
+					Value:  fmt.Sprintf("`%d`\n%s", perms, strings.Join(humanized, ", ")),
+					Inline: false,
+				},
 			},
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
 				URL: member.User.AvatarURL("256"),
 			},
 		}
 
-		if config.UsernameLoggingEnabled.Bool {
+		var trackingUNDisabled, trackingNNDisabled bool
+		if config.UsernameLoggingEnabled.Bool && confEnableUsernameTracking.GetBool() {
 			usernames, err := GetUsernames(parsed.Context(), member.User.ID, 5, 0)
 			if err != nil {
 				return err, err
@@ -257,13 +298,10 @@ var cmdWhois = &commands.YAGCommand{
 				Value: usernamesStr,
 			})
 		} else {
-			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-				Name:  "Usernames",
-				Value: "Username tracking disabled",
-			})
+			trackingUNDisabled = true
 		}
 
-		if config.NicknameLoggingEnabled.Bool {
+		if config.NicknameLoggingEnabled.Bool && confEnableUsernameTracking.GetBool() {
 
 			nicknames, err := GetNicknames(parsed.Context(), member.User.ID, parsed.GuildData.GS.ID, 5, 0)
 			if err != nil {
@@ -285,6 +323,20 @@ var cmdWhois = &commands.YAGCommand{
 				Value: nicknameStr,
 			})
 		} else {
+			trackingNNDisabled = true
+		}
+
+		if trackingUNDisabled && trackingNNDisabled {
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:  "Usernames and Nicknames",
+				Value: "Tracking disabled",
+			})
+		} else if trackingUNDisabled && !trackingNNDisabled {
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:  "Usernames",
+				Value: "Username tracking disabled",
+			})
+		} else if trackingNNDisabled && !trackingUNDisabled {
 			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
 				Name:  "Nicknames",
 				Value: "Nickname tracking disabled",
@@ -319,7 +371,7 @@ var cmdUsernames = &commands.YAGCommand{
 			gID = parsed.GuildData.GS.ID
 		}
 
-		pm, err := paginatedmessages.CreatePaginatedMessage(gID, parsed.ChannelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+		pm, err := paginatedmessages.CreatePaginatedMessage(gID, parsed.ChannelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 			target := parsed.Author
 			if parsed.Args[0].Value != nil {
 				target = parsed.Args[0].Value.(*discordgo.User)
@@ -382,7 +434,7 @@ var cmdNicknames = &commands.YAGCommand{
 			return "Nickname logging is disabled on this server", nil
 		}
 
-		pm, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.ChannelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+		pm, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.ChannelID, 1, 0, func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 
 			offset := (page - 1) * 15
 
@@ -492,7 +544,7 @@ func HandleQueueEvt(evt *eventsystem.EventData) {
 }
 
 func queueEvt(evt interface{}) {
-	if os.Getenv("YAGPDB_LOGS_DISABLE_USERNAME_TRACKING") != "" {
+	if !confEnableUsernameTracking.GetBool() {
 		return
 	}
 

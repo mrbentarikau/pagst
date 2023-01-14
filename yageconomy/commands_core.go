@@ -23,13 +23,13 @@ import (
 )
 
 var CoreCommands = []*commands.YAGCommand{
-	&commands.YAGCommand{
+	{
 		CmdCategory: CategoryEconomy,
 		Name:        "Loot",
 		Aliases:     []string{"balance", "wallet"},
 		Description: "Shows you balance",
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			var targetAccount *models.EconomyUser
@@ -54,22 +54,22 @@ var CoreCommands = []*commands.YAGCommand{
 				Description: "Account of " + target.Username,
 				Color:       ColorBlue,
 				Fields: []*discordgo.MessageEmbedField{
-					&discordgo.MessageEmbedField{
+					{
 						Inline: true,
 						Name:   "Bank Balance",
 						Value:  conf.CurrencySymbol + fmt.Sprint(targetAccount.MoneyBank),
 					},
-					&discordgo.MessageEmbedField{
+					{
 						Inline: true,
 						Name:   "Wallet",
 						Value:  conf.CurrencySymbol + fmt.Sprint(targetAccount.MoneyWallet),
 					},
-					&discordgo.MessageEmbedField{
+					{
 						Inline: true,
 						Name:   "Gambling profit boost %",
 						Value:  fmt.Sprintf("%d%%", targetAccount.GamblingBoostPercentage),
 					},
-					&discordgo.MessageEmbedField{
+					{
 						Inline: true,
 						Name:   "Fish caught",
 						Value:  fmt.Sprintf("%d", targetAccount.FishCaugth),
@@ -79,14 +79,14 @@ var CoreCommands = []*commands.YAGCommand{
 			return embed, nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "Withdraw",
 		Description:  "Withdraws money from your bank account into your wallet",
 		RequiredArgs: 1,
 		Middlewares:  []dcmd.MiddleWareFunc{moneyAlteringMW},
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Amount", Type: &AmountArg{}},
+			{Name: "Amount", Type: &AmountArg{}},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			account := CtxUser(parsed.Context())
@@ -108,14 +108,14 @@ var CoreCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Withdrew **%s%d** from your bank, your wallet now has **%s%d**", conf.CurrencySymbol, amount, conf.CurrencySymbol, account.MoneyWallet), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "Deposit",
 		Description:  "Deposits money into your bank account from your wallet",
 		Middlewares:  []dcmd.MiddleWareFunc{moneyAlteringMW},
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Amount", Type: &AmountArg{}},
+			{Name: "Amount", Type: &AmountArg{}},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			account := CtxUser(parsed.Context())
@@ -137,16 +137,16 @@ var CoreCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Deposited **%s%d** Into your bank account, your bank now contains **%s%d**", conf.CurrencySymbol, amount, conf.CurrencySymbol, account.MoneyBank), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "Give",
 		Description:  "Give someone money from your wallet",
 		Middlewares:  []dcmd.MiddleWareFunc{moneyAlteringMW},
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
-			&dcmd.ArgDef{Name: "Amount", Type: &AmountArg{}},
-			&dcmd.ArgDef{Name: "Reason", Type: dcmd.String},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Amount", Type: &AmountArg{}},
+			{Name: "Reason", Type: dcmd.String},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			target := parsed.Args[0].User()
@@ -182,7 +182,7 @@ var CoreCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Sent %s%d to %s%s", conf.CurrencySymbol, amount, target.Username, extraStr), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory: CategoryEconomy,
 		Name:        "Daily",
 		Middlewares: []dcmd.MiddleWareFunc{moneyAlteringMW},
@@ -214,13 +214,13 @@ var CoreCommands = []*commands.YAGCommand{
 			return ErrorEmbed(u, "You can't claim your daily yet again! Please wait another %s.", common.HumanizeDuration(common.DurationPrecisionSeconds, timeToWait)), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory: CategoryEconomy,
 		Name:        "TopMoney",
 		Aliases:     []string{"LB"},
 		Description: "Economy leaderboard, optionally specify a page",
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Page", Type: dcmd.Int, Default: 1},
+			{Name: "Page", Type: dcmd.Int, Default: 1},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			conf := CtxConfig(parsed.Context())
@@ -230,7 +230,7 @@ var CoreCommands = []*commands.YAGCommand{
 				page = 1
 			}
 
-			_, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, page, 0, func(p *paginatedmessages.PaginatedMessage, newPage int) (*discordgo.MessageEmbed, error) {
+			_, err := paginatedmessages.CreatePaginatedMessage(parsed.GuildData.GS.ID, parsed.GuildData.CS.ID, page, 0, func(p *paginatedmessages.PaginatedMessage, newPage int) (interface{}, error) {
 
 				offset := (newPage - 1) * 10
 				if offset < 0 {
@@ -286,15 +286,15 @@ var CoreCommands = []*commands.YAGCommand{
 			return nil, err
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "Plant",
 		Description:  "Plants a certain amount of currency in the channel, optionally with a password, use Pick to pick it",
 		Middlewares:  []dcmd.MiddleWareFunc{moneyAlteringMW},
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Money", Type: &AmountArg{}},
-			&dcmd.ArgDef{Name: "Password", Type: dcmd.String, Default: ""},
+			{Name: "Money", Type: &AmountArg{}},
+			{Name: "Password", Type: dcmd.String, Default: ""},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			account := CtxUser(parsed.Context())
@@ -329,13 +329,13 @@ var CoreCommands = []*commands.YAGCommand{
 			return nil, nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "Pick",
 		Description:  "Picks up money planted in the channel previously using plant",
 		RequiredArgs: 1,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Password", Type: dcmd.String},
+			{Name: "Password", Type: dcmd.String},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			bot.MessageDeleteQueue.DeleteMessages(parsed.GuildData.CS.ID, parsed.TraditionalTriggerData.Message.ID)
@@ -399,15 +399,15 @@ var CoreCommands = []*commands.YAGCommand{
 }
 
 var CoreAdminCommands = []*commands.YAGCommand{
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "Award",
 		Description:  "Award a member of the server some money (admins only)",
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
-			&dcmd.ArgDef{Name: "Amount", Type: &dcmd.IntArg{Min: 1, Max: 0xfffffffffffffff}},
-			&dcmd.ArgDef{Name: "Reason", Type: dcmd.String},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Amount", Type: &dcmd.IntArg{Min: 1, Max: 0xfffffffffffffff}},
+			{Name: "Reason", Type: dcmd.String},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			target := parsed.Args[0].User()
@@ -436,14 +436,14 @@ var CoreAdminCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Awarded **%s** with %s%d%s", target.Username, conf.CurrencySymbol, amount, extraStr), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "AwardAll",
 		Description:  "Award all members with the target role",
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.String},
-			&dcmd.ArgDef{Name: "Amount", Type: &dcmd.IntArg{Min: 1, Max: 0xfffffffffffffff}},
+			{Name: "Target", Type: dcmd.String},
+			{Name: "Amount", Type: &dcmd.IntArg{Min: 1, Max: 0xfffffffffffffff}},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 
@@ -486,15 +486,15 @@ var CoreAdminCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Started the job..."), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "Take",
 		Description:  "Takes away money from someone (admins only)",
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
-			&dcmd.ArgDef{Name: "Amount", Type: &AmountArg{}},
-			&dcmd.ArgDef{Name: "Reason", Type: dcmd.String},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Amount", Type: &AmountArg{}},
+			{Name: "Reason", Type: dcmd.String},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			target := parsed.Args[0].User()
@@ -526,14 +526,14 @@ var CoreAdminCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Took away %s%d from **%s**%s", conf.CurrencySymbol, amount, target.Username, extraStr), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "TakeAll",
 		Description:  "Takes away money from all the users with the role",
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.String},
-			&dcmd.ArgDef{Name: "Amount", Type: &AmountArg{}},
+			{Name: "Target", Type: dcmd.String},
+			{Name: "Amount", Type: &AmountArg{}},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 
@@ -578,13 +578,13 @@ var CoreAdminCommands = []*commands.YAGCommand{
 			return SimpleEmbedResponse(u, "Started the job..."), nil
 		},
 	},
-	&commands.YAGCommand{
+	{
 		CmdCategory:  CategoryEconomy,
 		Name:         "DelUser",
 		Description:  "Deletes someone's economy account (admins only)",
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			&dcmd.ArgDef{Name: "Target", Type: dcmd.AdvUserNoMember},
+			{Name: "Target", Type: dcmd.AdvUserNoMember},
 		},
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			target := parsed.Args[0].User()

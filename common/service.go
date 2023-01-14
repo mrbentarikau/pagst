@@ -61,7 +61,7 @@ type ServiceHost struct {
 	Services []*Service `json:"services"`
 }
 
-// ServiceTracker keeps track of the various components of yagpdb in a central location for ease of access
+// ServiceTracker keeps track of the various components of pagstdb in a central location for ease of access
 var ServiceTracker = newServiceTracker()
 
 func newServiceTracker() *serviceTracker {
@@ -150,7 +150,7 @@ func (s *serviceTracker) update() {
 
 	err = RedisPool.Do(radix.FlatCmd(nil, "ZREMRANGEBYSCORE", ServicesRedisKey, 0, time.Now().Unix()-30))
 	if err != nil {
-		logger.WithError(err).Error("feailed clearing old service hosts")
+		logger.WithError(err).Error("failed clearing old service hosts")
 		return
 	}
 }

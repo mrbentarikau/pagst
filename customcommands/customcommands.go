@@ -137,6 +137,7 @@ type CustomCommand struct {
 	RegexCaseSensitive bool     `json:"regex_case_sensitive" schema:"regex_case_sensitive"`
 	ID                 int64    `json:"id"`
 	Note               string   `json:"note" schema:"note" valid:",0,256"`
+	Disabled           bool     `json:"disabled" schema:"disabled"`
 
 	ContextChannel int64 `schema:"context_channel" valid:"channel,true"`
 
@@ -161,8 +162,9 @@ type CustomCommand struct {
 
 	GroupID int64
 
-	ShowErrors     bool `schema:"show_errors"`
-	ThreadsEnabled bool `schema:"threads_enabled"`
+	ShowErrors       bool `schema:"show_errors"`
+	ThreadsEnabled   bool `schema:"threads_enabled"`
+	NormalizeUnicode bool `json:"normalize_unicode" schema:"normalize_unicode"`
 }
 
 var _ web.CustomValidator = (*CustomCommand)(nil)
@@ -258,8 +260,10 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 		Responses: cc.Responses,
 
 		ShowErrors: cc.ShowErrors,
+		Disabled:   !cc.Disabled,
 
-		ThreadsEnabled: cc.ThreadsEnabled,
+		ThreadsEnabled:   cc.ThreadsEnabled,
+		NormalizeUnicode: cc.NormalizeUnicode,
 
 		DateUpdated: null.TimeFrom(time.Now()),
 	}
@@ -289,15 +293,15 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 	return pqCommand
 }
 
-func CmdRunsInCategory(cc *models.CustomCommand, channel int64) bool {
+func CmdRunsInCategory(cc *models.CustomCommand, parentChannel int64) bool {
 	if cc.GroupID.Valid {
 		// check group restrictions
-		if common.ContainsInt64Slice(cc.R.Group.IgnoreCategories, channel) {
+		if common.ContainsInt64Slice(cc.R.Group.IgnoreCategories, parentChannel) {
 			return false
 		}
 
 		if len(cc.R.Group.WhitelistCategories) > 0 {
-			if !common.ContainsInt64Slice(cc.R.Group.WhitelistCategories, channel) {
+			if !common.ContainsInt64Slice(cc.R.Group.WhitelistCategories, parentChannel) {
 				return false
 			}
 		}
@@ -305,7 +309,7 @@ func CmdRunsInCategory(cc *models.CustomCommand, channel int64) bool {
 
 	// check command specific restrictions
 	for _, v := range cc.Categories {
-		if v == channel {
+		if v == parentChannel {
 			return cc.CategoriesWhitelistMode
 		}
 	}
@@ -337,7 +341,7 @@ func CmdRunsInChannel(cc *models.CustomCommand, channel int64) bool {
 		}
 	}
 
-	if cs.Type.IsThread() {
+	if cs != nil && cs.Type.IsThread() {
 		isContained := common.ContainsInt64Slice(cc.Channels, common.ChannelOrThreadParentID(cs))
 		if cc.ChannelsWhitelistMode && !isContained {
 			return false

@@ -15,42 +15,48 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 var Command = &commands.YAGCommand{
-	CmdCategory:         commands.CategoryFun,
-	Cooldown:            5,
-	Name:                "exchange",
-	Aliases:             []string{"exch", "money"},
-	Description:         "💱Shows Currency Exchange Rates",
-	RunInDM:             true,
-	DefaultEnabled:      true,
-	SlashCommandEnabled: true,
-	RequiredArgs:        3,
+	CmdCategory:               commands.CategoryFun,
+	Cooldown:                  5,
+	Name:                      "Forex",
+	Aliases:                   []string{"fx", "exchange", "money"},
+	Description:               "💱Shows Currency Exchange Rate and converts to target currency...",
+	RunInDM:                   true,
+	DefaultEnabled:            true,
+	ApplicationCommandEnabled: true,
+	RequiredArgs:              3,
 	Arguments: []*dcmd.ArgDef{
-		{Name: "Amount", Type: dcmd.Float},
+		{Name: "Amount", Type: &dcmd.FloatArg{Min: 1, Max: 1000000000000000}},
 		{Name: "From", Type: dcmd.String}, {Name: "To", Type: dcmd.String},
 	},
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		amount := fmt.Sprintf("%.2f", data.Args[0].Float64())
-
+		amount := data.Args[0].Float64()
 		from := Symbols[strings.ToUpper(data.Args[1].Str())]
 		to := Symbols[strings.ToUpper(data.Args[2].Str())]
 
 		if len(to) == 0 || len(from) == 0 {
 			return "Invalid currency code.\nCheck out available codes on: <https://api.exchangerate.host/symbols>", nil
 		}
-		output, err := requestAPI("https://api.exchangerate.host/convert?from=" + from["Code"] + "&to=" + to["Code"] + "&amount=1")
+		output, err := requestAPI("https://api.exchangerate.host/convert?from=" + from["Code"] + "&to=" + to["Code"] + "&amount=" + fmt.Sprintf("%.3f", amount))
 		if err != nil {
 			return nil, err
 		}
 
+		printer := message.NewPrinter(language.English)
+		exchangeFrom := printer.Sprintf("%.2f", amount)
+		exchangeTo := printer.Sprintf("%.3f", output.Result)
+
 		embed := &discordgo.MessageEmbed{
-			Title:       "💱Currency Exhange Rate",
-			Description: fmt.Sprintf("\n%s **%s** (%s) is %0.3f **%s** (%s).", amount, from["Description"], output.Query.From, data.Args[0].Float64()*output.Result, to["Description"], output.Query.To),
+			Title:       "💱Currency Exchange Rate",
+			Description: fmt.Sprintf("\n%s **%s** (%s) is %s **%s** (%s).", exchangeFrom, from["Description"], output.Query.From, exchangeTo, to["Description"], output.Query.To),
 			Color:       int(rand.Int63n(0xffffff)),
-			Footer:      &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Based on currency rate 1:%0.3f", output.Result)},
+			Footer:      &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("Based on currency rate 1 : %f", output.Info.Rate)},
 			Timestamp:   time.Now().UTC().Format(time.RFC3339),
 		}
 

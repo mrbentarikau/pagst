@@ -55,7 +55,7 @@ var panelLogKeyCore = cplogs.RegisterActionFormat(&cplogs.ActionFormat{
 func getRedditQuote() string {
 	var redditQuoteQuery []redditQuoteStruct
 	var RedditHost = "https://old.reddit.com/"
-	var RedditJSON = "r/caubert/random.json"
+	var RedditJSON = common.ConfRedditRandomJSON.GetString()
 
 	queryURL := RedditHost + RedditJSON
 	req, err := http.NewRequest("GET", queryURL, nil)
@@ -63,7 +63,7 @@ func getRedditQuote() string {
 		return fmt.Sprint("Error: ", err)
 	}
 
-	req.Header.Set("User-Agent", "PAGST/20.42.6702 /u/caubert")
+	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString()+" /u/caubert")
 	//req.Header.Set("Content-Type", "application/json")
 
 	resp, _ := http.DefaultClient.Do(req)
@@ -209,15 +209,23 @@ type Alert struct {
 }
 
 const (
-	AlertDanger  = "danger"
-	AlertSuccess = "success"
-	AlertInfo    = "info"
-	AlertWarning = "warning"
+	AlertDanger    = "danger"
+	AlertSuccess   = "success"
+	AlertInfo      = "info"
+	AlertWarning   = "warning"
+	AlertCCWarning = "warning-cc-limit"
 )
 
 func ErrorAlert(args ...interface{}) *Alert {
 	return &Alert{
 		Style:   AlertDanger,
+		Message: fmt.Sprint(args...),
+	}
+}
+
+func CCLimitWarningAlert(args ...interface{}) *Alert {
+	return &Alert{
+		Style:   AlertCCWarning,
 		Message: fmt.Sprint(args...),
 	}
 }

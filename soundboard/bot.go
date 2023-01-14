@@ -21,8 +21,8 @@ func (p *Plugin) AddCommands() {
 			Arguments: []*dcmd.ArgDef{
 				{Name: "Name", Type: dcmd.String},
 			},
-			SlashCommandEnabled: true,
-			DefaultEnabled:      true,
+			ApplicationCommandEnabled: true,
+			DefaultEnabled:            true,
 			RunFunc: func(data *dcmd.Data) (interface{}, error) {
 				sounds, err := GetSoundboardSounds(data.GuildData.GS.ID, data.Context())
 				if err != nil {
@@ -85,12 +85,12 @@ func (p *Plugin) AddCommands() {
 		},
 
 		&commands.YAGCommand{
-			CmdCategory:         commands.CategoryFun,
-			Name:                "SoundboardReset",
-			Aliases:             []string{"sbclose", "sbReset"},
-			Description:         "Reset Soundboard Player",
-			SlashCommandEnabled: true,
-			DefaultEnabled:      true,
+			CmdCategory:               commands.CategoryFun,
+			Name:                      "SoundboardReset",
+			Aliases:                   []string{"sbclose", "sbReset"},
+			Description:               "Reset Soundboard Player",
+			ApplicationCommandEnabled: true,
+			DefaultEnabled:            true,
 			RunFunc: func(data *dcmd.Data) (interface{}, error) {
 				response := resetPlayerServer(data.GuildData.GS.ID)
 				if response != "" {

@@ -88,17 +88,6 @@ func InitCommands() {
 	}
 }
 
-/* Pedro's prefix change
-func GetCommandPrefixRedis(guild int64) (string, error) {
-	var prefix string
-	err := common.RedisPool.Do(radix.Cmd(&prefix, "GET", "command_prefix:"+discordgo.StrID(guild)))
-	if err == nil && prefix == "" {
-		prefix = defaultCommandPrefix()
-	}
-	return prefix, err
-}
-*/
-
 var _ featureflags.PluginWithFeatureFlags = (*Plugin)(nil)
 
 const (

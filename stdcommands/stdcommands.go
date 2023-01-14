@@ -5,7 +5,6 @@ import (
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/stdcommands/addspecialserver"
 	"github.com/mrbentarikau/pagst/stdcommands/advice"
 	"github.com/mrbentarikau/pagst/stdcommands/allocstat"
 	"github.com/mrbentarikau/pagst/stdcommands/antifish"
@@ -27,6 +26,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/dogfact"
 	"github.com/mrbentarikau/pagst/stdcommands/editchannelpermissions"
 	"github.com/mrbentarikau/pagst/stdcommands/editrole"
+	"github.com/mrbentarikau/pagst/stdcommands/evilinsult"
 	"github.com/mrbentarikau/pagst/stdcommands/exchange"
 	"github.com/mrbentarikau/pagst/stdcommands/exportcustomcommands"
 	"github.com/mrbentarikau/pagst/stdcommands/exportuserdatabase"
@@ -38,23 +38,28 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/info"
 	"github.com/mrbentarikau/pagst/stdcommands/inspire"
 	"github.com/mrbentarikau/pagst/stdcommands/invite"
+	"github.com/mrbentarikau/pagst/stdcommands/isthereanydeal"
 	"github.com/mrbentarikau/pagst/stdcommands/leaveserver"
 	"github.com/mrbentarikau/pagst/stdcommands/listflags"
 	"github.com/mrbentarikau/pagst/stdcommands/listroles"
 	"github.com/mrbentarikau/pagst/stdcommands/memstats"
+	"github.com/mrbentarikau/pagst/stdcommands/myanimelist"
 	"github.com/mrbentarikau/pagst/stdcommands/openweathermap"
 	"github.com/mrbentarikau/pagst/stdcommands/owldictionary"
+
+	//"github.com/mrbentarikau/pagst/stdcommands/paginationtest"
 	"github.com/mrbentarikau/pagst/stdcommands/pagstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/ping"
 	"github.com/mrbentarikau/pagst/stdcommands/poll"
 	"github.com/mrbentarikau/pagst/stdcommands/quack"
-	"github.com/mrbentarikau/pagst/stdcommands/removespecialserver"
 	"github.com/mrbentarikau/pagst/stdcommands/roll"
 	"github.com/mrbentarikau/pagst/stdcommands/setstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/simpleembed"
 	"github.com/mrbentarikau/pagst/stdcommands/sleep"
+	"github.com/mrbentarikau/pagst/stdcommands/specialservers"
 	"github.com/mrbentarikau/pagst/stdcommands/statedbg"
 	"github.com/mrbentarikau/pagst/stdcommands/stateinfo"
+	"github.com/mrbentarikau/pagst/stdcommands/thanks"
 	"github.com/mrbentarikau/pagst/stdcommands/throw"
 	"github.com/mrbentarikau/pagst/stdcommands/toggledbg"
 	"github.com/mrbentarikau/pagst/stdcommands/topcommands"
@@ -63,6 +68,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/topic"
 	"github.com/mrbentarikau/pagst/stdcommands/topservers"
 	"github.com/mrbentarikau/pagst/stdcommands/unbanserver"
+	"github.com/mrbentarikau/pagst/stdcommands/unbanserverowner"
 	"github.com/mrbentarikau/pagst/stdcommands/undelete"
 	"github.com/mrbentarikau/pagst/stdcommands/viewperms"
 	"github.com/mrbentarikau/pagst/stdcommands/voidservers"
@@ -106,6 +112,7 @@ func (p *Plugin) AddCommands() {
 		dogfact.Command,
 		editchannelpermissions.Command,
 		editrole.Command,
+		evilinsult.Command,
 		exchange.Command,
 		getiplocation.Command,
 		howlongtobeat.Command,
@@ -117,6 +124,7 @@ func (p *Plugin) AddCommands() {
 		quack.Command,
 		roll.Command,
 		simpleembed.Command,
+		thanks.Command,
 		throw.Command,
 		topgames.Command,
 		topic.Command,
@@ -129,7 +137,6 @@ func (p *Plugin) AddCommands() {
 
 		// Maintenance
 		antifish.Command,
-		addspecialserver.Command,
 		allocstat.Command,
 		banserver.Command,
 		banserverowner.Command,
@@ -146,7 +153,7 @@ func (p *Plugin) AddCommands() {
 		listflags.Command,
 		memstats.Command,
 		pagstatus.Command,
-		removespecialserver.Command,
+		// paginationtest.Command,
 		setstatus.Command,
 		sleep.Command,
 		stateinfo.Command,
@@ -155,16 +162,30 @@ func (p *Plugin) AddCommands() {
 		topevents.Command,
 		topservers.Command,
 		unbanserver.Command,
+		unbanserverowner.Command,
 		voidservers.Command,
 	)
 
+	specialservers.Commands()
 	statedbg.Commands()
 
 	if !owldictionary.ShouldRegister() {
-		common.GetPluginLogger(p).Warn("Owlbot API token not provided, skipping adding dictionary command...")
+		common.GetPluginLogger(p).Warn("Owlbot API token not provided, skipping adding owldictionary command...")
 		return
 	}
 
+	if !isthereanydeal.ShouldRegister() {
+		common.GetPluginLogger(p).Warn("IsThereAnyDeal API key not provided, skipping adding isthereanydeal command...")
+		return
+	}
+
+	if !myanimelist.ShouldRegister() {
+		common.GetPluginLogger(p).Warn("MyAnimelist API key not provided, skipping adding myanimelist command...")
+		return
+	}
+
+	commands.AddRootCommands(p, isthereanydeal.Command)
+	commands.AddRootCommands(p, myanimelist.Command)
 	commands.AddRootCommands(p, owldictionary.Command)
 
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/lib/template"
+
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
 	"golang.org/x/text/cases"
@@ -44,23 +45,25 @@ var (
 		"toString":          ToString, // don't ask why we have 2 of these
 
 		// string manipulation
-		"hasPrefix":   strings.HasPrefix,
-		"hasSuffix":   strings.HasSuffix,
-		"joinStr":     joinStrings,
-		"lower":       strings.ToLower,
-		"print":       withOutputLimit(fmt.Sprint, MaxStringLength),
-		"println":     withOutputLimit(fmt.Sprintln, MaxStringLength),
-		"printf":      withOutputLimitf(fmt.Sprintf, MaxStringLength),
-		"slice":       slice,
-		"split":       strings.Split,
-		"title":       cases.Title(language.Und).String,
-		"trim":        trimString(""),
-		"trimLeft":    trimString("left"),
-		"trimRight":   trimString("right"),
-		"trimSpace":   strings.TrimSpace,
-		"upper":       strings.ToUpper,
-		"urlescape":   url.PathEscape,
-		"urlunescape": url.PathUnescape,
+		"hasPrefix":            strings.HasPrefix,
+		"hasSuffix":            strings.HasSuffix,
+		"joinStr":              joinStrings,
+		"lower":                strings.ToLower,
+		"normalizeAccents":     tmplNormalizeAccents,
+		"normalizeConfusables": tmplNormalizeConfusables,
+		"print":                withOutputLimit(fmt.Sprint, MaxStringLength),
+		"println":              withOutputLimit(fmt.Sprintln, MaxStringLength),
+		"printf":               withOutputLimitf(fmt.Sprintf, MaxStringLength),
+		"slice":                slice,
+		"split":                strings.Split,
+		"title":                cases.Title(language.Und).String,
+		"trim":                 trimString(""),
+		"trimLeft":             trimString("left"),
+		"trimRight":            trimString("right"),
+		"trimSpace":            strings.TrimSpace,
+		"upper":                strings.ToUpper,
+		"urlescape":            url.PathEscape,
+		"urlunescape":          url.PathUnescape,
 
 		// regexp
 		"reQuoteMeta": regexp.QuoteMeta,
@@ -134,6 +137,7 @@ var (
 		"loadLocation":    time.LoadLocation,
 		"newDate":         tmplNewDate,
 		"parseTime":       tmplParseTime,
+		"parseDate":       tmplParseTime,
 		"snowflakeToTime": tmplSnowflakeToTime,
 		"timestampToTime": tmplTimestampToTime,
 		"weekNumber":      tmplWeekNumber,
@@ -144,6 +148,7 @@ var (
 		"humanizeTimeSinceDays":   tmplHumanizeTimeSinceDays,
 
 		// testing grounds
+		"replaceEmojis": tmplReplaceEmojis,
 	}
 
 	contextSetupFuncs = []ContextSetupFunc{}
@@ -295,7 +300,7 @@ func (c *Context) setupBaseData() {
 		"EmbedLinks":         discordgo.PermissionEmbedLinks,
 		"ManageMessages":     discordgo.PermissionManageMessages,
 		"MentionEveryone":    discordgo.PermissionMentionEveryone,
-		"ReadMessages":       discordgo.PermissionReadMessages,
+		"ReadMessages":       discordgo.PermissionViewChannel,
 		"ReadMessageHistory": discordgo.PermissionReadMessageHistory,
 		"SendMessages":       discordgo.PermissionSendMessages,
 		"SendTTSMessages":    discordgo.PermissionSendTTSMessages,
@@ -623,9 +628,50 @@ func (c *Context) addContextFunc(name string, f interface{}) {
 }
 
 func baseContextFuncs(c *Context) {
-	// message functions
+	// Channel functions
+	c.addContextFunc("getChannel", c.tmplGetChannel)
+	c.addContextFunc("getChannelPins", c.tmplGetChannelPins(false))
+	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
+	c.addContextFunc("getThread", c.tmplGetThread)
+	c.addContextFunc("editChannelName", c.tmplEditChannelName)
+	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
+
+	// Member & User
+	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman)
+	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes)
+	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
+	c.addContextFunc("editNickname", c.tmplEditNickname)
+	c.addContextFunc("getBotCount", c.tmplCountMembers(true))
+	c.addContextFunc("getMember", c.tmplGetMember)
+	c.addContextFunc("getMemberTimezone", c.tmplGetMemberTimezone)
+	c.addContextFunc("getUser", c.tmplGetUser)
+	c.addContextFunc("getUserCount", c.tmplCountMembers(false))
+	c.addContextFunc("onlineCount", c.tmplOnlineCount)
+	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots)
+	c.addContextFunc("setMemberTimeout", c.tmplSetMemberTimeout)
+
+	// Mentions
+	c.addContextFunc("mentionEveryone", c.tmplMentionEveryone)
+	c.addContextFunc("mentionHere", c.tmplMentionHere)
+	c.addContextFunc("mentionRole", c.tmplMentionRole)
+	c.addContextFunc("mentionRoleID", c.tmplMentionRoleID)
+	c.addContextFunc("mentionRoleName", c.tmplMentionRoleName)
+
+	// Message functions
+	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions)
+	c.addContextFunc("addReactions", c.tmplAddReactions)
+	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)
+	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions)
+	c.addContextFunc("deleteMessage", c.tmplDelMessage)
+	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction)
+	c.addContextFunc("deleteResponse", c.tmplDelResponse)
+	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
 	c.addContextFunc("editMessage", c.tmplEditMessage(true))
 	c.addContextFunc("editMessageNoEscape", c.tmplEditMessage(false))
+	c.addContextFunc("getAllMessageReactions", c.tmplGetMessageReactions)
+	c.addContextFunc("getMessage", c.tmplGetMessage)
+	c.addContextFunc("getMessageReactions", c.tmplGetMessageReactions)
+	c.addContextFunc("getPinCount", c.tmplGetChannelPins(true))
 	c.addContextFunc("lastMessages", c.tmplLastMessages)
 	c.addContextFunc("pinMessage", c.tmplPinMessage(false))
 	c.addContextFunc("sendDM", c.tmplSendDM)
@@ -638,98 +684,53 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("sendTemplateDM", c.tmplSendTemplateDM)
 	c.addContextFunc("unpinMessage", c.tmplPinMessage(true))
 
-	// Mentions
-	c.addContextFunc("mentionEveryone", c.tmplMentionEveryone)
-	c.addContextFunc("mentionHere", c.tmplMentionHere)
-	c.addContextFunc("mentionRole", c.tmplMentionRole)
-	c.addContextFunc("mentionRoleID", c.tmplMentionRoleID)
-	c.addContextFunc("mentionRoleName", c.tmplMentionRoleName)
-
 	// Role functions
 	c.addContextFunc("addRole", c.tmplAddRole)
 	c.addContextFunc("addRoleID", c.tmplAddRoleID)
 	c.addContextFunc("addRoleName", c.tmplAddRoleName)
-
 	c.addContextFunc("getRole", c.tmplGetRole)
 	c.addContextFunc("getRoleID", c.tmplGetRoleID)
 	c.addContextFunc("getRoleName", c.tmplGetRoleName)
-
 	c.addContextFunc("giveRole", c.tmplGiveRole)
 	c.addContextFunc("giveRoleID", c.tmplGiveRoleID)
 	c.addContextFunc("giveRoleName", c.tmplGiveRoleName)
-
 	c.addContextFunc("hasRole", c.tmplHasRole)
 	c.addContextFunc("hasRoleID", c.tmplHasRoleID)
 	c.addContextFunc("hasRoleName", c.tmplHasRoleName)
-
 	c.addContextFunc("removeRole", c.tmplRemoveRole)
 	c.addContextFunc("removeRoleID", c.tmplRemoveRoleID)
 	c.addContextFunc("removeRoleName", c.tmplRemoveRoleName)
-
 	c.addContextFunc("setRoles", c.tmplSetRoles)
-
 	c.addContextFunc("takeRole", c.tmplTakeRole)
 	c.addContextFunc("takeRoleID", c.tmplTakeRoleID)
 	c.addContextFunc("takeRoleName", c.tmplTakeRoleName)
-
 	c.addContextFunc("targetHasRole", c.tmplTargetHasRole)
 	c.addContextFunc("targetHasRoleID", c.tmplTargetHasRoleID)
 	c.addContextFunc("targetHasRoleName", c.tmplTargetHasRoleName)
 
-	// permission funcs
+	// Permission functions
 	c.addContextFunc("getTargetPermissionsIn", c.tmplGetTargetPermissionsIn)
 	c.addContextFunc("hasPermissions", c.tmplHasPermissions)
 	c.addContextFunc("targetHasPermissions", c.tmplTargetHasPermissions)
 
-	// Varia
-	c.addContextFunc("addMessageReactions", c.tmplAddMessageReactions)
-	c.addContextFunc("addReactions", c.tmplAddReactions)
-	c.addContextFunc("addResponseReactions", c.tmplAddResponseReactions)
-	c.addContextFunc("ccCounters", c.tmplCounters)
-	c.addContextFunc("deleteAllMessageReactions", c.tmplDelAllMessageReactions)
-	c.addContextFunc("deleteMessage", c.tmplDelMessage)
-	c.addContextFunc("deleteMessageReaction", c.tmplDelMessageReaction)
-	c.addContextFunc("deleteResponse", c.tmplDelResponse)
-	c.addContextFunc("deleteTrigger", c.tmplDelTrigger)
-	c.addContextFunc("getAllMessageReactions", c.tmplGetAllMessageReactions)
-	c.addContextFunc("getChannel", c.tmplGetChannel)
-	c.addContextFunc("getChannelPins", c.tmplGetChannelPins(false))
-	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
-	c.addContextFunc("getMember", c.tmplGetMember)
-	c.addContextFunc("getMessage", c.tmplGetMessage)
-	c.addContextFunc("getPinCount", c.tmplGetChannelPins(true))
-	c.addContextFunc("getThread", c.tmplGetThread)
-	c.addContextFunc("setMemberTimeout", c.tmplSetMemberTimeout)
-
-	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman)
-	c.addContextFunc("currentUserAgeMinutes", c.tmplCurrentUserAgeMinutes)
-	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
+	// Regexp functions
 	c.addContextFunc("reFind", c.reFind)
 	c.addContextFunc("reFindAll", c.reFindAll)
 	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches)
 	c.addContextFunc("reReplace", c.reReplace)
 	c.addContextFunc("reSplit", c.reSplit)
+
+	// Various
+	c.addContextFunc("ccCounters", c.tmplCounters)
+	c.addContextFunc("getApplicationCommands", c.tmplGetApplicationCommands)
 	c.addContextFunc("sleep", c.tmplSleep)
-
-	c.addContextFunc("getBotCount", c.tmplCountMembers(true))
-	c.addContextFunc("getUserCount", c.tmplCountMembers(false))
-
-	c.addContextFunc("editChannelName", c.tmplEditChannelName)
-	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
-	c.addContextFunc("editNickname", c.tmplEditNickname)
-	c.addContextFunc("onlineCount", c.tmplOnlineCount)
-	c.addContextFunc("onlineCountBots", c.tmplOnlineCountBots)
-
 	c.addContextFunc("sort", c.tmplSort)
 
 	// testing grounds
-	/*
-		c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
-		c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
-		c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
-		c.addContextFunc("getUser", c.tmplGetUser)
-		c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
-	*/
+	c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
+	c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
+	c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
+	c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
 }
 
 type limitedWriter struct {
@@ -925,33 +926,6 @@ func (d SDict) HasKey(k string) (ok bool) {
 }
 
 type Slice []interface{}
-
-/*
-func (s Slice) String() string {
-	fromStringSlice := make([]string, 0, len(s))
-
-	for _, Sliceval := range s {
-		switch t := Sliceval.(type) {
-		case string:
-			fromStringSlice = append(fromStringSlice, t)
-		case fmt.Stringer:
-			fromStringSlice = append(fromStringSlice, t.String())
-		case int, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64:
-			fromStringSlice = append(fromStringSlice, ToString(t))
-		default:
-			fromStringSlice = append(fromStringSlice, fmt.Sprintf("%+v", t))
-		}
-	}
-
-	// stringSlice := make([]string, 0, len(s))
-	// for _, v := range s {
-	// 	stringSlice = append(stringSlice, fmt.Sprintf("%v", v))
-	// }
-	// stringSlice = append(stringSlice, fromStringSlice...)
-
-	return strings.Join(fromStringSlice, " ")
-}
-*/
 
 func (s Slice) Append(item interface{}) (interface{}, error) {
 	if len(s)+1 > 10000 {

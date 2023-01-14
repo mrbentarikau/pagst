@@ -121,7 +121,7 @@ For more in depth help and information you should visit https://docs.yagpdb.xyz/
 
 	helpEmbeds = append([]*discordgo.MessageEmbed{firstPage}, helpEmbeds...)
 
-	_, err = paginatedmessages.CreatePaginatedMessage(0, channel.ID, 1, len(helpEmbeds), func(p *paginatedmessages.PaginatedMessage, page int) (*discordgo.MessageEmbed, error) {
+	_, err = paginatedmessages.CreatePaginatedMessage(0, channel.ID, 1, len(helpEmbeds), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
 		embed := helpEmbeds[page-1]
 		return embed, nil
 	})
