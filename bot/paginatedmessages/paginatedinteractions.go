@@ -140,6 +140,7 @@ func CreatePaginatedMessage(guildID, channelID int64, initPage, maxPages int, pa
 	case *discordgo.MessageSend:
 		t.Components = createNavigationButtons(true, nextButtonDisabled)
 		t.Content = fmt.Sprintf("%s\n`%s`", t.Content, footer)
+
 		msg, err := common.BotSession.ChannelMessageSendComplex(channelID, t)
 		if err != nil {
 			return nil, err
@@ -204,6 +205,7 @@ func (p *PaginatedMessage) HandlePageButtonClick(ic *discordgo.InteractionCreate
 		return
 	}
 
+	p.LastResponse = newMsg
 	p.lastUpdateTime = time.Now()
 
 	p.CurrentPage = newPage
@@ -303,13 +305,12 @@ OUTER:
 				ID:         p.MessageID,
 			})
 		case *discordgo.MessageSend:
-			t.Content = fmt.Sprintf("%s\n`%s`", t.Content, footer)
-
 			_, err = common.BotSession.ChannelMessageEditComplex(&discordgo.MessageEdit{
-				Content:    &t.Content,
-				Components: []discordgo.MessageComponent{},
-				Channel:    p.ChannelID,
-				ID:         p.MessageID,
+				Content:         &t.Content,
+				Components:      []discordgo.MessageComponent{},
+				AllowedMentions: t.AllowedMentions,
+				Channel:         p.ChannelID,
+				ID:              p.MessageID,
 			})
 		}
 
