@@ -33,11 +33,7 @@ const (
 	MaxTimeOutDuration     = 40320 * time.Minute
 	MinTimeOutDuration     = time.Minute
 	DefaultTimeoutDuration = 10 * time.Minute
-)
-
-const (
-	DefaultDMMessage = `You have been {{.ModAction}}
-{{if .Reason}}**Reason:** {{.Reason}}{{end}}`
+	DefaultDMMessage       = "You have been {{.ModAction}}\n**Reason:** {{.Reason}}"
 )
 
 func getMemberWithFallback(gs *dstate.GuildSet, user *discordgo.User) (ms *dstate.MemberState, notFound bool) {

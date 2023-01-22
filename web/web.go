@@ -332,7 +332,7 @@ func setupRoutes() *goji.Mux {
 }
 
 func AddServer(w http.ResponseWriter, r *http.Request) {
-	url := fmt.Sprintf("https://discordapp.com/oauth2/authorize?client_id=%s&scope=bot%%20identify%%20guilds%%20applications.commands&permissions=1101658455543&response_type=code&redirect_uri=https://%s/manage", common.ConfClientID.GetString(), common.ConfHost.GetString())
+	url := fmt.Sprintf("https://discordapp.com/oauth2/authorize?client_id=%s&scope=bot%%20identify%%20guilds%%20applications.commands&permissions=1516122532343&response_type=code&redirect_uri=https://%s/manage", common.ConfClientID.GetString(), common.ConfHost.GetString())
 	http.Redirect(w, r, url, http.StatusMovedPermanently)
 }
 

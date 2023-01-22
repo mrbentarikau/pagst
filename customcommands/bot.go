@@ -1000,8 +1000,11 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 	chanMsg := cmd.Responses[0]
 	out, err := tmplCtx.Execute(chanMsg)
 
-	if utf8.RuneCountInString(out) > 2000 {
-		out = "Custom command (#" + discordgo.StrID(cmd.LocalID) + ") response was longer than 2k (contact an admin on the server...)"
+	var pagination bool
+	if utf8.RuneCountInString(out) > 2000 && utf8.RuneCountInString(out) < 24900 {
+		pagination = true
+	} else if utf8.RuneCountInString(out) > 24900 {
+		out = "Custom command (#" + discordgo.StrID(cmd.LocalID) + ") response grew too big, almost 25k..."
 	}
 
 	go updatePostCommandRan(cmd, err)
@@ -1025,31 +1028,49 @@ func ExecuteCustomCommand(cmd *models.CustomCommand, tmplCtx *templates.Context)
 		}
 	}
 
-	_, err = tmplCtx.SendResponse(out)
-	if err != nil {
-		return errors.WithStackIf(err)
-	}
-	// handle Response err the same way
-	/*if err != nil {
-		logger.WithField("guild", tmplCtx.GS.ID).WithError(err).Error("Error executing custom command")
-		if cmd.ShowErrors {
-			out += "\nAn error caused the execution of the custom command " + tmplCtx.Name + " template to send response:\n"
-			out += formatCustomCommandRunErr(chanMsg, err)
+	// pagination ties some parts from templates.context.SendResponse to paginated messages
+	// 1900 is intentional, no need to risk close to 2000 chars
+	if pagination {
+		pm, err := paginatedmessages.CreatePaginatedMessage(
+			cmd.GuildID, tmplCtx.CurrentFrame.CS.ID, 1, int(math.Ceil(float64(len(out))/1900.0)), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
+				i := page - 1
+				lim := 1900
 
-			config, configErr := moderation.GetConfig(cmd.GuildID)
-			if configErr != nil {
-				return errors.WithMessage(configErr, "GetConfig")
-			}
+				var content string
+				if i == 0 {
+					content = out[:lim]
+				} else if len(out)-i*lim < lim {
+					content = out[i*lim:]
+				} else {
+					content = out[i*lim : page*lim]
+				}
 
-			if config.CCErrorChannel != "" {
-				_, _, _ = bot.SendMessage(cmd.GuildID, config.IntCCErrorChannel(), out)
-				return nil
-			}
+				return &discordgo.MessageSend{
+					Content: content,
+				}, nil
+			})
 
-			_, _, _ = bot.SendMessage(cmd.GuildID, tmplCtx.CurrentFrame.CS.ID, out)
-			return nil
+		if tmplCtx.CurrentFrame.DelResponse {
+			templates.MaybeScheduledDeleteMessage(tmplCtx.GS.ID, tmplCtx.CurrentFrame.CS.ID, pm.MessageID, tmplCtx.CurrentFrame.DelResponseDelay)
 		}
-	}*/
+
+		if len(tmplCtx.CurrentFrame.AddResponseReactionNames) > 0 {
+			go func(frame *templates.ContextFrame) {
+				for _, v := range frame.AddResponseReactionNames {
+					common.BotSession.MessageReactionAdd(tmplCtx.CurrentFrame.CS.ID, pm.MessageID, v)
+				}
+			}(tmplCtx.CurrentFrame)
+		}
+
+		if err != nil {
+			return errors.WithStackIf(err)
+		}
+	} else {
+		_, err = tmplCtx.SendResponse(out)
+		if err != nil {
+			return errors.WithStackIf(err)
+		}
+	}
 
 	return nil
 }
