@@ -255,7 +255,7 @@ For example, to mention a user, you would do <code><@{{"{{"}}.User.ID{{"}}"}}></
 {{end}}
 
 {{/*Specific template helpers*/}}
-{{define "template_helper_user"}}<code>{{"{{"}}.User{{"}}"}}: <a href="https://github.com/mrbentarikau/pagst-rtfm/blob/master/context_data.org#user"><code>.User</code> object documentation.</a></code>{{end}}
-{{define "template_helper_guild"}}<code>{{"{{"}}.Guild{{"}}"}}<a href="https://github.com/mrbentarikau/pagst-rtfm/blob/master/context_data.org#guildserver"><code>.Guild</code> object reference.</a></code>{{end}}
+{{define "template_helper_user"}}<code>{{"{{"}}.User{{"}}"}}: <a href="https://github.com/mrbentarikau/pagst/wiki/context_data#user"><code>.User</code> object documentation.</a></code>{{end}}
+{{define "template_helper_guild"}}<code>{{"{{"}}.Guild{{"}}"}}<a href="https://github.com/mrbentarikau/pagst/wiki/context_data#guildserver"><code>.Guild</code> object reference.</a></code>{{end}}
 
 {{define "set_roles"}}<script>var activeGuildRoles = JSON.parse('{{json .ActiveGuild.Roles}}');</script>{{end}}

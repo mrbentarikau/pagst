@@ -209,7 +209,7 @@
                     </li>
                     {{end}}
                     <li class="mt-5">
-                        <a class="nav-link" href="https://github.com/mrbentarikau/pagstrtfm" target="_blank">
+                        <a class="nav-link" href="https://github.com/mrbentarikau/pagst/wiki" target="_blank">
                             <i class="fas fa-book" aria-hidden="true"></i>
                             <span>Template Documentation</span>
                         </a>
@@ -288,7 +288,7 @@
         {{range $index, $element := .ManagedGuilds -}}{{if not $element.Connected -}}
         <li>
             <a
-                href="https://discordapp.com/oauth2/authorize?client_id={{$clientid}}&scope=applications.commands%20bot&permissions=1101658455543
+                href="https://discordapp.com/oauth2/authorize?client_id={{$clientid}}&scope=applications.commands%20bot&permissions=1516122532343
                 &guild_id={{$element.ID}}&response_type=code&redirect_uri={{joinStr "" $baseURL "/manage"}}"><i
                     class="fas fa-plus"></i>{{$element.Name}}</a>
         </li>

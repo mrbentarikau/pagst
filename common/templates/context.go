@@ -21,6 +21,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/lib/template"
+	"github.com/mrbentarikau/pagst/web/discorddata"
 
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
@@ -366,6 +367,7 @@ func (c *Context) Execute(source string) (string, error) {
 			// This may fail in some cases
 			c.Msg.ChannelID = c.GS.ID
 		}
+		/* this was before, memcacher and YT feeds issue
 		if c.GS != nil {
 			c.Msg.GuildID = c.GS.ID
 
@@ -375,6 +377,22 @@ func (c *Context) Execute(source string) (string, error) {
 			}
 
 			c.Msg.Member = member.DgoMember()
+		}*/
+		if c.GS != nil {
+			c.Msg.GuildID = c.GS.ID
+			if bot.State != nil {
+				member, err := bot.GetMember(c.GS.ID, c.BotUser.ID)
+				if err != nil {
+					return "", errors.WithMessage(err, "ctx.Execute")
+				}
+				c.Msg.Member = member.DgoMember()
+			} else {
+				member, err := discorddata.GetMember(c.GS.ID, c.BotUser.ID)
+				if err != nil {
+					return "", errors.WithMessage(err, "ctx.Execute")
+				}
+				c.Msg.Member = member
+			}
 		}
 
 	}
@@ -525,6 +543,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 	}
 
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
+
 	if err != nil {
 		/* KRAAKA that error printout!!! */
 		logger.WithField("guild", c.GS.ID).WithError(err).Error("Error sending message: " + c.Name)

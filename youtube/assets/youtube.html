@@ -62,7 +62,7 @@
         {{if .AddNew}}
         <section class="card">
             <header class="card-header">
-                <h2 class="card-title">New Feed & Announce</h2>
+                <h2 class="card-title">New Feed & Announcement</h2>
             </header>
             <div class="card-body">
                 <form class="" method="post" action="/manage/{{.Dot.ActiveGuild.ID}}/youtube">
@@ -75,13 +75,23 @@
                             If it's <code>youtube.com/channel/UCt-ERbX-2yA6cAqfdKOlUwQ</code> then the id is
                             <code>UCt-ERbX-2yA6cAqfdKOlUwQ</code><br/></p>
                             <p><b>If Server Channel is set to "None" the added or already active YouTube feed will be disabled.</b></p>
-                            <p><b>NB! </b>If Announce Message is enabled mentions go through templating.</p>
+                            <p><b>NB! </b>If Announcement Message is enabled mentions go through templating.</p>
                         </div>
                         <div class="form-group col mb-0">
                             {{checkbox "AnnounceEnabled" "yt-announce-enabled" `<h2 class="card-title">Enable</h2>` .Dot.AnnounceEnabled}}
-                            <label>YouTube Announce Message (<span class="announce-length-counter">{{toRune .Dot.YoutubeAnnounceMsg|len}}</span>/2000)</label>
+                            <label>YouTube Announcement Message (<span class="announce-length-counter">{{toRune .Dot.YoutubeAnnounceMsg|len}}</span>/2000)</label>
                             <textarea class="form-control" rows="5" id="yt-announce-msg" name="YoutubeAnnounceMsg" oninput="onCCChanged(this)">{{.Dot.YoutubeAnnounceMsg}}</textarea>
-                            <p class="help-block">Additional template data is:<code>{{"{{.ChannelID}}"}}</code>,<code>{{"{{.ChannelName}}"}}</code>,<code>{{"{{.LiveStream}}"}}</code>,<code>{{"{{.SelectedRoleID}}"}}</code>,<code>{{"{{.VideoID}}"}}</code>,<code>{{"{{.URL}}"}}</code></p>
+                            <p class="help-block">Additional template data is:
+                                <code>{{"{{.ChannelID}}"}}</code>,
+                                <code>{{"{{.ChannelName}}"}}</code>,
+                                <code>{{"{{.LiveStream}}"}}</code>,
+                                <code>{{"{{.SelectedRoleID}}"}}</code>,
+                                <code>{{"{{.VideoID}}"}}</code>,
+                                <code>{{"{{.VideoDescription}}"}}</code>,
+                                <code>{{"{{.VideoThumbnail}}"}}</code>,
+                                <code>{{"{{.URL}}"}}</code>
+                            <br/><code>{{"{{.FullSnippet}}"}}</code> holds all <a href="https://developers.google.com/youtube/v3/docs/videos#properties" target="_blank">snippet data</a> passed via feed. <code>{{"{{.ContentDetails}}"}}</code> from the same link provides information about the video content.
+                            </p>
                             <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstAnnounceSave" class="btn btn-sm btn-success btn-block" formaction="/manage/{{.Dot.ActiveGuild.ID}}/youtube/handle_announce" data-async-form-alertsonly>Save</button>
                             </span>
                         </div>
@@ -152,12 +162,15 @@
                             <td style="padding-right:42px">
                                 {{checkbox "MentionEveryone" "new-mention-everyone" `Mention everyone` false}}
                             </td>
+                            <td style="padding-right:42px">
+                                {{checkbox "PublishShorts" "new-publish-shorts" `Publish YT-shorts` true}}
+                            </td>
                             <td>
-                                {{checkbox "PublishLivestream" "new-publish-livestream" `Publish livestreams` false}}
+                                {{checkbox "PublishLivestream" "new-publish-livestream" `Publish YT-livestreams` false}}
                             </td>
                         </tr>
                     </table>
-                    <button type="submit" class="btn btn-success btn-block">Add</button>
+                    <button type="submit" id="yt-add-btn" class="btn btn-success btn-block">Add</button>
                 </form>
             </div>
         </section>
@@ -178,11 +191,12 @@
                     <thead>
                         <tr>
                             <th width="15%">Youtube</th>
-                            <th width=20%>Discord channel</th>
-                            <th width=20%>Mention role</th>
+                            <th width=15%>Discord channel</th>
+                            <th width=15%>Mention role</th>
                             <th>Mention everyone</th>
-                            <th>Publish livestreams</th>
-                            <th>Enabled</th>
+                            <th>YT Shorts</th>
+                            <th>YT Livestreams</th>
+                            <th>YT Enabled</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -208,10 +222,13 @@
                                 {{checkbox "MentionEveryone" (joinStr "" "mention-everyone-" .ID) `Mention everyone` .MentionEveryone (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
+                                {{checkbox "PublishShorts" (joinStr "" "publish-shorts-" .ID) `Publish shorts` .PublishShorts.Bool (joinStr "" `form="sub-item-` .ID `"`)}}
+                            </td>
+                            <td>
                                 {{checkbox "PublishLivestream" (joinStr "" "publish-livestream-" .ID) `Publish livestreams` .PublishLivestream (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
-                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Enabled` .Enabled (joinStr "" `form="sub-item-` .ID `"`)}}
+                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Stream Enabled` .Enabled (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
                                 <button form="sub-item-{{.ID}}" type="submit" class="btn btn-success"
