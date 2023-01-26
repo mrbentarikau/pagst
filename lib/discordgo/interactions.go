@@ -41,13 +41,13 @@ type ApplicationCommand struct {
 	DefaultPermission        *bool  `json:"default_permission,omitempty"`
 	DefaultMemberPermissions *int64 `json:"default_member_permissions,omitempty,string"`
 	DMPermission             *bool  `json:"dm_permission,omitempty"`
+	NSFW                     *bool  `json:"nsfw,omitempty"`
 
 	// NOTE: Chat commands only. Otherwise it mustn't be set.
 
 	Description              string                      `json:"description,omitempty"`
 	DescriptionLocalizations *map[Locale]string          `json:"description_localizations,omitempty"`
 	Options                  []*ApplicationCommandOption `json:"options"`
-	NSFW                     bool                        `json:"nsfw,omitempty"`
 }
 
 // ApplicationCommandOptionType indicates the type of a slash command's option.
@@ -354,11 +354,20 @@ func (ApplicationCommandInteractionData) Type() InteractionType {
 
 // MessageComponentInteractionData contains the data of message component interaction.
 type MessageComponentInteractionData struct {
-	CustomID      string        `json:"custom_id"`
-	ComponentType ComponentType `json:"component_type"`
+	CustomID      string                                  `json:"custom_id"`
+	ComponentType ComponentType                           `json:"component_type"`
+	Resolved      MessageComponentInteractionDataResolved `json:"resolved"`
 
 	// NOTE: Only filled when ComponentType is SelectMenuComponent (3). Otherwise is nil.
 	Values []string `json:"values"`
+}
+
+// MessageComponentInteractionDataResolved contains the resolved data of selected option.
+type MessageComponentInteractionDataResolved struct {
+	Users    map[string]*User    `json:"users"`
+	Members  map[string]*Member  `json:"members"`
+	Roles    map[string]*Role    `json:"roles"`
+	Channels map[string]*Channel `json:"channels"`
 }
 
 // Type returns the type of interaction data.

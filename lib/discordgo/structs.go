@@ -108,6 +108,39 @@ type Application struct {
 	Flags               int      `json:"flags,omitempty"`
 }
 */
+
+// ApplicationRoleConnectionMetadataType represents the type of application role connection metadata.
+type ApplicationRoleConnectionMetadataType int
+
+// Application role connection metadata types.
+const (
+	ApplicationRoleConnectionMetadataIntegerLessThanOrEqual     ApplicationRoleConnectionMetadataType = 1
+	ApplicationRoleConnectionMetadataIntegerGreaterThanOrEqual  ApplicationRoleConnectionMetadataType = 2
+	ApplicationRoleConnectionMetadataIntegerEqual               ApplicationRoleConnectionMetadataType = 3
+	ApplicationRoleConnectionMetadataIntegerNotEqual            ApplicationRoleConnectionMetadataType = 4
+	ApplicationRoleConnectionMetadataDatetimeLessThanOrEqual    ApplicationRoleConnectionMetadataType = 5
+	ApplicationRoleConnectionMetadataDatetimeGreaterThanOrEqual ApplicationRoleConnectionMetadataType = 6
+	ApplicationRoleConnectionMetadataBooleanEqual               ApplicationRoleConnectionMetadataType = 7
+	ApplicationRoleConnectionMetadataBooleanNotEqual            ApplicationRoleConnectionMetadataType = 8
+)
+
+// ApplicationRoleConnectionMetadata stores application role connection metadata.
+type ApplicationRoleConnectionMetadata struct {
+	Type                     ApplicationRoleConnectionMetadataType `json:"type"`
+	Key                      string                                `json:"key"`
+	Name                     string                                `json:"name"`
+	NameLocalizations        map[Locale]string                     `json:"name_localizations"`
+	Description              string                                `json:"description"`
+	DescriptionLocalizations map[Locale]string                     `json:"description_localizations"`
+}
+
+// ApplicationRoleConnection represents the role connection that an application has attached to a user.
+type ApplicationRoleConnection struct {
+	PlatformName     string            `json:"platform_name"`
+	PlatformUsername string            `json:"platform_username"`
+	Metadata         map[string]string `json:"metadata"`
+}
+
 // UserConnection is a Connection returned from the UserConnections endpoint
 type UserConnection struct {
 	ID           string         `json:"id"`
@@ -237,6 +270,28 @@ const (
 	ChannelFlagRequireTag ChannelFlags = 1 << 4
 )
 
+// ForumSortOrderType represents sort order of a forum channel.
+type ForumSortOrderType int
+
+const (
+	// ForumSortOrderLatestActivity sorts posts by activity.
+	ForumSortOrderLatestActivity ForumSortOrderType = 0
+	// ForumSortOrderCreationDate sorts posts by creation time (from most recent to oldest).
+	ForumSortOrderCreationDate ForumSortOrderType = 1
+)
+
+// ForumLayout represents layout of a forum channel.
+type ForumLayout int
+
+const (
+	// ForumLayoutNotSet represents no default layout.
+	ForumLayoutNotSet ForumLayout = 0
+	// ForumLayoutListView displays forum posts as a list.
+	ForumLayoutListView ForumLayout = 1
+	// ForumLayoutGalleryView displays forum posts as a collection of tiles.
+	ForumLayoutGalleryView ForumLayout = 2
+)
+
 // A Channel holds all data related to an individual Discord channel.
 type Channel struct {
 	// The ID of the channel.
@@ -316,17 +371,28 @@ type Channel struct {
 	Members []*ThreadMember `json:"-"`
 
 	// Channel flags.
-	// KRAAKA: Below stuff commented out due forums
-	// Flags ChannelFlags `json:"flags"`
+	Flags ChannelFlags `json:"flags"`
 
 	// The set of tags that can be used in a forum channel.
-	// AvailableTags []ForumTag `json:"available_tags"`
+	AvailableTags []ForumTag `json:"available_tags"`
 
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
-	// AppliedTags []string `json:"applied_tags"`
+	AppliedTags []string `json:"applied_tags"`
 
 	// Emoji to use as the default reaction to a forum post.
-	// DefaultReactionEmoji ForumDefaultReaction `json:"default_reaction_emoji"`
+	DefaultReactionEmoji ForumDefaultReaction `json:"default_reaction_emoji"`
+
+	// The initial RateLimitPerUser to set on newly created threads in a channel.
+	// This field is copied to the thread at creation time and does not live update.
+	DefaultThreadRateLimitPerUser int `json:"default_thread_rate_limit_per_user"`
+
+	// The default sort order type used to order posts in forum channels.
+	// Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin.
+	DefaultSortOrder *ForumSortOrderType `json:"default_sort_order"`
+
+	// The default forum layout view used to display posts in forum channels.
+	// Defaults to ForumLayoutNotSet, which indicates a layout view has not been set by a channel admin.
+	DefaultForumLayout ForumLayout `json:"default_forum_layout"`
 }
 
 func (c *Channel) GetChannelID() int64 {
@@ -348,16 +414,17 @@ func (t ChannelType) IsThread() bool {
 
 // A ChannelEdit holds Channel Feild data for a channel edit.
 type ChannelEdit struct {
-	Name                 string                 `json:"name,omitempty"`
-	Topic                string                 `json:"topic,omitempty"`
-	NSFW                 *bool                  `json:"nsfw,omitempty"`
-	Position             *int                   `json:"position,omitempty"`
-	Bitrate              int                    `json:"bitrate,omitempty"`
-	UserLimit            int                    `json:"user_limit,omitempty"`
-	PermissionOverwrites []*PermissionOverwrite `json:"permission_overwrites,omitempty"`
-	ParentID             *null.String           `json:"parent_id,omitempty"`
-	RateLimitPerUser     *int                   `json:"rate_limit_per_user,omitempty"`
-	Flags                *ChannelFlags          `json:"flags,omitempty"`
+	Name                          string                 `json:"name,omitempty"`
+	Topic                         string                 `json:"topic,omitempty"`
+	NSFW                          *bool                  `json:"nsfw,omitempty"`
+	Position                      *int                   `json:"position,omitempty"`
+	Bitrate                       int                    `json:"bitrate,omitempty"`
+	UserLimit                     int                    `json:"user_limit,omitempty"`
+	PermissionOverwrites          []*PermissionOverwrite `json:"permission_overwrites,omitempty"`
+	ParentID                      *null.String           `json:"parent_id,omitempty"`
+	RateLimitPerUser              *int                   `json:"rate_limit_per_user,omitempty"`
+	Flags                         *ChannelFlags          `json:"flags,omitempty"`
+	DefaultThreadRateLimitPerUser *int                   `json:"default_thread_rate_limit_per_user,omitempty"`
 
 	// NOTE: threads only
 
@@ -367,13 +434,13 @@ type ChannelEdit struct {
 	Invitable           *bool `json:"invitable,omitempty"`
 
 	// NOTE: forum channels only
-	// KRAAKA below stuff commented out due forums
-
-	// AvailableTags        *[]ForumTag      `json:"available_tags,omitempty"`
-	// DefaultReactionEmoji *ForumDefaultReaction `json:"default_reaction_emoji,omitempty"`
+	AvailableTags        *[]ForumTag           `json:"available_tags,omitempty"`
+	DefaultReactionEmoji *ForumDefaultReaction `json:"default_reaction_emoji,omitempty"`
+	DefaultSortOrder     *ForumSortOrderType   `json:"default_sort_order,omitempty"` // TODO: null
+	DefaultForumLayout   *ForumLayout          `json:"default_forum_layout,omitempty"`
 
 	// NOTE: forum threads only
-	// AppliedTags *[]string `json:"applied_tags,omitempty"`
+	AppliedTags *[]string `json:"applied_tags,omitempty"`
 }
 
 // A ChannelFollow holds data returned after following a news channel
@@ -472,7 +539,7 @@ type ForumTag struct {
 	ID        int64  `json:"id,string,omitempty"`
 	Name      string `json:"name"`
 	Moderated bool   `json:"moderated"`
-	EmojiID   int64  `json:"emoji_id,omitempty"`
+	EmojiID   int64  `json:"emoji_id,string,omitempty"`
 	EmojiName string `json:"emoji_name,omitempty"`
 }
 
@@ -488,7 +555,7 @@ type Emoji struct {
 
 // EmojiRegex is the regex used to find and identify emojis in messages
 var (
-	EmojiRegex = regexp.MustCompile(`<(a|):[A-z0-9_~]+:[0-9]{18}>`)
+	EmojiRegex = regexp.MustCompile(`<(a|):[A-z0-9_~]+:[0-9]{18,20}>`)
 )
 
 // MessageFormat returns a correctly formatted Emoji for use in Message content and embeds
@@ -990,11 +1057,18 @@ type SystemChannelFlag int
 
 // Block containing known SystemChannelFlag values
 const (
+	SystemChannelFlagsSuppressJoinNotifications          SystemChannelFlag = 1 << 0
+	SystemChannelFlagsSuppressPremium                    SystemChannelFlag = 1 << 1
+	SystemChannelFlagsSuppressGuildReminderNotifications SystemChannelFlag = 1 << 2
+	SystemChannelFlagsSuppressJoinNotificationReplies    SystemChannelFlag = 1 << 3
+)
+
+/*const (
 	SystemChannelFlagsSuppressJoin         SystemChannelFlag = 1 << 0
 	SystemChannelFlagsSuppressPremium      SystemChannelFlag = 1 << 1
 	SystemChannelFlagsSupressGuildReminder SystemChannelFlag = 1 << 2
 	SystemChannelFlagsSupressJoinReplies   SystemChannelFlag = 1 << 3
-)
+)*/
 
 // A UserGuild holds a brief version of a Guild
 type UserGuild struct {
@@ -1007,8 +1081,12 @@ type UserGuild struct {
 }
 
 // IconURL returns a URL to the guild's icon.
-func (g *Guild) IconURL() string {
-	if g.Icon == "" {
+//
+//	size:    The size of the desired icon image as a power of two
+//	         Image size can be any power of two between 16 and 4096.
+func (g *Guild) IconURL(size string) string {
+	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
+	/*if g.Icon == "" {
 		return ""
 	}
 
@@ -1016,15 +1094,19 @@ func (g *Guild) IconURL() string {
 		return EndpointGuildIconAnimated(g.ID, g.Icon)
 	}
 
-	return EndpointGuildIcon(g.ID, g.Icon)
+	return EndpointGuildIcon(g.ID, g.Icon)*/
 }
 
 // BannerURL returns a URL to the guild's banner.
-func (g *Guild) BannerURL() string {
-	if g.Banner == "" {
+//
+//	size:    The size of the desired banner image as a power of two
+//	         Image size can be any power of two between 16 and 4096.
+func (g *Guild) BannerURL(size string) string {
+	return bannerURL(g.Banner, EndpointGuildBanner(g.ID, g.Banner), EndpointGuildBannerAnimated(g.ID, g.Banner), size)
+	/*if g.Banner == "" {
 		return ""
 	}
-	return EndpointGuildBanner(g.ID, g.Banner)
+	return EndpointGuildBanner(g.ID, g.Banner)*/
 }
 
 // A Guild feature indicates the presence of a feature in a guild
@@ -1062,21 +1144,21 @@ type GuildParams struct {
 	VerificationLevel           *VerificationLevel `json:"verification_level,omitempty"`
 	DefaultMessageNotifications int                `json:"default_message_notifications,omitempty"` // TODO: Separate type?
 	ExplicitContentFilter       int                `json:"explicit_content_filter,omitempty"`
-	AfkChannelID                int64              `json:"afk_channel_id,omitempty,string"`
+	AfkChannelID                string             `json:"afk_channel_id,omitempty"`
 	AfkTimeout                  int                `json:"afk_timeout,omitempty"`
 	Icon                        string             `json:"icon,omitempty"`
-	OwnerID                     int64              `json:"owner_id,omitempty,string"`
+	OwnerID                     string             `json:"owner_id,omitempty"`
 	Splash                      string             `json:"splash,omitempty"`
-	DiscoverSplash              string             `json:"discovery_splash,omitempty"`
+	DiscoverySplash             string             `json:"discovery_splash,omitempty"`
 	Banner                      string             `json:"banner,omitempty"`
-	SystemChannelID             int64              `json:"system_channel_id,omitempty,string"`
+	SystemChannelID             string             `json:"system_channel_id,omitempty"`
 	SystemChannelFlags          SystemChannelFlag  `json:"system_channel_flags,omitempty"`
-	RulesChannelID              int64              `json:"rules_channel_id,omitempty,string"`
-	PublicUpdatesChannelID      int64              `json:"public_updates_channel_id,omitempty,string"`
-	PreferredLocale             string             `json:"preferred_locale,omitempty"`
+	RulesChannelID              string             `json:"rules_channel_id,omitempty"`
+	PublicUpdatesChannelID      string             `json:"public_updates_channel_id,omitempty"`
+	PreferredLocale             Locale             `json:"preferred_locale,omitempty"`
 	Features                    []GuildFeature     `json:"features,omitempty"`
 	Description                 string             `json:"description,omitempty"`
-	PremiumProgressBarEnabled   bool               `json:"premium_progress_bar_enabled,omitempty"`
+	PremiumProgressBarEnabled   *bool              `json:"premium_progress_bar_enabled,omitempty"`
 }
 
 // A Role stores information about Discord guild member roles.
@@ -1168,7 +1250,9 @@ type Presence struct {
 	User   *User  `json:"user"`
 	Status Status `json:"status"`
 
-	Activities Activities `json:"activities"`
+	Activities   Activities   `json:"activities"`
+	Since        *int         `json:"since"`
+	ClientStatus ClientStatus `json:"client_status"`
 }
 
 // implement gojay.UnmarshalerJSONObject
@@ -1302,6 +1386,11 @@ func (m *Member) GetGuildID() int64 {
 	return m.GuildID
 }
 
+// AvatarURL returns the URL of the member's avatar
+//
+//	size:    The size of the user's avatar as a power of two
+//	         if size is an empty string, no size parameter will
+//	         be added to the URL.
 func (m *Member) AvatarURL(size string) string {
 	var URL string
 
@@ -1323,6 +1412,13 @@ func (m *Member) AvatarURL(size string) string {
 		return URL + "?size=" + size
 	}
 	return URL
+}
+
+// ClientStatus stores the online, offline, idle, or dnd status of each device of a Guild member.
+type ClientStatus struct {
+	Desktop Status `json:"desktop"`
+	Mobile  Status `json:"mobile"`
+	Web     Status `json:"web"`
 }
 
 // Status type definition
@@ -1423,9 +1519,22 @@ type AutoModerationTriggerMetadata struct {
 	// Substrings which will be searched for in content.
 	// NOTE: should be only used with keyword trigger type.
 	KeywordFilter []string `json:"keyword_filter,omitempty"`
+
+	// Regular expression patterns which will be matched against content (maximum of 10).
+	// NOTE: should be only used with keyword trigger type.
+	RegexPatterns []string `json:"regex_patterns,omitempty"`
+
 	// Internally pre-defined wordsets which will be searched for in content.
 	// NOTE: should be only used with keyword preset trigger type.
 	Presets []AutoModerationKeywordPreset `json:"presets,omitempty"`
+
+	// Substrings which should not trigger the rule.
+	// NOTE: should be only used with keyword or keyword preset trigger type.
+	AllowList *[]string `json:"allow_list,omitempty"`
+
+	// Total number of unique role and user mentions allowed per message.
+	// NOTE: should be only used with mention spam trigger type.
+	MentionTotalLimit int `json:"mention_total_limit,omitempty"`
 }
 
 // AutoModerationActionType represents an action which will execute whenever a rule is triggered.
@@ -2655,7 +2764,8 @@ const (
 
 	IntentsGuilds                 Intent = 1 << 0
 	IntentsGuildMembers           Intent = 1 << 1
-	IntentsGuildBans              Intent = 1 << 2
+	IntentsGuildModeration        Intent = 1 << 2
+	IntentsGuildBans              Intent = IntentsGuildModeration // TODO: remove when compatibility is not needed
 	IntentsGuildEmojis            Intent = 1 << 3
 	IntentsGuildIntegrations      Intent = 1 << 4
 	IntentsGuildWebhooks          Intent = 1 << 5
