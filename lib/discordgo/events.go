@@ -71,7 +71,7 @@ type Ready struct {
 	Guilds           []*Guild     `json:"guilds"`
 	PrivateChannels  []*Channel   `json:"private_channels"`
 	ResumeGatewayUrl string       `json:"resume_gateway_url"`
-	Shard            [2]int       `json:"shard"`
+	Shard            *[2]int      `json:"shard"`
 	Application      *Application `json:"application"`
 }
 
@@ -152,6 +152,7 @@ func (e *GuildMemberAdd) GetGuildID() int64 {
 // GuildMemberUpdate is the data for a GuildMemberUpdate event.
 type GuildMemberUpdate struct {
 	*Member
+	BeforeUpdate *Member `json:"-"`
 }
 
 // GuildMemberRemove is the data for a GuildMemberRemove event.
@@ -501,6 +502,11 @@ type IntegrationDelete struct {
 
 type InteractionCreate struct {
 	Interaction
+}
+
+// AuditLogEntryCreate is the data for an AuditLogEntryCreate event.
+type AuditLogEntryCreate struct {
+	*AuditLogEntry
 }
 
 // UnmarshalJSON is a helper function to unmarshal Interaction object.
