@@ -554,11 +554,8 @@ func (p *Plugin) postVideo(subs []*ChannelSubscription, publishedAt time.Time, v
 
 	contentType := video.Snippet.LiveBroadcastContent
 	logger.Infof("Got a new video for channel %s with videoid %s, of type %s and publishing to %d subscriptions", channelID, video.Id, contentType, len(subs))
-	if contentType != "live" && contentType != "none" {
-		return nil
-	}
 
-	isLivestream := contentType == "live"
+	isLivestream := contentType == "live" || contentType == "upcoming"
 	isShortsCheckDone := false
 	isShorts := false
 
@@ -571,7 +568,7 @@ func (p *Plugin) postVideo(subs []*ChannelSubscription, publishedAt time.Time, v
 			//no need to check for shorts for a livestream
 			if !isLivestream && !sub.PublishShorts.Bool {
 				//check if a video is a short only when seeing the first shorts disabled subscription
-				//and cache in "isShorts" to reduce requests to youtube to check for shorts.
+				//and cache in "isShorts" to reduce requests to YouTube to check for shorts.
 				if !isShortsCheckDone {
 					isShorts = p.isShortsVideo(video)
 					isShortsCheckDone = true
