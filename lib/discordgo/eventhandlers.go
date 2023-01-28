@@ -11,7 +11,6 @@ const (
 	applicationCommandDeleteEventType            = "APPLICATION_COMMAND_DELETE"
 	applicationCommandPermissionsUpdateEventType = "APPLICATION_COMMAND_PERMISSIONS_UPDATE"
 	applicationCommandUpdateEventType            = "APPLICATION_COMMAND_UPDATE"
-	auditLogEntryCreateEventType                 = "AUDIT_LOG_ENTRY_CREATE"
 	autoModerationActionExecutionEventType       = "AUTO_MODERATION_ACTION_EXECUTION"
 	autoModerationRuleCreateEventType            = "AUTO_MODERATION_RULE_CREATE"
 	autoModerationRuleDeleteEventType            = "AUTO_MODERATION_RULE_DELETE"
@@ -23,6 +22,7 @@ const (
 	connectEventType                             = "__CONNECT__"
 	disconnectEventType                          = "__DISCONNECT__"
 	eventEventType                               = "__EVENT__"
+	guildAuditLogEntryCreateEventType            = "GUILD_AUDIT_LOG_ENTRY_CREATE"
 	guildBanAddEventType                         = "GUILD_BAN_ADD"
 	guildBanRemoveEventType                      = "GUILD_BAN_REMOVE"
 	guildCreateEventType                         = "GUILD_CREATE"
@@ -158,26 +158,6 @@ func (eh applicationCommandUpdateEventHandler) New() interface{} {
 // Handle is the handler for ApplicationCommandUpdate events.
 func (eh applicationCommandUpdateEventHandler) Handle(s *Session, i interface{}) {
 	if t, ok := i.(*ApplicationCommandUpdate); ok {
-		eh(s, t)
-	}
-}
-
-// auditLogEntryCreateEventHandler is an event handler for AuditLogEntryCreate events.
-type auditLogEntryCreateEventHandler func(*Session, *AuditLogEntryCreate)
-
-// Type returns the event type for AuditLogEntryCreate events.
-func (eh auditLogEntryCreateEventHandler) Type() string {
-	return auditLogEntryCreateEventType
-}
-
-// New returns a new instance of AuditLogEntryCreate.
-func (eh auditLogEntryCreateEventHandler) New() interface{} {
-	return &AuditLogEntryCreate{}
-}
-
-// Handle is the handler for AuditLogEntryCreate events.
-func (eh auditLogEntryCreateEventHandler) Handle(s *Session, i interface{}) {
-	if t, ok := i.(*AuditLogEntryCreate); ok {
 		eh(s, t)
 	}
 }
@@ -383,6 +363,26 @@ func (eh eventEventHandler) Type() string {
 // Handle is the handler for Event events.
 func (eh eventEventHandler) Handle(s *Session, i interface{}) {
 	if t, ok := i.(*Event); ok {
+		eh(s, t)
+	}
+}
+
+// guildAuditLogEntryCreateEventHandler is an event handler for GuildAuditLogEntryCreate events.
+type guildAuditLogEntryCreateEventHandler func(*Session, *GuildAuditLogEntryCreate)
+
+// Type returns the event type for GuildAuditLogEntryCreate events.
+func (eh guildAuditLogEntryCreateEventHandler) Type() string {
+	return guildAuditLogEntryCreateEventType
+}
+
+// New returns a new instance of GuildAuditLogEntryCreate.
+func (eh guildAuditLogEntryCreateEventHandler) New() interface{} {
+	return &GuildAuditLogEntryCreate{}
+}
+
+// Handle is the handler for GuildAuditLogEntryCreate events.
+func (eh guildAuditLogEntryCreateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildAuditLogEntryCreate); ok {
 		eh(s, t)
 	}
 }
@@ -1534,8 +1534,6 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return applicationCommandPermissionsUpdateEventHandler(v)
 	case func(*Session, *ApplicationCommandUpdate):
 		return applicationCommandUpdateEventHandler(v)
-	case func(*Session, *AuditLogEntryCreate):
-		return auditLogEntryCreateEventHandler(v)
 	case func(*Session, *AutoModerationActionExecution):
 		return autoModerationActionExecutionEventHandler(v)
 	case func(*Session, *AutoModerationRuleCreate):
@@ -1558,6 +1556,8 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return disconnectEventHandler(v)
 	case func(*Session, *Event):
 		return eventEventHandler(v)
+	case func(*Session, *GuildAuditLogEntryCreate):
+		return guildAuditLogEntryCreateEventHandler(v)
 	case func(*Session, *GuildBanAdd):
 		return guildBanAddEventHandler(v)
 	case func(*Session, *GuildBanRemove):
@@ -1682,7 +1682,6 @@ func init() {
 	registerInterfaceProvider(applicationCommandDeleteEventHandler(nil))
 	registerInterfaceProvider(applicationCommandPermissionsUpdateEventHandler(nil))
 	registerInterfaceProvider(applicationCommandUpdateEventHandler(nil))
-	registerInterfaceProvider(auditLogEntryCreateEventHandler(nil))
 	registerInterfaceProvider(autoModerationActionExecutionEventHandler(nil))
 	registerInterfaceProvider(autoModerationRuleCreateEventHandler(nil))
 	registerInterfaceProvider(autoModerationRuleDeleteEventHandler(nil))
@@ -1691,6 +1690,7 @@ func init() {
 	registerInterfaceProvider(channelDeleteEventHandler(nil))
 	registerInterfaceProvider(channelPinsUpdateEventHandler(nil))
 	registerInterfaceProvider(channelUpdateEventHandler(nil))
+	registerInterfaceProvider(guildAuditLogEntryCreateEventHandler(nil))
 	registerInterfaceProvider(guildBanAddEventHandler(nil))
 	registerInterfaceProvider(guildBanRemoveEventHandler(nil))
 	registerInterfaceProvider(guildCreateEventHandler(nil))
