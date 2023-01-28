@@ -505,7 +505,7 @@ type InteractionCreate struct {
 }
 
 // AuditLogEntryCreate is the data for an AuditLogEntryCreate event.
-type AuditLogEntryCreate struct {
+type GuildAuditLogEntryCreate struct {
 	*AuditLogEntry
 }
 
