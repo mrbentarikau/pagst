@@ -228,7 +228,7 @@
                                 {{checkbox "PublishLivestream" (joinStr "" "publish-livestream-" .ID) `Publish livestreams` .PublishLivestream (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
-                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Stream Enabled` .Enabled (joinStr "" `form="sub-item-` .ID `"`)}}
+                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Feed enabled` .Enabled (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
                                 <button form="sub-item-{{.ID}}" type="submit" class="btn btn-success"
