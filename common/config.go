@@ -38,6 +38,9 @@ var (
 	ConfBucketsPerNode          = config.RegisterOption("yagpdb.shard.buckets_per_node", "Number of buckets per node", 8)
 	ConfShardBucketSize         = config.RegisterOption("yagpdb.shard.shard_bucket_size", "Shards per bucket", 2)
 
+	ConfSupportServerName = config.RegisterOption("yagpdb.support_server_name", "Name of support server", "")
+	ConfSupportServerURL  = config.RegisterOption("yagpdb.support_server_url", "URL for support server", "")
+
 	ConfRedditRandomJSON = config.RegisterOption("yagpdb.redditquotes_json", "Subreddit random.json", "r/caubert/random.json")
 
 	BotOwners []int64

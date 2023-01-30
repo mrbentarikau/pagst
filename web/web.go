@@ -130,8 +130,10 @@ func Run() {
 	AddGlobalTemplateData("BotName", common.ConfBotName.GetString())
 	AddGlobalTemplateData("ClientID", common.ConfClientID.GetString())
 	AddGlobalTemplateData("Host", common.ConfHost.GetString())
-	AddGlobalTemplateData("Version", common.VERSION)
+	AddGlobalTemplateData("SupportServerName", common.ConfSupportServerName.GetString())
+	AddGlobalTemplateData("SupportServerURL", common.ConfSupportServerURL.GetString())
 	AddGlobalTemplateData("Testing", common.Testing)
+	AddGlobalTemplateData("Version", common.VERSION)
 
 	if properAddresses {
 		ListenAddressHTTP = ":80"
