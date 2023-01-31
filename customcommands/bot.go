@@ -384,13 +384,35 @@ var cmdListCommands = &commands.YAGCommand{
 		}
 
 		ccResponsesString := strings.Join(cc.Responses, "```\n```")
-		if !raw {
-			ccResponsesString = common.CutStringShort(ccResponsesString, 1744)
+		if raw || utf8.RuneCountInString(ccResponsesString) <= 1850 {
+			response = fmt.Sprintf("#%d - %s%s%s - Group: `%s`\nCommand Disabled: `%t` - %s```%s\n%s",
+				cc.LocalID, CommandTriggerType(cc.TriggerType), intervalText, caseSensitiveTrigger, groupMap[cc.GroupID.Int64], cc.Disabled, restrictions,
+				highlight, ccResponsesString)
+			return response + "\n```" + link, nil
+
 		}
-		response = fmt.Sprintf("#%d - %s%s%s - Group: `%s`\nCommand Disabled: `%t` - %s```%s\n%s",
-			cc.LocalID, CommandTriggerType(cc.TriggerType), intervalText, caseSensitiveTrigger, groupMap[cc.GroupID.Int64], cc.Disabled, restrictions,
-			highlight, ccResponsesString)
-		return response + "\n```" + link, nil
+
+		pm, err := paginatedmessages.CreatePaginatedMessage(
+			data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(ccResponsesString))/1900.0)), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
+				i := page - 1
+				lim := 1900
+
+				content := "```\n"
+				if i == 0 {
+					content += ccResponsesString[:lim]
+				} else if len(ccResponsesString)-i*lim < lim {
+					content += ccResponsesString[i*lim:]
+				} else {
+					content += ccResponsesString[i*lim : page*lim]
+				}
+
+				content += "```"
+
+				return &discordgo.MessageSend{
+					Content: content,
+				}, nil
+			})
+		return pm, nil
 	},
 }
 
