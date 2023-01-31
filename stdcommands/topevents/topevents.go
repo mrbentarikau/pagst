@@ -2,13 +2,16 @@ package topevents
 
 import (
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 var Command = &commands.YAGCommand{
@@ -20,8 +23,10 @@ var Command = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "shard", Type: dcmd.Int},
 	},
-	// RunFunc: cmdFuncTopEvents,
-	//}
+	ArgSwitches: []*dcmd.ArgDef{
+		{Name: "raw", Help: "Raw, legacy output"},
+	},
+
 	RunFunc: util.RequireBotAdmin(func(data *dcmd.Data) (interface{}, error) {
 
 		//func cmdFuncTopEvents(data *dcmd.Data) (interface{}, error) {
@@ -29,13 +34,13 @@ var Command = &commands.YAGCommand{
 		shardsTotal, lastPeriod := bot.EventLogger.GetStats()
 
 		sortable := make([]*DiscordEvtEntry, len(eventsystem.AllDiscordEvents))
-		for i, _ := range sortable {
+		for i := range sortable {
 			sortable[i] = &DiscordEvtEntry{
 				Name: eventsystem.AllDiscordEvents[i].String(),
 			}
 		}
 
-		for i, _ := range shardsTotal {
+		for i := range shardsTotal {
 			if data.Args[0].Value != nil && data.Args[0].Int() != i {
 				continue
 			}
@@ -48,24 +53,41 @@ var Command = &commands.YAGCommand{
 
 		sort.Sort(DiscordEvtEntrySortable(sortable))
 
-		out := "Total event stats across all shards:\n"
-		if data.Args[0].Value != nil {
-			out = fmt.Sprintf("Stats for shard %d:\n", data.Args[0].Int())
+		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+
+			out := "Total event stats across all shards:\n"
+			if data.Args[0].Value != nil {
+				out = fmt.Sprintf("Stats for shard %d:\n", data.Args[0].Int())
+			}
+
+			out += "```\n#     Total  -   /s  - Event\n"
+			sum := int64(0)
+			sumPerSecond := float64(0)
+			for k, entry := range sortable {
+				out += fmt.Sprintf("#%-2d: %7d - %5.1f - %s\n", k+1, entry.Total, entry.PerSecond, entry.Name)
+				sum += entry.Total
+				sumPerSecond += entry.PerSecond
+			}
+
+			out += fmt.Sprintf("\nTotal: %d, Events per second: %.1f", sum, sumPerSecond)
+			out += "\n```"
+
+			return out, nil
 		}
 
-		out += "```\n#     Total  -   /s  - Event\n"
-		sum := int64(0)
-		sumPerSecond := float64(0)
-		for k, entry := range sortable {
-			out += fmt.Sprintf("#%-2d: %7d - %5.1f - %s\n", k+1, entry.Total, entry.PerSecond, entry.Name)
-			sum += entry.Total
-			sumPerSecond += entry.PerSecond
+		maxLength := 25
+		pm, err := paginatedmessages.CreatePaginatedMessage(
+			data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(sortable))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
+				i := page - 1
+				description := rangeResults(sortable, i, maxLength, 0, false)
+				paginatedEmbed := embedCreator(description)
+				return paginatedEmbed, nil
+			})
+		if err != nil {
+			return "Something went wrong", nil
 		}
 
-		out += fmt.Sprintf("\nTotal: %d, Events per second: %.1f", sum, sumPerSecond)
-		out += "\n```"
-
-		return out, nil
+		return pm, nil
 	}),
 }
 
@@ -89,4 +111,29 @@ func (d DiscordEvtEntrySortable) Swap(i, j int) {
 	temp := d[i]
 	d[i] = d[j]
 	d[j] = temp
+}
+
+func rangeResults(cmdResults []*DiscordEvtEntry, i, ml, hours int, raw bool) string {
+	description := fmt.Sprintf("```\n\n%-3s %8s - %5s - %s\n", "#", "Total", "Sec", "Event")
+	total := int64(0)
+	sumPerSecond := float64(0)
+	for k, entry := range cmdResults[i*ml:] {
+		if k <= ml-1 || raw {
+			description += fmt.Sprintf("#%-2d: %7d - %5.1f - %s\n", k+1, entry.Total, entry.PerSecond, entry.Name)
+			total += entry.Total
+			sumPerSecond += entry.PerSecond
+		}
+	}
+
+	description += fmt.Sprintf("\nTotal: %d, Events per second: %.1f", total, sumPerSecond)
+	description += "\n```"
+	return description
+}
+
+func embedCreator(description string) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title:       "Total event stats across all shards:\n",
+		Description: description,
+	}
+	return embed
 }
