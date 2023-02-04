@@ -367,8 +367,8 @@ func encodeRunCCUserData(data interface{}) ([]byte, error) {
 
 // Limit execCC chains to 20/5m.
 const (
-	chainWindowDur = 5 * time.Minute
-	maxChainDepth  = 20
+	chainWindowDur = 1 * time.Hour
+	maxChainDepth  = 200
 )
 
 func updateCallChain(chain []time.Time, expectedCallTime time.Time) ([]time.Time, error) {
@@ -963,8 +963,10 @@ type LightDBEntry struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
-	Key   string
-	Value interface{}
+	Key      string
+	Value    interface{}
+	ValueNum float64
+	ValueRaw interface{}
 
 	User discordgo.User
 
@@ -1002,8 +1004,10 @@ func ToLightDBEntry(m *models.TemplatesUserDatabase) (*LightDBEntry, error) {
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 
-		Key:   m.Key,
-		Value: decodedValue,
+		Key:      m.Key,
+		Value:    decodedValue,
+		ValueNum: m.ValueNum,
+		ValueRaw: dst,
 
 		ExpiresAt: m.ExpiresAt.Time,
 
