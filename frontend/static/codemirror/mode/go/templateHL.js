@@ -157,6 +157,8 @@
     "getMessageReactions":true,
     "getPinCount":true,
     "getThread":true,
+    "getThreadsAllActive":true,
+    "getThreadsArchived":true,
     "getUser":true,
     "getUserCount":true,
     "onlineCount":true,
@@ -183,6 +185,7 @@
     // templexec
     "exec":true,
     "execAdmin":true,
+    "execBot":true,
     "userArg":true,
 
     // Role functions
