@@ -10,7 +10,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/antiphishing"
 	"github.com/mrbentarikau/pagst/automod/models"
-	"github.com/mrbentarikau/pagst/automod_legacy"
+	"github.com/mrbentarikau/pagst/automod_basic"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
@@ -539,7 +539,7 @@ func (inv *ServerInviteTrigger) UserSettings() []*SettingDef {
 }
 
 func (inv *ServerInviteTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
-	containsBadInvited := automod_legacy.CheckMessageForBadInvites(m.Content, m.GuildID)
+	containsBadInvited := automod_basic.CheckMessageForBadInvites(m.Content, m.GuildID)
 	return containsBadInvited, nil
 }
 

@@ -144,7 +144,7 @@ func (p *Plugin) CheckRSSFeed(feedByte []byte, directFeed *gofeed.Feed, feedURL 
 		return nil
 	}
 
-	if time.Since(*parsedPublishedAt) > time.Minute*30 && lastRSSLink != "" {
+	if time.Since(*parsedPublishedAt) > time.Minute*30 && lastRSSLink == feed.Items[0].Link {
 		// just a safeguard against empty parsedPublishedAt
 		return nil
 	}
@@ -153,7 +153,6 @@ func (p *Plugin) CheckRSSFeed(feedByte []byte, directFeed *gofeed.Feed, feedURL 
 		// wasn't a new feed
 		return nil
 	}
-
 	// This is a new feed, post it
 	return p.postRSSFeed(subs, &lastRSSTime, parsedPublishedAt, lastRSSLink, parsedFeedURLProtocol, feed)
 
@@ -173,7 +172,7 @@ func (p *Plugin) postRSSFeed(subs models.RSSFeedSlice, lastRSSTime, publishedAt 
 		if count >= 10 {
 			break
 		}
-		if lastRSSTime.After(*v.PublishedParsed) || time.Since(*v.PublishedParsed) > time.Minute*30 || lastRSSLink == v.Link {
+		if lastRSSTime.After(*v.PublishedParsed) || (time.Since(*v.PublishedParsed) > time.Minute*30 && lastRSSTime.Before(*v.PublishedParsed)) || lastRSSLink == v.Link {
 			continue
 		}
 

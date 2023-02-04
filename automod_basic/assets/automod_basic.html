@@ -1,4 +1,4 @@
-{{define "cp_automod_legacy"}}
+{{define "cp_automod_basic"}}
 {{template "cp_head" .}}
 <header class="page-header">
     <h2>Automoderator {{if .AutomodConfig.Enabled}}<span class="bg-success">Enabled</span>{{else}}<span
@@ -51,17 +51,17 @@
 
                 <!-- Tab panesy -->
                 <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane active" id="general">{{template "automod_legacy_general" .}}
+                    <div role="tabpanel" class="tab-pane active" id="general">{{template "automod_basic_general" .}}
                     </div>
-                    <div role="tabpanel" class="tab-pane" id="spam">{{template "automod_legacy_spam" .}}</div>
-                    <div role="tabpanel" class="tab-pane" id="mass-mention">{{template "automod_legacy_mention" .}}
+                    <div role="tabpanel" class="tab-pane" id="spam">{{template "automod_basic_spam" .}}</div>
+                    <div role="tabpanel" class="tab-pane" id="mass-mention">{{template "automod_basic_mention" .}}
                     </div>
-                    <div role="tabpanel" class="tab-pane" id="invites">{{template "automod_legacy_invite" .}}</div>
-                    <div role="tabpanel" class="tab-pane" id="links">{{template "automod_legacy_links" .}}</div>
-                    <div role="tabpanel" class="tab-pane" id="banned-words">{{template "automod_legacy_banned_words" .}}
+                    <div role="tabpanel" class="tab-pane" id="invites">{{template "automod_basic_invite" .}}</div>
+                    <div role="tabpanel" class="tab-pane" id="links">{{template "automod_basic_links" .}}</div>
+                    <div role="tabpanel" class="tab-pane" id="banned-words">{{template "automod_basic_banned_words" .}}
                     </div>
                     <div role="tabpanel" class="tab-pane" id="banned-websites">
-                        {{template "automod_legacy_banned_websites" .}}</div>
+                        {{template "automod_basic_banned_websites" .}}</div>
                 </div>
             </div>
         </div>
@@ -78,7 +78,7 @@
 {{end}}
 
 <!-- GENERAL -->
-{{define "automod_legacy_general"}}
+{{define "automod_basic_general"}}
 <div class="row">
     <div class="col-lg-12">
         {{checkbox "Enabled" "automod-enabled" "Enable basic automoderator" .AutomodConfig.Enabled}}
@@ -112,9 +112,9 @@
 {{end}}
 
 <!-- SPAM -->
-{{define "automod_legacy_spam"}}
+{{define "automod_basic_spam"}}
 <div class="col-lg-12">
-    {{mTemplate "automod_legacy_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Spam "Name" "Spam"}}
+    {{mTemplate "automod_basic_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Spam "Name" "Spam"}}
 
     <div class="form-group">
         <label for="NumMessages">Number of messages:</label>
@@ -133,9 +133,9 @@
 {{end}}
 
 <!-- MASS MENTION -->
-{{define "automod_legacy_mention"}}
+{{define "automod_basic_mention"}}
 <div class="col-lg-12">
-    {{mTemplate "automod_legacy_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Mention "Name" "Mention"}}
+    {{mTemplate "automod_basic_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Mention "Name" "Mention"}}
 
     <div class="form-group">
         <label for="Treshold">Mention Threshold</label>
@@ -149,26 +149,26 @@
 {{end}}
 
 <!-- SERVER INVITE -->
-{{define "automod_legacy_invite"}}
+{{define "automod_basic_invite"}}
 <div class="col-lg-12">
-    {{mTemplate "automod_legacy_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Invite "Name" "Invite"}}
+    {{mTemplate "automod_basic_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Invite "Name" "Invite"}}
 </div>
 {{end}}
 
 <!-- ALL LINKS -->
-{{define "automod_legacy_links"}}
+{{define "automod_basic_links"}}
 <div class="col-lg-12">
-    {{mTemplate "automod_legacy_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Links "Name" "Links"}}
+    {{mTemplate "automod_basic_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Links "Name" "Links"}}
 </div>
 {{end}}
 
 <!-- BANNED WORDS -->
-{{define "automod_legacy_banned_words"}}
+{{define "automod_basic_banned_words"}}
 <div class="col-lg-12">
-    {{mTemplate "automod_legacy_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Words "Name" "Words"}}
+    {{mTemplate "automod_basic_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Words "Name" "Words"}}
 
     <p class="help-block">Built in lists</p>
-    {{checkbox "Words.BuiltinSwearWords" "Words-BuiltinSwearWords" `Ban builtin swear words <a href="https://github.com/mrbentarikau/pagst/blob/master/automod_legacy/swearwords.go"> (list of swear words here)</a>` .AutomodConfig.Words.BuiltinSwearWords}}
+    {{checkbox "Words.BuiltinSwearWords" "Words-BuiltinSwearWords" `Ban builtin swear words <a href="https://github.com/botlabs-gg/yagpdb/blob/master/automod_basic/swearwords.go"> (list of swear words here)</a>` .AutomodConfig.Words.BuiltinSwearWords}}
     <hr />
 
     <div class="form-group">
@@ -183,9 +183,9 @@
 <!-- END BANNED WORDS -->
 
 <!-- BANNED WEBSITES -->
-{{define "automod_legacy_banned_websites"}}
+{{define "automod_basic_banned_websites"}}
 <div class="col-lg-12">
-    {{mTemplate "automod_legacy_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Sites "Name" "Sites"}}
+    {{mTemplate "automod_basic_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Sites "Name" "Sites"}}
     {{checkbox "Sites.GoogleSafeBrowsingEnabled" "automod-google-safebrowsing" `Enable <b>Google safebrowsing</b> integration` .AutomodConfig.Sites.GoogleSafeBrowsingEnabled}}
     <p>Detects sites that contains malware, scams, and other dangerous sites</p>
     <hr />
@@ -208,7 +208,7 @@
 <!-- END BANNED WEBSITES -->
 
 <!-- COMMON RULE FIELDS -->
-{{define "automod_legacy_common_fields"}}
+{{define "automod_basic_common_fields"}}
 
 <br />
 {{checkbox (joinStr "" .Name ".Enabled") (joinStr "" .Name ".Enabled") "Enabled" .Rule.Enabled}}

@@ -1,4 +1,4 @@
-package automod_legacy
+package automod_basic
 
 import (
 	"testing"

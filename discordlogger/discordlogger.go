@@ -67,12 +67,20 @@ func EventHandler(evt *eventsystem.EventData) (retry bool, err error) {
 
 		count = count - 1
 		msg = fmt.Sprintf(":x: Left guild **%s** :(", guildData.Name)
+
+		leftGuildOwnerName := "Unknown"
+		guildOwnerName, err := common.BotSession.User(guildData.OwnerID)
+		if err == nil {
+			leftGuildOwnerName = guildOwnerName.Username
+		}
+
+		msg += fmt.Sprintf(" owned by %s ID: %d", leftGuildOwnerName, guildData.OwnerID)
 		//From master code
 		//msg = fmt.Sprintf(":x: Left guild **%s** :(", common.ReplaceServerInvites(guildData.Name, 0, "[removed-server-invite]"))
 	case eventsystem.EventNewGuild:
 		guild := evt.GuildCreate().Guild
 		msg = fmt.Sprintf(":white_check_mark: Joined guild **%s** :D", common.ReplaceServerInvites(guild.Name, 0, "[removed-server-invite]"))
-		msg += fmt.Sprintf(" owned by %s", (bot.State.GetMember(guild.ID, guild.OwnerID)).User.Username)
+		msg += fmt.Sprintf(" owned by %s ID: %d", (bot.State.GetMember(guild.ID, guild.OwnerID)).User.Username, guild.OwnerID)
 	}
 	msg += fmt.Sprintf(" (now connected to %d servers)", count)
 	_, err = common.BotSession.ChannelMessageSend(int64(confBotLeavesJoins.GetInt()), msg)
