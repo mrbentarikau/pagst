@@ -210,11 +210,13 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 				return nil, err
 			}
 
-			if tier <= PremiumTierNone {
+			if tier <= PremiumTierNone && !confAllGuildsPremium.GetBool() {
 				continue
 			}
 
-			if _, ok := v.(*SlotGuildPremiumSource); ok {
+			if confAllGuildsPremium.GetBool() {
+				body.WriteString("<p class=\"mt-3\">Premium tier is <b>free for all</b>.")
+			} else if _, ok := v.(*SlotGuildPremiumSource); ok {
 				// special handling for this since i was a bit lazy
 				username := ""
 				discrim := ""
