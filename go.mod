@@ -22,7 +22,7 @@ require (
 	github.com/francoispqt/gojay v1.2.13
 	github.com/friendsofgo/errors v0.9.2
 	github.com/getsentry/sentry-go v0.7.0
-	github.com/gin-gonic/gin v1.7.0
+	github.com/gin-gonic/gin v1.7.7
 	github.com/go-errors/errors v1.0.1
 	github.com/gobwas/ws v1.0.3
 	github.com/google/safebrowsing v0.0.0-20190624211811-bbf0d20d26b3
