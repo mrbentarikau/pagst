@@ -68,9 +68,9 @@ require (
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/image v0.0.0-20190902063713-cb417be4ba39
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
+	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
-	golang.org/x/text v0.3.8
+	golang.org/x/text v0.7.0
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/api v0.40.0
 )
@@ -160,7 +160,7 @@ require (
 	go.opencensus.io v0.22.5 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d // indirect
