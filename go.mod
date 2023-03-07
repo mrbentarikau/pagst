@@ -67,7 +67,7 @@ require (
 	goji.io v2.0.2+incompatible
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
-	golang.org/x/image v0.0.0-20190902063713-cb417be4ba39
+	golang.org/x/image v0.5.0
 	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
 	golang.org/x/text v0.7.0
