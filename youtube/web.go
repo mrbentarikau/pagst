@@ -2,6 +2,7 @@ package youtube
 
 import (
 	"context"
+	"database/sql"
 	_ "embed"
 	"encoding/xml"
 	"errors"
@@ -13,11 +14,6 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-	"unicode"
-
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
@@ -27,14 +23,15 @@ import (
 	"github.com/mediocregopher/radix/v3"
 	"goji.io"
 	"goji.io/pat"
-	"google.golang.org/api/youtube/v3"
 )
 
+/*
 type CtxKey int
 
 const (
 	CurrentConfig CtxKey = iota
 )
+*/
 
 //go:embed assets/youtube.html
 var PageHTML string
@@ -58,28 +55,16 @@ type Form struct {
 	ID                 uint
 	MentionEveryone    bool
 	MentionRole        int64 `valid:"role,true"`
+	PublishShorts      bool
 	PublishLivestream  bool
 	Enabled            bool
 }
 
-type ytUrlType int
-
-const (
-	ytUrlTypeVideo ytUrlType = iota
-	ytUrlTypeCustom
-	ytUrlTypeChannel
-	ytUrlTypeUser
-	ytUrlTypeHandle
-	ytUrlTypeInvalid
-)
-
 var (
-	ytUrlRegex        = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com`)
-	ytVideoUrlRegex   = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]+).*`)
-	ytChannelUrlRegex = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/(channel)\/(UC[\w-]{21}[AQgw])$`)
-	ytCustomUrlRegex  = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/(c\/)?([\w-]+)$`)
-	ytUserUrlRegex    = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/(user\/)([\w-]+)$`)
-	ytHandleUrlRegex  = regexp.MustCompile(`^(https?:\/\/)?((www|m)\.)?youtube\.com\/(@)([\w-]+)$`)
+	ytChannelIDRegex  = regexp.MustCompile(`\AUC[\w\-]{21}[AQgw]\z`)
+	ytHandleRegex     = regexp.MustCompile(`\A@[\w\-.]{3,30}\z`)
+	ytPlaylistIDRegex = regexp.MustCompile(`\A(?:PL|OLAK|RDCLAK)[-_0-9A-Za-z]+\z`)
+	ytVideoIDRegex    = regexp.MustCompile(`\A[\w\-]+\z`)
 )
 
 func (p *Plugin) InitWeb() {
@@ -165,43 +150,30 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 	}
 
 	data := ctx.Value(common.ContextKeyParsedForm).(*Form)
-
-	cID := trimYouTubeURLParts(data.YoutubeChannelID)
-	username := trimYouTubeURLParts(data.YoutubeChannelUser)
-	cURL := trimYouTubeURLParts(data.YoutubeCustomURL)
-	vURL := trimYouTubeURLParts(data.YoutubeVideoURL)
-
-	urlYT := data.YoutubeURL
-	if !ytUrlRegex.MatchString(urlYT) && cID == "" && username == "" && cURL == "" && vURL == "" {
-		return templateData.AddAlerts(web.ErrorAlert("This is not a YouTube link...")), nil
-	}
-
-	var ytChannel, legacyYTChannel *youtube.Channel
-	var err error
-	tChain := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-
-	if urlYT != "" {
-		urlYT, _ = url.QueryUnescape(urlYT)
-		urlYT, _, _ = transform.String(tChain, urlYT)
-		ytChannel, err = p.getYTChannel(urlYT)
-	} else {
-		customURL, _ := url.QueryUnescape(data.YoutubeCustomURL)
-		customURL, _, _ = transform.String(tChain, customURL)
-		legacyYT := LegacyYTStruct{
-			YTChannelID: data.YoutubeChannelID,
-			YTUsername:  data.YoutubeChannelUser,
-			YTCustomURL: customURL,
-			YTVideoURL:  data.YoutubeVideoURL,
-		}
-		legacyYTChannel, err = p.legacyGetYTChannel(legacyYT)
-	}
-
+	channelUrl := data.YoutubeURL
+	parsedUrl, err := url.Parse(channelUrl)
 	if err != nil {
-		logger.WithError(err).Errorf("error occurred fetching channel for URL %s", urlYT)
+		return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Invalid link <b>%s<b>, make sure it is a valid youtube url", channelUrl))), err
+	}
+
+	id, err := p.parseYtUrl(parsedUrl)
+	if err != nil {
+		logger.WithError(err).Errorf("error occured parsing channel from url %q", channelUrl)
+		return templateData.AddAlerts(web.ErrorAlert(err)), err
+	}
+
+	list := p.YTService.Channels.List(listParts).MaxResults(1)
+	cResp, err := id.getChannelList(p, list)
+	if cResp != nil && len(cResp.Items) < 1 {
+		err = ErrNoChannel
+	}
+	if err != nil {
+		logger.WithError(err).Errorf("error occurred fetching channel for URL %s", channelUrl)
 		return templateData.AddAlerts(web.ErrorAlert("No channel found for that link")), err
 	}
 
-	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, legacyYTChannel, ytChannel, data.MentionEveryone, data.MentionRole, data.PublishLivestream)
+	ytChannel := cResp.Items[0]
+	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, ytChannel, data.MentionEveryone, data.MentionRole, data.PublishShorts, data.PublishLivestream)
 	if err != nil {
 		if err == ErrNoChannel {
 			return templateData.AddAlerts(web.ErrorAlert("No channel by that id/username found")), errors.New("channel not found")
@@ -286,13 +258,27 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 	data := ctx.Value(common.ContextKeyParsedForm).(*Form)
 
 	sub.MentionEveryone = data.MentionEveryone
+	sub.PublishShorts = sql.NullBool{Valid: true, Bool: data.PublishShorts}
 	sub.PublishLivestream = data.PublishLivestream
 	sub.ChannelID = discordgo.StrID(data.DiscordChannel)
 	sub.MentionRole = discordgo.StrID(data.MentionRole)
 	if data.DiscordChannel == 0 {
-		sub.Enabled = false
+		sub.Enabled = sql.NullBool{false, false}
 	} else {
-		sub.Enabled = data.Enabled
+		sub.Enabled = sql.NullBool{Valid: true, Bool: data.Enabled}
+	}
+
+	count := 0
+	common.GORM.Model(&ChannelSubscription{}).Where("guild_id = ? and enabled = ?", sub.GuildID, sql.NullBool{true, true}).Count(&count)
+	if count >= MaxFeedsForContext(ctx) {
+		var currFeed ChannelSubscription
+		err := common.GORM.Model(&ChannelSubscription{}).Where("id = ?", sub.ID).First(&currFeed)
+		if err != nil {
+			logger.WithError(err.Error).Errorf("Failed getting feed %d", sub.ID)
+		}
+		if !currFeed.Enabled.Bool && sub.Enabled.Bool {
+			return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Max %d enabled YouTube feeds allowed (%d for premium servers)", GuildMaxFeeds, GuildMaxFeedsPremium))), nil
+		}
 	}
 
 	err = common.GORM.Save(sub).Error

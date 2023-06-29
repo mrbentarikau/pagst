@@ -1,4 +1,4 @@
-package automod_legacy
+package automod_basic
 
 // These words are listed in in alphabethical order.
 var BuiltinSwearWords = map[string]bool{

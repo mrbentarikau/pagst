@@ -126,7 +126,7 @@ func (c *Context) tmplSendTargetDM(target interface{}, s ...interface{}) string 
 			return ""
 		}
 
-		targetID := targetUserID(target)
+		targetID := TargetUserID(target)
 		if targetID == 0 {
 			return ""
 		}
@@ -592,7 +592,7 @@ func (c *Context) tmplMentionHere() string {
 	return "@here"
 }
 
-func targetUserID(input interface{}) int64 {
+func TargetUserID(input interface{}) int64 {
 	switch t := input.(type) {
 	case *discordgo.User:
 		return t.ID
@@ -626,7 +626,7 @@ func (c *Context) tmplSetRoles(target interface{}, input interface{}) (string, e
 			targetID = c.MS.User.ID
 		}
 	} else {
-		targetID = targetUserID(target)
+		targetID = TargetUserID(target)
 	}
 
 	if targetID == 0 {
@@ -750,7 +750,7 @@ func (c *Context) tmplTargetHasPermissions(target interface{}, needed int64) (bo
 		return false, ErrTooManyAPICalls
 	}
 
-	targetID := targetUserID(target)
+	targetID := TargetUserID(target)
 	if targetID == 0 {
 		return false, nil
 	}
@@ -776,7 +776,7 @@ func (c *Context) tmplGetTargetPermissionsIn(target interface{}, channel interfa
 		return 0, ErrTooManyAPICalls
 	}
 
-	targetID := targetUserID(target)
+	targetID := TargetUserID(target)
 	if targetID == 0 {
 		return 0, nil
 	}
@@ -883,7 +883,7 @@ func (c *Context) tmplDelMessageReaction(values ...reflect.Value) (reflect.Value
 		}
 
 		if args[2].IsValid() {
-			uID = targetUserID(args[2].Interface())
+			uID = TargetUserID(args[2].Interface())
 		}
 
 		if uID == 0 {
@@ -1036,7 +1036,7 @@ func (c *Context) tmplGetMember(target interface{}) (*discordgo.Member, error) {
 		return nil, ErrTooManyAPICalls
 	}
 
-	mID := targetUserID(target)
+	mID := TargetUserID(target)
 	if mID == 0 {
 		return nil, nil
 	}
@@ -1069,7 +1069,6 @@ func (c *Context) tmplGetChannel(channel interface{}) (*CtxChannel, error) {
 }
 
 func (c *Context) tmplGetThread(channel interface{}) (*CtxChannel, error) {
-
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
 	}
@@ -1088,10 +1087,38 @@ func (c *Context) tmplGetThread(channel interface{}) (*CtxChannel, error) {
 	return CtxChannelFromCS(cstate), nil
 }
 
-func (c *Context) tmplGetThreadsArchived(args ...interface{}) (*discordgo.ThreadsList, error) {
-	var before time.Time
-	var channelID int64
-	var limit int
+func (c *Context) tmplGetGuildThreadsActive() (*discordgo.ThreadsList, error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_all_active_threads", 3) {
+		return nil, ErrTooManyCalls
+	}
+
+	gID := c.GS.ID
+	if gID == 0 {
+		return nil, nil //dont send an error , a nil output would indicate invalid/unknown channel
+	}
+
+	fmt.Println("gID", gID)
+
+	response, err := common.BotSession.GuildThreadsActive(gID)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (c *Context) tmplGetThreadsArchived(channel interface{}, args ...interface{}) (*discordgo.ThreadsList, error) {
+	var private bool
+	var response *discordgo.ThreadsList
+	var err error
+	var argsSDict SDict
+
+	before := time.Now().UTC()
+	limit := int(2)
 
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
@@ -1101,39 +1128,45 @@ func (c *Context) tmplGetThreadsArchived(args ...interface{}) (*discordgo.Thread
 		return nil, ErrTooManyCalls
 	}
 
-	if len(args) < 1 {
-		return nil, errors.New("no arguments given")
+	if len(args) > 0 {
+		argsSDict, err = StringKeyDictionary(args...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	argsSdict, err := StringKeyDictionary(args...)
-	if err != nil {
-		return nil, err
+	channelID := c.ChannelArg(channel)
+	if channelID == 0 {
+		return nil, nil //dont send an error , a nil output would indicate invalid/unknown channel
 	}
 
-	for key, val := range argsSdict {
+	for key, val := range argsSDict {
 		switch strings.ToLower(key) {
-		case "channel":
-			channelID = c.ChannelArg(val)
-			if channelID == 0 {
-				return nil, nil //dont send an error , a nil output would indicate invalid/unknown channel
-			}
 		case "before":
 			if realTime, ok := val.(time.Time); ok {
 				before = realTime
 			}
 		case "limit":
 			limit = tmplToInt(val)
-			if limit < 1 {
-				limit = 1
+			if limit < 2 {
+				limit = 2
 			} else if limit > 100 {
 				limit = 100
+			}
+		case "private":
+			if val.(bool) {
+				private = true
 			}
 		default:
 			return nil, errors.New(`invalid key "` + key + ` "passed to getArchivedThreads builder`)
 		}
 	}
 
-	response, err := common.BotSession.ThreadsArchived(channelID, &before, limit)
+	if private {
+		response, err = common.BotSession.ThreadsPrivateArchived(channelID, &before, limit)
+	} else {
+		response, err = common.BotSession.ThreadsArchived(channelID, &before, limit)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1504,20 +1537,24 @@ func (c *Context) tmplSetMemberTimeout(target interface{}, optionalArgs ...inter
 		return "", ErrTooManyCalls
 	}
 
-	mID := targetUserID(target)
+	mID := TargetUserID(target)
 	if mID == 0 {
 		return "", nil
 	}
 
-	delay := 60 * time.Second
+	delay := 300 * time.Second
 	var until time.Time
 	if len(optionalArgs) > 0 {
-		delay = c.validateDurationDelay(optionalArgs[0])
+		dur := c.validateDurationDelay(optionalArgs[0])
+		if dur > delay {
+			delay = dur
+		}
 	}
 
 	until = time.Now().Add(delay)
 
-	err := common.BotSession.GuildMemberTimeout(c.GS.ID, mID, &until, "")
+	reason := discordgo.WithAuditLogReason("Timeout from " + c.Name)
+	err := common.BotSession.GuildMemberTimeout(c.GS.ID, mID, &until, "", reason)
 	if err != nil {
 		return "", err
 	}
@@ -2078,7 +2115,7 @@ func (c *Context) targetHasRole(target interface{}, roleInput interface{}) (bool
 		return false, ErrTooManyAPICalls
 	}
 
-	targetID := targetUserID(target)
+	targetID := TargetUserID(target)
 	if targetID == 0 {
 		return false, fmt.Errorf("target %v not found", target)
 	}
@@ -2123,7 +2160,7 @@ func (c *Context) giveRole(target interface{}, roleInput interface{}, optionalAr
 		delay = c.validateDurationDelay(optionalArgs[0])
 	}
 
-	targetID := targetUserID(target)
+	targetID := TargetUserID(target)
 	if targetID == 0 {
 		return "", fmt.Errorf("target %v not found", target)
 	}
@@ -2227,7 +2264,7 @@ func (c *Context) takeRole(target interface{}, roleInput interface{}, optionalAr
 		delay = c.validateDurationDelay(optionalArgs[0])
 	}
 
-	targetID := targetUserID(target)
+	targetID := TargetUserID(target)
 	if targetID == 0 {
 		return "", fmt.Errorf("target %v not found", target)
 	}
@@ -2378,7 +2415,7 @@ func (c *Context) tmplGuildMemberMove(channel interface{}, target interface{}) (
 		cID = 0
 	}
 
-	mID := targetUserID(target)
+	mID := TargetUserID(target)
 	if mID == 0 {
 		return "", nil
 	}
@@ -2435,7 +2472,7 @@ func (c *Context) tmplGetAuditLog(args ...interface{}) ([]*discordgo.AuditLogEnt
 	for key, val := range argsSdict {
 		switch strings.ToLower(key) {
 		case "userid":
-			userID = targetUserID(val)
+			userID = TargetUserID(val)
 		case "before":
 			beforeID = ToInt64(val)
 		case "action_type":
@@ -2469,7 +2506,7 @@ func (c *Context) tmplGetUser(target interface{}) (*discordgo.User, error) {
 		return nil, ErrTooManyCalls
 	}
 
-	uID := targetUserID(target)
+	uID := TargetUserID(target)
 	if uID == 0 {
 		return nil, nil
 	}
@@ -2494,7 +2531,7 @@ func (c *Context) tmplGetMemberTimezone(target ...interface{}) (*time.Location, 
 
 	uID := c.MS.User.ID
 	if len(target) > 0 {
-		uID = targetUserID(target[0])
+		uID = TargetUserID(target[0])
 		if uID == 0 {
 			return nil, nil
 		}

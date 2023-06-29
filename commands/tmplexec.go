@@ -20,6 +20,7 @@ func init() {
 		execUser, execBot := TmplExecCmdFuncs(ctx, 5, false)
 		ctx.ContextFuncs["exec"] = execUser
 		ctx.ContextFuncs["execAdmin"] = execBot
+		ctx.ContextFuncs["execBot"] = execBot
 		ctx.ContextFuncs["userArg"] = tmplUserArg(ctx)
 	})
 }
@@ -87,13 +88,13 @@ func TmplExecCmdFuncs(ctx *templates.Context, maxExec int, dryRun bool) (userCtx
 			return "", errors.New("Max number of commands executed in custom command")
 		}
 		maxExec -= 1
-		return execCmd(ctx, dryRun, mc, cmd, args...)
+		return execCmd(ctx, dryRun, true, mc, cmd, args...)
 	}
 
 	execBot := func(cmd string, args ...interface{}) (interface{}, error) {
 
 		botUserCopy := *common.BotUser
-		botUserCopy.Username = common.ConfBotName.GetString() + " (cc: " + ctx.Msg.Author.Username + "#" + ctx.Msg.Author.Discriminator + ")"
+		botUserCopy.Username = common.ConfBotName.GetString() + " (cc: " + ctx.Msg.Author.String() + ")"
 
 		messageCopy := *ctx.Msg
 		messageCopy.Author = &botUserCopy
@@ -113,13 +114,24 @@ func TmplExecCmdFuncs(ctx *templates.Context, maxExec int, dryRun bool) (userCtx
 			return "", errors.New("Max number of commands executed in custom command")
 		}
 		maxExec -= 1
-		return execCmd(ctx, dryRun, mc, cmd, args...)
+		return execCmd(ctx, dryRun, false, mc, cmd, args...)
 	}
 
 	return execUser, execBot
 }
 
-func execCmd(tmplCtx *templates.Context, dryRun bool, m *discordgo.MessageCreate, cmd string, args ...interface{}) (interface{}, error) {
+func execCmd(tmplCtx *templates.Context, dryRun, execUser bool, m *discordgo.MessageCreate, cmd string, args ...interface{}) (interface{}, error) {
+	/* KRAAKA: IDEA LVL, NEEDS REMOVAL
+	if tmplCtx.IsExecedByEvalCC {
+		cmd := tmplCtx.Data["Cmd"].(string)
+		prefix := tmplCtx.Data["GuildPrefix"].(string)
+
+		if strings.ToLower(strings.TrimPrefix(cmd, prefix)) == "evalcc" {
+			return "can not use exec/execAdmin for evalcc", nil
+		}
+	}
+	*/
+
 	fakeMsg := *m.Message
 	fakeMsg.Mentions = make([]*discordgo.User, 0)
 
@@ -237,6 +249,10 @@ func execCmd(tmplCtx *templates.Context, dryRun bool, m *discordgo.MessageCreate
 
 	if cd > 0 {
 		return "", errors.NewPlain("this command is on guild scope cooldown")
+	}
+
+	if tmplCtx.IsExecedByEvalCC && execUser {
+		data.Author = tmplCtx.Data["User"].(*discordgo.User)
 	}
 
 	resp, err := runFunc(data)

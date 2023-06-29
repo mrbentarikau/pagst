@@ -22,12 +22,15 @@ const (
 	connectEventType                             = "__CONNECT__"
 	disconnectEventType                          = "__DISCONNECT__"
 	eventEventType                               = "__EVENT__"
+	guildAuditLogEntryCreateEventType            = "GUILD_AUDIT_LOG_ENTRY_CREATE"
 	guildBanAddEventType                         = "GUILD_BAN_ADD"
 	guildBanRemoveEventType                      = "GUILD_BAN_REMOVE"
 	guildCreateEventType                         = "GUILD_CREATE"
 	guildDeleteEventType                         = "GUILD_DELETE"
 	guildEmojisUpdateEventType                   = "GUILD_EMOJIS_UPDATE"
 	guildIntegrationsUpdateEventType             = "GUILD_INTEGRATIONS_UPDATE"
+	guildJoinRequestDeleteEventType              = "GUILD_JOIN_REQUEST_DELETE"
+	guildJoinRequestUpdateEventType              = "GUILD_JOIN_REQUEST_UPDATE"
 	guildMemberAddEventType                      = "GUILD_MEMBER_ADD"
 	guildMemberRemoveEventType                   = "GUILD_MEMBER_REMOVE"
 	guildMemberUpdateEventType                   = "GUILD_MEMBER_UPDATE"
@@ -366,6 +369,26 @@ func (eh eventEventHandler) Handle(s *Session, i interface{}) {
 	}
 }
 
+// guildAuditLogEntryCreateEventHandler is an event handler for GuildAuditLogEntryCreate events.
+type guildAuditLogEntryCreateEventHandler func(*Session, *GuildAuditLogEntryCreate)
+
+// Type returns the event type for GuildAuditLogEntryCreate events.
+func (eh guildAuditLogEntryCreateEventHandler) Type() string {
+	return guildAuditLogEntryCreateEventType
+}
+
+// New returns a new instance of GuildAuditLogEntryCreate.
+func (eh guildAuditLogEntryCreateEventHandler) New() interface{} {
+	return &GuildAuditLogEntryCreate{}
+}
+
+// Handle is the handler for GuildAuditLogEntryCreate events.
+func (eh guildAuditLogEntryCreateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildAuditLogEntryCreate); ok {
+		eh(s, t)
+	}
+}
+
 // guildBanAddEventHandler is an event handler for GuildBanAdd events.
 type guildBanAddEventHandler func(*Session, *GuildBanAdd)
 
@@ -482,6 +505,46 @@ func (eh guildIntegrationsUpdateEventHandler) New() interface{} {
 // Handle is the handler for GuildIntegrationsUpdate events.
 func (eh guildIntegrationsUpdateEventHandler) Handle(s *Session, i interface{}) {
 	if t, ok := i.(*GuildIntegrationsUpdate); ok {
+		eh(s, t)
+	}
+}
+
+// guildJoinRequestDeleteEventHandler is an event handler for GuildJoinRequestDelete events.
+type guildJoinRequestDeleteEventHandler func(*Session, *GuildJoinRequestDelete)
+
+// Type returns the event type for GuildJoinRequestDelete events.
+func (eh guildJoinRequestDeleteEventHandler) Type() string {
+	return guildJoinRequestDeleteEventType
+}
+
+// New returns a new instance of GuildJoinRequestDelete.
+func (eh guildJoinRequestDeleteEventHandler) New() interface{} {
+	return &GuildJoinRequestDelete{}
+}
+
+// Handle is the handler for GuildJoinRequestDelete events.
+func (eh guildJoinRequestDeleteEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildJoinRequestDelete); ok {
+		eh(s, t)
+	}
+}
+
+// guildJoinRequestUpdateEventHandler is an event handler for GuildJoinRequestUpdate events.
+type guildJoinRequestUpdateEventHandler func(*Session, *GuildJoinRequestUpdate)
+
+// Type returns the event type for GuildJoinRequestUpdate events.
+func (eh guildJoinRequestUpdateEventHandler) Type() string {
+	return guildJoinRequestUpdateEventType
+}
+
+// New returns a new instance of GuildJoinRequestUpdate.
+func (eh guildJoinRequestUpdateEventHandler) New() interface{} {
+	return &GuildJoinRequestUpdate{}
+}
+
+// Handle is the handler for GuildJoinRequestUpdate events.
+func (eh guildJoinRequestUpdateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildJoinRequestUpdate); ok {
 		eh(s, t)
 	}
 }
@@ -1535,6 +1598,8 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return disconnectEventHandler(v)
 	case func(*Session, *Event):
 		return eventEventHandler(v)
+	case func(*Session, *GuildAuditLogEntryCreate):
+		return guildAuditLogEntryCreateEventHandler(v)
 	case func(*Session, *GuildBanAdd):
 		return guildBanAddEventHandler(v)
 	case func(*Session, *GuildBanRemove):
@@ -1547,6 +1612,10 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return guildEmojisUpdateEventHandler(v)
 	case func(*Session, *GuildIntegrationsUpdate):
 		return guildIntegrationsUpdateEventHandler(v)
+	case func(*Session, *GuildJoinRequestDelete):
+		return guildJoinRequestDeleteEventHandler(v)
+	case func(*Session, *GuildJoinRequestUpdate):
+		return guildJoinRequestUpdateEventHandler(v)
 	case func(*Session, *GuildMemberAdd):
 		return guildMemberAddEventHandler(v)
 	case func(*Session, *GuildMemberRemove):
@@ -1667,12 +1736,15 @@ func init() {
 	registerInterfaceProvider(channelDeleteEventHandler(nil))
 	registerInterfaceProvider(channelPinsUpdateEventHandler(nil))
 	registerInterfaceProvider(channelUpdateEventHandler(nil))
+	registerInterfaceProvider(guildAuditLogEntryCreateEventHandler(nil))
 	registerInterfaceProvider(guildBanAddEventHandler(nil))
 	registerInterfaceProvider(guildBanRemoveEventHandler(nil))
 	registerInterfaceProvider(guildCreateEventHandler(nil))
 	registerInterfaceProvider(guildDeleteEventHandler(nil))
 	registerInterfaceProvider(guildEmojisUpdateEventHandler(nil))
 	registerInterfaceProvider(guildIntegrationsUpdateEventHandler(nil))
+	registerInterfaceProvider(guildJoinRequestDeleteEventHandler(nil))
+	registerInterfaceProvider(guildJoinRequestUpdateEventHandler(nil))
 	registerInterfaceProvider(guildMemberAddEventHandler(nil))
 	registerInterfaceProvider(guildMemberRemoveEventHandler(nil))
 	registerInterfaceProvider(guildMemberUpdateEventHandler(nil))

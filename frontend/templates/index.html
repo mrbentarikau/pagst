@@ -3,6 +3,7 @@
 <html lang="en">
 
 <head>
+  {{template "googleAnalytics" .}}
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -52,7 +53,7 @@
       <ul class="navbar-nav mr-auto">
         {{ if not (ge .JoinedServers 199) }}
         <li class="nav-item active">
-		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=applications.commands%20bot&permissions=1101658455543&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
+		          <a class="nav-link" href='https://discordapp.com/oauth2/authorize?client_id={{.ClientID}}&scope=applications.commands%20bot&permissions=1516122532343&response_type=code&redirect_uri={{urlquery (joinStr ""  "https://" .Host "/manage")}}'>Add to Server</a>
 			         
 	      </li>
         {{ end }}
@@ -107,7 +108,7 @@
         <div class="col col-lg-8 abouttext" style="padding-bottom: 3%; text-align: left">
           <p class="about poppins semibold" style="line-height: 1.2;font-size: 2rem;background-color: #1a1a1a; margin-top:51px">About {{.BotName}}<br/><span style="text-align:left;font-size: 13px;display: block;"><i>Cessation of Existence</i></span></p>
 
-          <p class="about"><b>PAGSTDB</b> is 100% open-source and started as a fork of YAGPDB from dev. Jonas747#0001 who does not have this bot any more and does not develop it further.</p>
+          <p class="about"><b>{{.BotName}}</b> is 100% open-source and started as a fork of YAGPDB from dev. Jonas747#0001 who does not have this bot any more and does not develop it further.</p>
           <p class="about">Battlegrounds have changed and Jonas is developing yet another much cooler bot called <a class="pagst" href="https://botloader.io/" rel="noopener" target="_blank">Botloader</a>.
           </p>
           <p>Corporations kill creativity - PAGST has nothing to do with YAGPDB and mindset of Botlabs.gg LLC and BlueStacks.</p>
@@ -134,9 +135,10 @@
           <p style="text-align: center;">
             <b>YAGPDB</b> created by
             <a class="pagst" href="https://github.com/jonas747" rel="noopener" target="_blank">Jonas747</a> |
-            <b>PAGSTDB</b> maintained by <a class="pagst" href="https://github.com/mrbentarikau/" rel="noopener" target="_blank">caubert</a> |
-            <b>PAGST</b> is referenced from <a class="pagst" href="https://www.paradigmadventure.com/" rel="noopener" target="_blank">PARADIGM</a> |
-            <b>PAGSTDB</b> <a class="pagst" href="../privacy_policy" rel="noopener">Privacy Policy</a>
+            <b>{{.BotName}}</b> maintained by <a class="pagst" href="https://github.com/mrbentarikau/" rel="noopener" target="_blank">caubert</a> |
+            <b>PAGST</b> is referenced from <a class="pagst" href="https://www.paradigmadventure.com/" rel="noopener" target="_blank">PARADIGM</a><br/>
+            <b>{{.BotName}}</b> <a class="pagst" href="../privacy_policy" rel="noopener">Privacy Policy</a> |
+            <b>{{.BotName}}</b> <a class="pagst" href="../tos" rel="noopener">Terms of Service</a>
           </p>
         </div>
       </div>
@@ -156,12 +158,23 @@
         pointerEvents: true
       });
     </script>
-    {{template "googleAnalytics" .}}
 </body>
 </html>
 
 
-{{end}} {{define "googleAnalytics"}}{{if and (not .Testing) .GAID}}
+{{end}} {{define "googleAnalytics"}}{{if and (not .Testing) (or .GAID .GA4)}}
+{{if .GA4}}
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{.GA4}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '{{.GA4}}');
+</script>
+{{end}}
+{{if .GAID}}
 <script>
   (function (i, s, o, g, r, a, m) {
     i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
@@ -171,4 +184,7 @@
   })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
   ga('create', '{{.GAID}}', 'auto');
   ga('send', 'pageview');
-</script>{{end}}{{end}}
+</script>
+{{end}}
+
+{{end}}{{end}}

@@ -11,7 +11,6 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
-	"github.com/mrbentarikau/pagst/lib/go-twitter/twitter"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/twitter/models"
 	"github.com/mrbentarikau/pagst/web"
@@ -24,21 +23,15 @@ import (
 //go:embed assets/twitter.html
 var PageHTML string
 
-type CtxKey int
-
-const (
-	CurrentConfig CtxKey = iota
-)
-
 type Form struct {
 	TwitterUser    string  `valid:",1,256"`
-	DiscordChannel int64   `valid:"channel,true"`
+	DiscordChannel int64   `valid:"channel,false"`
 	MentionRole    []int64 `valid:"role,true"`
 	ID             int64
 }
 
 type EditForm struct {
-	DiscordChannel  int64 `valid:"channel,true"`
+	DiscordChannel  int64 `valid:"channel,false"`
 	IncludeReplies  bool
 	IncludeRetweets bool
 	MentionRole     []int64 `valid:"role,true"`
@@ -98,9 +91,9 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 	ctx := r.Context()
 	activeGuild, templateData := web.GetBaseCPContextData(ctx)
 
-	//if premium.PremiumTierPremium != 1 || premium.ContextPremiumTier(ctx) != premium.PremiumTierPremium {
+	//if premium.ContextPremiumTier(ctx) != premium.PremiumTierPremium {
 	if !premium.ContextPremium(ctx) {
-		return templateData.AddAlerts(web.ErrorAlert("Twitter feeds are premium only")), nil
+		return templateData.AddAlerts(web.ErrorAlert("Twitter feeds are paid premium only")), nil
 	}
 
 	// limit it to max 25 feeds
@@ -113,40 +106,22 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 		return templateData.AddAlerts(web.ErrorAlert("Max 25 feeds per server")), nil
 	}
 
-	globalCount, err := models.TwitterFeeds(models.TwitterFeedWhere.GuildID.EQ(activeGuild.ID)).CountG(ctx)
-	if err != nil {
-		return templateData, err
-	}
-
-	if globalCount >= 4000 {
-		return templateData.AddAlerts(web.ErrorAlert("Bot hit max feeds, contact bot owner")), nil
-	}
-
 	form := ctx.Value(common.ContextKeyParsedForm).(*Form)
 
 	// search up the ID
-	users, _, err := p.twitterAPI.Users.Lookup(&twitter.UserLookupParams{
-		ScreenName: []string{form.TwitterUser},
-	})
+	user, err := p.twitterScraper.GetProfile(form.TwitterUser)
 	if err != nil {
-		if cast, ok := err.(twitter.APIError); ok {
-			if cast.Errors[0].Code == 17 {
-				return templateData.AddAlerts(web.ErrorAlert("User not found")), nil
-			}
-		}
-		return templateData, err
-	}
-
-	if len(users) < 1 {
 		return templateData.AddAlerts(web.ErrorAlert("User not found")), nil
 	}
 
-	user := users[0]
-
+	userId, err := strconv.ParseInt(user.UserID, 10, 64)
+	if err != nil {
+		return templateData.AddAlerts(web.ErrorAlert("Failed getting user id")), nil
+	}
 	m := &models.TwitterFeed{
 		GuildID:         activeGuild.ID,
-		TwitterUsername: user.ScreenName,
-		TwitterUserID:   user.ID,
+		TwitterUsername: user.Username,
+		TwitterUserID:   userId,
 		ChannelID:       form.DiscordChannel,
 		MentionRole:     form.MentionRole,
 		Enabled:         true,
@@ -158,7 +133,7 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 
 	err = m.InsertG(ctx, boil.Infer())
 	if err == nil {
-		go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyAddedFeed, &cplogs.Param{Type: cplogs.ParamTypeString, Value: user.ScreenName}))
+		go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyAddedFeed, &cplogs.Param{Type: cplogs.ParamTypeString, Value: user.Username}))
 	}
 	return templateData, err
 }

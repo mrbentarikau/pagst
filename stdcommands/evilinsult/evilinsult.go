@@ -3,6 +3,7 @@ package evilinsult
 import (
 	"fmt"
 	"html"
+	"math/rand"
 
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
@@ -20,6 +21,7 @@ var Command = &commands.YAGCommand{
 	},
 	DefaultEnabled:            true,
 	ApplicationCommandEnabled: true,
+	ApplicationCommandType:    2,
 	NSFW:                      true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		target := "a random person nearby"
@@ -29,14 +31,19 @@ var Command = &commands.YAGCommand{
 
 		queryInsult := "https://evilinsult.com/generate_insult.php?lang=en"
 
-		body, err := util.RequestFromAPI(queryInsult)
-		if err != nil {
-			return "Not enough heat for a roast", err
+		roast := randomRoast()
+
+		request := rand.Intn(2)
+		if request > 0 {
+			body, err := util.RequestFromAPI(queryInsult)
+			if err == nil {
+				roast = string(body)
+			}
 		}
 
 		embed := &discordgo.MessageEmbed{}
 		embed.Title = fmt.Sprintf(`%s roasted %s`, data.Author.Username, target)
-		embed.Description = html.UnescapeString(string(body))
+		embed.Description = html.UnescapeString(roast)
 
 		return embed, nil
 	},

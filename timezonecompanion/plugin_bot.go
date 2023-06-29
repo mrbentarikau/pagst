@@ -76,7 +76,7 @@ func (p *Plugin) AddCommands() {
 					if err != nil {
 						return nil, err
 					}
-					return "Registered time zone deleted", nil
+					return "Registered time zone `" + localTZ.String() + "` deleted", nil
 				} else {
 					return "You don't have a registered time zone", nil
 				}

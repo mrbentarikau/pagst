@@ -1,4 +1,4 @@
-package automod_legacy
+package automod_basic
 
 import (
 	"time"
@@ -27,7 +27,7 @@ func (p *Plugin) BotInit() {
 
 	eventsystem.AddHandlerAsyncLastLegacy(p, HandleMessageUpdate, eventsystem.EventMessageUpdate)
 
-	pubsub.AddHandler("update_automod_legacy_rules", HandleUpdateAutomodRules, nil)
+	pubsub.AddHandler("update_automod_basic_rules", HandleUpdateAutomodRules, nil)
 	confCache = ccache.New(ccache.Configure().MaxSize(1000))
 }
 

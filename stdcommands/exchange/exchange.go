@@ -5,16 +5,17 @@ package exchange
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	"math"
 	"math/rand"
-	"net/http"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -41,9 +42,24 @@ var Command = &commands.YAGCommand{
 		to := Symbols[strings.ToUpper(data.Args[2].Str())]
 
 		if len(to) == 0 || len(from) == 0 {
-			return "Invalid currency code.\nCheck out available codes on: <https://api.exchangerate.host/symbols>", nil
+			pm, err := paginatedmessages.CreatePaginatedMessage(
+				data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(Symbols))/float64(15))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
+					return errEmbed(Symbols, page)
+				})
+			if err != nil {
+				return nil, err
+			}
+			return pm, nil
 		}
-		output, err := requestAPI("https://api.exchangerate.host/convert?from=" + from["Code"] + "&to=" + to["Code"] + "&amount=" + fmt.Sprintf("%.3f", amount))
+
+		query := "https://api.exchangerate.host/convert?from=" + from["Code"] + "&to=" + to["Code"] + "&amount=" + fmt.Sprintf("%.3f", amount)
+		body, err := util.RequestFromAPI(query)
+		if err != nil {
+			return nil, err
+		}
+
+		output := &Result{}
+		err = json.Unmarshal([]byte(body), &output)
 		if err != nil {
 			return nil, err
 		}
@@ -62,32 +78,6 @@ var Command = &commands.YAGCommand{
 
 		return embed, nil
 	},
-}
-
-func requestAPI(query string) (*Result, error) {
-	req, err := http.NewRequest("GET", query, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		return nil, commands.NewPublicError("HTTP err: ", resp.StatusCode)
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	result := &Result{}
-	err = json.Unmarshal([]byte(body), &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
 }
 
 type SymbolInfo struct {
@@ -113,4 +103,28 @@ type Result struct {
 	Date       string                 `json:"date,omitempty"`
 	Result     float64                `json:"result,omitempty"`
 	Symbols    map[string]*SymbolInfo `json:"symbols,omitempty"`
+}
+
+func errEmbed(check map[string]map[string]string, page int) (*discordgo.MessageEmbed, error) {
+	desc := "CODE | Description\n------------------\n"
+	codes := make([]string, 0, len(Symbols))
+	for k := range Symbols {
+		codes = append(codes, k)
+	}
+	sort.Strings(codes)
+	start := (page * 15) - 15
+	end := page * 15
+	for i, c := range codes {
+		if i < end && i >= start {
+			desc += fmt.Sprintf("%4s | %s\n", c, Symbols[c]["Description"])
+		}
+	}
+	embed := &discordgo.MessageEmbed{
+		Title:       "Invalid currency code",
+		URL:         "https://api.exchangerate.host/symbols",
+		Color:       0xAE27FF,
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
+		Description: fmt.Sprintf("Check out available codes on: https://api.exchangerate.host/symbols ```\n%s```", desc),
+	}
+	return embed, nil
 }

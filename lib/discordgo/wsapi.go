@@ -221,3 +221,11 @@ func (wh *wsHeartBeater) Times() (send time.Time, ack time.Time) {
 	wh.Unlock()
 	return
 }
+
+// UpdateWatchStatus is used to update the user's watch status.
+// If idle>0 then set status to idle.
+// If name!="" then set movie/stream.
+// if otherwise, set status to active, and no activity.
+func (s *Session) UpdateWatchStatus(idle int, name string) (err error) {
+	return s.UpdateStatusComplex(*newUpdateStatusData(idle, ActivityTypeWatching, name, ""))
+}

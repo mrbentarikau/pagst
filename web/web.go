@@ -104,7 +104,7 @@ func loadTemplates() {
 		"templates/index.html", "templates/cp_main.html",
 		"templates/cp_nav.html", "templates/cp_selectserver.html", "templates/cp_logs.html",
 		"templates/status.html", "templates/cp_server_home.html", "templates/cp_core_settings.html",
-		"templates/error404.html", "templates/privacy_policy.html", "templates/chat.html",
+		"templates/error404.html", "templates/privacy_policy.html", "templates/chat.html", "templates/tos.html",
 	}
 
 	for _, v := range coreTemplates {
@@ -130,8 +130,10 @@ func Run() {
 	AddGlobalTemplateData("BotName", common.ConfBotName.GetString())
 	AddGlobalTemplateData("ClientID", common.ConfClientID.GetString())
 	AddGlobalTemplateData("Host", common.ConfHost.GetString())
-	AddGlobalTemplateData("Version", common.VERSION)
+	AddGlobalTemplateData("SupportServerName", common.ConfSupportServerName.GetString())
+	AddGlobalTemplateData("SupportServerURL", common.ConfSupportServerURL.GetString())
 	AddGlobalTemplateData("Testing", common.Testing)
+	AddGlobalTemplateData("Version", common.VERSION)
 
 	if properAddresses {
 		ListenAddressHTTP = ":80"
@@ -260,6 +262,8 @@ func setupRoutes() *goji.Mux {
 	RootMux.Handle(pat.Get("/status/"), ControllerHandler(HandleStatusHTML, "cp_status"))
 	RootMux.Handle(pat.Get("/privacy_policy"), ControllerHandler(HandleStatusHTML, "cp_privacy_policy"))
 	RootMux.Handle(pat.Get("/privacy_policy/"), ControllerHandler(HandleStatusHTML, "cp_privacy_policy"))
+	RootMux.Handle(pat.Get("/tos"), ControllerHandler(HandleStatusHTML, "cp_terms_and_conditions"))
+	RootMux.Handle(pat.Get("/tos/"), ControllerHandler(HandleStatusHTML, "cp_terms_and_conditions"))
 	RootMux.Handle(pat.Get("/status.json"), APIHandler(HandleStatusJSON))
 	RootMux.Handle(pat.Get("/error404"), RenderHandler(HandleError404, "error404"))
 	RootMux.Handle(pat.Get("/error404/"), RenderHandler(HandleError404, "error404"))
@@ -332,7 +336,7 @@ func setupRoutes() *goji.Mux {
 }
 
 func AddServer(w http.ResponseWriter, r *http.Request) {
-	url := fmt.Sprintf("https://discordapp.com/oauth2/authorize?client_id=%s&scope=bot%%20identify%%20guilds%%20applications.commands&permissions=1101658455543&response_type=code&redirect_uri=https://%s/manage", common.ConfClientID.GetString(), common.ConfHost.GetString())
+	url := fmt.Sprintf("https://discordapp.com/oauth2/authorize?client_id=%s&scope=bot%%20identify%%20guilds%%20applications.commands&permissions=1516122532343&response_type=code&redirect_uri=https://%s/manage", common.ConfClientID.GetString(), common.ConfHost.GetString())
 	http.Redirect(w, r, url, http.StatusMovedPermanently)
 }
 

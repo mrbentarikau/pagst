@@ -21,6 +21,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/lib/template"
+	"github.com/mrbentarikau/pagst/web/discorddata"
 
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
@@ -54,6 +55,7 @@ var (
 		"print":                withOutputLimit(fmt.Sprint, MaxStringLength),
 		"println":              withOutputLimit(fmt.Sprintln, MaxStringLength),
 		"printf":               withOutputLimitf(fmt.Sprintf, MaxStringLength),
+		"sanitizeText":         common.SanitizeText,
 		"slice":                slice,
 		"split":                strings.Split,
 		"title":                cases.Title(language.Und).String,
@@ -366,6 +368,7 @@ func (c *Context) Execute(source string) (string, error) {
 			// This may fail in some cases
 			c.Msg.ChannelID = c.GS.ID
 		}
+		/* this was before, memcacher and YT feeds issue
 		if c.GS != nil {
 			c.Msg.GuildID = c.GS.ID
 
@@ -375,6 +378,22 @@ func (c *Context) Execute(source string) (string, error) {
 			}
 
 			c.Msg.Member = member.DgoMember()
+		}*/
+		if c.GS != nil {
+			c.Msg.GuildID = c.GS.ID
+			if bot.State != nil {
+				member, err := bot.GetMember(c.GS.ID, c.BotUser.ID)
+				if err != nil {
+					return "", errors.WithMessage(err, "ctx.Execute")
+				}
+				c.Msg.Member = member.DgoMember()
+			} else {
+				member, err := discorddata.GetMember(c.GS.ID, c.BotUser.ID)
+				if err != nil {
+					return "", errors.WithMessage(err, "ctx.Execute")
+				}
+				c.Msg.Member = member
+			}
 		}
 
 	}
@@ -525,6 +544,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 	}
 
 	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
+
 	if err != nil {
 		/* KRAAKA that error printout!!! */
 		logger.WithField("guild", c.GS.ID).WithError(err).Error("Error sending message: " + c.Name)
@@ -633,6 +653,8 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getChannelPins", c.tmplGetChannelPins(false))
 	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
 	c.addContextFunc("getThread", c.tmplGetThread)
+	c.addContextFunc("getThreadsAllActive", c.tmplGetGuildThreadsActive)
+	c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
 	c.addContextFunc("editChannelName", c.tmplEditChannelName)
 	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
 
@@ -729,7 +751,6 @@ func baseContextFuncs(c *Context) {
 	// testing grounds
 	c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
 	c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
-	c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
 	c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
 }
 

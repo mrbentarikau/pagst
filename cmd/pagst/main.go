@@ -17,7 +17,7 @@ import (
 
 	// Plugin imports
 	"github.com/mrbentarikau/pagst/automod"
-	"github.com/mrbentarikau/pagst/automod_legacy"
+	"github.com/mrbentarikau/pagst/automod_basic"
 	"github.com/mrbentarikau/pagst/autorole"
 	"github.com/mrbentarikau/pagst/aylien"
 	"github.com/mrbentarikau/pagst/cah"
@@ -62,7 +62,7 @@ func main() {
 	analytics.RegisterPlugin()
 	antiphishing.RegisterPlugin()
 	automod.RegisterPlugin()
-	automod_legacy.RegisterPlugin()
+	automod_basic.RegisterPlugin()
 	autorole.RegisterPlugin()
 	aylien.RegisterPlugin()
 	cah.RegisterPlugin()

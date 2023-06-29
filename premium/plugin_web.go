@@ -210,14 +210,15 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 				return nil, err
 			}
 
-			if tier <= PremiumTierNone {
+			if tier <= PremiumTierNone && !confAllGuildsPremium.GetBool() {
 				continue
 			}
 
-			if _, ok := v.(*SlotGuildPremiumSource); ok {
+			if confAllGuildsPremium.GetBool() {
+				body.WriteString("<p class=\"mt-3\">Premium tier is <b>free for all</b>.")
+			} else if _, ok := v.(*SlotGuildPremiumSource); ok {
 				// special handling for this since i was a bit lazy
 				username := ""
-				discrim := ""
 
 				premiumBy, err := PremiumProvidedBy(ag.ID)
 				if err != nil {
@@ -226,15 +227,14 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 
 				user, err := common.BotSession.User(premiumBy)
 				if err == nil {
-					username = user.Username
-					discrim = user.Discriminator
+					username = user.String()
 				}
 
 				detForm := fmt.Sprintf(`<form data-async-form action="/manage/%d/premium/detach">
 			<button type="submit" class="btn btn-danger">Detach premium slot</button>
 		</form>`, ag.ID)
 
-				body.WriteString(fmt.Sprintf("<p>Premium tier <b>%s</b> active and provided by user <code>%s#%s (%d)</p></code>\n\n%s", tier.String(), html.EscapeString(username), html.EscapeString(discrim), premiumBy, detForm))
+				body.WriteString(fmt.Sprintf("<p>Premium tier <b>%s</b> active and provided by user <code>%s (%d)</p></code>\n\n%s", tier.String(), html.EscapeString(username), premiumBy, detForm))
 			} else {
 				body.WriteString(fmt.Sprintf("<p class=\"mt-3\">Premium tier <b>%s</b> active and provided by %s: %s</p>", tier.String(), v.Name(), status))
 			}

@@ -98,7 +98,7 @@ func (p *Plugin) AddCommands() {
 				return nil, err
 			}
 
-			return fmt.Sprintf("Added %s#%s to the ticket", target.User.Username, target.User.Discriminator), nil
+			return fmt.Sprintf("Added %s to the ticket", target.User.String()), nil
 		},
 	}
 
@@ -130,7 +130,7 @@ func (p *Plugin) AddCommands() {
 			}
 
 			if !foundUser {
-				return fmt.Sprintf("%s#%s is already not (explicitly) part of this ticket", target.User.Username, target.User.Discriminator), nil
+				return fmt.Sprintf("%s is already not (explicitly) part of this ticket", target.User.String()), nil
 			}
 
 			err := common.BotSession.ChannelPermissionDelete(currentTicket.Ticket.ChannelID, target.User.ID)
@@ -138,7 +138,7 @@ func (p *Plugin) AddCommands() {
 				return nil, err
 			}
 
-			return fmt.Sprintf("Removed %s#%s from the ticket", target.User.Username, target.User.Discriminator), nil
+			return fmt.Sprintf("Removed %s from the ticket", target.User.String()), nil
 		},
 	}
 
@@ -572,7 +572,7 @@ func createTXTTranscript(ticket *models.Ticket, msgs []*discordgo.Message) *byte
 
 		// serialize mesasge content
 		ts, _ := m.Timestamp.Parse()
-		buf.WriteString(fmt.Sprintf("[%s] %s#%s (%d): ", ts.UTC().Format(TicketTXTDateFormat), m.Author.Username, m.Author.Discriminator, m.Author.ID))
+		buf.WriteString(fmt.Sprintf("[%s] %s (%d): ", ts.UTC().Format(TicketTXTDateFormat), m.Author.String(), m.Author.ID))
 		if m.Content != "" {
 			buf.WriteString(m.Content)
 			if len(m.Embeds) > 0 {

@@ -2,12 +2,12 @@ package youtube
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"sync"
-	"time"
 
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
@@ -48,7 +48,7 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 func RegisterPlugin() {
 	p := &Plugin{}
 
-	common.GORM.AutoMigrate(ChannelSubscription{}, YoutubeAnnouncements{}, YoutubePlaylistID{})
+	common.GORM.AutoMigrate(ChannelSubscription{}, YoutubeAnnouncements{})
 
 	mqueue.RegisterSource("youtube", p)
 
@@ -57,11 +57,6 @@ func RegisterPlugin() {
 		logger.WithError(err).Error("Failed setting up YouTube plugin, YouTube plugin will not be enabled.")
 		return
 	}
-
-	/*if !common.FeedEnabled(p.PluginInfo().Name) {
-		return
-	}*/
-
 	common.RegisterPlugin(p)
 }
 
@@ -78,8 +73,9 @@ type ChannelSubscription struct {
 	YoutubeChannelName string
 	MentionEveryone    bool
 	MentionRole        string
+	PublishShorts      sql.NullBool `gorm:"default:true"`
 	PublishLivestream  bool
-	Enabled            bool `sql:"DEFAULT:true"`
+	Enabled            sql.NullBool `sql:"DEFAULT:true"`
 }
 
 func (c *ChannelSubscription) TableName() string {
@@ -92,23 +88,33 @@ type YoutubeAnnouncements struct {
 	Enabled      bool `sql:"DEFAULT:false"`
 }
 
-type YoutubePlaylistID struct {
-	ChannelID  string `gorm:"primary_key"`
-	CreatedAt  time.Time
-	PlaylistID string
-}
-
 var _ mqueue.PluginWithSourceDisabler = (*Plugin)(nil)
 
 // Remove feeds if they don't point to a proper channel
 func (p *Plugin) DisableFeed(elem *mqueue.QueuedElement, err error) {
-	// Remove it
-	err = common.GORM.Where("channel_id = ?", elem.ChannelID).Delete(ChannelSubscription{}).Error
+	p.DisableChannelFeeds(elem.ChannelID)
+}
+
+func (p *Plugin) DisableChannelFeeds(channelID int64) error {
+	err := common.GORM.Model(&ChannelSubscription{}).Where("channel_id = ?", channelID).Updates(ChannelSubscription{Enabled: sql.NullBool{false, false}}).Error
 	if err != nil {
-		logger.WithError(err).Error("failed removing nonexistant channel")
+		logger.WithError(err).Errorf("failed removing non-existant channel for channel_id %d", channelID)
+		return err
 	} else {
-		logger.WithField("channel", elem.ChannelID).Info("Removed youtube feed to nonexistant channel")
+		logger.WithField("channel", channelID).Info("Disabled youtube feed to non-existant channel")
 	}
+	return nil
+}
+
+func (p *Plugin) DisableGuildFeeds(guildID int64) error {
+	err := common.GORM.Model(&ChannelSubscription{}).Where("guild_id = ?", guildID).Updates(ChannelSubscription{Enabled: sql.NullBool{false, false}}).Error
+	if err != nil {
+		logger.WithError(err).Errorf("failed removing non-existant guild for guild_id %d", guildID)
+		return err
+	} else {
+		logger.WithField("guild", guildID).Info("Disabled youtube feed to non-existant guild")
+	}
+	return nil
 }
 
 func (p *Plugin) WebSubSubscribe(ytChannelID string) error {
@@ -204,7 +210,7 @@ type LinkEntry struct {
 
 const (
 	GuildMaxFeeds        = 50
-	GuildMaxFeedsPremium = 100
+	GuildMaxFeedsPremium = 250
 )
 
 func MaxFeedsForContext(ctx context.Context) int {

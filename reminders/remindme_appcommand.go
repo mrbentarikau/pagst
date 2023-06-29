@@ -100,20 +100,6 @@ func getTranslation(key string, locale discordgo.Locale) string {
 
 func getModalComponents(locale discordgo.Locale) []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{
-		/*
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:  "remindme_modal_content",
-						Label:     "Reminder Content:",
-						Style:     discordgo.TextInputShort,
-						Required:  true,
-						MaxLength: len(content),
-						Value:     content,
-					},
-				},
-			},
-		*/
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.TextInput{
@@ -218,7 +204,7 @@ func (p *Plugin) handleRemindmeInteractionCreate(ic *discordgo.InteractionCreate
 		}
 
 		if properTime {
-			_, err = NewReminder(p.RemindmeData.AuthorID, p.RemindmeData.GuildID, channelID, reminderContent, when, repeatDuration, true)
+			_, err = NewReminder(p.RemindmeData.AuthorID, p.RemindmeData.GuildID, channelID, reminderContent, when, repeatDuration, true, true)
 			if err != nil {
 				return
 			}
@@ -240,7 +226,8 @@ func (p *Plugin) handleRemindmeInteractionCreate(ic *discordgo.InteractionCreate
 			Flags:           64,
 		}
 
-		_, err = common.BotSession.CreateFollowupMessage(common.BotApplication.ID, ic.Token, params)
+		// _, err = common.BotSession.CreateFollowupMessage(common.BotApplication.ID, ic.Token, params)
+		_, err = common.BotSession.FollowupMessageCreate(&ic.Interaction, true, params)
 		if err != nil {
 			logger.WithError(err).Error("Failed creating AddRemindme FollowupMessage")
 			return

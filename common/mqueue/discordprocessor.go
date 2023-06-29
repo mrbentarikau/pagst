@@ -76,7 +76,8 @@ var disableOnError = []int{
 	discordgo.ErrCodeUnknownChannel,
 	discordgo.ErrCodeMissingAccess,
 	discordgo.ErrCodeMissingPermissions,
-	30007, // max number of webhooks
+	30007,  // max number of webhooks
+	220001, // webhook points to a forum channel
 }
 
 func maybeDisableFeed(source PluginWithSourceDisabler, elem *QueuedElement, err *discordgo.RESTError) {

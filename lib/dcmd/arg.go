@@ -612,7 +612,7 @@ func (f *FloatArg) ParseFromMessage(def *ArgDef, part string, data *Data) (inter
 		}
 	} else if (f.Min != 0 || f.Max != 0) && f.Max == f.Min {
 		if v != f.Max {
-			return nil, &OutOfRangeError{ArgName: def.Name, Got: v, Min: f.Min, Max: f.Max}
+			return nil, &OutOfRangeError{ArgName: def.Name, Got: v, Min: f.Min, Max: f.Max, Float: true}
 		}
 	}
 

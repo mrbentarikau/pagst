@@ -36,15 +36,16 @@ var ErrMFA = errors.New("account has 2FA enabled")
 // tasks if given enough information to do so.  Currently you can pass zero
 // arguments and it will return an empty Discord session.
 // There are 3 ways to call New:
-//     With a single auth token - All requests will use the token blindly,
-//         no verification of the token will be done and requests may fail.
-//         IF THE TOKEN IS FOR A BOT, IT MUST BE PREFIXED WITH `BOT `
-//         eg: `"Bot <token>"`
-//     With an email and password - Discord will sign in with the provided
-//         credentials.
-//     With an email, password and auth token - Discord will verify the auth
-//         token, if it is invalid it will sign in with the provided
-//         credentials. This is the Discord recommended way to sign in.
+//
+//	With a single auth token - All requests will use the token blindly,
+//	    no verification of the token will be done and requests may fail.
+//	    IF THE TOKEN IS FOR A BOT, IT MUST BE PREFIXED WITH `BOT `
+//	    eg: `"Bot <token>"`
+//	With an email and password - Discord will sign in with the provided
+//	    credentials.
+//	With an email, password and auth token - Discord will verify the auth
+//	    token, if it is invalid it will sign in with the provided
+//	    credentials. This is the Discord recommended way to sign in.
 //
 // NOTE: While email/pass authentication is supported by DiscordGo it is
 // HIGHLY DISCOURAGED by Discord. Please only use email/pass to obtain a token
@@ -60,6 +61,7 @@ func New(args ...interface{}) (s *Session, err error) {
 		StateEnabled:           true,
 		Compress:               true,
 		ShouldReconnectOnError: true,
+		ShouldRetryOnRateLimit: true,
 		ShardID:                0,
 		ShardCount:             1,
 		MaxRestRetries:         10,
@@ -136,19 +138,7 @@ func New(args ...interface{}) (s *Session, err error) {
 	// Otherwise get auth token from Discord, if a token was specified
 	// Discord will verify it for free, or log the user in if it is
 	// invalid.
-	if pass == "" {
-		s.Token = auth
-	} else {
-		err = s.Login(auth, pass)
-		if err != nil || s.Token == "" {
-			if s.MFA {
-				err = ErrMFA
-			} else {
-				err = fmt.Errorf("unable to fetch discord authentication token. %v", err)
-			}
-			return
-		}
-	}
+	s.Token = auth
 
 	// The Session is now able to have RestAPI methods called on it.
 	// It is recommended that you now call Open() so that events will trigger.

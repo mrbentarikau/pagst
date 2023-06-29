@@ -3,8 +3,8 @@ package banserver
 import (
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mediocregopher/radix/v3"
 )
 
@@ -13,7 +13,7 @@ var Command = &commands.YAGCommand{
 	CmdCategory:          commands.CategoryDebug,
 	HideFromCommandsPage: true,
 	Name:                 "banserver",
-	Description:          ";))",
+	Description:          ";))\n\nBans the specified server from using the bot. Bot will leave the server, and leave whenever invited back. Bot Owner Only.",
 	HideFromHelp:         true,
 	RequiredArgs:         1,
 	Arguments: []*dcmd.ArgDef{

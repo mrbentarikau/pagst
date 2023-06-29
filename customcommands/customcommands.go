@@ -294,6 +294,10 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 }
 
 func CmdRunsInCategory(cc *models.CustomCommand, parentChannel int64) bool {
+	gs := bot.State.GetGuild(cc.GuildID)
+	cs := gs.GetChannelOrThread(parentChannel)
+	threadChannelParent := cs.ParentID
+
 	if cc.GroupID.Valid {
 		// check group restrictions
 		if common.ContainsInt64Slice(cc.R.Group.IgnoreCategories, parentChannel) {
@@ -310,6 +314,10 @@ func CmdRunsInCategory(cc *models.CustomCommand, parentChannel int64) bool {
 	// check command specific restrictions
 	for _, v := range cc.Categories {
 		if v == parentChannel {
+			return cc.CategoriesWhitelistMode
+		}
+
+		if threadChannelParent != 0 && v == threadChannelParent {
 			return cc.CategoriesWhitelistMode
 		}
 	}

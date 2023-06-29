@@ -47,13 +47,14 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 
 type Reminder struct {
 	gorm.Model
-	UserID     string
-	ChannelID  string
-	GuildID    int64
-	Message    string
-	When       int64
-	Repeat     int64
-	AppCommand bool
+	UserID         string
+	ChannelID      string
+	GuildID        int64
+	Message        string
+	When           int64
+	Repeat         int64
+	AppCommand     bool
+	DisableMention bool
 }
 
 func (r *Reminder) UserIDInt() (i int64) {
@@ -133,18 +134,22 @@ func (r *Reminder) Trigger() error {
 				sendDM = false
 			}
 		}
+
+		disabledMentions := discordgo.AllowedMentions{Users: []int64{r.UserIDInt()}}
+		if r.DisableMention {
+			disabledMentions = discordgo.AllowedMentions{}
+		}
+
 		if !sendDM {
 			mqueue.QueueMessage(&mqueue.QueuedElement{
 				Source:       "reminder",
 				SourceItemID: "",
 
-				GuildID:      r.GuildID,
-				ChannelID:    channelID,
-				MessageEmbed: embed,
-				MessageStr:   reminderRepeat + " <@" + r.UserID + ">", // : " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
-				AllowedMentions: discordgo.AllowedMentions{
-					Users: []int64{r.UserIDInt()},
-				},
+				GuildID:         r.GuildID,
+				ChannelID:       channelID,
+				MessageEmbed:    embed,
+				MessageStr:      reminderRepeat + " <@" + r.UserID + ">", // : " + common.ReplaceServerInvites(r.Message, r.GuildID, "(removed-invite)"),
+				AllowedMentions: disabledMentions,
 
 				Priority: 10, // above all feeds
 			})
@@ -169,7 +174,7 @@ func GetChannelReminders(channel int64) (results []*Reminder, err error) {
 	return
 }
 
-func NewReminder(userID int64, guildID int64, channelID int64, message string, when time.Time, repeatDuration time.Duration, isAppCmd ...bool) (*Reminder, error) {
+func NewReminder(userID int64, guildID int64, channelID int64, message string, when time.Time, repeatDuration time.Duration, disableMention bool, isAppCmd ...bool) (*Reminder, error) {
 	var appCmd bool
 	whenUnix := when.Unix()
 
@@ -178,13 +183,14 @@ func NewReminder(userID int64, guildID int64, channelID int64, message string, w
 	}
 
 	reminder := &Reminder{
-		UserID:     discordgo.StrID(userID),
-		ChannelID:  discordgo.StrID(channelID),
-		Message:    message,
-		When:       whenUnix,
-		GuildID:    guildID,
-		Repeat:     repeatDuration.Nanoseconds(),
-		AppCommand: appCmd,
+		UserID:         discordgo.StrID(userID),
+		ChannelID:      discordgo.StrID(channelID),
+		Message:        message,
+		When:           whenUnix,
+		GuildID:        guildID,
+		Repeat:         repeatDuration.Nanoseconds(),
+		AppCommand:     appCmd,
+		DisableMention: disableMention,
 	}
 
 	err := common.GORM.Create(reminder).Error

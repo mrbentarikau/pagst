@@ -19,6 +19,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mrbentarikau/pagst/logs"
 	"github.com/jinzhu/gorm"
 )
 
@@ -133,7 +134,7 @@ func GenericCmdResp(action ModlogAction, target *discordgo.User, duration time.D
 		durStr = ""
 	}
 
-	userStr := target.Username + "#" + target.Discriminator
+	userStr := target.String()
 	if target.Discriminator == "????" {
 		userStr = strconv.FormatInt(target.ID, 10)
 	}
@@ -451,7 +452,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			}
 
 			if config.MuteRole == "" {
-				return "No mute role set up, assign a mute role in the control panel", nil
+				return fmt.Sprintf("No mute role selected. Select one at <%s/manage/%d/moderation>", common.ConfHost.GetString(), parsed.GuildData.GS.ID), nil
 			}
 
 			reason := parsed.Args[2].Str()
@@ -684,14 +685,14 @@ var ModerationCommands = []*commands.YAGCommand{
 				return "No report channel set up", nil
 			}
 
-			topContent := fmt.Sprintf("%s reported **%s#%s (ID %d)**", parsed.Author.Mention(), target.Username, target.Discriminator, target.ID)
+			topContent := fmt.Sprintf("%s reported **%s (ID %d)**", parsed.Author.Mention(), target.String(), target.ID)
 
 			embed := &discordgo.MessageEmbed{
 				Author: &discordgo.MessageEmbedAuthor{
-					Name:    fmt.Sprintf("%s#%s (ID %d)", parsed.Author.Username, parsed.Author.Discriminator, parsed.Author.ID),
+					Name:    fmt.Sprintf("%s (ID %d)", parsed.Author.String(), parsed.Author.ID),
 					IconURL: discordgo.EndpointUserAvatar(parsed.Author.ID, parsed.Author.Avatar),
 				},
-				Description: fmt.Sprintf("🔍**Reported** %s#%s *(ID %d)*\n📄**Reason:** %s ([Logs](%s))\n**Channel:** <#%d>", target.Username, target.Discriminator, target.ID, parsed.Args[1].Value, logLink, parsed.ChannelID),
+				Description: fmt.Sprintf("🔍**Reported** %s *(ID %d)*\n📄**Reason:** %s ([Logs](%s))\n**Channel:** <#%d>", target.String(), target.ID, parsed.Args[1].Value, logLink, parsed.ChannelID),
 				Color:       0xee82ee,
 				Thumbnail: &discordgo.MessageEmbedThumbnail{
 					URL: discordgo.EndpointUserAvatar(target.ID, target.Avatar),
@@ -747,22 +748,12 @@ var ModerationCommands = []*commands.YAGCommand{
 			{Name: "ignoreuser", Help: "Ignore flagged user"},
 		},
 		RequiredDiscordPermsHelp:  "(ManageMessages)",
-		RequireBotPerms:           [][]int64{{discordgo.PermissionAdministrator}, {discordgo.PermissionManageServer}, {discordgo.PermissionManageMessages}},
+		RequireBotPerms:           [][]int64{{discordgo.PermissionAdministrator}, {discordgo.PermissionManageMessages}},
 		ArgumentCombos:            [][]int{{0}, {0, 1}, {1, 0}},
 		ApplicationCommandEnabled: true,
 		IsResponseEphemeral:       true,
 		DefaultEnabled:            false,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
-			botMember, err := bot.GetMember(parsed.GuildData.GS.ID, common.BotUser.ID)
-			if err != nil {
-				return "Failed fetching bot member to check permissions", nil
-			}
-
-			canClear, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, parsed.ChannelID, botMember, discordgo.PermissionManageMessages)
-			if err != nil || !canClear {
-				return "I need the `Manage Messages` permission to be able to clear messages", nil
-			}
-
 			config, _, err := MBaseCmd(parsed, 0)
 			if err != nil {
 				return nil, err
@@ -891,7 +882,7 @@ var ModerationCommands = []*commands.YAGCommand{
 				limitFetch = 1000
 			}
 
-			// Wait a second so the client dosen't gltich out
+			// Wait a second so the client doesn't glitch out
 			time.Sleep(time.Second)
 
 			numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, triggerID, userFilter, re, invertRegexMatch, toID, ma, minAge, pe, onlyBots, onlyNotBots, ignoreUser, attachments, messagesOnly, num, limitFetch)
@@ -1084,7 +1075,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			}
 
 			rows := common.GORM.Model(WarningModel{}).Where("guild_id = ? AND id = ?", parsed.GuildData.GS.ID, parsed.Args[0].Int()).Update(
-				"message", fmt.Sprintf("%s (updated by %s#%s (%d))", parsed.Args[1].Str(), parsed.Author.Username, parsed.Author.Discriminator, parsed.Author.ID)).RowsAffected
+				"message", fmt.Sprintf("%s (updated by %s (%d))", parsed.Args[1].Str(), parsed.Author.String(), parsed.Author.ID)).RowsAffected
 
 			if rows < 1 {
 				return "Failed updating, most likely couldn't find the warning", nil
@@ -1102,6 +1093,7 @@ var ModerationCommands = []*commands.YAGCommand{
 		RequiredArgs:  1,
 		Arguments: []*dcmd.ArgDef{
 			{Name: "Id", Type: dcmd.Int},
+			{Name: "Reason", Type: dcmd.String},
 		},
 		RequiredDiscordPermsHelp:  "(ManageMessages)",
 		ApplicationCommandEnabled: true,
@@ -1134,13 +1126,14 @@ var ModerationCommands = []*commands.YAGCommand{
 		RequiredArgs:  1,
 		Arguments: []*dcmd.ArgDef{
 			{Name: "User", Type: dcmd.UserID},
+			{Name: "Reason", Type: dcmd.String},
 		},
 		RequiredDiscordPermsHelp:  "(ManageMessages)",
 		ApplicationCommandEnabled: true,
 		DefaultEnabled:            false,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 
-			config, _, err := MBaseCmd(parsed, 0)
+			config, target, err := MBaseCmd(parsed, parsed.Args[0].Int64())
 			if err != nil {
 				return nil, err
 			}
@@ -1150,9 +1143,13 @@ var ModerationCommands = []*commands.YAGCommand{
 				return nil, err
 			}
 
-			userID := parsed.Args[0].Int64()
+			rows := common.GORM.Where("guild_id = ? AND user_id = ?", parsed.GuildData.GS.ID, target.ID).Delete(WarningModel{}).RowsAffected
 
-			rows := common.GORM.Where("guild_id = ? AND user_id = ?", parsed.GuildData.GS.ID, userID).Delete(WarningModel{}).RowsAffected
+			reason := parsed.Args[1].Str()
+			err = CreateModlogEmbed(config, parsed.Author, MAClearWarnings, target, reason, "")
+			if err != nil {
+				return "failed sending modlog", err
+			}
 			return fmt.Sprintf("Deleted %d warnings.", rows), nil
 		},
 	},
@@ -1553,7 +1550,8 @@ func PaginateWarnings(parsed *dcmd.Data, count int) func(p *paginatedmessages.Pa
 					entry_formatted = common.CutStringShort(entry_formatted, 900)
 				}
 				entry_formatted += "\n"
-				if entry.LogsLink != "" {
+				purgedWarnLogs := logs.ConfRestrictLogsThirtyDays.GetBool() && entry.CreatedAt.Before(time.Now().AddDate(0, 0, -30))
+				if entry.LogsLink != "" && !purgedWarnLogs {
 					entry_formatted += fmt.Sprintf("> logs: [`link`](%s)\n", entry.LogsLink)
 				}
 

@@ -2,7 +2,8 @@
 <!DOCTYPE html>
 <html lang="en" class="fixed {{if not .LightTheme}}dark{{else}}sidebar-light{{end}}{{if .SidebarCollapsed}} sidebar-left-collapsed{{end}}">
 
-<head>
+<head> 
+    {{template "googleAnalytics" .}}
 
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -29,10 +30,10 @@
     <meta property="og:title" content="{{.BotName}}" />
     <meta property="og:description" content="People Against Generally Shitty Things Discord Bot" />
 
-    <title>{{.BotName}} - Control panel</title>
+    <title>{{.BotName}} - Control panel{{if .ActiveGuild}} | {{.ActiveGuild.Name}}{{end}}</title>
     <meta name="keywords" content="People Against Generally Shitty Things" />
     <meta name="description" content="{{.BotName}} - People Against Generally Shitty Things Discord Bot">
-    <meta name="author" content="jonas747 + others">
+    <meta name="author" content="caubert, jonas747 + others">
 
     <!-- Web Fonts  -->
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
@@ -145,7 +146,6 @@
 
     <script src="/static/js/spongebob.js?{{.StartedAtUnix}}"></script>
 
-    {{template "googleAnalytics" .}}
 </body>
 
 
@@ -255,7 +255,7 @@ For example, to mention a user, you would do <code><@{{"{{"}}.User.ID{{"}}"}}></
 {{end}}
 
 {{/*Specific template helpers*/}}
-{{define "template_helper_user"}}<code>{{"{{"}}.User{{"}}"}}: <a href="https://github.com/mrbentarikau/pagst-rtfm/blob/master/context_data.org#user"><code>.User</code> object documentation.</a></code>{{end}}
-{{define "template_helper_guild"}}<code>{{"{{"}}.Guild{{"}}"}}<a href="https://github.com/mrbentarikau/pagst-rtfm/blob/master/context_data.org#guildserver"><code>.Guild</code> object reference.</a></code>{{end}}
+{{define "template_helper_user"}}<code>{{"{{"}}.User{{"}}"}}: <a href="https://github.com/mrbentarikau/pagst/wiki/context_data#user"><code>.User</code> object documentation.</a></code>{{end}}
+{{define "template_helper_guild"}}<code>{{"{{"}}.Guild{{"}}"}}<a href="https://github.com/mrbentarikau/pagst/wiki/context_data#guildserver"><code>.Guild</code> object reference.</a></code>{{end}}
 
 {{define "set_roles"}}<script>var activeGuildRoles = JSON.parse('{{json .ActiveGuild.Roles}}');</script>{{end}}

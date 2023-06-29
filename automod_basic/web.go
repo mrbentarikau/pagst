@@ -1,4 +1,4 @@
-package automod_legacy
+package automod_basic
 
 import (
 	_ "embed"
@@ -9,39 +9,39 @@ import (
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/common/pubsub"
-	"github.com/mrbentarikau/pagst/web"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/web"
 	"goji.io"
 	"goji.io/pat"
 )
 
-//go:embed assets/automod_legacy.html
+//go:embed assets/automod_basic.html
 var PageHTML string
 
 type GeneralForm struct {
 	Enabled bool
 }
 
-var panelLogKeyUpdatedSettings = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "automod_legacy_settings_updated", FormatString: "Updated legacy automod settings"})
+var panelLogKeyUpdatedSettings = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "automod_basic_settings_updated", FormatString: "Updated settings for basic automod"})
 
 func (p *Plugin) InitWeb() {
-	web.AddHTMLTemplate("automod_legacy/assets/automod_legacy.html", PageHTML)
+	web.AddHTMLTemplate("automod_basic/assets/automod_basic.html", PageHTML)
 
 	web.AddSidebarItem(web.SidebarCategoryTools, &web.SidebarItem{
 		Name: "Basic Automoderator",
-		URL:  "automod_legacy",
-		Icon: "fas fa-robot",
+		URL:  "automod_basic",
+		Icon: "fa-brands fa-android",
 	})
 
 	autmodMux := goji.SubMux()
-	web.CPMux.Handle(pat.New("/automod_legacy/*"), autmodMux)
-	web.CPMux.Handle(pat.New("/automod_legacy"), autmodMux)
+	web.CPMux.Handle(pat.New("/automod_basic/*"), autmodMux)
+	web.CPMux.Handle(pat.New("/automod_basic"), autmodMux)
 
 	// Alll handlers here require guild channels present
 	autmodMux.Use(web.RequireBotMemberMW)
 	autmodMux.Use(web.RequirePermMW(discordgo.PermissionManageRoles, discordgo.PermissionKickMembers, discordgo.PermissionBanMembers, discordgo.PermissionManageMessages))
 
-	getHandler := web.RenderHandler(HandleAutomod, "cp_automod_legacy")
+	getHandler := web.RenderHandler(HandleAutomod, "cp_automod_basic")
 
 	autmodMux.Handle(pat.Get("/"), getHandler)
 	autmodMux.Handle(pat.Get(""), getHandler)
@@ -58,7 +58,7 @@ func HandleAutomod(w http.ResponseWriter, r *http.Request) interface{} {
 	web.CheckErr(templateData, err, "Failed retrieving rules", web.CtxLogger(r.Context()).Error)
 
 	templateData["AutomodConfig"] = config
-	templateData["VisibleURL"] = "/manage/" + discordgo.StrID(g.ID) + "/automod_legacy/"
+	templateData["VisibleURL"] = "/manage/" + discordgo.StrID(g.ID) + "/automod_basic/"
 
 	return templateData
 }
@@ -67,7 +67,7 @@ func HandleAutomod(w http.ResponseWriter, r *http.Request) interface{} {
 func ExtraPostMW(inner http.Handler) http.Handler {
 	mw := func(w http.ResponseWriter, r *http.Request) {
 		activeGuild, _ := web.GetBaseCPContextData(r.Context())
-		pubsub.Publish("update_automod_legacy_rules", activeGuild.ID, nil)
+		pubsub.Publish("update_automod_basic_rules", activeGuild.ID, nil)
 		featureflags.MarkGuildDirty(activeGuild.ID)
 		inner.ServeHTTP(w, r)
 	}
@@ -80,7 +80,7 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 	g, templateData := web.GetBaseCPContextData(r.Context())
 
 	templateData["WidgetTitle"] = "Basic Automod"
-	templateData["SettingsPath"] = "/automod_legacy"
+	templateData["SettingsPath"] = "/automod_basic"
 
 	config, err := GetConfig(g.ID)
 	if err != nil {
