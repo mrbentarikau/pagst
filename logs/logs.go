@@ -26,7 +26,7 @@ import (
 var (
 	ErrChannelBlacklisted = errors.New("Channel blacklisted from creating message logs")
 
-	confRestrictLogsThirtyDays = config.RegisterOption("yagpdb.enable_restrict_logs", "Enable restricting logs to 30 days", false)
+	ConfRestrictLogsThirtyDays = config.RegisterOption("yagpdb.enable_restrict_logs", "Enable restricting logs to 30 days", false)
 	logger                     = common.GetPluginLogger(&Plugin{})
 )
 
@@ -142,7 +142,7 @@ func CreateChannelLog(ctx context.Context, config *models.GuildLoggingConfig, gu
 			CreatedAt: v.ParsedCreatedAt,
 			UpdatedAt: v.ParsedCreatedAt,
 
-			AuthorUsername: v.Author.Username + "#" + v.Author.Discriminator,
+			AuthorUsername: v.Author.String(),
 			AuthorID:       v.Author.ID,
 			Deleted:        v.Deleted,
 		}

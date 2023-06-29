@@ -3,7 +3,7 @@
 {{template "cp_head" .}}
 
 <header class="page-header">
-	<h2>PAGSTDB Privacy Policy</h2>
+	<h2>{{.BotName}} Privacy Policy</h2>
 </header>
 
 {{template "cp_alerts" .}}
@@ -11,19 +11,19 @@
 <section class="card card-featured card-featured-success mb-4">
 	<div class="card-body" style="font-size:15px">
 		<p>
-			Everyone cares about their personal information and <span style="color:#89aa00">PAGSTDB</span> takes your privacy seriously. Please read the following to learn more about the Privacy Policy.
+			Everyone cares about their personal information and <span style="color:#89aa00">{{.BotName}}</span> takes your privacy seriously. Please read the following to learn more about the Privacy Policy.
 		</p>
 		<h4>Logging:</h4>
 		<p>
-			Although username and nickname logging is part of this bot's code, the production instance of <span style="color:#89aa00">PAGSTDB</span> has this feature disabled. Only things which get logged are moderation and control panel actions in addition to message-logs using <b>log command</b> which stores up to 100 messages from designated channel every execution. Moderation and control panel actions are accessible only by server managers by default, while logs produced by the <b>log command</b> are accessible to all members by default. If desired, logs can be restricted to server managers as well. Additionally, logs can be deleted by server managers via the control panel or by contacting the <span style="color:#89aa00">PAGSTDB</span> owner directly via e-mail given below.<br/>
+			Although username and nickname logging is part of this bot's code, the production instance of <span style="color:#89aa00">{{.BotName}}</span> has this feature disabled. Only things which get logged are moderation and control panel actions in addition to message-logs using <b>log command</b> which stores up to 100 messages from designated channel every execution. Moderation and control panel actions are accessible only by server managers by default, while logs produced by the <b>log command</b> are accessible to all members by default. If desired, logs can be restricted to server managers as well. Additionally, logs can be deleted by server managers via the control panel or by contacting the <span style="color:#89aa00">{{.BotName}}</span> owner directly via e-mail given below.<br/>
 			<b>Any other personal information from you is not collected</b> by this bot.
 		</p>
 		<p>
 			This Discord bot does not share or sell logged information for advertising or marketing purposes. Additionally, that information is not shared with any third-parties, except when it is required by law.<br/>
-			<span style="color:#89aa00">PAGSTDB</span> retains collected information for as long as necessary to provide you with your requested service. What data is collected is protected using commercially reasonable means to prevent loss and theft, as well as unauthorized access, disclosure, copying, use or modification.
+			<span style="color:#89aa00">{{.BotName}}</span> retains collected information for as long as necessary to provide you with your requested service. What data is collected is protected using commercially reasonable means to prevent loss and theft, as well as unauthorized access, disclosure, copying, use or modification.
 		</p>
 		<p>
-			If any link is shared from this bot (using custom commands for example) to external sites that are not operated by <span style="color:#89aa00">PAGSTDB</span> then please be aware that this bot has no control over the content and practices of these sites, and cannot accept responsibility or liability for their respective privacy policies.
+			If any link is shared from this bot (using custom commands for example) to external sites that are not operated by <span style="color:#89aa00">{{.BotName}}</span> then please be aware that this bot has no control over the content and practices of these sites, and cannot accept responsibility or liability for their respective privacy policies.
 		</p>
 		<p>
 			You can always opt not to disclose information to us, but keep in mind you may need to provide some information to us in order to take advantage of some of our services and features.

@@ -6,8 +6,8 @@ import (
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mediocregopher/radix/v3"
 )
 
@@ -16,7 +16,7 @@ var Command = &commands.YAGCommand{
 	CmdCategory:          commands.CategoryDebug,
 	HideFromCommandsPage: true,
 	Name:                 "setstatus",
-	Description:          "Sets the bot's status, streaming url,\nactivity type (gaming/listening/watching)\nand toggles idle state.",
+	Description:          "Sets the bot's status, streaming url,\nactivity type (gaming/listening/watching)\nand toggles idle state. Bot Admin Only.",
 	HideFromHelp:         true,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "status", Type: dcmd.String, Default: ""},

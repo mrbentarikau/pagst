@@ -72,7 +72,7 @@ func SplitSendMessage(data *Data, contents string, allowedMentions discordgo.All
 		var m *discordgo.Message
 		switch data.TriggerType {
 		case TriggerTypeSlashCommands:
-			m, err = data.Session.CreateFollowupMessage(data.SlashCommandTriggerData.Interaction.ApplicationID, data.SlashCommandTriggerData.Interaction.Token, &discordgo.WebhookParams{
+			m, err = data.Session.FollowupMessageCreate(data.SlashCommandTriggerData.Interaction, true, &discordgo.WebhookParams{
 				Content:         v,
 				AllowedMentions: &allowedMentions,
 			})

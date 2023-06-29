@@ -30,7 +30,7 @@ type ContextKey int
 const (
 	ContextKeySub          ContextKey = iota
 	DefaultAnnounceMessage            = `Hey, {{with .SelectedRoleID}}{{(getRole .).Mention}}{{else}}everyone{{end}}...
-Incoming RSS feed, **{{.RSSFeed.Title}}** just posted {{.RSSFeedItem.Link}} !`
+Incoming RSS feed, **{{or .RSSName .RSSFeed.Title "Untitled"}}** just posted {{.RSSFeedItem.Link}} !`
 )
 
 var (
@@ -123,9 +123,14 @@ func (p *Plugin) HandleAnnouncement(w http.ResponseWriter, r *http.Request) (tem
 	guild, templateData := web.GetBaseCPContextData(ctx)
 	data := ctx.Value(common.ContextKeyParsedForm).(*Form)
 
+	announcement := data.RSSFeedAnnounceMsg
+	if announcement == "" {
+		announcement = DefaultAnnounceMessage
+	}
+
 	dbAnnounceMsg := &models.RSSAnnouncement{
 		GuildID:      guild.ID,
-		Announcement: data.RSSFeedAnnounceMsg,
+		Announcement: announcement,
 		Enabled:      data.AnnounceEnabled,
 	}
 

@@ -37,6 +37,7 @@ var (
 	MATimeOutRemoved = ModlogAction{Prefix: "Timeout removed from", Emoji: "⏱", Color: 0x9b59b6}
 	MAGiveRole       = ModlogAction{Prefix: "", Emoji: "👍", Color: 0x53fcf9}
 	MARemoveRole     = ModlogAction{Prefix: "", Emoji: "👎", Color: 0x53fcf9}
+	MAClearWarnings  = ModlogAction{Prefix: "Cleared warnings", Emoji: "👌", Color: 0x62c65f}
 	MALock           = ModlogAction{Prefix: "Locked", Emoji: "🔒", Color: 0xEE00EE}
 	MAUnlock         = ModlogAction{Prefix: "Unlocked", Emoji: "🔓", Color: 0x718AED}
 )
@@ -76,12 +77,12 @@ func CreateModlogEmbed(config *Config, author *discordgo.User, action ModlogActi
 
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
-			Name:    fmt.Sprintf("%s#%s (ID %d)", author.Username, author.Discriminator, author.ID),
+			Name:    fmt.Sprintf("%s (ID %d)", author.String(), author.ID),
 			IconURL: discordgo.EndpointUserAvatar(author.ID, author.Avatar),
 		},
 		Color: action.Color,
-		Description: fmt.Sprintf("**%s%s:** %s%s *(ID %d)*\n📄**Reason:** %s",
-			action.Emoji, action.Prefix, name, discriminator, id, reason),
+		Description: fmt.Sprintf("**%s%s:** %s *(ID %d)*\n📄**Reason:** %s",
+			action.Emoji, action.Prefix, name, id, reason),
 	}
 	if discriminator != "" {
 		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
@@ -137,7 +138,7 @@ func updateEmbedReason(author *discordgo.User, reason string, embed *discordgo.M
 
 	if author != nil {
 		embed.Author = &discordgo.MessageEmbedAuthor{
-			Name:    fmt.Sprintf("%s#%s (ID %d)", author.Username, author.Discriminator, author.ID),
+			Name:    fmt.Sprintf("%s (ID %d)", author.String(), author.ID),
 			IconURL: discordgo.EndpointUserAvatar(author.ID, author.Avatar),
 		}
 	}

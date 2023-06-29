@@ -202,6 +202,8 @@ const (
 	MessageFlagsLoading MessageFlags = 1 << 7
 	// MessageFlagsFailedToMentionSomeRolesInThread this message failed to mention some roles and add their members to the thread.
 	MessageFlagsFailedToMentionSomeRolesInThread MessageFlags = 1 << 8
+	// MessageFlagsSuppressNotifications this message will not trigger push and desktop notifications
+	MessageFlagsSuppressNotifications MessageFlags = 1 << 12
 )
 
 // GetCustomEmojis pulls out all the custom (Non-unicode) emojis from a message and returns a Slice of the Emoji struct.
@@ -239,6 +241,8 @@ type MessageSend struct {
 	Files           []*File            `json:"-"`
 	AllowedMentions AllowedMentions    `json:"allowed_mentions"`
 	Reference       *MessageReference  `json:"message_reference,omitempty"`
+	Flags           MessageFlags       `json:"flags,omitempty"`
+	StickerIds      []int64            `json:"sticker_ids"`
 
 	// TODO: Remove this when compatibility is not required.
 	File *File `json:"-"`
@@ -488,18 +492,30 @@ type AllowedMentions struct {
 
 // MessageReference contains reference data sent with crossposted messages
 type MessageReference struct {
-	MessageID int64 `json:"message_id,string"`
-	ChannelID int64 `json:"channel_id,string,omitempty"`
-	GuildID   int64 `json:"guild_id,string,omitempty"`
+	MessageID       int64 `json:"message_id,string"`
+	ChannelID       int64 `json:"channel_id,string,omitempty"`
+	GuildID         int64 `json:"guild_id,string,omitempty"`
+	FailIfNotExists *bool `json:"fail_if_not_exists,omitempty"`
 }
 
-// Reference returns MessageReference of given message
-func (m *Message) Reference() *MessageReference {
+func (m *Message) reference(failIfNotExists bool) *MessageReference {
 	return &MessageReference{
-		GuildID:   m.GuildID,
-		ChannelID: m.ChannelID,
-		MessageID: m.ID,
+		GuildID:         m.GuildID,
+		ChannelID:       m.ChannelID,
+		MessageID:       m.ID,
+		FailIfNotExists: &failIfNotExists,
 	}
+}
+
+// Reference returns a MessageReference of the given message.
+func (m *Message) Reference() *MessageReference {
+	return m.reference(true)
+}
+
+// SoftReference returns a MessageReference of the given message.
+// If the message doesn't exist it will instead be sent as a non-reply message.
+func (m *Message) SoftReference() *MessageReference {
+	return m.reference(false)
 }
 
 // MessageInteraction contains information about the application command interaction which generated the message.

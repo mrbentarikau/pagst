@@ -55,6 +55,7 @@ var (
 		"print":                withOutputLimit(fmt.Sprint, MaxStringLength),
 		"println":              withOutputLimit(fmt.Sprintln, MaxStringLength),
 		"printf":               withOutputLimitf(fmt.Sprintf, MaxStringLength),
+		"sanitizeText":         common.SanitizeText,
 		"slice":                slice,
 		"split":                strings.Split,
 		"title":                cases.Title(language.Und).String,
@@ -750,7 +751,6 @@ func baseContextFuncs(c *Context) {
 	// testing grounds
 	c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
 	c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
-	//c.addContextFunc("getThreadsActive", c.tmplGetThreadsActive)
 	c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
 }
 

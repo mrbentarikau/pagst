@@ -488,6 +488,11 @@ type AutoModerationActionExecution struct {
 	MatchedContent       string                        `json:"matched_content"`
 }
 
+// AuditLogEntryCreate is the data for an AuditLogEntryCreate event.
+type AuditLogEntryCreate struct {
+	*AuditLogEntry
+}
+
 type IntegrationCreate struct {
 	*Integration
 }
@@ -508,6 +513,9 @@ type InteractionCreate struct {
 type GuildAuditLogEntryCreate struct {
 	*AuditLogEntry
 }
+
+type GuildJoinRequestUpdate struct{}
+type GuildJoinRequestDelete struct{}
 
 // UnmarshalJSON is a helper function to unmarshal Interaction object.
 func (i *InteractionCreate) UnmarshalJSON(b []byte) error {

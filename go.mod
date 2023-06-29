@@ -12,7 +12,7 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cenkalti/backoff v2.1.1+incompatible
-	github.com/dghubble/oauth1 v0.6.0
+	github.com/cyruzin/golang-tmdb v1.5.0
 	github.com/dghubble/sling v1.3.0
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dpatrie/urbandictionary v0.0.0-20151214192647-3b38cbf4cb81
@@ -44,6 +44,7 @@ require (
 	github.com/miolini/datacounter v0.0.0-20190724021726-aa48df3a02c1
 	github.com/mitchellh/cli v1.1.2
 	github.com/mmcdole/gofeed v1.1.3
+	github.com/n0madic/twitter-scraper v0.0.0-20230625205053-302c2d461a6a
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/oragono/confusables v0.0.0-20201108231250-4ab98ab61fb1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -54,7 +55,7 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/shurcooL/github_flavored_markdown v0.0.0-20181002035957-2122de532470
 	github.com/sirupsen/logrus v1.6.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/tidwall/buntdb v1.2.8
 	github.com/tkuchiki/go-timezone v0.2.2
 	github.com/trubitsyn/go-zero-width v1.0.1
@@ -68,9 +69,9 @@ require (
 	golang.org/x/crypto v0.1.0
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/image v0.5.0
-	golang.org/x/net v0.7.0
-	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
-	golang.org/x/text v0.7.0
+	golang.org/x/net v0.10.0
+	golang.org/x/oauth2 v0.8.0
+	golang.org/x/text v0.9.0
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/api v0.40.0
 )
@@ -160,7 +161,7 @@ require (
 	go.opencensus.io v0.22.5 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d // indirect
@@ -168,5 +169,5 @@ require (
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

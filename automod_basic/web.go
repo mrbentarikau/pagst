@@ -30,7 +30,7 @@ func (p *Plugin) InitWeb() {
 	web.AddSidebarItem(web.SidebarCategoryTools, &web.SidebarItem{
 		Name: "Basic Automoderator",
 		URL:  "automod_basic",
-		Icon: "fas fa-robot",
+		Icon: "fa-brands fa-android",
 	})
 
 	autmodMux := goji.SubMux()

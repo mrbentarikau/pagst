@@ -2,7 +2,6 @@ package discordgo
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/mrbentarikau/pagst/lib/gojay"
 )
@@ -40,6 +39,10 @@ type User struct {
 
 	// The user's username.
 	Username string `json:"username"`
+
+	// The user's display name, if it is set.
+	// For bots, this is the application name.
+	GlobalName string `json:"global_name"`
 
 	// The hash of the user's avatar. Use Session.UserAvatar
 	// to retrieve the avatar itself.
@@ -93,7 +96,14 @@ type User struct {
 }
 
 // String returns a unique identifier of the form username#discriminator
+// or username only if the discriminator is "0"
 func (u *User) String() string {
+	if u.isMigrated() {
+		return u.Username
+	}
+
+	// The code below handles applications and users without a migrated username.
+	// https://support-dev.discord.com/hc/en-us/articles/13667755828631
 	return fmt.Sprintf("%s#%s", u.Username, u.Discriminator)
 }
 
@@ -133,20 +143,24 @@ func (u *User) NKeys() int {
 //	size:    The size of the user's avatar as a power of two
 //	         if size is an empty string, no size parameter will
 //	         be added to the URL.
+//
+// Update: https://discord.com/developers/docs/change-log#default-avatars
+// Based on the update from new username
+// Users on the legacy username will use the discriminator % 5
+// Otherwise, users will use the (user_id >> 22) % 6
 func (u *User) AvatarURL(size string) string {
-	var URL string
-	if u.Avatar == "" {
-		URL = EndpointDefaultUserAvatar(u.Discriminator)
-	} else if strings.HasPrefix(u.Avatar, "a_") {
-		URL = EndpointUserAvatarAnimated(u.ID, u.Avatar)
-	} else {
-		URL = EndpointUserAvatar(u.ID, u.Avatar)
+	defaultUserAvatar := EndpointDefaultUserAvatar(u.Discriminator)
+	if u.isMigrated() {
+		defaultUserAvatar = EndpointDefaultUserAvatarMigrated(u.ID)
 	}
 
-	if size != "" {
-		return URL + "?size=" + size
-	}
-	return URL
+	return avatarURL(
+		u.Avatar,
+		defaultUserAvatar,
+		EndpointUserAvatar(u.ID, u.Avatar),
+		EndpointUserAvatarAnimated(u.ID, u.Avatar),
+		size,
+	)
 }
 
 // BannerURL returns the URL of the users's banner image.
@@ -162,4 +176,10 @@ func (u *User) BannerURL(size string) string {
 type SelfUser struct {
 	*User
 	Token string `json:"token"`
+}
+
+// isMigrated returns true if the user is migrated from the legacy username system
+// https://discord.com/developers/docs/change-log#identifying-migrated-users
+func (u *User) isMigrated() bool {
+	return u.Discriminator == "" || u.Discriminator == "0"
 }

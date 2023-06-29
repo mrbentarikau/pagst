@@ -61,27 +61,36 @@ var cmds = []*commands.YAGCommand{
 	{
 		CmdCategory:  commands.CategoryTool,
 		Name:         "Remindme",
-		Description:  "Schedules a reminder, example: 'remindme 1h30min are you still alive?'\n\nSwitch -repeat will repeat the reminder starting with min duration of 1 hour.\nSwitch -time needs quoted date in either your registered time zone (using the `setz` command) or UTC. Adds first argument's duration and if repeat, sets duration to 24h. 'remindme 5m are you still alive? -time \"tomorrow 12:45\"'",
+		Description:  "Schedules a reminder, example: 'remindme 1h30min are you still alive?'\n\nSwitch -repeat will repeat the reminder starting with min duration of 1 hour.\nFlag -time needs quoted date in either your registered time zone (using the `setz` command) or UTC. Adds first argument's duration and if repeat, sets duration to 24h. 'remindme 5m are you still alive? -time \"tomorrow 12:45\"'.\n Using -time and 0 duration, first command argument is made to reminder text.",
 		Aliases:      []string{"remind", "reminder"},
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			{Name: "Duration", Type: &commands.DurationArg{}},
+			{Name: "Duration", Type: dcmd.String},
 			{Name: "Message", Type: dcmd.String},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "channel", Type: dcmd.Channel},
 			{Name: "repeat", Help: "Repeat the reminder at set duration"},
 			{Name: "time", Help: "Exact time for the reminder", Type: dcmd.String},
+			{Name: "noping", Help: "Don't ping the user in reminder response"},
 		},
 		ApplicationCommandEnabled: true,
 		DefaultEnabled:            true,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			var reminderMessage string
 			currentReminders, _ := GetUserReminders(parsed.Author.ID)
 			if len(currentReminders) >= 25 {
 				return "You can have a maximum of 25 active reminders, list your reminders with the `reminders` command", nil
 			}
 
-			fromNow := parsed.Args[0].Value.(time.Duration)
+			if parsed.Author.Bot {
+				return "Cannot create reminder for Bots, you're most likely trying to use execAdmin to create a reminder, use exec", nil
+			}
+
+			fromNow, err := common.ParseDuration(parsed.Args[0].Str())
+			if err != nil {
+				fromNow = 0
+			}
 			durString := common.HumanizeDuration(common.DurationPrecisionSeconds, fromNow)
 			when := time.Now().Add(fromNow)
 
@@ -90,7 +99,16 @@ var cmds = []*commands.YAGCommand{
 				repeatDuration = fromNow
 			}
 
+			disableMention := false
+			if parsed.Switch("noping").Value != nil && parsed.Switch("noping").Value.(bool) {
+				disableMention = true
+			}
+
 			switchTime := parsed.Switch("time")
+			if fromNow == 0 && switchTime != nil {
+				reminderMessage += fmt.Sprintf("%s ", parsed.Args[0].Str())
+			}
+
 			if switchTime.Value != nil {
 				dateParser := createDateParser()
 				if parsed.Switch("repeat").Value != nil && parsed.Switch("repeat").Value.(bool) {
@@ -117,22 +135,21 @@ var cmds = []*commands.YAGCommand{
 			}
 
 			id := parsed.ChannelID
-
 			if c := parsed.Switch("channel"); c.Value != nil {
+				id = c.Value.(*dstate.ChannelState).ID
 				hasPerms, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, id, parsed.GuildData.MS, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel)
 				if err != nil {
 					return "Failed checking permissions, please try again or join the support server.", err
 				}
 
-				id = c.Value.(*dstate.ChannelState).ID
 				nok := commands.CanExecuteInChannel(parsed, id)
 
 				if !hasPerms || !nok {
 					return "You do not have permissions to send messages there", nil
 				}
 			}
-
-			_, err := NewReminder(parsed.Author.ID, parsed.GuildData.GS.ID, id, parsed.Args[1].Str(), when, repeatDuration)
+			reminderMessage += parsed.Args[1].Str()
+			_, err = NewReminder(parsed.Author.ID, parsed.GuildData.GS.ID, id, reminderMessage, when, repeatDuration, disableMention)
 			if err != nil {
 				return nil, err
 			}

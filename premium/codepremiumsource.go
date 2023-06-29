@@ -14,9 +14,9 @@ import (
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/premium/models"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
-	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/lib/pq"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -155,7 +155,7 @@ var cmdGenerateCode = &commands.YAGCommand{
 	HideFromCommandsPage: true,
 	Name:                 "generatepremiumcode",
 	Aliases:              []string{"gpc"},
-	Description:          "Generates premium codes",
+	Description:          "Generates premium codes. Bot Owner Only.",
 	HideFromHelp:         true,
 	RequiredArgs:         3,
 	RunInDM:              true,

@@ -5,8 +5,8 @@ import (
 
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common/featureflags"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 var Command = &commands.YAGCommand{
@@ -14,7 +14,7 @@ var Command = &commands.YAGCommand{
 	CmdCategory:          commands.CategoryDebug,
 	HideFromCommandsPage: true,
 	Name:                 "listflags",
-	Description:          ";))",
+	Description:          ";))\n\nLists feature flags for the current, or optional provided guild. Bot Owner Only.",
 	HideFromHelp:         true,
 	RequiredArgs:         0,
 	Arguments: []*dcmd.ArgDef{

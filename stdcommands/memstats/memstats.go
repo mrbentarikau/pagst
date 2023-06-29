@@ -7,9 +7,9 @@ import (
 
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
-	"github.com/mrbentarikau/pagst/stdcommands/util"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 var Command = &commands.YAGCommand{
@@ -17,7 +17,7 @@ var Command = &commands.YAGCommand{
 	CmdCategory:          commands.CategoryDebug,
 	HideFromCommandsPage: true,
 	Name:                 "memstats",
-	Description:          ";))",
+	Description:          ";))\n\nFull memory statistics. Bot Owner Only.",
 	HideFromHelp:         true,
 	RunFunc: util.RequireOwner(func(data *dcmd.Data) (interface{}, error) {
 		var m runtime.MemStats

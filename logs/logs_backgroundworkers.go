@@ -15,14 +15,17 @@ var _ backgroundworkers.BackgroundWorkerPlugin = (*Plugin)(nil)
 
 func (p *Plugin) RunBackgroundWorker() {
 	ticker := time.NewTicker(time.Minute * 5)
-
+	if !ConfRestrictLogsThirtyDays.GetBool() {
+		logger.Infof("[logs] Disabling background worker for message log purge, set yagpdb.enable_restrict_logs to true for this ")
+		(<-p.stopWorkers).Done()
+		return
+	}
 	for {
 		select {
 		case <-ticker.C:
-			if confRestrictLogsThirtyDays.GetBool() {
-				go p.DeleteOldMessages()
-				go p.DeleteOldMessageLogs()
-			}
+			go p.DeleteOldMessages()
+			go p.DeleteOldMessageLogs()
+			//go p.DeleteOldWarningsLinks()
 		case wg := <-p.stopWorkers:
 			wg.Done()
 			return
@@ -50,6 +53,14 @@ func (p *Plugin) DeleteOldMessageLogs() {
 		return
 	}
 	logger.Infof("[logs] Took %s to delete %v old message_logs2", time.Since(started), deleted)
+}
+
+func (p *Plugin) DeleteOldWarningsLinks() {
+	started := time.Now()
+	rows := common.GORM.Table("moderation_warnings").Where("created_at < now() - interval '30 days' AND logs_link != ''").Update("logs_link", "").RowsAffected
+
+	logger.Infof("[logs] Took %s to delete %v old moderation_warnings links", time.Since(started), rows)
+
 }
 
 func (p *Plugin) StopBackgroundWorker(wg *sync.WaitGroup) {

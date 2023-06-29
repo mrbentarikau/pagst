@@ -26,7 +26,7 @@
 </style>
 
 <header class="page-header">
-    <h2>YouTube upload feeds</h2>
+    <h2><i class="fab fa-youtube"></i>&nbsp;YouTube Feeds</h2>
 </header>
 {{template "cp_alerts" .}}
 
@@ -86,11 +86,12 @@
                                 <code>{{"{{.ChannelName}}"}}</code>,
                                 <code>{{"{{.LiveStream}}"}}</code>,
                                 <code>{{"{{.SelectedRoleID}}"}}</code>,
-                                <code>{{"{{.VideoID}}"}}</code>,
+                                <code>{{"{{.URL}}"}}</code>,
                                 <code>{{"{{.VideoDescription}}"}}</code>,
-                                <code>{{"{{.VideoThumbnail}}"}}</code>,
-                                <code>{{"{{.URL}}"}}</code>
-                            <br/><code>{{"{{.FullSnippet}}"}}</code> holds all <a href="https://developers.google.com/youtube/v3/docs/videos#properties" target="_blank">snippet data</a> passed via feed. <code>{{"{{.ContentDetails}}"}}</code> from the same link provides information about the video content.
+                                <code>{{"{{.VideoDurationSeconds}}"}}</code>,
+                                <code>{{"{{.VideoID}}"}}</code>,
+                                <code>{{"{{.VideoThumbnail}}"}}</code>
+                            <br/><code>{{"{{.FullSnippet}}"}}</code> holds all <a href="https://developers.google.com/youtube/v3/docs/videos#properties" target="_blank">snippet data</a> passed via feed. <code>{{"{{.ContentDetails}}"}}</code> from the same link provides information about the video content. <code>{{"{{.LiveStreamingDetails}}"}}</code> holds all data concerning live/upcoming streams e.g. <code>{{"{{.LiveStreamingDetails.ScheduledStartTime}}"}}</code> - also covered in the link above.
                             </p>
                             <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstAnnounceSave" class="btn btn-sm btn-success btn-block" formaction="/manage/{{.Dot.ActiveGuild.ID}}/youtube/handle_announce" data-async-form-alertsonly>Save</button>
                             </span>
@@ -102,47 +103,7 @@
                             <input type="text" class="form-control" placeholder="Enter link of youtube channel or video or user" id="yt-channel-url" name="YoutubeUrl">
                         </div>
                     </div>
-                    <section style="margin-bottom: 25px;padding-bottom: -25px;">
-                        <a style="text-decoration: none;color:#a1a1a1!important;display:block;font-size:14px!important" data-toggle="collapse" href="#collapse_YT_adv_search" aria-expanded="false" aria-controls="collapse_YT_adv_search" class="cc-collapsibleDown"><span>More precise YT-channel search:</span></a>
-                        <div class="card-body collapse" id="collapse_YT_adv_search">
-                            <div class="form-row mb-3">
-                                <div class="form-group col mb-0">
-                                    <label for="yt-channel-id">YouTube Channel ID</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-prepend"><span
-                                            class="input-group-text">youtube.com/channel/</span></span>
-                                        <input type="text" class="form-control" id="yt-channel-id" name="YoutubeChannelID">
-                                    </div>
-                                </div>
-                                <div class="form-group col mb-0">
-                                    <label for="yt-channel-user">YouTube Username</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-prepend"><span
-                                            class="input-group-text">youtube.com/user/</span></span>
-                                        <input type="text" class="form-control" id="yt-channel-user" name="YoutubeChannelUser">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row mb-3">
-                                <div class="form-group col mb-0">
-                                    <label for="yt-channel-user">YouTube Custom URL<sup>*</sup></label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-prepend"><span
-                                            class="input-group-text">youtube.com/c/</span></span>
-                                        <input type="text" class="form-control" id="yt-custom-url" name="YoutubeCustomURL">
-                                    </div>
-                                </div>
-                                <div class="form-group col mb-0">
-                                    <label for="yt-video-url">YouTube Video URL<sup>*</sup></label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-prepend"><span
-                                            class="input-group-text">youtube.com/watch?v=</span></span>
-                                        <input type="text" class="form-control" id="yt-video-url" name="YoutubeVideoURL">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                    
                     <div class="form-row mb-0">
                         <div class="form-group col mb-0">
                             <label for="channel">Discord Channel</label>
@@ -163,10 +124,10 @@
                                 {{checkbox "MentionEveryone" "new-mention-everyone" `Mention everyone` false}}
                             </td>
                             <td style="padding-right:42px">
-                                {{checkbox "PublishShorts" "new-publish-shorts" `Publish YT-shorts` true}}
+                                {{checkbox "PublishShorts" "new-publish-shorts" `Publish YT-shorts` false}}
                             </td>
                             <td>
-                                {{checkbox "PublishLivestream" "new-publish-livestream" `Publish YT-livestreams` false}}
+                                {{checkbox "PublishLivestream" "new-publish-livestream" `Publish YT-livestreams` true}}
                             </td>
                         </tr>
                     </table>
@@ -202,7 +163,7 @@
                     </thead>
                     <tbody>
                         {{range .Dot.Subs}}
-                        <tr class="{{if not .Enabled}}feed-item-disabled{{end}}">
+                        <tr class="{{if not .Enabled.Bool}}feed-item-disabled{{end}}">
                             <td>
                                 <p class="form-control-static"><a class="feedlink" href="https://youtube.com/channel/{{.YoutubeChannelID}}" target="_blank"><b>{{.YoutubeChannelName}}</b></a><br/>
                                    <code>{{.YoutubeChannelID}}</code></p>
@@ -228,7 +189,7 @@
                                 {{checkbox "PublishLivestream" (joinStr "" "publish-livestream-" .ID) `Publish livestreams` .PublishLivestream (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
-                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Feed enabled` .Enabled (joinStr "" `form="sub-item-` .ID `"`)}}
+                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Feed enabled` .Enabled.Bool (joinStr "" `form="sub-item-` .ID `"`)}}
                             </td>
                             <td>
                                 <button form="sub-item-{{.ID}}" type="submit" class="btn btn-success"

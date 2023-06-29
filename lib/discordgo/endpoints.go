@@ -42,6 +42,7 @@ var (
 	EndpointCDNChannelIcons string
 	EndpointCDNBanners      string
 	EndpointCDNGuilds       string
+	EndpointCDNRoleIcons    string
 
 	EndpointAuth           string
 	EndpointLogin          string
@@ -64,12 +65,13 @@ var (
 	EndpointReport       string
 	EndpointIntegrations string
 
-	EndpointUser               = func(uID string) string { return "" }
-	EndpointUserAvatar         = func(uID int64, aID string) string { return "" }
-	EndpointUserAvatarAnimated = func(uID int64, aID string) string { return "" }
-	EndpointDefaultUserAvatar  = func(uDiscriminator string) string { return "" }
-	EndpointUserBanner         = func(uID int64, hash string) string { return "" }
-	EndpointUserBannerAnimated = func(uID int64, hash string) string { return "" }
+	EndpointUser                      = func(uID string) string { return "" }
+	EndpointUserAvatar                = func(uID int64, aID string) string { return "" }
+	EndpointUserAvatarAnimated        = func(uID int64, aID string) string { return "" }
+	EndpointDefaultUserAvatar         = func(uDiscriminator string) string { return "" }
+	EndpointDefaultUserAvatarMigrated = func(uID int64) string { return "" }
+	EndpointUserBanner                = func(uID int64, hash string) string { return "" }
+	EndpointUserBannerAnimated        = func(uID int64, hash string) string { return "" }
 
 	EndpointUserGuilds                    = func(uID string) string { return "" }
 	EndpointUserGuild                     = func(uID string, gID int64) string { return "" }
@@ -232,6 +234,8 @@ var (
 	EndpointInteractionOriginalMessage = func(applicationID int64, token string) string {
 		return ""
 	}
+
+	EndpointRoleIcon = func(rID int64, cID string) string { return "" }
 )
 
 func CreateEndpoints(base string) {
@@ -259,6 +263,10 @@ func CreateEndpoints(base string) {
 	EndpointCDNChannelIcons = EndpointCDN + "channel-icons/"
 	EndpointCDNBanners = EndpointCDN + "banners/"
 	EndpointCDNGuilds = EndpointCDN + "guilds/"
+	EndpointCDNRoleIcons = EndpointCDN + "role-icons/"
+	EndpointRoleIcon = func(rID int64, cID string) string {
+		return EndpointCDNRoleIcons + StrID(rID) + "/" + cID + ".png"
+	}
 
 	EndpointAuth = EndpointAPI + "auth/"
 	EndpointLogin = EndpointAuth + "login"
@@ -287,6 +295,9 @@ func CreateEndpoints(base string) {
 	EndpointDefaultUserAvatar = func(uDiscriminator string) string {
 		uDiscriminatorInt, _ := strconv.Atoi(uDiscriminator)
 		return EndpointCDN + "embed/avatars/" + strconv.Itoa(uDiscriminatorInt%5) + ".png"
+	}
+	EndpointDefaultUserAvatarMigrated = func(uID int64) string {
+		return EndpointCDN + "embed/avatars/" + StrID((uID>>22)%5) + ".png"
 	}
 	EndpointUserSettings = func(uID string) string { return EndpointUsers + uID + "/settings" }
 	EndpointUserGuilds = func(uID string) string { return EndpointUsers + uID + "/guilds" }
@@ -350,7 +361,7 @@ func CreateEndpoints(base string) {
 	EndpointGuildScheduledEvents = func(gID int64) string { return EndpointGuilds + StrID(gID) + "/scheduled-events" }
 	EndpointGuildScheduledEvent = func(gID, eID int64) string { return EndpointGuilds + StrID(gID) + "/scheduled-events/" + StrID(eID) }
 	EndpointGuildScheduledEventUsers = func(gID, eID int64) string { return EndpointGuildScheduledEvent(gID, eID) + "/users" }
-	EndpointGuildTemplate = func(tID int64) string { return EndpointGuilds + "/templates/" + StrID(tID) }
+	EndpointGuildTemplate = func(tID int64) string { return EndpointGuilds + "templates/" + StrID(tID) }
 	EndpointGuildTemplates = func(gID int64) string { return EndpointGuilds + StrID(gID) + "/templates" }
 	EndpointGuildTemplateSync = func(gID, tID int64) string { return EndpointGuilds + StrID(gID) + "/templates/" + StrID(tID) }
 	EndpointGuildMemberAvatar = func(gID int64, uID int64, aID string) string {

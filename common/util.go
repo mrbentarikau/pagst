@@ -801,13 +801,29 @@ func ReplaceEmojis(s string, replace ...string) string {
 	})
 }
 
+// Sanitize text to match confusables and remove diacritics
+var transformer = transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+
 func NormalizeAccents(msg string) string {
-	tChain := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	msg, _, _ = transform.String(tChain, msg)
+	msg, _, _ = transform.String(transformer, msg)
 	return msg
 }
 
 func NormalizeConfusables(msg string) string {
 	msg = confusables.SkeletonTweaked(msg)
 	return msg
+}
+
+func SanitizeText(content string) string {
+	// Normalize string
+	output := NormalizeAccents(content)
+
+	// Match confusables
+	output = NormalizeConfusables(output)
+
+	return output
+}
+
+func BoolToPointer(b bool) *bool {
+	return &b
 }

@@ -60,6 +60,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/statedbg"
 	"github.com/mrbentarikau/pagst/stdcommands/stateinfo"
 	"github.com/mrbentarikau/pagst/stdcommands/thanks"
+	"github.com/mrbentarikau/pagst/stdcommands/themoviedb"
 	"github.com/mrbentarikau/pagst/stdcommands/throw"
 	"github.com/mrbentarikau/pagst/stdcommands/toggledbg"
 	"github.com/mrbentarikau/pagst/stdcommands/topcommands"
@@ -184,9 +185,15 @@ func (p *Plugin) AddCommands() {
 		return
 	}
 
+	if !themoviedb.ShouldRegister() {
+		common.GetPluginLogger(p).Warn("The Movie DB API key not provided, skipping adding tmdb command...")
+		return
+	}
+
 	commands.AddRootCommands(p, isthereanydeal.Command)
 	commands.AddRootCommands(p, myanimelist.Command)
 	commands.AddRootCommands(p, owldictionary.Command)
+	commands.AddRootCommands(p, themoviedb.Command)
 
 }
 

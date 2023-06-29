@@ -9,12 +9,12 @@ import (
 
 	"emperror.dev/errors"
 
-	"github.com/bwmarrin/snowflake"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/bwmarrin/snowflake"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -208,7 +208,7 @@ func BotPermissions(gs *dstate.GuildSet, channelID int64) (int64, error) {
 }
 
 func SendMessage(guildID int64, channelID int64, msg string) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages)
+	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -219,7 +219,7 @@ func SendMessage(guildID int64, channelID int64, msg string) (permsOK bool, resp
 }
 
 func SendMessageGS(gs *dstate.GuildSet, channelID int64, msg string) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermissionGS(gs, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages)
+	hasPerms, err := BotHasPermissionGS(gs, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -229,7 +229,7 @@ func SendMessageGS(gs *dstate.GuildSet, channelID int64, msg string) (permsOK bo
 }
 
 func SendMessageEmbed(guildID int64, channelID int64, embed *discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionEmbedLinks)
+	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel|discordgo.PermissionEmbedLinks)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -240,7 +240,7 @@ func SendMessageEmbed(guildID int64, channelID int64, embed *discordgo.MessageEm
 }
 
 func SendMessageEmbedGS(gs *dstate.GuildSet, channelID int64, msg *discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermissionGS(gs, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionEmbedLinks)
+	hasPerms, err := BotHasPermissionGS(gs, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel|discordgo.PermissionEmbedLinks)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -251,7 +251,7 @@ func SendMessageEmbedGS(gs *dstate.GuildSet, channelID int64, msg *discordgo.Mes
 }
 
 func SendMessageEmbedList(guildID int64, channelID int64, embeds []*discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionEmbedLinks)
+	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel|discordgo.PermissionEmbedLinks)
 	if !hasPerms {
 		return false, nil, err
 	}

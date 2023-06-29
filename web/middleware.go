@@ -29,6 +29,7 @@ import (
 
 var (
 	confGAID = config.RegisterOption("yagpdb.ga_id", "Google analytics id", "")
+	confGA4  = config.RegisterOption("yagpdb.google_ga4", "Google analytics GA4 id", "")
 )
 
 // Misc mw that adds some headers, (Strict-Transport-Security)
@@ -90,6 +91,7 @@ func BaseTemplateDataMiddleware(inner http.Handler) http.Handler {
 			"SidebarCollapsed": collapseSidebar,
 			"SidebarItems":     sideBarItems,
 			"GAID":             confGAID.GetString(),
+			"GA4":              confGA4.GetString(),
 		}
 
 		baseData["BaseURL"] = BaseURL()
