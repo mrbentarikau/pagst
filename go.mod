@@ -12,7 +12,7 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cenkalti/backoff v2.1.1+incompatible
-	github.com/dghubble/oauth1 v0.6.0
+	github.com/cyruzin/golang-tmdb v1.5.0
 	github.com/dghubble/sling v1.3.0
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dpatrie/urbandictionary v0.0.0-20151214192647-3b38cbf4cb81
@@ -44,6 +44,7 @@ require (
 	github.com/miolini/datacounter v0.0.0-20190724021726-aa48df3a02c1
 	github.com/mitchellh/cli v1.1.2
 	github.com/mmcdole/gofeed v1.1.3
+	github.com/n0madic/twitter-scraper v0.0.0-20230625205053-302c2d461a6a
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/oragono/confusables v0.0.0-20201108231250-4ab98ab61fb1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -69,7 +70,7 @@ require (
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/image v0.5.0
 	golang.org/x/net v0.10.0
-	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b
+	golang.org/x/oauth2 v0.8.0
 	golang.org/x/text v0.9.0
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/api v0.40.0

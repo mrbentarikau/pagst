@@ -104,7 +104,7 @@ func loadTemplates() {
 		"templates/index.html", "templates/cp_main.html",
 		"templates/cp_nav.html", "templates/cp_selectserver.html", "templates/cp_logs.html",
 		"templates/status.html", "templates/cp_server_home.html", "templates/cp_core_settings.html",
-		"templates/error404.html", "templates/privacy_policy.html", "templates/chat.html",
+		"templates/error404.html", "templates/privacy_policy.html", "templates/chat.html", "templates/tos.html",
 	}
 
 	for _, v := range coreTemplates {
@@ -262,6 +262,8 @@ func setupRoutes() *goji.Mux {
 	RootMux.Handle(pat.Get("/status/"), ControllerHandler(HandleStatusHTML, "cp_status"))
 	RootMux.Handle(pat.Get("/privacy_policy"), ControllerHandler(HandleStatusHTML, "cp_privacy_policy"))
 	RootMux.Handle(pat.Get("/privacy_policy/"), ControllerHandler(HandleStatusHTML, "cp_privacy_policy"))
+	RootMux.Handle(pat.Get("/tos"), ControllerHandler(HandleStatusHTML, "cp_terms_and_conditions"))
+	RootMux.Handle(pat.Get("/tos/"), ControllerHandler(HandleStatusHTML, "cp_terms_and_conditions"))
 	RootMux.Handle(pat.Get("/status.json"), APIHandler(HandleStatusJSON))
 	RootMux.Handle(pat.Get("/error404"), RenderHandler(HandleError404, "error404"))
 	RootMux.Handle(pat.Get("/error404/"), RenderHandler(HandleError404, "error404"))

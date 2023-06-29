@@ -348,7 +348,8 @@ func (e *EphemeralOrNone) Send(data *dcmd.Data) ([]*discordgo.Message, error) {
 			}
 		}
 
-		m, err := data.Session.CreateFollowupMessage(common.BotApplication.ID, data.SlashCommandTriggerData.Interaction.Token, params)
+		//m, err := data.Session.CreateFollowupMessage(common.BotApplication.ID, data.SlashCommandTriggerData.Interaction.Token, params)
+		m, err := data.Session.FollowupMessageCreate(data.SlashCommandTriggerData.Interaction, true, params)
 		// m, err := data.Session.EditOriginalInteractionResponse(common.BotApplication.ID, data.SlashCommandTriggerData.Interaction.Token, params)
 		// err = data.Session.CreateInteractionResponse(data.SlashCommandTriggerData.Interaction.ID, data.SlashCommandTriggerData.Interaction.Token, &discordgo.InteractionResponse{
 		// 	Kind: discordgo.InteractionResponseTypeChannelMessageWithSource,

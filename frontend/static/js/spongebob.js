@@ -150,6 +150,7 @@ function showAlerts(alertsJson) {
 		if (alert.Style === "success") {
 			notice = new PNotify({
 				title: alert.Message,
+				text: "(Click to dismiss)",
 				type: 'success',
 				addclass: 'stack-bar-top click-2-close',
 				stack: stack_bar_top,
@@ -163,7 +164,7 @@ function showAlerts(alertsJson) {
 		} else if (alert.Style === "danger") {
 			notice = new PNotify({
 				title: alert.Message,
-				text: "Read the docs and contact support if you don't know what went wrong.",
+				text: "Read the docs and contact support if you don't know what went wrong.\n(Click to dismiss)",
 				type: 'error',
 				addclass: 'stack-bar-top click-2-close',
 				stack: stack_bar_top,
@@ -177,7 +178,7 @@ function showAlerts(alertsJson) {
 		} else if (alert.Style === "warning-cc-limit") {
 			notice = new PNotify({
 				title: alert.Message,
-				text: "This warning does not affect saves.",
+				text: "This warning does not affect saves.\n(Click to dismiss)",
 				type: 'warning-cc-limit',
 				addclass: 'stack-bar-top click-2-close',
 				stack: stack_bar_top,

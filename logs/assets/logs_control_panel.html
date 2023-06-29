@@ -7,12 +7,12 @@
     }
 </style>
 
-<header class="page-header">
+<header class="page-header"><h2><i class="fas fa-copy"></i>&nbsp;
     {{if .UsernameTrackingEnabled}}
-    <h2>Message and username/nickname logs</h2>
+    Message and username/nickname logs
     {{else}}
-    <h2>Message logs</h2>
-    {{end}}
+    Message logs
+    {{end}}</h2>
 </header>
 
 {{template "cp_alerts" .}}

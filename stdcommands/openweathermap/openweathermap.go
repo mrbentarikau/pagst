@@ -135,6 +135,10 @@ func weatherFromAPI(where string, geoCode *owmGeoCodeStruct) (*openWeatherMap, e
 
 	body, _ := requestAPI(queryURL)
 
+	if len(body) == 0 {
+		return nil, commands.NewPublicError("No results for `", where, "`. Be more specific...")
+	}
+
 	queryErr := json.Unmarshal(body, &weather)
 	if queryErr != nil {
 		return nil, queryErr

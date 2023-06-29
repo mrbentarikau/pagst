@@ -188,7 +188,7 @@ func (pa *ParsedArgs) Len() int {
 	return count
 }
 
-// tmplRunCC either run another custom command immediately with a max stack depth of 2
+// tmplRunCC either run another custom command immeditely with a max stack depth of 2
 // or schedules a custom command to be run in the future sometime with the provided data placed in .ExecData
 func tmplRunCC(ctx *templates.Context) interface{} {
 	return func(ccID int, channel interface{}, delaySeconds interface{}, data interface{}) (string, error) {
@@ -201,12 +201,7 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			return "", err
 		}
 
-		if opts.Cmd.Disabled {
-			return "", errors.New("custom command is disabled")
-		}
-
-		actualDelay := templates.ToInt64(delaySeconds)
-		if actualDelay <= 0 {
+		if opts.Delay <= 0 {
 			currentStackDepthI := ctx.Data["StackDepth"]
 			currentStackDepth := 0
 			if currentStackDepthI != nil {

@@ -41,7 +41,7 @@ func (p *Plugin) InitWeb() {
 	web.AddSidebarItem(web.SidebarCategoryTools, &web.SidebarItem{
 		Name: "Ticket System",
 		URL:  "tickets/settings",
-		Icon: "fas fa-ticket-alt",
+		Icon: "fas fa-ticket",
 	})
 
 	getHandler := web.ControllerHandler(p.handleGetSettings, "cp_tickets_settings")

@@ -1,7 +1,7 @@
 {{define "cp_automod_basic"}}
 {{template "cp_head" .}}
 <header class="page-header">
-    <h2>Automoderator {{if .AutomodConfig.Enabled}}<span class="bg-success">Enabled</span>{{else}}<span
+    <h2><i class="fa-brands fa-android"></i>&nbsp;Basic Automoderator {{if .AutomodConfig.Enabled}}<span class="bg-success">Enabled</span>{{else}}<span
             class="bg-danger">Disabled</span>{{end}}</h2>
 </header>
 
@@ -168,7 +168,7 @@
     {{mTemplate "automod_basic_common_fields" "Guild" .ActiveGuild "Rule" .AutomodConfig.Words "Name" "Words"}}
 
     <p class="help-block">Built in lists</p>
-    {{checkbox "Words.BuiltinSwearWords" "Words-BuiltinSwearWords" `Ban builtin swear words <a href="https://github.com/botlabs-gg/yagpdb/blob/master/automod_basic/swearwords.go"> (list of swear words here)</a>` .AutomodConfig.Words.BuiltinSwearWords}}
+    {{checkbox "Words.BuiltinSwearWords" "Words-BuiltinSwearWords" `Ban builtin swear words <a href="https://github.com/mrbentarikau/pagst/blob/master/automod_basic/swearwords.go"> (list of swear words here)</a>` .AutomodConfig.Words.BuiltinSwearWords}}
     <hr />
 
     <div class="form-group">

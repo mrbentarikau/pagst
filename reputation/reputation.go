@@ -245,8 +245,8 @@ func ModifyRep(ctx context.Context, conf *models.ReputationConfig, guildID int64
 		return
 	}
 
-	receiverUsername := receiver.User.Username + "#" + receiver.User.Discriminator
-	senderUsername := sender.User.Username + "#" + sender.User.Discriminator
+	receiverUsername := receiver.User.String()
+	senderUsername := sender.User.String()
 
 	// Add the log element
 	entry := &models.ReputationLog{
@@ -426,7 +426,7 @@ func DetailedLeaderboardEntries(guildID int64, ranks []*RankEntry) ([]*Leaderboa
 
 		for _, m := range members {
 			if m.User.ID == userIDs[i] {
-				lEntry.Username = m.User.Username + "#" + m.User.Discriminator
+				lEntry.Username = m.User.String()
 				lEntry.Avatar = m.User.AvatarURL("256")
 				lEntry.Bot = m.User.Bot
 				break
