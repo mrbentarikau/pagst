@@ -118,9 +118,14 @@ const (
 
 	GatewayIntentGuildScheduledEvents        GatewayIntent = 1 << 16
 	GatewayIntentAutoModerationConfiguration GatewayIntent = 1 << 20
-	GatewayIntentAutoModerationExecution     GatewayIntent = 1 << 21
+	// - AUTO_MODERATION_RULE_CREATE
+	// - AUTO_MODERATION_RULE_UPDATE
+	// - AUTO_MODERATION_RULE_DELETE
+	GatewayIntentAutoModerationExecution GatewayIntent = 1 << 21
+	// - AUTO_MODERATION_ACTION_EXECUTION
 
 	/* old stuff */
+
 	GatewayIntentsAllWithoutPrivileged = GatewayIntentGuilds |
 		GatewayIntentGuildBans |
 		GatewayIntentGuildEmojis |

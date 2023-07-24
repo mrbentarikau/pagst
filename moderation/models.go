@@ -136,6 +136,7 @@ type WarningModel struct {
 	common.SmallModel
 	GuildID  int64 `gorm:"index"`
 	UserID   string
+	Username string
 	AuthorID string
 
 	// Username and discrim for author incase he/she leaves

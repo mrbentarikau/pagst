@@ -296,7 +296,10 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 func CmdRunsInCategory(cc *models.CustomCommand, parentChannel int64) bool {
 	gs := bot.State.GetGuild(cc.GuildID)
 	cs := gs.GetChannelOrThread(parentChannel)
-	threadChannelParent := cs.ParentID
+	threadChannelParent := int64(0)
+	if cs != nil {
+		threadChannelParent = cs.ParentID
+	}
 
 	if cc.GroupID.Valid {
 		// check group restrictions

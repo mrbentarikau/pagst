@@ -745,6 +745,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			{Name: "a", Help: "Only remove messages with attachments"},
 			{Name: "m", Help: "Only remove messages without attachments"},
 			{Name: "to", Help: "Stop at this msg ID", Type: dcmd.BigInt},
+			{Name: "from", Help: "Start at this msg ID", Type: dcmd.BigInt},
 			{Name: "ignoreuser", Help: "Ignore flagged user"},
 		},
 		RequiredDiscordPermsHelp:  "(ManageMessages)",
@@ -830,6 +831,17 @@ var ModerationCommands = []*commands.YAGCommand{
 				toID = parsed.Switches["to"].Int64()
 			}
 
+			// Check if set to break at a certain ID
+			fromID := int64(0)
+			if parsed.Switches["from"].Value != nil {
+				filtered = true
+				fromID = parsed.Switches["from"].Int64()
+			}
+
+			if toID > 0 && fromID > 0 && fromID < toID {
+				return errors.New("from messageID cannot be less than to messageID"), nil
+			}
+
 			// Check if we should ignore pinned messages
 			pe := false
 			if parsed.Switches["nopin"].Value != nil && parsed.Switches["nopin"].Value.(bool) {
@@ -885,7 +897,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			// Wait a second so the client doesn't glitch out
 			time.Sleep(time.Second)
 
-			numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, triggerID, userFilter, re, invertRegexMatch, toID, ma, minAge, pe, onlyBots, onlyNotBots, ignoreUser, attachments, messagesOnly, num, limitFetch)
+			numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, triggerID, userFilter, re, invertRegexMatch, toID, fromID, ma, minAge, pe, onlyBots, onlyNotBots, ignoreUser, attachments, messagesOnly, num, limitFetch)
 
 			return dcmd.NewTemporaryResponse(time.Second*5, fmt.Sprintf("Deleted %d message(s)! :')", numDeleted), true), err
 		},
@@ -1021,8 +1033,18 @@ var ModerationCommands = []*commands.YAGCommand{
 					return fmt.Sprintf("Warning with given id : `%d` does not exist.", parsed.Switches["id"].Int()), nil
 				}
 
+				username := warn[0].Username
+				if username == "" {
+					userID, _ := strconv.ParseInt(warn[0].UserID, 10, 64)
+					warningsUser, err := common.BotSession.User(userID)
+					username = warningsUser.GlobalName
+					if err != nil {
+						username = "None"
+					}
+				}
+
 				return &discordgo.MessageEmbed{
-					Title:       fmt.Sprintf("Warning#%d - User : %s", warn[0].ID, warn[0].UserID),
+					Title:       fmt.Sprintf("Warning#%d - User: %s\nID: %s", warn[0].ID, username, warn[0].UserID),
 					Description: fmt.Sprintf("<t:%d:f> - **Reason** : %s", warn[0].CreatedAt.Unix(), warn[0].Message),
 					Footer:      &discordgo.MessageEmbedFooter{Text: fmt.Sprintf("By: %s (%13s)", warn[0].AuthorUsernameDiscrim, warn[0].AuthorID)},
 				}, nil
@@ -1357,7 +1379,7 @@ var ModerationCommands = []*commands.YAGCommand{
 	},
 }
 
-func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUser int64, regex string, invertRegexMatch bool, toID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable, onlyBotsFilterEnable, onlyNotBotsFilterEnable, ignoreUserFilterEnabled, attachmentFilterEnable, messageFilterEnable bool, deleteNum, fetchNum int) (int, error) {
+func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUser int64, regex string, invertRegexMatch bool, toID, fromID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable, onlyBotsFilterEnable, onlyNotBotsFilterEnable, ignoreUserFilterEnabled, attachmentFilterEnable, messageFilterEnable bool, deleteNum, fetchNum int) (int, error) {
 	var compiledRegex *regexp.Regexp
 	if regex != "" {
 		// Start by compiling the regex
@@ -1449,7 +1471,12 @@ func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUse
 		}
 
 		// Continue only if current msg ID is < toID
-		if toID > msgs[i].ID {
+		if toID > 0 && toID > msgs[i].ID {
+			continue
+		}
+
+		// Continue only if current msg ID is > fromID
+		if fromID > 0 && fromID < msgs[i].ID {
 			continue
 		}
 
@@ -1520,11 +1547,11 @@ func PaginateWarnings(parsed *dcmd.Data, count int) func(p *paginatedmessages.Pa
 		limit := 6
 
 		var result []*WarningModel
-		/*var count int
+		var count int
 		err = common.GORM.Table("moderation_warnings").Where("user_id = ? AND guild_id = ?", userID, parsed.GuildData.GS.ID).Count(&count).Error
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, err
-		}*/
+		}
 		err = common.GORM.Where("user_id = ? AND guild_id = ?", userID, parsed.GuildData.GS.ID).Order("id desc").Offset(skip).Limit(limit).Find(&result).Error
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, err
@@ -1570,8 +1597,21 @@ func PaginateWarnings(parsed *dcmd.Data, count int) func(p *paginatedmessages.Pa
 			currentField.Value = "No Warnings"
 		}
 
+		username := "None"
+		if len(result) > 0 {
+			username = result[0].Username
+			if username == "" {
+				warningsUser, err := common.BotSession.User(userID)
+				if err != nil {
+					username = "None"
+				} else if warningsUser != nil {
+					username = warningsUser.GlobalName
+				}
+			}
+		}
+
 		return &discordgo.MessageEmbed{
-			Title:       fmt.Sprintf("Warnings - User : %d", userID),
+			Title:       fmt.Sprintf("Warnings - User: %s\nID: %d", username, userID),
 			Description: desc,
 			Fields:      fields,
 		}, nil

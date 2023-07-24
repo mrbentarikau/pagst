@@ -2,6 +2,7 @@ package discordgo
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/mrbentarikau/pagst/lib/gojay"
 )
@@ -98,13 +99,15 @@ type User struct {
 // String returns a unique identifier of the form username#discriminator
 // or username only if the discriminator is "0"
 func (u *User) String() string {
-	if u.isMigrated() {
+	// If the user has been migrated from the legacy username system, their discriminator is "0".
+	// See https://support-dev.discord.com/hc/en-us/articles/13667755828631
+	if u.Discriminator == "0" {
 		return u.Username
 	}
 
 	// The code below handles applications and users without a migrated username.
 	// https://support-dev.discord.com/hc/en-us/articles/13667755828631
-	return fmt.Sprintf("%s#%s", u.Username, u.Discriminator)
+	return u.Username + "#" + u.Discriminator
 }
 
 // Mention return a string which mentions the user
@@ -143,20 +146,10 @@ func (u *User) NKeys() int {
 //	size:    The size of the user's avatar as a power of two
 //	         if size is an empty string, no size parameter will
 //	         be added to the URL.
-//
-// Update: https://discord.com/developers/docs/change-log#default-avatars
-// Based on the update from new username
-// Users on the legacy username will use the discriminator % 5
-// Otherwise, users will use the (user_id >> 22) % 6
 func (u *User) AvatarURL(size string) string {
-	defaultUserAvatar := EndpointDefaultUserAvatar(u.Discriminator)
-	if u.isMigrated() {
-		defaultUserAvatar = EndpointDefaultUserAvatarMigrated(u.ID)
-	}
-
 	return avatarURL(
 		u.Avatar,
-		defaultUserAvatar,
+		EndpointDefaultUserAvatar(u.DefaultAvatarIndex()),
 		EndpointUserAvatar(u.ID, u.Avatar),
 		EndpointUserAvatarAnimated(u.ID, u.Avatar),
 		size,
@@ -165,8 +158,8 @@ func (u *User) AvatarURL(size string) string {
 
 // BannerURL returns the URL of the users's banner image.
 //
-//	size:    The size of the desired banner image as a power of two
-//	         Image size can be any power of two between 16 and 4096.
+//		size:    The size of the desired banner image as a power of two
+//	        Image size can be any power of two between 16 and 4096.
 func (u *User) BannerURL(size string) string {
 	return bannerURL(u.Banner, EndpointUserBanner(u.ID, u.Banner), EndpointUserBannerAnimated(u.ID, u.Banner), size)
 }
@@ -178,8 +171,12 @@ type SelfUser struct {
 	Token string `json:"token"`
 }
 
-// isMigrated returns true if the user is migrated from the legacy username system
-// https://discord.com/developers/docs/change-log#identifying-migrated-users
-func (u *User) isMigrated() bool {
-	return u.Discriminator == "" || u.Discriminator == "0"
+// AvatarIndex returns the index of the user's avatar
+func (u *User) DefaultAvatarIndex() int64 {
+	if u.Discriminator == "0" {
+		return (u.ID >> 22) % 6
+	}
+
+	id, _ := strconv.Atoi(u.Discriminator)
+	return int64(id % 5)
 }

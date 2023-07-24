@@ -1256,7 +1256,7 @@ func tmplToInt(from interface{}) int {
 	case uint64:
 		return int(t)
 	case string:
-		parsed, _ := strconv.ParseInt(t, 10, 64)
+		parsed, _ := strconv.ParseInt(strings.TrimSpace(t), 10, 64)
 		return int(parsed)
 	case time.Duration:
 		return int(t)
@@ -1296,7 +1296,7 @@ func ToInt64(from interface{}) int64 {
 	case uint64:
 		return int64(t)
 	case string:
-		parsed, _ := strconv.ParseInt(t, 10, 64)
+		parsed, _ := strconv.ParseInt(strings.TrimSpace(t), 10, 64)
 		return parsed
 	case time.Duration:
 		return int64(t)
@@ -1427,7 +1427,7 @@ func ToFloat64(from interface{}) float64 {
 	case uint64:
 		return float64(t)
 	case string:
-		parsed, _ := strconv.ParseFloat(t, 64)
+		parsed, _ := strconv.ParseFloat(strings.TrimSpace(t), 64)
 		return parsed
 	case time.Duration:
 		return float64(t)
