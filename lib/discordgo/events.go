@@ -488,6 +488,10 @@ type AutoModerationActionExecution struct {
 	MatchedContent       string                        `json:"matched_content"`
 }
 
+func (e *AutoModerationActionExecution) GetGuildID() int64 {
+	return e.GuildID
+}
+
 // AuditLogEntryCreate is the data for an AuditLogEntryCreate event.
 type AuditLogEntryCreate struct {
 	*AuditLogEntry

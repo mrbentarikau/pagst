@@ -41,9 +41,11 @@ func (p *Plugin) StopFeed(wg *sync.WaitGroup) {
 
 	if p.Stop != nil {
 		wg.Add(1)
+		p.twitterScraper.Logout()
 		p.Stop <- wg
 		p.Stop <- wg
 	} else {
+		p.twitterScraper.Logout()
 		wg.Done()
 	}
 }

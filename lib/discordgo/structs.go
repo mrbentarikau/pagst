@@ -1056,6 +1056,79 @@ type GuildScheduledEventUser struct {
 	Member                *Member `json:"member"`
 }
 
+// GuildOnboarding represents the onboarding flow for a guild
+// https://discord.com/developers/docs/resources/guild#guild-onboarding-object
+type GuildOnboarding struct {
+	// ID of the guild this onboarding is part of
+	GuildID int64 `json:"guild_id,string"`
+
+	// Prompts shown during onboarding and in customize community
+	Prompts []GuildOnboardingPrompt `json:"prompts"`
+
+	// Channel IDs that members get opted into automatically
+	DefaultChannelIDs []int64 `json:"default_channel_ids"`
+
+	// 	Whether onboarding is enabled in the guild
+	Enabled bool `json:"enabled"`
+}
+
+// GuildOnboardingPrompt is a prompt shown during onboarding and in customize community
+// https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure
+type GuildOnboardingPrompt struct {
+	// ID of the prompt
+	ID int64 `json:"id,string"`
+
+	// Type of prompt
+	Type GuildOnboardingPromptType `json:"type"`
+
+	// Options available within the prompt
+	Options []GuildOnboardingPromptOption `json:"options"`
+
+	// Title of the prompt
+	Title string `json:"title"`
+
+	// Indicates whether users are limited to selecting one option for the prompt
+	SingleSelect bool `json:"single_select"`
+
+	// Indicates whether the prompt is required before a user completes the onboarding flow
+	Required bool `json:"required"`
+
+	// Indicates whether the prompt is present in the onboarding flow. If false, the prompt will only appear in the Channels & Roles tab
+	InOnboarding bool `json:"in_onboarding"`
+}
+
+// GuildOnboardingPromptType is the type of prompt during onboarding
+// https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-types
+type GuildOnboardingPromptType int
+
+// Block containing known GuildOnboardingPromptType values
+const (
+	GuildOnboardingPromptTypeMultipleChoice GuildOnboardingPromptType = 0
+	GuildOnboardingPromptTypeDropdown       GuildOnboardingPromptType = 1
+)
+
+// GuildOnboardingPromptOption is an option available within an onboarding prompt
+// https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure
+type GuildOnboardingPromptOption struct {
+	// ID of the prompt option
+	ID int64 `json:"id,string"`
+
+	// IDs for channels a member is added to when the option is selected
+	ChannelIDs []int64 `json:"channel_ids"`
+
+	// IDs for roles assigned to a member when the option is selected
+	RoleIDs []int64 `json:"role_ids"`
+
+	// Emoji of the option
+	Emoji Emoji `json:"emoji"`
+
+	// Title of the option
+	Title string `json:"title"`
+
+	// Description of the option
+	Description string `json:"description,omitempty"`
+}
+
 // A GuildTemplate represents
 type GuildTemplate struct {
 	// The unique code for the guild template
@@ -1683,7 +1756,7 @@ const (
 type AutoModerationActionMetadata struct {
 	// Channel to which user content should be logged.
 	// NOTE: should be only used with send alert message action type.
-	ChannelID string `json:"channel_id,omitempty"`
+	ChannelID string `json:"channel_id,string,omitempty"`
 
 	// Timeout duration in seconds (maximum of 2419200 - 4 weeks).
 	// NOTE: should be only used with timeout action type.

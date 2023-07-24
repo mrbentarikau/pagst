@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 
 	"github.com/mrbentarikau/pagst/commands"
+	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"gopkg.in/yaml.v3"
 )
 
 var Command = &commands.YAGCommand{
@@ -21,9 +23,17 @@ var Command = &commands.YAGCommand{
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var parsed *discordgo.MessageEmbed
-		err := json.Unmarshal([]byte(data.Args[0].Str()), &parsed)
+		j := common.ParseCodeblock(data.Args[0].Str())
+
+		// attempt to parse as YAML first.
+		// We don't care about the error here, as we're going to try parsing it as JSON anyway.
+		err := yaml.Unmarshal([]byte(j), &parsed)
 		if err != nil {
-			return "Failed parsing json: " + err.Error(), err
+			// Maybe it is JSON instead?
+			err = json.Unmarshal([]byte(j), &parsed)
+			if err != nil {
+				return "Failed parsing as YAML or JSON", err
+			}
 		}
 
 		if discordgo.IsEmbedEmpty(parsed) {

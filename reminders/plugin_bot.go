@@ -162,6 +162,7 @@ var cmds = []*commands.YAGCommand{
 		Name:                      "Reminders",
 		Description:               "Lists your active reminders",
 		ApplicationCommandEnabled: true,
+		IsResponseEphemeral:       true,
 		DefaultEnabled:            true,
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "raw", Help: "Raw, legacy output"},
@@ -179,10 +180,13 @@ var cmds = []*commands.YAGCommand{
 				return nil, err
 			}
 
+			out := "You have no reminders. Create reminders with the `Remindme` command."
 			if !pagination {
-				out := "Your reminders:\n"
-				out += stringReminders(currentReminders, false)
-				out += "```Remove a reminder with 'delreminder/rmreminder (id)' where id is the first number for each reminder above.\nTo clear all reminders, use 'delreminder' with the '-a' switch.```"
+				if len(currentReminders) > 0 {
+					out = "Your reminders:\n"
+					out += stringReminders(currentReminders, false)
+					out += "\nRemove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above.\nTo clear all reminders, use `delreminder` with the `-a` switch."
+				}
 				return out, nil
 			}
 
@@ -198,8 +202,7 @@ var cmds = []*commands.YAGCommand{
 					return fmt.Sprintf("Something went wrong: %s", err), nil
 				}
 			} else {
-				paginatedEmbed := embedCreator(currentReminders, 0, maxLength, 0, parsed)
-				return paginatedEmbed, nil
+				return out, nil
 			}
 
 			return pm, nil
@@ -211,6 +214,7 @@ var cmds = []*commands.YAGCommand{
 		Aliases:                   []string{"channelreminders"},
 		Description:               "Lists reminders in channel, only users with 'manage channel' permissions can use this.",
 		ApplicationCommandEnabled: true,
+		IsResponseEphemeral:       true,
 		DefaultEnabled:            true,
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "raw", Help: "Raw, legacy output"},
@@ -236,21 +240,29 @@ var cmds = []*commands.YAGCommand{
 				return nil, err
 			}
 
+			out := "You have no reminders. Create reminders with the `Remindme` command."
 			if !pagination {
-				out := "Reminders in this channel:\n"
-				out += stringReminders(currentReminders, true)
-				out += "```Remove a reminder with 'delreminder/rmreminder (id)' where id is the first number for each reminder above```"
+				if len(currentReminders) > 0 {
+					out := "Reminders in this channel:\n"
+					out += stringReminders(currentReminders, true)
+					out += "```Remove a reminder with 'delreminder/rmreminder (id)' where id is the first number for each reminder above```"
+				}
 				return out, nil
 			}
 
-			pm, err := paginatedmessages.CreatePaginatedMessage(
-				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
-					i := page - 1
-					paginatedEmbed := embedCreator(currentReminders, i, maxLength, 1, parsed)
-					return paginatedEmbed, nil
-				})
-			if err != nil {
-				return fmt.Sprintf("Something went wrong: %s", err), nil
+			var pm *paginatedmessages.PaginatedMessage
+			if len(currentReminders) > 0 {
+				pm, err = paginatedmessages.CreatePaginatedMessage(
+					parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
+						i := page - 1
+						paginatedEmbed := embedCreator(currentReminders, i, maxLength, 1, parsed)
+						return paginatedEmbed, nil
+					})
+				if err != nil {
+					return fmt.Sprintf("Something went wrong: %s", err), nil
+				}
+			} else {
+				return out, nil
 			}
 
 			return pm, nil
@@ -270,6 +282,7 @@ var cmds = []*commands.YAGCommand{
 			{Name: "userid", Type: dcmd.Int, Default: 0, Help: "userID"},
 		},
 		ApplicationCommandEnabled: true,
+		IsResponseEphemeral:       true,
 		DefaultEnabled:            true,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			var reminder Reminder
