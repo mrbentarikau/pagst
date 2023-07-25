@@ -3822,6 +3822,21 @@ func (s *Session) GuildScheduledEventUsers(guildID, eventID int64, limit int, wi
 	return
 }
 
+// GuildOnboarding returns the onboarding flow for a guild
+// guildID   : The ID of a Guild
+func (s *Session) GuildOnboarding(guildID int64, options ...RequestOption) (onboarding GuildOnboarding, err error) {
+	endpoint := EndpointGuildOnboarding(guildID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("GET", endpoint, nil, nil, endpoint, options...)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &onboarding)
+	return
+}
+
 // ----------------------------------------------------------------------
 // Functions specific to auto moderation
 // ----------------------------------------------------------------------

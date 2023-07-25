@@ -193,9 +193,7 @@ var cmdEvalCommand = &commands.YAGCommand{
 			maxRunes = 1000
 		}
 
-		code := data.Args[0].Str()
-
-		code = parseCodeblock(code)
+		code := common.ParseCodeblock(data.Args[0].Str())
 
 		// Encourage only small code snippets being tested with this command
 		if utf8.RuneCountInString(code) > maxRunes {
@@ -213,21 +211,6 @@ var cmdEvalCommand = &commands.YAGCommand{
 
 		return out, nil
 	},
-}
-
-var codeblockRegexp = regexp.MustCompile(`(?m)\A(?:\x60{2} ?\x60)(?:go(?:lang)?\n)?([\S\s]+)(?:\x60 ?\x60{2})\z`)
-
-// Parses code wrapped in Discord markdown code blocks.
-func parseCodeblock(input string) string {
-	parts := codeblockRegexp.FindStringSubmatch(input)
-
-	// No match found, input was not wrapped in (valid) codeblock markdown
-	// just dump it, don't bother fixing things for the user.
-	if parts == nil {
-		return input
-	}
-
-	return parts[1]
 }
 
 var cmdListCommands = &commands.YAGCommand{

@@ -19,7 +19,6 @@ import (
 	"github.com/mrbentarikau/pagst/automod"
 	"github.com/mrbentarikau/pagst/automod_basic"
 	"github.com/mrbentarikau/pagst/autorole"
-	"github.com/mrbentarikau/pagst/aylien"
 	"github.com/mrbentarikau/pagst/cah"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/customcommands"
@@ -64,7 +63,6 @@ func main() {
 	automod.RegisterPlugin()
 	automod_basic.RegisterPlugin()
 	autorole.RegisterPlugin()
-	aylien.RegisterPlugin()
 	cah.RegisterPlugin()
 	commands.RegisterPlugin()
 	customcommands.RegisterPlugin()

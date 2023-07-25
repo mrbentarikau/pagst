@@ -23,9 +23,11 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/dadjoke"
 	"github.com/mrbentarikau/pagst/stdcommands/dcallvoice"
 	"github.com/mrbentarikau/pagst/stdcommands/define"
+	"github.com/mrbentarikau/pagst/stdcommands/dictionary"
 	"github.com/mrbentarikau/pagst/stdcommands/dogfact"
 	"github.com/mrbentarikau/pagst/stdcommands/editchannelpermissions"
 	"github.com/mrbentarikau/pagst/stdcommands/editrole"
+	"github.com/mrbentarikau/pagst/stdcommands/eightball"
 	"github.com/mrbentarikau/pagst/stdcommands/evilinsult"
 	"github.com/mrbentarikau/pagst/stdcommands/exchange"
 	"github.com/mrbentarikau/pagst/stdcommands/exportcustomcommands"
@@ -45,7 +47,6 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/memstats"
 	"github.com/mrbentarikau/pagst/stdcommands/myanimelist"
 	"github.com/mrbentarikau/pagst/stdcommands/openweathermap"
-	"github.com/mrbentarikau/pagst/stdcommands/owldictionary"
 
 	//"github.com/mrbentarikau/pagst/stdcommands/paginationtest"
 	"github.com/mrbentarikau/pagst/stdcommands/pagstatus"
@@ -110,9 +111,11 @@ func (p *Plugin) AddCommands() {
 		customembed.Command,
 		dadjoke.Command,
 		define.Command,
+		dictionary.Command,
 		dogfact.Command,
 		editchannelpermissions.Command,
 		editrole.Command,
+		eightball.Command,
 		evilinsult.Command,
 		exchange.Command,
 		getiplocation.Command,
@@ -170,11 +173,6 @@ func (p *Plugin) AddCommands() {
 	specialservers.Commands()
 	statedbg.Commands()
 
-	if !owldictionary.ShouldRegister() {
-		common.GetPluginLogger(p).Warn("Owlbot API token not provided, skipping adding owldictionary command...")
-		return
-	}
-
 	if !isthereanydeal.ShouldRegister() {
 		common.GetPluginLogger(p).Warn("IsThereAnyDeal API key not provided, skipping adding isthereanydeal command...")
 		return
@@ -192,7 +190,6 @@ func (p *Plugin) AddCommands() {
 
 	commands.AddRootCommands(p, isthereanydeal.Command)
 	commands.AddRootCommands(p, myanimelist.Command)
-	commands.AddRootCommands(p, owldictionary.Command)
 	commands.AddRootCommands(p, themoviedb.Command)
 
 }

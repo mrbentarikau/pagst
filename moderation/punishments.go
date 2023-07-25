@@ -748,6 +748,7 @@ func WarnUser(config *Config, guildID int64, channel *dstate.ChannelState, msg *
 	warning := &WarningModel{
 		GuildID:               guildID,
 		UserID:                discordgo.StrID(target.ID),
+		Username:              target.GlobalName,
 		AuthorID:              discordgo.StrID(author.ID),
 		AuthorUsernameDiscrim: author.String(),
 

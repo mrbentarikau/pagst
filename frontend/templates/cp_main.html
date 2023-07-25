@@ -166,13 +166,6 @@
 <script>
 $(function(){
     showAlerts("{{json .Alerts}}");
-    /*$.getJSON("https://srhpyqt94yxb.statuspage.io/api/v2/incidents/unresolved.json", function(data) {
-        if (data.incidents) {
-            data.incidents.forEach(function(incident) {
-                addAlertPAGST("warning","Discord's " + incident.status + " an incident: " + incident.name + ". Functionality may be limited.");
-            })
-        }
-    });*/
     {{with .DiscordStatus}}
         {{if .Incidents}}
             {{range .Incidents}}
