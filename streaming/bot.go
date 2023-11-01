@@ -442,12 +442,6 @@ func SendStreamingAnnouncement(config *Config, guild *dstate.GuildSet, ms *dstat
 	go analytics.RecordActiveUnit(guild.ID, &Plugin{}, "sent_streaming_announcement")
 
 	ctx := templates.NewContext(guild, nil, ms)
-	// ctx.Data["URL"] = ms.PresenceGame.URL
-	// ctx.Data["url"] = ms.PresenceGame.URL
-	// ctx.Data["Game"] = ms.PresenceGame.State
-	// ctx.Data["StreamTitle"] = ms.PresenceGame.Details
-	// ctx.Data["StreamPlatform"] = ms.PresenceGame.Name
-
 	ctx.Data["URL"] = url
 	ctx.Data["url"] = url
 	ctx.Data["Game"] = gameName
@@ -461,8 +455,15 @@ func SendStreamingAnnouncement(config *Config, guild *dstate.GuildSet, ms *dstat
 	}
 
 	m, err := common.BotSession.ChannelMessageSendComplex(config.AnnounceChannel, ctx.MessageSend(out))
-	if err == nil && ctx.CurrentFrame.DelResponse {
+	if err != nil {
+		return
+	}
+	if ctx.CurrentFrame.DelResponse {
 		templates.MaybeScheduledDeleteMessage(guild.ID, config.AnnounceChannel, m.ID, ctx.CurrentFrame.DelResponseDelay)
+	}
+
+	if ctx.CurrentFrame.PublishResponse {
+		common.BotSession.ChannelMessageCrosspost(config.AnnounceChannel, m.ID)
 	}
 }
 

@@ -17,6 +17,9 @@ import (
 )
 
 const (
+	GuildMaxFeeds        = 50
+	GuildMaxFeedsPremium = 100
+
 	RedisChannelsLockKey = "youtube_subbed_channel_lock"
 
 	RedisKeyWebSubChannels = "youtube_registered_websub_channels"
@@ -118,14 +121,6 @@ func (p *Plugin) DisableGuildFeeds(guildID int64) error {
 }
 
 func (p *Plugin) WebSubSubscribe(ytChannelID string) error {
-	// hub.callback:https://testing.yagpdb.xyz/yt_new_upload
-	// hub.topic:https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCt-ERbX-2yA6cAqfdKOlUwQ
-	// hub.verify:sync
-	// hub.mode:subscribe
-	// hub.verify_token:hmmmmmmmmwhatsthis
-	// hub.secret:
-	// hub.lease_seconds:
-
 	values := url.Values{
 		"hub.callback":     {"https://" + common.ConfHost.GetString() + "/yt_new_upload/" + confWebsubVerifytoken.GetString()},
 		"hub.topic":        {"https://www.youtube.com/xml/feeds/videos.xml?channel_id=" + ytChannelID},
@@ -152,14 +147,6 @@ func (p *Plugin) WebSubSubscribe(ytChannelID string) error {
 }
 
 func (p *Plugin) WebSubUnsubscribe(ytChannelID string) error {
-	// hub.callback:https://testing.yagpdb.xyz/yt_new_upload
-	// hub.topic:https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCt-ERbX-2yA6cAqfdKOlUwQ
-	// hub.verify:sync
-	// hub.mode:subscribe
-	// hub.verify_token:hmmmmmmmmwhatsthis
-	// hub.secret:
-	// hub.lease_seconds:
-
 	values := url.Values{
 		"hub.callback":     {"https://" + common.ConfHost.GetString() + "/yt_new_upload/" + confWebsubVerifytoken.GetString()},
 		"hub.topic":        {"https://www.youtube.com/xml/feeds/videos.xml?channel_id=" + ytChannelID},
@@ -207,11 +194,6 @@ type LinkEntry struct {
 	Href string `xml:"href,attr"`
 	Rel  string `xml:"rel,attr"`
 }
-
-const (
-	GuildMaxFeeds        = 50
-	GuildMaxFeedsPremium = 250
-)
 
 func MaxFeedsForContext(ctx context.Context) int {
 	if premium.ContextPremium(ctx) {

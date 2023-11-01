@@ -3,15 +3,24 @@ package bashquotes
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 )
+
+func ShouldRegister() bool {
+	dialHost := "bash.org:http"
+	timeout := 1 * time.Second
+	_, err := net.DialTimeout("tcp", dialHost, timeout)
+	return err == nil
+}
 
 var Command = &commands.YAGCommand{
 	CmdCategory: commands.CategoryFun,

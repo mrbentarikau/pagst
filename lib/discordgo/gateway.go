@@ -870,6 +870,26 @@ func (s *Session) UpdateListeningStatus(game string) (err error) {
 	return s.UpdateStatusComplex(*newUpdateStatusData(0, ActivityTypeListening, game, ""))
 }
 
+// UpdateCustomStatus is used to update the user's custom status.
+// If state!="" then set the custom status.
+// Else, set user to active and remove the custom status.
+func (s *Session) UpdateCustomStatus(state string) (err error) {
+	data := UpdateStatusData{
+		Status: "online",
+	}
+
+	if state != "" {
+		// Discord requires a non-empty activity name, therefore we provide "Custom Status" as a placeholder.
+		data.Activities = []*Activity{{
+			Name:  "Custom Status",
+			Type:  ActivityTypeCustom,
+			State: state,
+		}}
+	}
+
+	return s.UpdateStatusComplex(data)
+}
+
 func (s *Session) UpdateStatusComplex(usd UpdateStatusData) (err error) {
 	curConn := s.GatewayManager.GetCurrentConnection()
 	if curConn == nil {

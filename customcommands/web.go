@@ -169,6 +169,7 @@ func handleGetCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData,
 
 	templateData["CC"] = cc
 	templateData["Commands"] = true
+	templateData["IsGuildPremium"] = premium.ContextPremium(r.Context())
 
 	return serveGroupSelected(r, templateData, cc.GroupID.Int64, activeGuild.ID)
 }
@@ -320,6 +321,10 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 		if c < 1 {
 			return templateData.AddAlerts(web.ErrorAlert("Unknown group")), nil
 		}
+	}
+
+	if !premium.ContextPremium(ctx) && cmd.TriggerOnEdit {
+		return templateData.AddAlerts(web.ErrorAlert("`Trigger on edits` is a premium feature, your command wasn't saved, please save again after disabling `Trigger on edits`")), nil
 	}
 
 	dbModel := cmd.ToDBModel()

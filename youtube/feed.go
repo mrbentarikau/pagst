@@ -166,14 +166,17 @@ func (p *Plugin) syncWebSubs() {
 	}))
 }
 
-func (p *Plugin) sendNewVidMessage(guild, discordChannel, channelID, mentionRole string, mentionEveryone bool, ytVideo *youtube.Video) {
+func (p *Plugin) sendNewVidMessage(sub *ChannelSubscription, ytVideo *youtube.Video) {
 	var content string
+
+	mentionRole := sub.MentionRole
+	mentionEveryone := sub.MentionEveryone
 
 	channelTitle := ytVideo.Snippet.ChannelTitle
 	liveBroadcastContent := ytVideo.Snippet.LiveBroadcastContent
 
-	parsedChannel, _ := strconv.ParseInt(discordChannel, 10, 64)
-	parsedGuild, _ := strconv.ParseInt(guild, 10, 64)
+	parsedChannel, _ := strconv.ParseInt(sub.ChannelID, 10, 64)
+	parsedGuild, _ := strconv.ParseInt(sub.GuildID, 10, 64)
 	parseMentionRole, _ := strconv.ParseInt(mentionRole, 10, 64)
 
 	guildState, err := discorddata.GetFullGuild(parsedGuild)
@@ -205,7 +208,7 @@ func (p *Plugin) sendNewVidMessage(guild, discordChannel, channelID, mentionRole
 
 	ctx := templates.NewContext(guildState, guildState.GetChannel(parsedChannel), nil) //needs GuildSet, ChannelState, MemberState
 	ctx.Data["ChannelName"] = channelTitle
-	ctx.Data["ChannelID"] = channelID
+	ctx.Data["ChannelID"] = sub.YoutubeChannelID
 	ctx.Data["ContentDetails"] = ytVideo.ContentDetails
 	ctx.Data["FullSnippet"] = ytVideo.Snippet
 	ctx.Data["LiveStream"] = liveBroadcastContent
@@ -226,6 +229,8 @@ func (p *Plugin) sendNewVidMessage(guild, discordChannel, channelID, mentionRole
 		announceMsg.AnnounceMsg = dbAnnounceMsg.Announcement
 	}
 
+	var publishAnnouncement bool
+
 	if announceMsg.Enabled {
 		content, err = ctx.Execute(announceMsg.AnnounceMsg)
 		if err != nil {
@@ -235,6 +240,8 @@ func (p *Plugin) sendNewVidMessage(guild, discordChannel, channelID, mentionRole
 		if content == "" { // Nothing to do
 			return
 		}
+
+		publishAnnouncement = ctx.CurrentFrame.PublishResponse
 	} else {
 		var scheduledAt, actualStartTime string
 		layout := "2006-01-02T15:04:05Z"
@@ -281,12 +288,13 @@ func (p *Plugin) sendNewVidMessage(guild, discordChannel, channelID, mentionRole
 	feeds.MetricPostedMessages.With(prometheus.Labels{"source": "youtube"}).Inc()
 
 	mqueue.QueueMessage(&mqueue.QueuedElement{
-		GuildID:      parsedGuild,
-		ChannelID:    parsedChannel,
-		Source:       "youtube",
-		SourceItemID: "",
-		MessageStr:   content,
-		Priority:     2,
+		GuildID:             parsedGuild,
+		ChannelID:           parsedChannel,
+		Source:              "youtube",
+		SourceItemID:        "",
+		MessageStr:          content,
+		PublishAnnouncement: publishAnnouncement,
+		Priority:            2,
 		AllowedMentions: discordgo.AllowedMentions{
 			Parse: parseMentions,
 		},
@@ -547,7 +555,19 @@ func (p *Plugin) MaybeAddChannelWatch(lock bool, channel string) error {
 	return nil
 }
 
-func (p *Plugin) CheckVideo(videoID string, channelID string) error {
+func (p *Plugin) CheckVideo(parsedVideo XMLFeed) error {
+	videoID := parsedVideo.VideoId
+	channelID := parsedVideo.ChannelID
+
+	parsedPublishedTime, err := time.Parse(time.RFC3339, parsedVideo.Published)
+	if err != nil {
+		return errors.New("Failed parsing YouTube timestamp: " + err.Error() + ": " + parsedVideo.Published)
+	}
+
+	if time.Since(parsedPublishedTime) > time.Hour {
+		return nil
+	}
+
 	subs, err := p.getRemoveSubs(channelID)
 	if err != nil || len(subs) < 1 {
 		return err
@@ -556,6 +576,11 @@ func (p *Plugin) CheckVideo(videoID string, channelID string) error {
 	lastVid, lastVidTime, err := p.getLastVidTimes(channelID)
 	if err != nil {
 		return err
+	}
+
+	if lastVidTime.After(parsedPublishedTime) {
+		// wasn't a new vid
+		return nil
 	}
 
 	if lastVid == videoID {
@@ -583,10 +608,11 @@ func (p *Plugin) CheckVideo(videoID string, channelID string) error {
 	if lastVidTime.After(parsedPublishedAt) {
 		// wasn't a new vid
 		return nil
+
 	}
 
 	// This is a new video, post it
-	return p.postVideo(subs, parsedPublishedAt, item, channelID)
+	return p.postVideo(subs, parsedPublishedTime, item, channelID)
 }
 
 func (p *Plugin) postVideo(subs []*ChannelSubscription, publishedAt time.Time, video *youtube.Video, channelID string) error {
@@ -625,8 +651,7 @@ func (p *Plugin) postVideo(subs []*ChannelSubscription, publishedAt time.Time, v
 				}
 			}
 
-			//p.sendNewVidMessage(sub.GuildID, sub.ChannelID, video.Snippet.ChannelTitle, sub.YoutubeChannelID, video.Id, sub.MentionRole, sub.MentionEveryone, video.Snippet, video.ContentDetails, video.LiveStreamingDetails, video)
-			p.sendNewVidMessage(sub.GuildID, sub.ChannelID, sub.YoutubeChannelID, sub.MentionRole, sub.MentionEveryone, video)
+			p.sendNewVidMessage(sub, video)
 		}
 	}
 

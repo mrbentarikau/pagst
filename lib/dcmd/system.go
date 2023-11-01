@@ -72,7 +72,6 @@ func (sys *System) CheckInteraction(s *discordgo.Session, interaction *discordgo
 	if err != nil {
 		return err
 	}
-
 	response, err := sys.Root.Run(data)
 	return sys.ResponseSender.SendResponse(data, response, err)
 }

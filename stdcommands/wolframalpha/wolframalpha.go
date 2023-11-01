@@ -24,7 +24,7 @@ var Command = &commands.YAGCommand{
 					Results are given in metric system, link below would use user's local unit-system.
 
 					Needs user created AppID for WolframAlpha.
-					To setup a WolframAlpha appID, you must register a Wolfram ID and sign in to the Wolfram|Alpha Developer Portal > https://developer.wolframalpha.com/portal/
+					To setup a WolframAlpha appID, you must register a Wolfram ID and sign in to the Wolfram|Alpha Developer Portal > https://developer.wolframalpha.com/
 					Upon logging in, go to the *My Apps* tab to start creating your first app. 
 					
 					This free access gives for up to **2 000** non-commercial API calls per month.`,
@@ -112,20 +112,28 @@ func handleWolframAPIResponse(body []byte) string {
 	if len(waQuery.Queryresult.Pod) == 0 {
 		return "Wolfram has no good answer for this query..."
 	}
-	//Convert response to somewhat general Discord format (maybe separete func.)
+	//Convert response to somewhat general Discord format (maybe separate func.)
 	var re = regexp.MustCompile(`\x0a\x20\x7C`)
 
-	for k, v := range waQuery.Queryresult.Pod {
-		if v.Subpod[0].Plaintext != "" && k <= 6 {
-			result += "\n" + v.Title + ":\n"
+	var iterationCap bool
+	var iterCap int
+	for _, v := range waQuery.Queryresult.Pod {
+		if v.Subpod[0].Plaintext != "" && !iterationCap {
+			result += "\n\n" + v.Title + ":\n"
 			subpodResult = ""
 			for _, vv := range v.Subpod {
-				subpodResult += fmt.Sprintf("%s\n", re.ReplaceAllString(vv.Plaintext, " |"))
+				subpodResult += fmt.Sprintf("%s", re.ReplaceAllString(vv.Plaintext, " |"))
 			}
+
 			if len(subpodResult) >= 512 {
-				subpodResult = common.CutStringShort(subpodResult, 510) + "\n"
+				subpodResult = common.CutStringShort(subpodResult, 510)
 			}
 			result += subpodResult
+
+			iterCap++
+			if iterCap == 7 {
+				iterationCap = true
+			}
 		}
 	}
 

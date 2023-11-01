@@ -123,9 +123,11 @@
                             <td style="padding-right:42px">
                                 {{checkbox "MentionEveryone" "new-mention-everyone" `Mention everyone` false}}
                             </td>
-                            <td style="padding-right:42px">
+                            <td>
                                 {{checkbox "PublishShorts" "new-publish-shorts" `Publish YT-shorts` false}}
                             </td>
+                        </tr>
+                        <tr>
                             <td>
                                 {{checkbox "PublishLivestream" "new-publish-livestream" `Publish YT-livestreams` true}}
                             </td>
@@ -151,9 +153,10 @@
                 <table class="table table-responsive-md table-sm mb-0">
                     <thead>
                         <tr>
-                            <th width="15%">Youtube</th>
-                            <th width=15%>Discord channel</th>
-                            <th width=15%>Mention role</th>
+                            <th width="1%">#</th>
+                            <th width="15%">YouTube channel</th>
+                            <th width=10%>Discord channel</th>
+                            <th width=10%>Mention role</th>
                             <th>Mention everyone</th>
                             <th>YT Shorts</th>
                             <th>YT Livestreams</th>
@@ -162,40 +165,44 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{range .Dot.Subs}}
-                        <tr class="{{if not .Enabled.Bool}}feed-item-disabled{{end}}">
+                        {{range $k,$v := .Dot.Subs}}
+                        {{ $k = add $k 1}}
+                        <tr class="{{if not $v.Enabled.Bool}}feed-item-disabled{{end}}">
                             <td>
-                                <p class="form-control-static"><a class="feedlink" href="https://youtube.com/channel/{{.YoutubeChannelID}}" target="_blank"><b>{{.YoutubeChannelName}}</b></a><br/>
-                                   <code>{{.YoutubeChannelID}}</code></p>
+                                {{printf "%03d" $k}}
                             </td>
                             <td>
-                                <select form="sub-item-{{.ID}}" id="channel" class="form-control" name="DiscordChannel"
+                                <p class="form-control-static"><a class="feedlink" href="https://youtube.com/channel/{{$v.YoutubeChannelID}}" target="_blank"><b>{{$v.YoutubeChannelName}}</b></a><br/>
+                                   <code>{{$v.YoutubeChannelID}}</code></p>
+                            </td>
+                            <td>
+                                <select form="sub-item-{{$v.ID}}" id="channel" class="form-control" name="DiscordChannel"
                                     data-requireperms-embed>
-                                    {{textChannelOptions $dot.ActiveGuild.Channels .ChannelID true "None"}}
+                                    {{textChannelOptions $dot.ActiveGuild.Channels $v.ChannelID true "None"}}
                                 </select>
                             </td>
                             <td>
-                                <select form="sub-item-{{.ID}}" id="mention-role" class="form-control" name="MentionRole">
-                                        {{roleOptions $dot.ActiveGuild.Roles nil .MentionRole "None selected"}}
+                                <select form="sub-item-{{$v.ID}}" id="mention-role" class="form-control" name="MentionRole">
+                                        {{roleOptions $dot.ActiveGuild.Roles nil $v.MentionRole "None selected"}}
                                 </select>
                             </td>
                             <td>
-                                {{checkbox "MentionEveryone" (joinStr "" "mention-everyone-" .ID) `Mention everyone` .MentionEveryone (joinStr "" `form="sub-item-` .ID `"`)}}
+                                {{checkbox "MentionEveryone" (joinStr "" "mention-everyone-" $v.ID) `@everyone` $v.MentionEveryone (joinStr "" `form="sub-item-` $v.ID `"`)}}
                             </td>
                             <td>
-                                {{checkbox "PublishShorts" (joinStr "" "publish-shorts-" .ID) `Publish shorts` .PublishShorts.Bool (joinStr "" `form="sub-item-` .ID `"`)}}
+                                {{checkbox "PublishShorts" (joinStr "" "publish-shorts-" $v.ID) `Publish Shorts` $v.PublishShorts.Bool (joinStr "" `form="sub-item-` $v.ID `"`)}}
                             </td>
                             <td>
-                                {{checkbox "PublishLivestream" (joinStr "" "publish-livestream-" .ID) `Publish livestreams` .PublishLivestream (joinStr "" `form="sub-item-` .ID `"`)}}
+                                {{checkbox "PublishLivestream" (joinStr "" "publish-livestream-" $v.ID) `Publish Lives` $v.PublishLivestream (joinStr "" `form="sub-item-` $v.ID `"`)}}
                             </td>
                             <td>
-                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Feed enabled` .Enabled.Bool (joinStr "" `form="sub-item-` .ID `"`)}}
+                                {{checkbox "Enabled" (joinStr "" "feed-enabled-" $v.ID) `Feed enabled` $v.Enabled.Bool (joinStr "" `form="sub-item-` $v.ID `"`)}}
                             </td>
                             <td>
-                                <button form="sub-item-{{.ID}}" type="submit" class="btn btn-success"
-                                    formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{.ID}}/update">Save</button>
-                                <button form="sub-item-{{.ID}}" type="submit" class="btn btn-danger"
-                                    formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{.ID}}/delete">Delete</button>
+                                <button form="sub-item-{{$v.ID}}" type="submit" class="btn btn-success"
+                                    formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{$v.ID}}/update">Save</button>
+                                <button form="sub-item-{{$v.ID}}" type="submit" class="btn btn-danger"
+                                    formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{$v.ID}}/delete">Delete</button>
                             </td>
                         </tr>
                         {{end}}

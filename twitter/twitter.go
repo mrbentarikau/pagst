@@ -19,10 +19,9 @@ var (
 	confTwitterPollFrequency = config.RegisterOption("yagpdb.twitter.poll_frequency", "Minimum Delay in each feed poll for all feeds in minutes", 1)
 	confTwitterBatchDelay    = config.RegisterOption("yagpdb.twitter.batch_delay", "Delay in seconds between each batch", 10)
 
-	confTwitterUsername         = config.RegisterOption("yagpdb.twitter.login.username", "Twitter username for login", "")
-	confTwitterPassword         = config.RegisterOption("yagpdb.twitter.login.password", "Twitter password for login", "")
-	confTwitterEmail            = config.RegisterOption("yagpdb.twitter.login.email", "Twitter e-mail for login", "")
-	confTwitterLoginOpenAccount = config.RegisterOption("yagpdb.twitter.open.account", "Whether to use open account for login", false)
+	confTwitterUsername = config.RegisterOption("yagpdb.twitter.username", "Twitter username for login", "")
+	confTwitterPassword = config.RegisterOption("yagpdb.twitter.password", "Twitter password for login", "")
+	confTwitterEmail    = config.RegisterOption("yagpdb.twitter.email", "Twitter e-mail for login", "")
 )
 
 type Plugin struct {
@@ -43,28 +42,14 @@ func (p *Plugin) PluginInfo() *common.PluginInfo {
 
 func RegisterPlugin() {
 	twitterScraper := twitterscraper.New()
-	twitterProxy := confTwitterProxy.GetString()
-	if len(twitterProxy) > 0 {
-		twitterScraper.SetProxy(twitterProxy)
-	}
-
-	var err error
-	if (confTwitterUsername.GetString() != "" && confTwitterPassword.GetString() != "") && !confTwitterLoginOpenAccount.GetBool() {
-		if confTwitterEmail.GetString() != "" {
-			err = twitterScraper.Login(confTwitterUsername.GetString(), confTwitterPassword.GetString(), confTwitterEmail.GetString())
-		} else {
-			err = twitterScraper.Login(confTwitterUsername.GetString(), confTwitterPassword.GetString())
-		}
-	} else if confTwitterLoginOpenAccount.GetBool() {
-		err = twitterScraper.LoginOpenAccount()
-	} else {
-		logger.Warn("Twitter disabled, skipping plugin init...")
-		return
-	}
-
+	err := twitterScraper.Login(confTwitterUsername.GetString(), confTwitterPassword.GetString(), confTwitterEmail.GetString())
 	if err != nil {
 		logger.WithError(err).Error("Failed initializing TWITTER plugin, probably login error")
 		return
+	}
+	twitterProxy := confTwitterProxy.GetString()
+	if len(twitterProxy) > 0 {
+		twitterScraper.SetProxy(twitterProxy)
 	}
 
 	p := &Plugin{

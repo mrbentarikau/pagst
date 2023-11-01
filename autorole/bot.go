@@ -104,6 +104,10 @@ func assignRoleAfterScreening(config *GeneralConfig, evt *eventsystem.EventData,
 	memberDuration := time.Since(memberJoinedAt)
 	configDuration := time.Duration(config.RequiredDuration) * time.Minute
 
+	if config.IgnoreBots && member.User.Bot {
+		return
+	}
+
 	if (config.RequiredDuration < 1 || config.OnlyOnJoin || configDuration <= memberDuration) && config.CanAssignTo(member.Roles, memberJoinedAt) {
 		_, retry, err = assignRole(config, member.GuildID, member.User.ID)
 		return retry, err
@@ -124,6 +128,10 @@ func onMemberJoin(evt *eventsystem.EventData) (retry bool, err error) {
 	config, err := GuildCacheGetGeneralConfig(addEvt.GuildID)
 	if err != nil {
 		return true, errors.WithStackIf(err)
+	}
+
+	if config.IgnoreBots && addEvt.User.Bot {
+		return
 	}
 
 	if config.AssignRoleAfterScreening && addEvt.Pending {
@@ -521,6 +529,9 @@ func handleAssignFullScanRole(guildID int64, config *GeneralConfig, rolesAssigne
 
 	memberStates, _ := bot.GetMembers(guildID, uIDsParsed...)
 	for _, ms := range memberStates {
+		if ms.User.Bot && config.IgnoreBots {
+			continue
+		}
 		disabled, _, err := assignRole(config, guildID, ms.User.ID)
 		if err != nil {
 			logger.WithError(err).WithField("user", ms.User.ID).WithField("guild", guildID).Error("failed adding autorole role")
@@ -692,6 +703,10 @@ func handleAssignRole(evt *scheduledEventsModels.ScheduledEvent, data interface{
 		return bot.CheckDiscordErrRetry(err), err
 	}
 
+	if config.IgnoreBots && member.User.Bot {
+		return false, nil
+	}
+
 	if config.AssignRoleAfterScreening && member.Member.Pending {
 		// If Membership Screening is pending, add it to autorole pending set and return
 		addMemberToAutorolePendingSet(evt.GuildID, member.User.ID)
@@ -739,6 +754,10 @@ func handleRemoveRole(evt *scheduledEventsModels.ScheduledEvent, data interface{
 		}
 
 		return bot.CheckDiscordErrRetry(err), err
+	}
+
+	if config.IgnoreBots && member.User.Bot {
+		return false, nil
 	}
 
 	parsedT, _ := member.Member.JoinedAt.Parse()
@@ -816,7 +835,7 @@ func handleGuildMemberUpdate(evt *eventsystem.EventData) (retry bool, err error)
 	var response *discordgo.GuildAuditLog
 	var responseChangesKey discordgo.AuditLogChangeKey
 	response, _ = common.BotSession.GuildAuditLog(update.GuildID, 0, 0, int(discordgo.AuditLogActionMemberRoleUpdate), 1)
-	if response != nil {
+	if response != nil && len(response.AuditLogEntries) > 0 && len(response.AuditLogEntries[0].Changes) > 0 {
 		responseChangesKey = *response.AuditLogEntries[0].Changes[0].Key
 	}
 

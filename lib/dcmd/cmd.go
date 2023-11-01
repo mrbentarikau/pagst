@@ -14,7 +14,7 @@ type RegisteredCommand struct {
 	builtFullMiddlewareChain RunFunc
 }
 
-// FormatNames returns a string with names and if includedAliases is true, aliases seperated by seperator
+// FormatNames returns a string with names and if includedAliases is true, aliases separated by separator
 // Falls back to reflection if no names are available
 func (r *RegisteredCommand) FormatNames(includeAliases bool, seperator string) string {
 	if len(r.Trigger.Names) > 0 {
@@ -34,7 +34,7 @@ type Cmd interface {
 	// Run the command with the provided data,
 	// response is either string, error, embed or custom that implements CmdResponse
 	// if response is nil, and an error is returned that is not PublicError,
-	// the string "An error occured. Contact bot owner" becomes the response
+	// the string "An error occurred. Contact bot owner" becomes the response
 	Run(data *Data) (interface{}, error)
 }
 
@@ -52,7 +52,7 @@ type CmdWithArgDefs interface {
 		Returns the argument definitions
 
 		if 'combos' is non nil, then that takes priority over 'required'
-		Combos wllows the command to take different combinations and orders of arguments
+		Combos allows the command to take different combinations and orders of arguments
 
 		Example: a `clean` command that deletes x amount of messages and can optionally filter by user
 		could look like this
