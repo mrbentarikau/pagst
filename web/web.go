@@ -79,7 +79,7 @@ func init() {
 		"checkbox":          tmplCheckbox,
 		"checkboxWithInput": tmplCheckboxWithInput,
 		"roleOptions":       tmplRoleDropdown,
-		"roleOptionsMulti":  tmplRoleDropdownMutli,
+		"roleOptionsMulti":  tmplRoleDropdownMulti,
 
 		"textChannelOptions":      tmplChannelOpts([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews, discordgo.ChannelTypeGuildVoice, discordgo.ChannelTypeGuildForum}),
 		"textChannelOptionsMulti": tmplChannelOptsMulti([]discordgo.ChannelType{discordgo.ChannelTypeGuildText, discordgo.ChannelTypeGuildNews, discordgo.ChannelTypeGuildVoice, discordgo.ChannelTypeGuildForum}),
@@ -150,7 +150,7 @@ func Run() {
 	go pollCCsRan()
 	go pollAMV2sRan()
 	go pollDiscordStatus()
-	//go pollRedditQuotes()
+	go pollRedditQuotes()
 
 	blogChannel := confAnnouncementsChannel.GetInt()
 	if blogChannel != 0 {

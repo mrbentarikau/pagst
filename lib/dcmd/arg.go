@@ -3,6 +3,7 @@ package dcmd
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -583,7 +584,8 @@ func (i *IntArg) SlashCommandOptions(def *ArgDef) []*discordgo.ApplicationComman
 // FloatArg matches and parses float arguments
 // If min and max are not equal then the value has to be within min and max or else it will fail parsing
 type FloatArg struct {
-	Min, Max float64
+	Min, Max      float64
+	PreventInfNaN bool
 }
 
 var _ ArgType = (*FloatArg)(nil)
@@ -601,7 +603,7 @@ func (f *FloatArg) CheckCompatibility(def *ArgDef, part string) CompatibilityRes
 
 func (f *FloatArg) ParseFromMessage(def *ArgDef, part string, data *Data) (interface{}, error) {
 	v, err := strconv.ParseFloat(part, 64)
-	if err != nil {
+	if err != nil || (f.PreventInfNaN && (math.IsNaN(v) || math.IsInf(v, 0))) {
 		return nil, &InvalidFloat{part}
 	}
 
@@ -626,7 +628,7 @@ func (f *FloatArg) ParseFromInteraction(def *ArgDef, data *Data, options *SlashC
 	}
 
 	parsedF, err := strconv.ParseFloat(v, 64)
-	if err != nil {
+	if err != nil || (f.PreventInfNaN && (math.IsNaN(parsedF) || math.IsInf(parsedF, 0))) {
 		return nil, err
 	}
 

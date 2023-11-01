@@ -14,6 +14,15 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
+type WouldYouRather struct {
+	OptionA string
+	OptionB string
+}
+
+func randomQuestion() WouldYouRather {
+	return Questions[rand.Intn(len(Questions))]
+}
+
 var Command = &commands.YAGCommand{
 	CmdCategory: commands.CategoryFun,
 	Name:        "WouldYouRather",
@@ -23,10 +32,22 @@ var Command = &commands.YAGCommand{
 		{Name: "raw", Help: "Raw output"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		var q1, q2 string
+		var err error
+		var nonErrare bool
 
-		q1, q2, err := wouldYouRather()
-		if err != nil {
-			return nil, err
+		question := randomQuestion()
+		q1 = question.OptionA
+		q2 = question.OptionB
+
+		if rand.Intn(2) > 0 {
+			nonErrare = true
+			q1, q2, err = wouldYouRather()
+			if err != nil {
+				nonErrare = false
+				q1 = question.OptionA
+				q2 = question.OptionB
+			}
 		}
 
 		wyrDescription := fmt.Sprintf("**EITHER...**\n🇦 %s\n\n **OR...**\n🇧 %s", q1, q2)
@@ -34,7 +55,6 @@ var Command = &commands.YAGCommand{
 		content := &discordgo.MessageEmbed{
 			Author: &discordgo.MessageEmbedAuthor{
 				Name:    "Would you rather?",
-				URL:     "http://wouldurather.io",
 				IconURL: "https://pagst.xyz/static/icons/favicon-32x32.png",
 			},
 			Color:       int(rand.Int63n(16777215)),
@@ -43,6 +63,10 @@ var Command = &commands.YAGCommand{
 				Text:    fmt.Sprintf("Requested by: %s", data.Author.String()),
 				IconURL: discordgo.EndpointUserAvatar(data.Author.ID, data.Author.Avatar),
 			},
+		}
+
+		if nonErrare {
+			content.Author.URL = "http://wouldurather.io"
 		}
 
 		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {

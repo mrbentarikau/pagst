@@ -289,7 +289,7 @@ func NodeID() string {
 func RefreshStatus(session *discordgo.Session) {
 
 	var streamingURL string
-	var status string
+	var status, customStatus string
 	var idle string
 	var activity string
 	var idleState *discordgo.UpdateStatusData
@@ -318,7 +318,10 @@ func RefreshStatus(session *discordgo.Session) {
 		//session.UpdateStreamingStatus(0, status, streamingURL)
 	} else {
 		activity = strings.ToLower(activity)
-		if activity == "listening" {
+		if activity == "custom" {
+			gameType = discordgo.ActivityTypeCustom
+			customStatus = status
+		} else if activity == "listening" {
 			gameType = discordgo.ActivityTypeListening
 		} else if activity == "watching" {
 			gameType = discordgo.ActivityTypeWatching
@@ -336,7 +339,7 @@ func RefreshStatus(session *discordgo.Session) {
 		idleState.IdleSince = &now
 	}
 
-	idleState.Game = &discordgo.Activity{Name: status, Type: gameType, URL: streamingURL}
+	idleState.Game = &discordgo.Activity{Name: status, Type: gameType, URL: streamingURL, State: customStatus}
 	session.UpdateStatusComplex(*idleState)
 }
 

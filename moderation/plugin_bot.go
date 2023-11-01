@@ -42,6 +42,7 @@ var _ bot.ShardMigrationReceiver = (*Plugin)(nil)
 
 func (p *Plugin) AddCommands() {
 	commands.AddRootCommands(p, ModerationCommands...)
+	commands.AddRootCommands(p, p.createDeleteBotDMInteraction())
 }
 
 func (p *Plugin) BotInit() {

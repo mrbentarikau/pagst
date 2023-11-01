@@ -360,7 +360,9 @@ func (s *Session) innerDoRequest(method, urlStr, contentType string, b []byte, e
 
 	cfg := newRequestConfig(s, req)
 	for _, opt := range options {
-		opt(cfg)
+		if opt != nil {
+			opt(cfg)
+		}
 	}
 	req = cfg.Request
 
@@ -870,6 +872,18 @@ func (s *Session) Guild(guildID int64, options ...RequestOption) (st *Guild, err
 // guildID   : The ID of a Guild
 func (s *Session) GuildWithCounts(guildID int64, options ...RequestOption) (st *Guild, err error) {
 	body, err := s.RequestWithBucketID("GET", EndpointGuild(guildID)+"?with_counts=true", nil, nil, EndpointGuild(guildID), options...)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &st)
+	return
+}
+
+// GuildPreview returns a GuildPreview structure of a specific public Guild.
+// guildID   : The ID of a Guild
+func (s *Session) GuildPreview(guildID int64, options ...RequestOption) (st *GuildPreview, err error) {
+	body, err := s.RequestWithBucketID("GET", EndpointGuildPreview(guildID), nil, nil, EndpointGuildPreview(guildID), options...)
 	if err != nil {
 		return
 	}
@@ -1959,8 +1973,8 @@ func (s *Session) ChannelMessageSendComplex(channelID int64, msg *MessageSend, o
 		}
 	}
 
-	if msg.StickerIds != nil {
-		if len(msg.StickerIds) > 3 {
+	if msg.StickerIDs != nil {
+		if len(msg.StickerIDs) > 3 {
 			err = fmt.Errorf("cannot send more than 3 stickers")
 			return
 		}
@@ -2738,6 +2752,137 @@ func (s *Session) WebhookExecuteComplex(webhookID int64, token string, wait bool
 
 	// _, err = s.RequestWithBucketID("POST", uri, data, EndpointWebhookToken(0, ""))
 	// return
+}
+
+// WebhookMessage gets a webhook message.
+// webhookID : The ID of a webhook
+// token     : The auth token for the webhook
+// messageID : The ID of message to get
+func (s *Session) WebhookMessage(webhookID int64, token, messageID string, options ...RequestOption) (message *Message, err error) {
+	uri := EndpointWebhookMessage(webhookID, token, messageID)
+
+	body, err := s.RequestWithBucketID("GET", uri, nil, nil, EndpointWebhookToken(0, ""), options...)
+	if err != nil {
+		return
+	}
+
+	err = Unmarshal(body, &message)
+
+	return
+}
+
+// WebhookMessageEdit edits a webhook message and returns a new one.
+// webhookID : The ID of a webhook
+// token     : The auth token for the webhook
+// messageID : The ID of message to edit
+func (s *Session) WebhookMessageEdit(webhookID int64, token, messageID string, data *WebhookEdit, options ...RequestOption) (st *Message, err error) {
+	uri := EndpointWebhookMessage(webhookID, token, messageID)
+
+	var response []byte
+	if len(data.Files) > 0 {
+		contentType, body, err := MultipartBodyWithJSON(data, data.Files)
+		if err != nil {
+			return nil, err
+		}
+
+		response, err = s.request("PATCH", uri, contentType, body, nil, uri, options...)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		response, err = s.RequestWithBucketID("PATCH", uri, data, nil, EndpointWebhookToken(0, ""), options...)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = unmarshal(response, &st)
+	return
+}
+
+// WebhookMessageDelete deletes a webhook message.
+// webhookID : The ID of a webhook
+// token     : The auth token for the webhook
+// messageID : The ID of a message to edit
+func (s *Session) WebhookMessageDelete(webhookID int64, token, messageID string, options ...RequestOption) (err error) {
+	uri := EndpointWebhookMessage(webhookID, token, messageID)
+
+	_, err = s.RequestWithBucketID("DELETE", uri, nil, nil, EndpointWebhookToken(0, ""), options...)
+	return
+}
+
+// WebhookThreadMessage gets a webhook message.
+// webhookID : The ID of a webhook
+// token     : The auth token for the webhook
+// messageID : The ID of message to get
+// threadID  : Get a message in the specified thread within a webhook's channel.
+func (s *Session) WebhookThreadMessage(webhookID int64, token, threadID, messageID string, options ...RequestOption) (message *Message, err error) {
+	uri := EndpointWebhookMessage(webhookID, token, messageID)
+
+	v := url.Values{}
+	v.Set("thread_id", threadID)
+	uri += "?" + v.Encode()
+
+	body, err := s.RequestWithBucketID("GET", uri, nil, nil, EndpointWebhookToken(0, ""), options...)
+	if err != nil {
+		return
+	}
+
+	err = Unmarshal(body, &message)
+
+	return
+}
+
+// WebhookThreadMessageEdit edits a webhook message in a thread and returns a new one.
+// webhookID : The ID of a webhook
+// token     : The auth token for the webhook
+// messageID : The ID of message to edit
+// threadID  : Edits a message in the specified thread within a webhook's channel.
+func (s *Session) WebhookThreadMessageEdit(webhookID int64, token, threadID, messageID string, data *WebhookEdit, options ...RequestOption) (st *Message, err error) {
+	uri := EndpointWebhookMessage(webhookID, token, messageID)
+
+	v := url.Values{}
+	v.Set("thread_id", threadID)
+	uri += "?" + v.Encode()
+
+	var response []byte
+	if len(data.Files) > 0 {
+		contentType, body, err := MultipartBodyWithJSON(data, data.Files)
+		if err != nil {
+			return nil, err
+		}
+
+		response, err = s.request("PATCH", uri, contentType, body, nil, uri, options...)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		response, err = s.RequestWithBucketID("PATCH", uri, data, nil, EndpointWebhookToken(0, ""), options...)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = unmarshal(response, &st)
+	return
+}
+
+// WebhookThreadMessageDelete deletes a webhook message.
+// webhookID : The ID of a webhook
+// token     : The auth token for the webhook
+// messageID : The ID of a message to edit
+// threadID  : Deletes a message in the specified thread within a webhook's channel.
+func (s *Session) WebhookThreadMessageDelete(webhookID int64, token, threadID, messageID string, options ...RequestOption) (err error) {
+	uri := EndpointWebhookMessage(webhookID, token, messageID)
+
+	v := url.Values{}
+	v.Set("thread_id", threadID)
+	uri += "?" + v.Encode()
+
+	_, err = s.RequestWithBucketID("DELETE", uri, nil, nil, EndpointWebhookToken(0, ""), options...)
+	return
 }
 
 // MessageReactionAdd creates an emoji reaction to a message.
@@ -3596,14 +3741,6 @@ func (s *Session) DeleteInteractionResponse(applicationID int64, token string, o
 func (s *Session) CreateFollowupMessage(applicationID int64, token string, data *WebhookParams, options ...RequestOption) (st *Message, err error) {
 	body, err := s.WebhookExecuteComplex(applicationID, token, true, data, options...)
 	return body, err
-
-	// body, err := s.RequestWithBucketID("POST", EndpointWebhookToken(applicationID, token), data, EndpointWebhookToken(0, ""))
-	// if err != nil {
-	// 	return
-	// }
-
-	// err = unmarshal(body, &st)
-	// return
 }
 
 func (s *Session) FollowupMessageCreate(interaction *Interaction, wait bool, data *WebhookParams, options ...RequestOption) (st *Message, err error) {
@@ -3829,6 +3966,22 @@ func (s *Session) GuildOnboarding(guildID int64, options ...RequestOption) (onbo
 
 	var body []byte
 	body, err = s.RequestWithBucketID("GET", endpoint, nil, nil, endpoint, options...)
+	if err != nil {
+		return
+	}
+
+	err = unmarshal(body, &onboarding)
+	return
+}
+
+// GuildOnboardingEdit edits Onboarding for a Guild.
+// guildID   : The ID of a Guild.
+// o 		     : A GuildOnboarding struct.
+func (s *Session) GuildOnboardingEdit(guildID int64, o *GuildOnboarding, options ...RequestOption) (onboarding *GuildOnboarding, err error) {
+	endpoint := EndpointGuildOnboarding(guildID)
+
+	var body []byte
+	body, err = s.RequestWithBucketID("PUT", endpoint, o, nil, endpoint, options...)
 	if err != nil {
 		return
 	}

@@ -70,7 +70,7 @@ func BaseTemplateDataMiddleware(inner http.Handler) http.Handler {
 	mw := func(w http.ResponseWriter, r *http.Request) {
 		// we store the light theme and sidebar_collapsed stuff in cookies
 		lightTheme := false
-		if cookie, err := r.Cookie("light_theme"); err == nil {
+		if cookie, err := r.Cookie("nord_theme"); err == nil {
 			if cookie.Value != "false" {
 				lightTheme = true
 			}

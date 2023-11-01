@@ -577,7 +577,7 @@ type AddedThreadMember struct {
 // NOTE: Exactly one of EmojiID and EmojiName must be set.
 type ForumDefaultReaction struct {
 	// The id of a guild's custom emoji.
-	EmojiID int64 `json:"emoji_id,omitempty,string"`
+	EmojiID int64 `json:"emoji_id,string,omitempty"`
 	// The unicode character of the emoji.
 	EmojiName string `json:"emoji_name,omitempty"`
 }
@@ -1056,27 +1056,44 @@ type GuildScheduledEventUser struct {
 	Member                *Member `json:"member"`
 }
 
+// GuildOnboardingMode defines the criteria used to satisfy constraints that are required for enabling onboarding.
+// https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-mode
+type GuildOnboardingMode int
+
+// Block containing known GuildOnboardingMode values
+const (
+	// GuildOnboardingModeDefault counts default channels towards constraints
+	GuildOnboardingModeDefault GuildOnboardingMode = 0
+	// GuildOnboardingModeAdvanced counts default channels and questions towards constraints
+	GuildOnboardingModeAdvanced GuildOnboardingMode = 1
+)
+
 // GuildOnboarding represents the onboarding flow for a guild
 // https://discord.com/developers/docs/resources/guild#guild-onboarding-object
 type GuildOnboarding struct {
 	// ID of the guild this onboarding is part of
-	GuildID int64 `json:"guild_id,string"`
+	GuildID int64 `json:"guild_id,string,omitempty"`
 
 	// Prompts shown during onboarding and in customize community
-	Prompts []GuildOnboardingPrompt `json:"prompts"`
+	Prompts *[]GuildOnboardingPrompt `json:"prompts,omitempty"`
 
 	// Channel IDs that members get opted into automatically
-	DefaultChannelIDs []int64 `json:"default_channel_ids"`
+	DefaultChannelIDs []int64 `json:"default_channel_ids,omitempty"`
 
 	// 	Whether onboarding is enabled in the guild
-	Enabled bool `json:"enabled"`
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Mode of onboarding.
+	Mode *GuildOnboardingMode `json:"mode,omitempty"`
 }
 
 // GuildOnboardingPrompt is a prompt shown during onboarding and in customize community
 // https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure
 type GuildOnboardingPrompt struct {
 	// ID of the prompt
-	ID int64 `json:"id,string"`
+	// NOTE: always requires to be a valid snowflake (e.g. "0"), see
+	// https://github.com/discord/discord-api-docs/issues/6320 for more information.
+	ID int64 `json:"id,string,omitempty"`
 
 	// Type of prompt
 	Type GuildOnboardingPromptType `json:"type"`
@@ -1111,7 +1128,7 @@ const (
 // https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure
 type GuildOnboardingPromptOption struct {
 	// ID of the prompt option
-	ID int64 `json:"id,string"`
+	ID int64 `json:"id,string,omitempty"`
 
 	// IDs for channels a member is added to when the option is selected
 	ChannelIDs []int64 `json:"channel_ids"`
@@ -1236,35 +1253,43 @@ type GuildPreview struct {
 
 	// the description for the guild
 	Description string `json:"description"`
+
+	// Stickers
+	Stickers []*Sticker `json:"stickers"`
 }
 
 // IconURL returns a URL to the guild's icon.
 //
 //	size:    The size of the desired icon image as a power of two
 //	         Image size can be any power of two between 16 and 4096.
-func (g *Guild) IconURL(size string) string {
+func (g *Guild) IconURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
+	}
+
 	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
-	/*if g.Icon == "" {
-		return ""
+}
+
+func (g *GuildPreview) IconURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
 	}
 
-	if strings.HasPrefix(g.Icon, "a_") {
-		return EndpointGuildIconAnimated(g.ID, g.Icon)
-	}
-
-	return EndpointGuildIcon(g.ID, g.Icon)*/
+	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
 }
 
 // BannerURL returns a URL to the guild's banner.
 //
 //	size:    The size of the desired banner image as a power of two
 //	         Image size can be any power of two between 16 and 4096.
-func (g *Guild) BannerURL(size string) string {
-	return bannerURL(g.Banner, EndpointGuildBanner(g.ID, g.Banner), EndpointGuildBannerAnimated(g.ID, g.Banner), size)
-	/*if g.Banner == "" {
-		return ""
+func (g *Guild) BannerURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
 	}
-	return EndpointGuildBanner(g.ID, g.Banner)*/
+	return bannerURL(g.Banner, EndpointGuildBanner(g.ID, g.Banner), EndpointGuildBannerAnimated(g.ID, g.Banner), size)
 }
 
 // A Guild feature indicates the presence of a feature in a guild
@@ -1389,7 +1414,7 @@ type RoleParams struct {
 	// Whether to display the role's users separately
 	Hoist *bool `json:"hoist,omitempty"`
 	// The overall permissions number of the role
-	Permissions *int64 `json:"permissions,omitempty,string"`
+	Permissions *int64 `json:"permissions,string,omitempty"`
 	// Whether this role is mentionable
 	Mentionable *bool `json:"mentionable,omitempty"`
 }
@@ -1576,8 +1601,13 @@ func (m *Member) CommunicationDisabledUntil() *time.Time {
 //	size:    The size of the user's avatar as a power of two
 //	         if size is an empty string, no size parameter will
 //	         be added to the URL.
-func (m *Member) AvatarURL(size string) string {
+func (m *Member) AvatarURL(sizeArg ...string) string {
 	var URL string
+
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
 
 	if m == nil {
 		return "Member not found"
@@ -1597,6 +1627,15 @@ func (m *Member) AvatarURL(size string) string {
 		return URL + "?size=" + size
 	}
 	return URL
+}
+
+// DisplayName returns the member's guild nickname if they have one,
+// otherwise it returns their discord display name.
+func (m *Member) DisplayName() string {
+	if m.Nick != "" {
+		return m.Nick
+	}
+	return m.User.GlobalName
 }
 
 // ClientStatus stores the online, offline, idle, or dnd status of each device of a Guild member.
@@ -1676,10 +1715,10 @@ type GuildBan struct {
 
 // AutoModerationRule stores data for an auto moderation rule.
 type AutoModerationRule struct {
-	ID              int64                          `json:"id,omitempty,string"`
-	GuildID         int64                          `json:"guild_id,omitempty,string"`
+	ID              int64                          `json:"id,string,omitempty"`
+	GuildID         int64                          `json:"guild_id,string,omitempty"`
 	Name            string                         `json:"name,omitempty"`
-	CreatorID       int64                          `json:"creator_id,omitempty,string"`
+	CreatorID       int64                          `json:"creator_id,string,omitempty"`
 	EventType       AutoModerationRuleEventType    `json:"event_type,omitempty"`
 	TriggerType     AutoModerationRuleTriggerType  `json:"trigger_type,omitempty"`
 	TriggerMetadata *AutoModerationTriggerMetadata `json:"trigger_metadata,omitempty"`
@@ -1756,7 +1795,7 @@ const (
 type AutoModerationActionMetadata struct {
 	// Channel to which user content should be logged.
 	// NOTE: should be only used with send alert message action type.
-	ChannelID string `json:"channel_id,string,omitempty"`
+	ChannelID int64 `json:"channel_id,string,omitempty"`
 
 	// Timeout duration in seconds (maximum of 2419200 - 4 weeks).
 	// NOTE: should be only used with timeout action type.
@@ -1968,6 +2007,8 @@ type AuditLogOptions struct {
 	ApplicationID                 int64                `json:"application_id,string"`
 	AutoModerationRuleName        string               `json:"auto_moderation_rule_name"`
 	AutoModerationRuleTriggerType int                  `json:"auto_moderation_rule_trigger_type,string"`
+	IntegrationType               string               `json:"integration_type"`
+	Status                        string               `json:"status"`
 }
 
 // AuditLogOptionsType of the AuditLogOption
@@ -2053,6 +2094,9 @@ const (
 	AuditLogActionAutoModerationBlockMessage              AuditLogAction = 143
 	AuditLogActionAutoModerationFlagToChannel             AuditLogAction = 144
 	AuditLogActionAutoModerationUserCommunicationDisabled AuditLogAction = 145
+
+	AuditLogActionCreatorMonetizationRequestCreated AuditLogAction = 150
+	AuditLogActionCreatorMonetizationTermsAccepted  AuditLogAction = 151
 )
 
 // GuildMemberParams stores data needed to update a member
@@ -2263,12 +2307,13 @@ func (g *Game) NKeys() int {
 
 // Activity defines the Activity sent with GatewayStatusUpdate
 // https://discord.com/developers/docs/topics/gateway#activity-object
+// KRAAKA! appID
 type Activity struct {
 	Name          string       `json:"name"`
 	Type          ActivityType `json:"type"`
 	URL           string       `json:"url,omitempty"`
 	CreatedAt     time.Time    `json:"created_at"`
-	ApplicationID string       `json:"application_id,omitempty"`
+	ApplicationID int64        `json:"application_id,string,omitempty"`
 	State         string       `json:"state,omitempty"`
 	Details       string       `json:"details,omitempty"`
 	Timestamps    TimeStamps   `json:"timestamps,omitempty"`
@@ -2278,6 +2323,8 @@ type Activity struct {
 	Secrets       Secrets      `json:"secrets,omitempty"`
 	Instance      bool         `json:"instance,omitempty"`
 	Flags         int          `json:"flags,omitempty"`
+	//SyncID is undocumented
+	//SyncID        string       `json:"sync_id,omitempty"`
 	// Buttons       []*ActivityButton `json:"buttons,omitempty"`
 }
 
@@ -2305,17 +2352,20 @@ func (a *Activity) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
 		}
 		switch t := i.(type) {
 		case int64:
-			a.ApplicationID = strconv.FormatInt(t, 10)
-		case int32:
-			a.ApplicationID = strconv.FormatInt(int64(t), 10)
-		case string:
 			a.ApplicationID = t
+		case int32:
+			a.ApplicationID = int64(t)
+		case string:
+			a.ApplicationID, _ = strconv.ParseInt(t, 10, 64)
 		}
+
 	case "instance":
 		return dec.Bool(&a.Instance)
 	case "flags":
 		return dec.Int(&a.Flags)
 	case "buttons":
+		//case "sync_id":
+		//	return dec.String(&a.SyncID)
 	}
 
 	return nil
@@ -2328,20 +2378,21 @@ func (a *Activity) NKeys() int {
 // UnmarshalJSON is a custom unmarshaljson to make CreatedAt a time.Time instead of an int
 func (activity *Activity) UnmarshalJSON(b []byte) error {
 	temp := struct {
-		Name          string       `json:"name"`
-		Type          ActivityType `json:"type"`
-		URL           string       `json:"url,omitempty"`
-		CreatedAt     int64        `json:"created_at"`
-		ApplicationID string       `json:"application_id,omitempty"`
-		State         string       `json:"state,omitempty"`
-		Details       string       `json:"details,omitempty"`
-		Timestamps    TimeStamps   `json:"timestamps,omitempty"`
-		Emoji         Emoji        `json:"emoji,omitempty"`
-		Party         Party        `json:"party,omitempty"`
-		Assets        Assets       `json:"assets,omitempty"`
-		Secrets       Secrets      `json:"secrets,omitempty"`
-		Instance      bool         `json:"instance,omitempty"`
-		Flags         int          `json:"flags,omitempty"`
+		Name      string       `json:"name"`
+		Type      ActivityType `json:"type"`
+		URL       string       `json:"url,omitempty"`
+		CreatedAt int64        `json:"created_at"`
+		//ApplicationID string       `json:"application_id,omitempty"`
+		State      string     `json:"state,omitempty"`
+		Details    string     `json:"details,omitempty"`
+		Timestamps TimeStamps `json:"timestamps,omitempty"`
+		Emoji      Emoji      `json:"emoji,omitempty"`
+		Party      Party      `json:"party,omitempty"`
+		Assets     Assets     `json:"assets,omitempty"`
+		Secrets    Secrets    `json:"secrets,omitempty"`
+		Instance   bool       `json:"instance,omitempty"`
+		Flags      int        `json:"flags,omitempty"`
+		//SyncID     string     `json:"sync_id,omitempty"`
 		// Buttons       []*ActivityButton `json:"buttons,omitempty"`
 	}{}
 	err := Unmarshal(b, &temp)
@@ -2349,7 +2400,7 @@ func (activity *Activity) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	activity.CreatedAt = time.Unix(0, temp.CreatedAt*1000000)
-	activity.ApplicationID = temp.ApplicationID
+	//activity.ApplicationID = temp.ApplicationID
 	activity.Assets = temp.Assets
 	activity.Details = temp.Details
 	activity.Emoji = temp.Emoji
@@ -2362,6 +2413,7 @@ func (activity *Activity) UnmarshalJSON(b []byte) error {
 	activity.Timestamps = temp.Timestamps
 	activity.Type = temp.Type
 	activity.URL = temp.URL
+	//activity.SyncID = temp.SyncID
 	// activity.Buttons = temp.Buttons
 	return nil
 }
@@ -2693,6 +2745,9 @@ const (
 	PermissionUsePrivateThreads      int64 = PermissionCreatePrivateThreads
 	PermissionUseExternalStickers    int64 = 0x0000002000000000
 	PermissionSendMessagesInThreads  int64 = 0x0000004000000000
+
+	// Allows sending voice messages.
+	PermissionSendVoiceMessages int64 = 1 << 46
 )
 
 // Constants for the different bit offsets of voice permissions
@@ -2711,6 +2766,12 @@ const (
 	PermissionRequestToSpeak        int64 = PermissionVoiceRequestToSpeak
 	PermissionUseActivities         int64 = 0x0000008000000000
 	PermissionUseEmbeddedActivities int64 = PermissionUseActivities
+
+	// Allows for using soundboard in a voice channel.
+	PermissionUseSoundboard int64 = 1 << 42
+
+	// Allows the usage of custom soundboard sounds from other servers.
+	PermissionUseExternalSounds int64 = 1 << 45
 )
 
 // Constants for general management.
@@ -2721,7 +2782,18 @@ const (
 	PermissionManageWebhooks          int64 = 0x0000000020000000
 	PermissionManageEmojis            int64 = 0x0000000040000000
 	PermissionManageEmojisAndStickers int64 = PermissionManageEmojis
-	PermissionManageEvents            int64 = 0x0000000200000000
+	// Allows management and editing of emojis, stickers, and soundboard sounds.
+	PermissionManageGuildExpressions int64 = 1 << 30
+	PermissionManageEvents           int64 = 0x0000000200000000
+
+	// Allows for viewing role subscription insights.
+	PermissionViewCreatorMonetizationAnalytics int64 = 1 << 41
+
+	// Allows for creating emojis, stickers, and soundboard sounds, and editing and deleting those created by the current user.
+	PermissionCreateGuildExpressions int64 = 1 << 43
+
+	// Allows for creating scheduled events, and editing and deleting those created by the current user.
+	PermissionCreateEvents int64 = 1 << 44
 )
 
 // Constants for the different bit offsets of general permissions
@@ -2934,6 +3006,9 @@ const (
 
 	ErrCodeCannotUpdateAFinishedEvent             = 180000
 	ErrCodeFailedToCreateStageNeededForStageEvent = 180002
+
+	ErrCodeCannotEnableOnboardingRequirementsAreNotMet  = 350000
+	ErrCodeCannotUpdateOnboardingWhileBelowRequirements = 350001
 )
 
 // Intent is the type of a Gateway Intent

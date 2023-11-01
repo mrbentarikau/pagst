@@ -39,6 +39,9 @@ var Command = &commands.YAGCommand{
 
 		body, err := util.RequestFromAPI(url)
 		if err != nil {
+			if err.Error() == "HTTP err: 404" {
+				return fmt.Sprintf("Could not find a definition for word: `%s`.", query), nil
+			}
 			return nil, err
 		}
 

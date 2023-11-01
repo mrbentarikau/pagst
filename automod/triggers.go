@@ -873,6 +873,7 @@ type MultiMsgMentionTriggerData struct {
 	Threshold       int
 	Interval        int
 	CountDuplicates bool
+	IgnoreReplies   bool
 }
 
 var _ MessageTrigger = (*MultiMsgMentionTrigger)(nil)
@@ -924,6 +925,11 @@ func (mt *MultiMsgMentionTrigger) UserSettings() []*SettingDef {
 			Key:  "CountDuplicates",
 			Kind: SettingTypeBool,
 		},
+		{
+			Name: "Ignore reply mentions",
+			Key:  "IgnoreReplies",
+			Kind: SettingTypeBool,
+		},
 	}
 }
 
@@ -948,6 +954,10 @@ func (mt *MultiMsgMentionTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 		age := now.Sub(v.ParsedCreatedAt)
 		if age > within {
 			break
+		}
+
+		if settings.IgnoreReplies && v.ReferencedMessage != nil {
+			continue
 		}
 
 		if mt.ChannelBased || v.Author.ID == triggerCtx.MS.User.ID {

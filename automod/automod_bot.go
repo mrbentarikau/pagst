@@ -19,6 +19,7 @@ import (
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -343,6 +344,22 @@ func (p *Plugin) handleAutomodExecution(evt *eventsystem.EventData) {
 
 	cs := evt.GS.GetChannelOrThread(eventData.ChannelID)
 	if cs == nil {
+		return
+	}
+
+	redisKey := fmt.Sprintf("automodv2_rule_execution_%d", eventData.MessageID)
+
+	var exists string
+
+	if err := common.RedisPool.Do(radix.Cmd(&exists, "GET", redisKey)); err != nil {
+		return
+	}
+	if exists == "1" {
+		return
+	}
+
+	// Expires a temporary value after 5 seconds
+	if err := common.RedisPool.Do(radix.Cmd(nil, "SET", redisKey, "1", "EX", "5")); err != nil {
 		return
 	}
 
