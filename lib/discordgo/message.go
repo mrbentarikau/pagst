@@ -124,6 +124,12 @@ type Message struct {
 	// A list of users mentioned in the message.
 	Mentions []*User `json:"mentions"`
 
+	// Is sent with Rich Presence-related chat embeds
+	Activity *MessageActivity `json:"activity"`
+
+	// Is sent with Rich Presence-related chat embeds
+	Application *MessageApplication `json:"application"`
+
 	// Whether the message is pinned or not.
 	Pinned bool `json:"pinned"`
 
@@ -153,6 +159,11 @@ type Message struct {
 	// This means responses to message component interactions do not include this property,
 	// instead including a MessageReference, as components exist on preexisting messages.
 	Interaction *MessageInteraction `json:"interaction"`
+
+	// The flags of the message, which describe extra features of a message.
+	// This is a combination of bit masks; the presence of a certain permission can
+	// be checked by performing a bitwise AND between this int and the flag.
+	Flags MessageFlags `json:"flags"`
 
 	// An array of Sticker objects, if any were sent.
 	Stickers []*Sticker `json:"sticker_items"`
@@ -204,6 +215,8 @@ const (
 	MessageFlagsFailedToMentionSomeRolesInThread MessageFlags = 1 << 8
 	// MessageFlagsSuppressNotifications this message will not trigger push and desktop notifications
 	MessageFlagsSuppressNotifications MessageFlags = 1 << 12
+	// MessageFlagsIsVoiceMessage this message is a voice message.
+	MessageFlagsIsVoiceMessage MessageFlags = 1 << 13
 )
 
 // GetCustomEmojis pulls out all the custom (Non-unicode) emojis from a message and returns a Slice of the Emoji struct.
@@ -242,7 +255,7 @@ type MessageSend struct {
 	AllowedMentions AllowedMentions    `json:"allowed_mentions"`
 	Reference       *MessageReference  `json:"message_reference,omitempty"`
 	Flags           MessageFlags       `json:"flags,omitempty"`
-	StickerIds      []int64            `json:"sticker_ids"`
+	StickerIDs      []int64            `json:"sticker_ids"`
 
 	// TODO: Remove this when compatibility is not required.
 	File *File `json:"-"`
@@ -490,6 +503,14 @@ type AllowedMentions struct {
 	RepliedUser bool `json:"replied_user"`
 }
 
+type MessageApplication struct {
+	ID          int64  `json:"id,string"`
+	CoverImage  string `json:"cover_image"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
+	Name        string `json:"name"`
+}
+
 // MessageReference contains reference data sent with crossposted messages
 type MessageReference struct {
 	MessageID       int64 `json:"message_id,string"`
@@ -528,3 +549,20 @@ type MessageInteraction struct {
 	// Member is only present when the interaction is from a guild.
 	Member *Member `json:"member"`
 }
+
+// MessageActivity is sent with Rich Presence-related chat embeds
+type MessageActivity struct {
+	Type    MessageActivityType `json:"type"`
+	PartyID string              `json:"party_id"`
+}
+
+// MessageActivityType is the type of message activity
+type MessageActivityType int
+
+// Constants for the different types of Message Activity
+const (
+	MessageActivityTypeJoin        MessageActivityType = 1
+	MessageActivityTypeSpectate    MessageActivityType = 2
+	MessageActivityTypeListen      MessageActivityType = 3
+	MessageActivityTypeJoinRequest MessageActivityType = 5
+)

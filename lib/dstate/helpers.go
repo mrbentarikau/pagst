@@ -87,6 +87,8 @@ func MessageStateFromDgo(m *discordgo.Message) *MessageState {
 		MentionRoles:    m.MentionRoles,
 		ParsedCreatedAt: parsedC,
 		ParsedEditedAt:  parsedE,
+
+		ReferencedMessage: m.ReferencedMessage,
 	}
 }
 
@@ -138,8 +140,9 @@ func MemberStateFromPresence(p *discordgo.PresenceUpdate) *MemberState {
 
 		Member: nil,
 		Presence: &PresenceFields{
-			Game:   lg,
-			Status: status,
+			Activity: lg,
+			Game:     lg,
+			Status:   status,
 		},
 	}
 }

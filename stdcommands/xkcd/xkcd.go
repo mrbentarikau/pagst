@@ -29,6 +29,7 @@ type Xkcd struct {
 
 var XkcdHost = "https://xkcd.com/"
 var XkcdJson = "info.0.json"
+var XkcdExplainedHost = "https://www.explainxkcd.com/wiki/index.php/"
 
 var Command = &commands.YAGCommand{
 	CmdCategory: commands.CategoryFun,
@@ -63,6 +64,9 @@ var Command = &commands.YAGCommand{
 			n := data.Args[0].Int64()
 			if n >= 1 && n <= xkcd.Num {
 				xkcdNum = n
+				if xkcdNum == 404 {
+					return "A treasured and carefully-guarded point in the space of four-character strings not found.", nil
+				}
 			} else {
 				return fmt.Sprintf("There's no comic numbered %d, current range is 1-%d", n, xkcd.Num), nil
 			}
@@ -78,7 +82,8 @@ var Command = &commands.YAGCommand{
 
 		embed := &discordgo.MessageEmbed{
 			Title:       fmt.Sprintf("#%d: %s", xkcd.Num, xkcd.Title),
-			Description: fmt.Sprintf("[%s](%s%d/)", xkcd.Alt, XkcdHost, xkcd.Num),
+			URL:         fmt.Sprintf("%s%d/", XkcdHost, xkcd.Num),
+			Description: fmt.Sprintf("%s\n\n[#%[2]d explained](%s%[2]d)", xkcd.Alt, xkcd.Num, XkcdExplainedHost),
 			Color:       int(rand.Int63n(16777215)),
 			Image: &discordgo.MessageEmbedImage{
 				URL: xkcd.Img,

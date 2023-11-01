@@ -122,6 +122,8 @@ func (u *User) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
 		return DecodeSnowflake(&u.ID, dec)
 	case "username":
 		return dec.String(&u.Username)
+	case "global_name":
+		return dec.String(&u.GlobalName)
 	case "avatar":
 		return dec.String(&u.Avatar)
 	case "locale":
@@ -146,7 +148,12 @@ func (u *User) NKeys() int {
 //	size:    The size of the user's avatar as a power of two
 //	         if size is an empty string, no size parameter will
 //	         be added to the URL.
-func (u *User) AvatarURL(size string) string {
+func (u *User) AvatarURL(sizeArg ...string) string {
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+
 	return avatarURL(
 		u.Avatar,
 		EndpointDefaultUserAvatar(u.DefaultAvatarIndex()),
@@ -160,7 +167,12 @@ func (u *User) AvatarURL(size string) string {
 //
 //		size:    The size of the desired banner image as a power of two
 //	        Image size can be any power of two between 16 and 4096.
-func (u *User) BannerURL(size string) string {
+func (u *User) BannerURL(sizeArg ...string) string {
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+
 	return bannerURL(u.Banner, EndpointUserBanner(u.ID, u.Banner), EndpointUserBannerAnimated(u.ID, u.Banner), size)
 }
 

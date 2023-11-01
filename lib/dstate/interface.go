@@ -146,16 +146,44 @@ func (gs *GuildSet) GetChannelOrThread(id int64) *ChannelState {
 //	size: The size of the guild's icon as a power of two
 //	      if size is an emptry string, no size parameter will
 //	      be added to the URL.
-func (gs *GuildSet) IconURL(size string) string {
+func (gs *GuildSet) IconURL(sizeArg ...string) string {
 	if gs.Icon == "" {
 		return ""
 	}
 
 	var url string
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+
 	if strings.HasPrefix(gs.Icon, "a_") {
 		url = discordgo.EndpointGuildIconAnimated(gs.ID, gs.Icon)
 	} else {
 		url = discordgo.EndpointGuildIcon(gs.ID, gs.Icon)
+	}
+
+	if size != "" {
+		url += "?size=" + size
+	}
+
+	return url
+}
+
+func (gs *GuildSet) BannerURL(sizeArg ...string) string {
+	if gs.Banner == "" {
+		return ""
+	}
+
+	var url string
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+	if strings.HasPrefix(gs.Banner, "a_") {
+		url = discordgo.EndpointGuildBannerAnimated(gs.ID, gs.Banner)
+	} else {
+		url = discordgo.EndpointGuildBanner(gs.ID, gs.Banner)
 	}
 
 	if size != "" {
@@ -422,6 +450,8 @@ type MessageState struct {
 
 	ParsedCreatedAt time.Time
 	ParsedEditedAt  time.Time
+
+	ReferencedMessage *discordgo.Message
 
 	Deleted bool
 }

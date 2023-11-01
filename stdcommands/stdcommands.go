@@ -47,8 +47,6 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/memstats"
 	"github.com/mrbentarikau/pagst/stdcommands/myanimelist"
 	"github.com/mrbentarikau/pagst/stdcommands/openweathermap"
-
-	//"github.com/mrbentarikau/pagst/stdcommands/paginationtest"
 	"github.com/mrbentarikau/pagst/stdcommands/pagstatus"
 	"github.com/mrbentarikau/pagst/stdcommands/ping"
 	"github.com/mrbentarikau/pagst/stdcommands/poll"
@@ -103,7 +101,6 @@ func (p *Plugin) AddCommands() {
 
 		// Standard
 		advice.Command,
-		bashquotes.Command,
 		calc.Command,
 		catfact.Command,
 		// covidstats.Command,
@@ -157,7 +154,6 @@ func (p *Plugin) AddCommands() {
 		listflags.Command,
 		memstats.Command,
 		pagstatus.Command,
-		// paginationtest.Command,
 		setstatus.Command,
 		sleep.Command,
 		stateinfo.Command,
@@ -173,24 +169,29 @@ func (p *Plugin) AddCommands() {
 	specialservers.Commands()
 	statedbg.Commands()
 
+	if !bashquotes.ShouldRegister() {
+		common.GetPluginLogger(p).Warn("BashQuotes site down, skipping adding bashquotes command...")
+	} else {
+		commands.AddRootCommands(p, bashquotes.Command)
+	}
+
 	if !isthereanydeal.ShouldRegister() {
 		common.GetPluginLogger(p).Warn("IsThereAnyDeal API key not provided, skipping adding isthereanydeal command...")
-		return
+	} else {
+		commands.AddRootCommands(p, isthereanydeal.Command)
 	}
 
 	if !myanimelist.ShouldRegister() {
 		common.GetPluginLogger(p).Warn("MyAnimelist API key not provided, skipping adding myanimelist command...")
-		return
+	} else {
+		commands.AddRootCommands(p, myanimelist.Command)
 	}
 
 	if !themoviedb.ShouldRegister() {
 		common.GetPluginLogger(p).Warn("The Movie DB API key not provided, skipping adding tmdb command...")
-		return
+	} else {
+		commands.AddRootCommands(p, themoviedb.Command)
 	}
-
-	commands.AddRootCommands(p, isthereanydeal.Command)
-	commands.AddRootCommands(p, myanimelist.Command)
-	commands.AddRootCommands(p, themoviedb.Command)
 
 }
 

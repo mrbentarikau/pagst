@@ -441,7 +441,7 @@ a:active {
 	}
 
 	.header .header-right {
-		background: #FFF;
+		/*background: #FFF;*/
 		float: none !important;
 		height: 60px;
 		margin-top: 60px;
@@ -3958,12 +3958,14 @@ html.has-left-sidebar-half .header {
 
 /* Header Mobile */
 @media only screen and (max-width: 767px) {
+	/*
 	.header .logo-container {
 		background-image: -webkit-gradient(linear, left top, left bottom, from(#F6F6F6), color-stop(45%, #FFFFFF));
 		background-image: linear-gradient(#F6F6F6 0%, #FFFFFF 45%);
 		border-bottom: 1px solid #E9E9E6;
 		border-top: 3px solid #EDEDED;
 	}
+	*/
 
 	.header .logo-container .logo {
 		float: none;

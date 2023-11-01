@@ -28,7 +28,11 @@
     crossorigin="anonymous">
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/static/css/landing-page-min.css">
+  {{if .LightTheme}}
+  <link rel="stylesheet" href="/static/css/custom_nord.css">
+  {{else}}
   <link rel="stylesheet" href="/static/css/custom.css">
+  {{end}}
   <!-- Custom Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400,500,700|Poppins:500,700" rel="stylesheet">
   <title>{{.BotName}}</title>

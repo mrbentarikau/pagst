@@ -199,8 +199,6 @@ func (p *PostHandlerImpl) handlePost(post *reddit.Link, filterGuild int64) error
 	}).Debug("Found matched Reddit post")
 
 	messageShowSpoilers, messageWithSpoilers, embedShowSpoilers, embedWithSpoilers := p.createPostMessage(post)
-	//messageWithSpoilers, embedWithSpoilers := p.createPostMessage(post, false)
-
 	for _, item := range filteredItems {
 		message := messageWithSpoilers
 		embed := embedWithSpoilers

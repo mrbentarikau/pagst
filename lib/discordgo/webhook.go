@@ -37,6 +37,9 @@ type WebhookParams struct {
 	Embeds          []*MessageEmbed       `json:"embeds,omitempty"`
 	Attachments     *[]*MessageAttachment `json:"attachments,omitempty"`
 	AllowedMentions *AllowedMentions      `json:"allowed_mentions,omitempty"`
+	// Name of the thread to create.
+	// NOTE: can only be used in forum channels.
+	ThreadName string `json:"thread_name,omitempty"`
 	// Only MessageFlagsSuppressEmbeds and MessageFlagsEphemeral can be set.
 	// MessageFlagsEphemeral can only be set when using Followup Message Create endpoint.
 	Flags MessageFlags `json:"flags,omitempty"`

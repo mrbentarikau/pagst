@@ -145,7 +145,7 @@ table{
                                     </table>
                                     <button type="button" class="btn btn-primary btn-sm automod-add-rule-part">+</button>
                                 </div>
-                                <button class="btn btn-success" type="submit" style="color:#282828!important;background-color:#89aa00!important">Save</button>
+                                <button class="btn btn-success-pagst" type="submit">Save</button>
                                 <button class="btn btn-danger" type="submit" formaction="/manage/{{.ActiveGuild.ID}}/automod/ruleset/{{.CurrentRuleset.ID}}/delete">Delete entire ruleset</button>
                             </form>
                         </div>
@@ -257,7 +257,7 @@ table{
                         <button type="submit" class="btn btn-danger" formaction="/manage/{{$dot.ActiveGuild.ID}}/automod/ruleset/{{$dot.CurrentRuleset.ID}}/rule/{{.ID}}/delete">Delete</button>
                     </div>
                     <h2 class="card-title">
-                    <a style="text-decoration: none;color:#a1a1a1!important;display:block;font-size:16px!important" data-toggle="collapse" href="#collapse_cmd{{$i}}" aria-expanded="false" aria-controls="collapse_cmd{{$i}}" class="cc-collapsibleUp"><span style="color:#89aa00!important">Rule #{{$i}}:</span> <span contenteditable="true" data-content-editable-form="Name" class="content-editable-form" style="color:#89aa00!important">{{or .Name "Un-named"}}</span></a></h2>
+                    <a class="amV2-atag" data-toggle="collapse" href="#collapse_cmd{{$i}}" aria-expanded="false" aria-controls="collapse_cmd{{$i}}" class="cc-collapsibleUp"><span class="amV2-spantag">Rule #{{$i}}:</span> <span contenteditable="true" data-content-editable-form="Name" class="content-editable-form amV2-spantag">{{or .Name "Un-named"}}</span></a></h2>
                 </header>
                 <div class="card-body collapse show" id="collapse_cmd{{$i}}">
                     <div class="automod-rule-part-table" data-automod-part-type=0>

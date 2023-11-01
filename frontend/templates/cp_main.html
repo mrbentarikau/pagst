@@ -58,7 +58,11 @@
     <link rel="stylesheet" href="/static/css/skins/default.css" />
 
     <!-- Theme Custom CSS -->
+    {{if .LightTheme}}
+    <link rel="stylesheet" href="/static/css/custom_nord.css?{{.StartedAtUnix}}">
+    {{else}}
     <link rel="stylesheet" href="/static/css/custom.css?{{.StartedAtUnix}}">
+    {{end}}
 
     <!-- Head Libs -->
     <script src="/static/vendorr/modernizr/modernizr.js"></script>

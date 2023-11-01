@@ -25,14 +25,6 @@ import (
 	"goji.io/pat"
 )
 
-/*
-type CtxKey int
-
-const (
-	CurrentConfig CtxKey = iota
-)
-*/
-
 //go:embed assets/youtube.html
 var PageHTML string
 
@@ -55,8 +47,8 @@ type Form struct {
 	ID                 uint
 	MentionEveryone    bool
 	MentionRole        int64 `valid:"role,true"`
-	PublishShorts      bool
 	PublishLivestream  bool
+	PublishShorts      bool
 	Enabled            bool
 }
 
@@ -173,6 +165,7 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 	}
 
 	ytChannel := cResp.Items[0]
+
 	sub, err := p.AddFeed(activeGuild.ID, data.DiscordChannel, ytChannel, data.MentionEveryone, data.MentionRole, data.PublishShorts, data.PublishLivestream)
 	if err != nil {
 		if err == ErrNoChannel {
@@ -258,8 +251,8 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 	data := ctx.Value(common.ContextKeyParsedForm).(*Form)
 
 	sub.MentionEveryone = data.MentionEveryone
-	sub.PublishShorts = sql.NullBool{Valid: true, Bool: data.PublishShorts}
 	sub.PublishLivestream = data.PublishLivestream
+	sub.PublishShorts = sql.NullBool{Valid: true, Bool: data.PublishShorts}
 	sub.ChannelID = discordgo.StrID(data.DiscordChannel)
 	sub.MentionRole = discordgo.StrID(data.MentionRole)
 	if data.DiscordChannel == 0 {
@@ -357,7 +350,7 @@ func (p *Plugin) HandleFeedUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = p.CheckVideo(parsed.VideoId, parsed.ChannelID)
+	err = p.CheckVideo(parsed)
 	if err != nil {
 		web.CtxLogger(ctx).WithError(err).Error("Failed parsing checking new YouTube video")
 		w.WriteHeader(http.StatusInternalServerError)
