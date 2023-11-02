@@ -162,36 +162,25 @@ func (p *Plugin) yagCommandToSlashCommand(cmd *dcmd.RegisteredCommand) *discordg
 	t := true
 
 	_, opts := cast.slashCommandOptions()
-	applicationCommand := &discordgo.ApplicationCommand{
-		Name:              strings.ToLower(cmd.Trigger.Names[0]),
-		Description:       common.CutStringShort(cast.Description, 100),
+
+	applicationCommandPackage := &discordgo.ApplicationCommand{
 		DefaultPermission: &t,
-		Options:           opts,
+		Name:              strings.ToLower(cmd.Trigger.Names[0]),
+		NameLocalizations: cast.NameLocalizations,
 		NSFW:              &cast.NSFW,
 	}
 
-	// KRAAKA adding context menu command
 	if cast.ApplicationCommandType == discordgo.UserApplicationCommand {
-		applicationCommand = &discordgo.ApplicationCommand{
-			DefaultPermission: &t,
-			Name:              strings.ToLower(cmd.Trigger.Names[0]),
-			NameLocalizations: cast.NameLocalizations,
-			Type:              discordgo.UserApplicationCommand,
-			NSFW:              &cast.NSFW,
-		}
+		applicationCommandPackage.Type = discordgo.UserApplicationCommand
+	} else if cast.ApplicationCommandType == discordgo.MessageApplicationCommand {
+		applicationCommandPackage.Type = discordgo.MessageApplicationCommand
+	} else {
+		applicationCommandPackage.Description = common.CutStringShort(cast.Description, 100)
+		applicationCommandPackage.NameLocalizations = cast.NameLocalizations
+		applicationCommandPackage.Options = opts
 	}
 
-	if cast.ApplicationCommandType == discordgo.MessageApplicationCommand {
-		applicationCommand = &discordgo.ApplicationCommand{
-			DefaultPermission: &t,
-			Name:              strings.ToLower(cmd.Trigger.Names[0]),
-			NameLocalizations: cast.NameLocalizations,
-			Type:              discordgo.MessageApplicationCommand,
-			NSFW:              &cast.NSFW,
-		}
-	}
-
-	return applicationCommand
+	return applicationCommandPackage
 }
 
 func (yc *YAGCommand) slashCommandOptions() (turnedIntoSubCommands bool, result []*discordgo.ApplicationCommandOption) {
