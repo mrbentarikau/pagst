@@ -175,9 +175,15 @@ func (p *Plugin) yagCommandToSlashCommand(cmd *dcmd.RegisteredCommand) *discordg
 	} else if cast.ApplicationCommandType == discordgo.MessageApplicationCommand {
 		applicationCommandPackage.Type = discordgo.MessageApplicationCommand
 	} else {
-		applicationCommandPackage.Description = common.CutStringShort(cast.Description, 100)
-		applicationCommandPackage.NameLocalizations = cast.NameLocalizations
-		applicationCommandPackage.Options = opts
+		applicationCommandPackage = &discordgo.ApplicationCommand{
+			DefaultPermission: &t,
+			Description:       common.CutStringShort(cast.Description, 100),
+			Name:              strings.ToLower(cmd.Trigger.Names[0]),
+			NameLocalizations: cast.NameLocalizations,
+			NSFW:              &cast.NSFW,
+			Options:           opts,
+		}
+
 	}
 
 	return applicationCommandPackage

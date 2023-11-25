@@ -27,7 +27,7 @@ var panelLogKeyUpdatedSettings = cplogs.RegisterActionFormat(&cplogs.ActionForma
 func (p *Plugin) InitWeb() {
 	web.AddHTMLTemplate("automod_basic/assets/automod_basic.html", PageHTML)
 
-	web.AddSidebarItem(web.SidebarCategoryTools, &web.SidebarItem{
+	web.AddSidebarItem(web.SidebarCategoryModeration, &web.SidebarItem{
 		Name: "Basic Automoderator",
 		URL:  "automod_basic",
 		Icon: "fa-brands fa-android",

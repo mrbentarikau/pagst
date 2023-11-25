@@ -212,7 +212,7 @@ type Context struct {
 	ExecutedFrom ExecutedFromType
 
 	// See DelayedRunCCData.CallChain.
-	ExecCallChain          []time.Time
+	ExecCallChain          []time.Time // https://github.com/mrbentarikau/pagst/pull/1336
 	IsExecedByEvalCC       bool
 	IsExecedByJoinMessage  bool
 	IsExecedByLeaveMessage bool
