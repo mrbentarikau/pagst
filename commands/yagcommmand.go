@@ -196,8 +196,9 @@ func (yc *YAGCommand) Run(data *dcmd.Data) (interface{}, error) {
 		return nil, nil
 	}
 
-	// Send typing to indicate the bot's working
-	if confSetTyping.GetBool() && data.TriggerType != dcmd.TriggerTypeSlashCommands {
+	// Send typing to indicate the bot's working, disabled for Evalcc because of empty responses from Custom Commands
+	// for enabled approach, check Evalcc in customcommands/bot.go
+	if confSetTyping.GetBool() && data.TriggerType != dcmd.TriggerTypeSlashCommands { //&& data.Cmd.Trigger.Names[0] != "Evalcc" {
 		common.BotSession.ChannelTyping(data.ChannelID)
 	}
 

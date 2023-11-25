@@ -21,6 +21,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/lib/template"
+	"github.com/mrbentarikau/pagst/web/discorddata"
 
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
@@ -54,6 +55,7 @@ var (
 		"print":                withOutputLimit(fmt.Sprint, MaxStringLength),
 		"println":              withOutputLimit(fmt.Sprintln, MaxStringLength),
 		"printf":               withOutputLimitf(fmt.Sprintf, MaxStringLength),
+		"sanitizeText":         common.SanitizeText,
 		"slice":                slice,
 		"split":                strings.Split,
 		"title":                cases.Title(language.Und).String,
@@ -175,6 +177,16 @@ func init() {
 // set by the premium package to return wether this guild is premium or not
 var GuildPremiumFunc func(guildID int64) (bool, error)
 
+// Defines where a template was executed from to enable certain restrictions
+type ExecutedFromType int
+
+const (
+	ExecutedFromStandard ExecutedFromType = 0
+	ExecutedFromJoin     ExecutedFromType = 1
+	ExecutedFromLeave    ExecutedFromType = 2
+	ExecutedFromEvalCC   ExecutedFromType = 3
+)
+
 type Context struct {
 	Name string
 
@@ -197,10 +209,13 @@ type Context struct {
 
 	CurrentFrame *ContextFrame
 
+	ExecutedFrom ExecutedFromType
+
 	// See DelayedRunCCData.CallChain.
-	ExecCallChain          []time.Time
-	IsExecedByLeaveMessage bool
+	ExecCallChain          []time.Time // https://github.com/mrbentarikau/pagst/pull/1336
 	IsExecedByEvalCC       bool
+	IsExecedByJoinMessage  bool
+	IsExecedByLeaveMessage bool
 
 	contextFuncsAdded bool
 }
@@ -212,7 +227,8 @@ type ContextFrame struct {
 	MentionHere     bool
 	MentionRoles    []int64
 
-	DelResponse bool
+	DelResponse     bool
+	PublishResponse bool
 
 	DelResponseDelay         int
 	EmbedsToSend             []*discordgo.MessageEmbed
@@ -366,15 +382,22 @@ func (c *Context) Execute(source string) (string, error) {
 			// This may fail in some cases
 			c.Msg.ChannelID = c.GS.ID
 		}
+
 		if c.GS != nil {
 			c.Msg.GuildID = c.GS.ID
-
-			member, err := bot.GetMember(c.GS.ID, c.BotUser.ID)
-			if err != nil {
-				return "", errors.WithMessage(err, "ctx.Execute")
+			if bot.State != nil {
+				member, err := bot.GetMember(c.GS.ID, c.BotUser.ID)
+				if err != nil {
+					return "", errors.WithMessage(err, "ctx.Execute")
+				}
+				c.Msg.Member = member.DgoMember()
+			} else {
+				member, err := discorddata.GetMember(c.GS.ID, c.BotUser.ID)
+				if err != nil {
+					return "", errors.WithMessage(err, "ctx.Execute")
+				}
+				c.Msg.Member = member
 			}
-
-			c.Msg.Member = member.DgoMember()
 		}
 
 	}
@@ -395,12 +418,12 @@ func (c *Context) executeParsed() (string, error) {
 
 	if c.IsPremium {
 		parsed = parsed.MaxOps(MaxOpsPremium)
-		if c.IsExecedByEvalCC {
+		if c.ExecutedFrom == ExecutedFromEvalCC {
 			parsed = parsed.MaxOps(MaxOpsEvalPremium)
 		}
 	} else {
 		parsed = parsed.MaxOps(MaxOpsNormal)
-		if c.IsExecedByEvalCC {
+		if c.ExecutedFrom == ExecutedFromEvalCC {
 			parsed = parsed.MaxOps(MaxOpsEvalNormal)
 		}
 	}
@@ -441,6 +464,9 @@ func (c *Context) newContextFrame(cs *dstate.ChannelState) *ContextFrame {
 
 func (c *Context) ExecuteAndSendWithErrors(source string, channelID int64) error {
 	out, err := c.Execute(source)
+
+	// trim whitespace for accurate character count
+	out = strings.TrimSpace(out)
 
 	if utf8.RuneCountInString(out) > 2000 {
 		out = "Template output for " + c.Name + " was longer than 2k (contact an admin on the server...)"
@@ -503,28 +529,32 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 	isDM := c.CurrentFrame.SendResponseInDM || (c.CurrentFrame.CS != nil && c.CurrentFrame.CS.IsPrivate())
 
 	var embeds []*discordgo.MessageEmbed
-	for _, v := range c.CurrentFrame.EmbedsToSend {
-		if isDM {
-			v.Footer = &discordgo.MessageEmbedFooter{
-				Text:    "Custom Command DM from the server " + c.GS.Name,
-				IconURL: c.GS.Icon,
-			}
-		}
-		embeds = append(embeds, v)
+	embeds = append(embeds, c.CurrentFrame.EmbedsToSend...)
+	msgSend := c.MessageSend("")
+	msgSend.Embeds = embeds
+	msgSend.Content = content
 
-	}
-	common.BotSession.ChannelMessageSendEmbedList(channelID, embeds)
-
-	if strings.TrimSpace(content) == "" || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
+	if (len(msgSend.Embeds) == 0 && strings.TrimSpace(content) == "") || (c.CurrentFrame.DelResponse && c.CurrentFrame.DelResponseDelay < 1) {
 		// no point in sending the response if it gets deleted immediately
 		return nil, nil
 	}
 
 	if isDM {
-		content = "Custom Command DM from the server **" + c.GS.Name + "**\n" + content
+		msgSend.Components = []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    "Show Server Info",
+						Style:    discordgo.PrimaryButton,
+						Emoji:    discordgo.ComponentEmoji{Name: "📬"},
+						CustomID: fmt.Sprintf("DM_%d", c.GS.ID),
+					},
+				},
+			},
+		}
 	}
 
-	m, err := common.BotSession.ChannelMessageSendComplex(channelID, c.MessageSend(content))
+	m, err := common.BotSession.ChannelMessageSendComplex(channelID, msgSend)
 	if err != nil {
 		/* KRAAKA that error printout!!! */
 		logger.WithField("guild", c.GS.ID).WithError(err).Error("Error sending message: " + c.Name)
@@ -562,6 +592,10 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 				return m, errors.New(fmt.Sprint(goErr))
 			}*/
 		}
+
+		if c.CurrentFrame.PublishResponse && c.CurrentFrame.CS.Type == discordgo.ChannelTypeGuildNews {
+			common.BotSession.ChannelMessageCrosspost(m.ChannelID, m.ID)
+		}
 	}
 
 	return m, nil
@@ -598,7 +632,7 @@ func (c *Context) IncreaseCheckCallCounterPremium(key string, normalLimit, premi
 }
 
 func (c *Context) IncreaseCheckGenericAPICall() bool {
-	if c.IsExecedByEvalCC {
+	if c.ExecutedFrom == ExecutedFromEvalCC {
 		return c.IncreaseCheckCallCounter("api_call", 20)
 	}
 	return c.IncreaseCheckCallCounter("api_call", 100)
@@ -633,6 +667,8 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getChannelPins", c.tmplGetChannelPins(false))
 	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
 	c.addContextFunc("getThread", c.tmplGetThread)
+	c.addContextFunc("getThreadsAllActive", c.tmplGetGuildThreadsActive)
+	c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
 	c.addContextFunc("editChannelName", c.tmplEditChannelName)
 	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
 
@@ -642,6 +678,7 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("currentUserCreated", c.tmplCurrentUserCreated)
 	c.addContextFunc("editNickname", c.tmplEditNickname)
 	c.addContextFunc("getBotCount", c.tmplCountMembers(true))
+	c.addContextFunc("getGuildMembers", c.tmplGetGuildMembers)
 	c.addContextFunc("getMember", c.tmplGetMember)
 	c.addContextFunc("getMemberTimezone", c.tmplGetMemberTimezone)
 	c.addContextFunc("getUser", c.tmplGetUser)
@@ -674,6 +711,8 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getPinCount", c.tmplGetChannelPins(true))
 	c.addContextFunc("lastMessages", c.tmplLastMessages)
 	c.addContextFunc("pinMessage", c.tmplPinMessage(false))
+	c.addContextFunc("publishMessage", c.tmplPublishMessage)
+	c.addContextFunc("publishResponse", c.tmplPublishResponse)
 	c.addContextFunc("sendDM", c.tmplSendDM)
 	c.addContextFunc("sendMessage", c.tmplSendMessage(true, false))
 	c.addContextFunc("sendMessageNoEscape", c.tmplSendMessage(false, false))
@@ -723,14 +762,15 @@ func baseContextFuncs(c *Context) {
 	// Various
 	c.addContextFunc("ccCounters", c.tmplCounters)
 	c.addContextFunc("getApplicationCommands", c.tmplGetApplicationCommands)
+	c.addContextFunc("getGuildPreview", c.tmplGetGuildPreview)
 	c.addContextFunc("sleep", c.tmplSleep)
 	c.addContextFunc("sort", c.tmplSort)
 
 	// testing grounds
 	c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
 	c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
-	c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
 	c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
+	c.addContextFunc("getGuild", c.tmplGetGuild)
 }
 
 type limitedWriter struct {

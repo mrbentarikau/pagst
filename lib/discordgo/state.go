@@ -812,6 +812,17 @@ func (s *State) OnInterface(se *Session, i interface{}) (err error) {
 		}
 	case *GuildMemberUpdate:
 		if s.TrackMembers {
+			var old *Member
+			old, err = s.Member(t.GuildID, t.User.ID)
+			if err == nil {
+				oldCopy := *old
+				if oldCopy.User != nil {
+					oldUser := *oldCopy.User
+					oldCopy.User = &oldUser
+				}
+				t.BeforeUpdate = &oldCopy
+			}
+
 			err = s.MemberAdd(t.Member)
 		}
 	case *GuildMemberRemove:

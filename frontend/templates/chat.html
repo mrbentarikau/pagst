@@ -3,6 +3,7 @@
 <html lang="en">
 
 <head>
+  {{template "googleAnalytics" .}}
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -27,7 +28,11 @@
     crossorigin="anonymous">
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/static/css/landing-page-min.css">
+  {{if .LightTheme}}
+  <link rel="stylesheet" href="/static/css/custom_nord.css">
+  {{else}}
   <link rel="stylesheet" href="/static/css/custom.css">
+  {{end}}
   <!-- Custom Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Lato:300,400,500,700|Poppins:500,700" rel="stylesheet">
   <title>{{.BotName}}</title>
@@ -95,12 +100,23 @@
         pointerEvents: true
       });
     </script>
-     {{template "googleAnalytics" .}}
 </body>
 </html>
 
 
-{{end}} {{define "googleAnalytics"}}{{if and (not .Testing) .GAID}}
+{{end}} {{define "googleAnalytics_chat"}}{{if and (not .Testing) (or .GAID .GA4)}}
+{{if .GA4}}
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{.GA4}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', '{{.GA4}}');
+</script>
+{{end}}
+{{if .GAID}}
 <script>
   (function (i, s, o, g, r, a, m) {
     i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
@@ -110,4 +126,7 @@
   })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
   ga('create', '{{.GAID}}', 'auto');
   ga('send', 'pageview');
-</script>{{end}}{{end}}
+</script>
+{{end}}
+
+{{end}}{{end}}

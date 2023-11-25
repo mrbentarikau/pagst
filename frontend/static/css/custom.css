@@ -647,11 +647,12 @@ form>.form-group>p.form-control-static{margin-bottom:7px!important;width:20%;pad
 .form-control,.form-control-static{color:#a1a1a1;text-align:left}
 [class*="form-control"],.btn-default,.dropdown-menu,.dropdown-menu-righ,.input-group-text{background-color:#282828!important;border-color:#282828!important}
 .btn-success,.btn-info,.btn-primary,.btn-primary-scale-2{color:#89aa00!important;background-color:#282828!important;border-color:#282828!important}
+.btn-success-pagst{color:#282828!important;background-color:#89aa00!important;border-color:#89aa00!important}
 
 /*crazy stuff for future reference*/
 .btn-primary.focus,.btn-primary.dropdown-toggle,.btn-primary.dropdown-toggle:focus,.btn-primary:focus,.btn-primary-scale-2:focus{color:#2e2e2e!important; background-color:#89aa00!important;box-shadow:none!important;}
 .btn-primary.active.focus,.btn-primary.active:focus,.btn-primary.active:hover,.btn-primary:active.focus,.btn-primary:active:focus,.btn-primary:active:hover{color:#2e2e2e!important; background-color:#89aa00!important;border-color:#89aa00!important; box-shadow: none!important}
-.btn-success.focus,.btn-success:focus,.btn-success:active{box-shadow:none!important}
+.btn-success.focus,.btn-success:focus,.btn-success:active,.btn-success-pagst.focus,.btn-success-pagst:focus,.btn-success-pagst:active{box-shadow:none!important}
 .btn-info.focus,.btn-info:focus,.btn-info:active{box-shadow:none!important}
 .btn-block{width:auto; background-color:#89aa00!important;color:#1f1f1f!important}
 .btn-circle{color:#aa8900!important; background-color:#1f1f1f!important;border-color:#1f1f1f!important}
@@ -739,3 +740,7 @@ a.pagst:hover{
 .feedlink {
   color: #a1a1a1!important;
 }
+
+a.amV2-atag{text-decoration: none;color:#a1a1a1!important;display:block;font-size:16px!important}
+a.cc-view-disabled,h2.card-title>a.cc-view-disabled:focus,h2.card-title>a.cc-view-disabled:hover{background-color:#5a2c26!important}
+span.amV2-spantag{color:#89aa00!important}

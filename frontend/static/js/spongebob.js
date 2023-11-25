@@ -150,6 +150,7 @@ function showAlerts(alertsJson) {
 		if (alert.Style === "success") {
 			notice = new PNotify({
 				title: alert.Message,
+				text: "(Click to dismiss)",
 				type: 'success',
 				addclass: 'stack-bar-top click-2-close',
 				stack: stack_bar_top,
@@ -163,7 +164,7 @@ function showAlerts(alertsJson) {
 		} else if (alert.Style === "danger") {
 			notice = new PNotify({
 				title: alert.Message,
-				text: "Read the docs and contact support if you don't know what went wrong.",
+				text: "Read the docs and contact support if you don't know what went wrong.\n(Click to dismiss)",
 				type: 'error',
 				addclass: 'stack-bar-top click-2-close',
 				stack: stack_bar_top,
@@ -177,7 +178,7 @@ function showAlerts(alertsJson) {
 		} else if (alert.Style === "warning-cc-limit") {
 			notice = new PNotify({
 				title: alert.Message,
-				text: "This warning does not affect saves.",
+				text: "This warning does not affect saves.\n(Click to dismiss)",
 				type: 'warning-cc-limit',
 				addclass: 'stack-bar-top click-2-close',
 				stack: stack_bar_top,
@@ -852,6 +853,30 @@ function toggleTheme() {
 		elem.classList.remove("sidebar-light")
 		document.cookie = "light_theme=false; max-age=3153600000; path=/"
 	}
+}
+
+function toggleNordTheme() {
+   //var nordTheme = false
+    var head  = document.getElementsByTagName('head')[0];
+    var link  = document.createElement('link');
+    link.id   = "cssId";
+    link.rel  = 'stylesheet';
+    link.type = 'text/css';
+    // if (nordTheme) {
+    var elem = document.documentElement;
+	if (elem.classList.contains("dark")) {
+		elem.classList.remove("dark");
+		elem.classList.add("sidebar-light")
+        link.href = '/static/css/custom_nord.css';
+        document.cookie = "nord_theme=true; max-age=3153600000; path=/"
+    } else {
+    	elem.classList.add("dark");
+		elem.classList.remove("sidebar-light")
+        link.href = '/static/css/custom.css';
+        document.cookie = "nord_theme=false; max-age=3153600000; path=/"
+    }
+    link.media = 'all';
+    head.appendChild(link);
 }
 
 function loadWidget(destinationParentID, path) {

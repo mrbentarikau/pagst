@@ -141,6 +141,58 @@ func (gs *GuildSet) GetChannelOrThread(id int64) *ChannelState {
 	return gs.GetThread(id)
 }
 
+// IconURL returns a URL to the guild icon.
+//
+//	size: The size of the guild's icon as a power of two
+//	      if size is an emptry string, no size parameter will
+//	      be added to the URL.
+func (gs *GuildSet) IconURL(sizeArg ...string) string {
+	if gs.Icon == "" {
+		return ""
+	}
+
+	var url string
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+
+	if strings.HasPrefix(gs.Icon, "a_") {
+		url = discordgo.EndpointGuildIconAnimated(gs.ID, gs.Icon)
+	} else {
+		url = discordgo.EndpointGuildIcon(gs.ID, gs.Icon)
+	}
+
+	if size != "" {
+		url += "?size=" + size
+	}
+
+	return url
+}
+
+func (gs *GuildSet) BannerURL(sizeArg ...string) string {
+	if gs.Banner == "" {
+		return ""
+	}
+
+	var url string
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+	if strings.HasPrefix(gs.Banner, "a_") {
+		url = discordgo.EndpointGuildBannerAnimated(gs.ID, gs.Banner)
+	} else {
+		url = discordgo.EndpointGuildBanner(gs.ID, gs.Banner)
+	}
+
+	if size != "" {
+		url += "?size=" + size
+	}
+
+	return url
+}
+
 type GuildState struct {
 	ID          int64  `json:"id,string"`
 	Available   bool   `json:"available"`
@@ -287,14 +339,15 @@ type MemberState struct {
 }
 
 type MemberFields struct {
-	JoinedAt         discordgo.Timestamp
-	Roles            []int64
-	Nick             string
-	Avatar           string
-	Pending          bool
-	PremiumSince     *time.Time
-	Permissions      int64
-	TimeoutExpiresAt *time.Time
+	JoinedAt                   discordgo.Timestamp
+	Roles                      []int64
+	Nick                       string
+	Avatar                     string
+	Pending                    bool
+	PremiumSince               *time.Time
+	Permissions                int64
+	TimeoutExpiresAt           *time.Time
+	CommunicationDisabledUntil *time.Time
 }
 
 type PresenceStatus int32
@@ -335,14 +388,15 @@ func MemberStateFromMember(member *discordgo.Member) *MemberState {
 		GuildID: member.GuildID,
 
 		Member: &MemberFields{
-			JoinedAt:         member.JoinedAt,
-			Roles:            member.Roles,
-			Nick:             member.Nick,
-			Avatar:           member.Avatar,
-			Pending:          member.Pending,
-			PremiumSince:     member.PremiumSince,
-			Permissions:      member.Permissions,
-			TimeoutExpiresAt: member.TimeoutExpiresAt,
+			JoinedAt:                   member.JoinedAt,
+			Roles:                      member.Roles,
+			Nick:                       member.Nick,
+			Avatar:                     member.Avatar,
+			Pending:                    member.Pending,
+			PremiumSince:               member.PremiumSince,
+			Permissions:                member.Permissions,
+			TimeoutExpiresAt:           member.TimeoutExpiresAt,
+			CommunicationDisabledUntil: member.TimeoutExpiresAt,
 		},
 		Presence: nil,
 	}
@@ -375,6 +429,10 @@ func (ms *MemberState) DgoMember() *discordgo.Member {
 	return m
 }
 
+func (ms *MemberState) CommunicationDisabledUntil() *time.Time {
+	return ms.Member.TimeoutExpiresAt
+}
+
 type MessageState struct {
 	ID        int64
 	GuildID   int64
@@ -392,6 +450,8 @@ type MessageState struct {
 
 	ParsedCreatedAt time.Time
 	ParsedEditedAt  time.Time
+
+	ReferencedMessage *discordgo.Message
 
 	Deleted bool
 }

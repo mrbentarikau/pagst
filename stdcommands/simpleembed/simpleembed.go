@@ -33,7 +33,7 @@ var Command = &commands.YAGCommand{
 		{Name: "footericon", Help: "URL to a icon for the 'footer' field", Type: dcmd.String},
 
 		{Name: "channel", Help: "Optional channel to send in", Type: dcmd.Channel},
-		{Name: "messageID", Help: "Message ID for editing", Type: dcmd.BigInt},
+		{Name: "messageid", Help: "Message ID for editing", Type: dcmd.BigInt},
 	},
 	ApplicationCommandEnabled: true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
@@ -59,7 +59,7 @@ var Command = &commands.YAGCommand{
 			}
 		}
 
-		mID := data.Switch("messageID").Int64()
+		mID := data.Switch("messageid").Int64()
 		var msg *discordgo.Message
 		if mID != 0 {
 			hasPerms, err := bot.AdminOrPermMS(data.GuildData.GS.ID, cID, data.GuildData.MS, discordgo.PermissionManageMessages)

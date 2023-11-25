@@ -188,7 +188,7 @@ func (pa *ParsedArgs) Len() int {
 	return count
 }
 
-// tmplRunCC either run another custom command immediately with a max stack depth of 2
+// tmplRunCC either run another custom command immeditely with a max stack depth of 2
 // or schedules a custom command to be run in the future sometime with the provided data placed in .ExecData
 func tmplRunCC(ctx *templates.Context) interface{} {
 	return func(ccID int, channel interface{}, delaySeconds interface{}, data interface{}) (string, error) {
@@ -201,12 +201,7 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			return "", err
 		}
 
-		if opts.Cmd.Disabled {
-			return "", errors.New("custom command is disabled")
-		}
-
-		actualDelay := templates.ToInt64(delaySeconds)
-		if actualDelay <= 0 {
+		if opts.Delay <= 0 {
 			currentStackDepthI := ctx.Data["StackDepth"]
 			currentStackDepth := 0
 			if currentStackDepthI != nil {
@@ -224,7 +219,7 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			}
 			newCtx.Data["ExecData"] = data
 			newCtx.Data["StackDepth"] = currentStackDepth + 1
-			newCtx.IsExecedByLeaveMessage = ctx.IsExecedByLeaveMessage
+			newCtx.ExecutedFrom = ctx.ExecutedFrom
 
 			go ExecuteCustomCommand(opts.Cmd, newCtx)
 			return "", nil
@@ -243,8 +238,8 @@ func tmplRunCC(ctx *templates.Context) interface{} {
 			Member:  ctx.MS,
 			Message: ctx.Msg,
 
-			CallChain:              newCallChain,
-			IsExecedByLeaveMessage: ctx.IsExecedByLeaveMessage,
+			CallChain:    newCallChain,
+			ExecutedFrom: ctx.ExecutedFrom,
 		}
 
 		// embed data using msgpack to include type information
@@ -300,8 +295,8 @@ func tmplScheduleUniqueCC(ctx *templates.Context) interface{} {
 			Message: ctx.Msg,
 			UserKey: stringedKey,
 
-			CallChain:              newCallChain,
-			IsExecedByLeaveMessage: ctx.IsExecedByLeaveMessage,
+			CallChain:    newCallChain,
+			ExecutedFrom: ctx.ExecutedFrom,
 		}
 
 		// embed data using msgpack to include type information
@@ -367,8 +362,8 @@ func encodeRunCCUserData(data interface{}) ([]byte, error) {
 
 // Limit execCC chains to 20/5m.
 const (
-	chainWindowDur = 5 * time.Minute
-	maxChainDepth  = 20
+	chainWindowDur = 1 * time.Hour
+	maxChainDepth  = 200
 )
 
 func updateCallChain(chain []time.Time, expectedCallTime time.Time) ([]time.Time, error) {
@@ -640,7 +635,10 @@ func tmplDBGetPattern(ctx *templates.Context, inverse bool) interface{} {
 
 		amount := int(templates.ToInt64(iAmount))
 		skip := int(templates.ToInt64(iSkip))
-		if amount > 100 {
+
+		// LIMIT 0 essentially means LIMIT ALL, or no limit at all.
+		// Make sure we actually cap it at the max documented limit.
+		if amount > 100 || amount == 0 {
 			amount = 100
 		}
 
@@ -701,7 +699,7 @@ func tmplDBDelMultiple(ctx *templates.Context) interface{} {
 		}
 
 		amount := int(templates.ToInt64(iAmount))
-		if amount > 100 {
+		if amount > 100 || amount == 0 {
 			amount = 100
 		}
 		skip := int(templates.ToInt64(iSkip))
@@ -878,7 +876,7 @@ func tmplDBTopEntries(ctx *templates.Context, bottom bool) interface{} {
 
 		amount := int(templates.ToInt64(iAmount))
 		skip := int(templates.ToInt64(iSkip))
-		if amount > 100 {
+		if amount > 100 || amount == 0 {
 			amount = 100
 		}
 
@@ -963,8 +961,10 @@ type LightDBEntry struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
-	Key   string
-	Value interface{}
+	Key      string
+	Value    interface{}
+	ValueNum float64
+	ValueRaw interface{}
 
 	User discordgo.User
 
@@ -1002,8 +1002,10 @@ func ToLightDBEntry(m *models.TemplatesUserDatabase) (*LightDBEntry, error) {
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 
-		Key:   m.Key,
-		Value: decodedValue,
+		Key:      m.Key,
+		Value:    decodedValue,
+		ValueNum: m.ValueNum,
+		ValueRaw: dst,
 
 		ExpiresAt: m.ExpiresAt.Time,
 

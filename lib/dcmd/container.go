@@ -105,7 +105,14 @@ func (c *Container) Run(data *Data) (interface{}, error) {
 		} else if data.SlashCommandTriggerData.Interaction.DataCommand.AppCmdType == discordgo.MessageApplicationCommand &&
 			len(data.SlashCommandTriggerData.Interaction.DataCommand.Options) > 0 {
 
-			message, err := data.Session.ChannelMessage(data.GuildData.CS.ID, data.SlashCommandTriggerData.Interaction.DataCommand.TargetID)
+			var channelID int64
+			if data.GuildData != nil {
+				channelID = data.GuildData.CS.ID
+			} else {
+				channelID = data.SlashCommandTriggerData.Interaction.ChannelID
+			}
+
+			message, err := data.Session.ChannelMessage(channelID, data.SlashCommandTriggerData.Interaction.DataCommand.TargetID)
 			if err != nil {
 				return nil, err
 			}

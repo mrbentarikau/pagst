@@ -207,7 +207,6 @@ func (p *Plugin) startVerificationProcess(conf *models.VerificationConfig, guild
 	if strings.TrimSpace(msg) == "" {
 		msg = DefaultDMMessage
 	}
-	msg = "DM sent from server **" + gs.Name + "**(ID: " + discordgo.StrID(gs.ID) + ")\n" + msg
 
 	ms, err := bot.GetMember(guildID, target.ID)
 	if err != nil {
@@ -224,7 +223,7 @@ func (p *Plugin) startVerificationProcess(conf *models.VerificationConfig, guild
 	cs := dstate.ChannelStateFromDgo(channel)
 
 	tmplCTX := templates.NewContext(gs, &cs, ms)
-	tmplCTX.Name = "dm_veification_message"
+	tmplCTX.Name = "dm_verification_message"
 	tmplCTX.Data["Link"] = fmt.Sprintf("%s/public/%d/verify/%d/%s", web.BaseURL(), guildID, target.ID, token)
 
 	err = tmplCTX.ExecuteAndSendWithErrors(msg, channel.ID)
@@ -341,8 +340,8 @@ func (p *Plugin) handleUserVerifiedScheduledEvent(ms *dstate.MemberState, guildI
 			return scheduledevents2.CheckDiscordErrRetry(err), err
 		}
 
-		p.logAction(guildID, conf.LogChannel, &ms.User, fmt.Sprintf("User banned for sharing IP with banned user %s#%s (%d)\nReason: %s",
-			ban.User.Username, ban.User.Discriminator, ban.User.ID, ban.Reason), 0xef4640)
+		p.logAction(guildID, conf.LogChannel, &ms.User, fmt.Sprintf("User banned for sharing IP with banned user %s (%d)\nReason: %s",
+			ban.User.String(), ban.User.ID, ban.Reason), 0xef4640)
 
 		return false, nil
 	}
@@ -352,7 +351,7 @@ func (p *Plugin) handleUserVerifiedScheduledEvent(ms *dstate.MemberState, guildI
 	builder.WriteString("User verified but verified with the same IP as the following users: \n")
 
 	for i, v := range conflicts {
-		builder.WriteString(fmt.Sprintf("\n%s#%s (%d)", v.Username, v.Discriminator, v.ID))
+		builder.WriteString(fmt.Sprintf("\n%s (%d)", v.String(), v.ID))
 		if i >= 20 && len(conflicts) > 21 {
 			builder.WriteString(fmt.Sprintf("\n\nAnd %d other users...", len(conflicts)-21))
 			break
@@ -523,7 +522,7 @@ func (p *Plugin) logAction(guildID int64, channelID int64, author *discordgo.Use
 	_, err := common.BotSession.ChannelMessageSendEmbed(channelID, &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
 			IconURL: author.AvatarURL("128"),
-			Name:    fmt.Sprintf("%s#%s (%d)", author.Username, author.Discriminator, author.ID),
+			Name:    fmt.Sprintf("%s (%d)", author.String(), author.ID),
 		},
 		Description: action,
 		Color:       color,
@@ -674,7 +673,7 @@ func (p *Plugin) banAlts(ban *discordgo.GuildBanAdd, alts []*discordgo.User) {
 			if cast.Response.StatusCode == 404 {
 				// not banned
 				logger.WithField("guild", ban.GuildID).WithField("user", v.ID).WithField("dupe-of", ban.User.ID).Info("banning alt account")
-				reason := fmt.Sprintf("Alt of banned user (%s#%s (%d))", ban.User.Username, ban.User.Discriminator, ban.User.ID)
+				reason := fmt.Sprintf("Alt of banned user (%s (%d))", ban.User.String(), ban.User.ID)
 				markRecentlyBannedByVerification(ban.GuildID, v.ID)
 				moderation.BanUser(nil, ban.GuildID, nil, nil, common.BotUser, reason, v)
 				continue

@@ -13,32 +13,6 @@ package discordgo
 // Code specific to Discord OAuth2 Applications
 // ------------------------------------------------------------------------------------------------
 
-// An Application struct stores values for a Discord OAuth2 Application
-type Application struct {
-	ID                  int64     `json:"id,string,omitempty"`
-	Name                string    `json:"name"`
-	Icon                string    `json:"icon,omitempty"`
-	Description         string    `json:"description,omitempty"`
-	RPCOrigins          []string  `json:"rpc_origins,omitempty"`
-	BotPublic           bool      `json:"bot_public,omitempty"`
-	BotRequireCodeGrant bool      `json:"bot_require_code_grant,omitempty"`
-	TermsOfServiceURL   string    `json:"terms_of_service_url"`
-	PrivacyProxyURL     string    `json:"privacy_policy_url"`
-	Owner               *User     `json:"owner"`
-	Secret              string    `json:"secret,omitempty"`
-	RedirectURIs        *[]string `json:"redirect_uris,omitempty"`
-	RPCApplicationState int       `json:"rpc_application_state,omitempty"`
-	Flags               int       `json:"flags,omitempty"`
-	Bot                 *User     `json:"bot"`
-	Summary             string    `json:"summary"`
-	VerifyKey           string    `json:"verify_key"`
-	Team                *Team     `json:"team"`
-	GuildID             int64     `json:"guild_id,string"`
-	PrimarySKUID        string    `json:"primary_sku_id"`
-	Slug                string    `json:"slug"`
-	CoverImage          string    `json:"cover_image"`
-}
-
 // The MembershipState represents whether the user is in the team or has been invited into it
 type MembershipState int
 
@@ -62,7 +36,7 @@ type Team struct {
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Icon        string        `json:"icon"`
-	OwnerID     int64         `json:"owner_user_id,int64"`
+	OwnerID     int64         `json:"owner_user_id,string"`
 	Members     []*TeamMember `json:"members"`
 }
 

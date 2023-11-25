@@ -41,17 +41,39 @@ type ApplicationCommand struct {
 	DefaultPermission        *bool  `json:"default_permission,omitempty"`
 	DefaultMemberPermissions *int64 `json:"default_member_permissions,omitempty,string"`
 	DMPermission             *bool  `json:"dm_permission,omitempty"`
+	NSFW                     *bool  `json:"nsfw,omitempty"`
 
 	// NOTE: Chat commands only. Otherwise it mustn't be set.
 
 	Description              string                      `json:"description,omitempty"`
 	DescriptionLocalizations *map[Locale]string          `json:"description_localizations,omitempty"`
 	Options                  []*ApplicationCommandOption `json:"options"`
-	NSFW                     bool                        `json:"nsfw,omitempty"`
 }
 
 // ApplicationCommandOptionType indicates the type of a slash command's option.
 type ApplicationCommandOptionType uint8
+
+type CreateApplicationCommandRequest struct {
+	Name                     string                      `json:"name"`        // 1-32 character name matching ^[\w-]{1,32}$
+	Description              string                      `json:"description"` // 1-100 character description
+	Type                     ApplicationCommandType      `json:"type,omitempty"`
+	Options                  []*ApplicationCommandOption `json:"options"`                      // the parameters for the command
+	DefaultPermission        *bool                       `json:"default_permission,omitempty"` // (default true)	whether the command is enabled by default when the app is added to a guild
+	DefaultMemberPermissions int64                       `json:"default_member_permissions,string,omitempty"`
+	DMPermission             bool                        `json:"dm_permission,omitempty"`
+	NSFW                     bool                        `json:"nsfw,omitempty"` // marks a command as age-restricted
+	NameLocalizations        *map[Locale]string          `json:"name_localizations,omitempty"`
+}
+
+type EditApplicationCommandRequest struct {
+	Name                     *string                      `json:"name,omitempty"`               //	1-32 character name matching ^[\w-]{1,32}$
+	Description              *string                      `json:"description,omitempty"`        //	1-100 character description
+	Options                  *[]*ApplicationCommandOption `json:"options,omitempty"`            // the parameters for the command
+	DefaultPermission        *bool                        `json:"default_permission,omitempty"` // (default true)	whether the command is enabled by default when the app is added to a guild
+	DefaultMemberPermissions *int64                       `json:"default_member_permissions,string,omitempty"`
+	DMPermission             *bool                        `json:"dm_permission,omitempty"`
+	NameLocalizations        *map[Locale]string           `json:"name_localizations,omitempty"`
+}
 
 // Application command option types.
 const (
@@ -354,11 +376,20 @@ func (ApplicationCommandInteractionData) Type() InteractionType {
 
 // MessageComponentInteractionData contains the data of message component interaction.
 type MessageComponentInteractionData struct {
-	CustomID      string        `json:"custom_id"`
-	ComponentType ComponentType `json:"component_type"`
+	CustomID      string                                  `json:"custom_id"`
+	ComponentType ComponentType                           `json:"component_type"`
+	Resolved      MessageComponentInteractionDataResolved `json:"resolved"`
 
 	// NOTE: Only filled when ComponentType is SelectMenuComponent (3). Otherwise is nil.
 	Values []string `json:"values"`
+}
+
+// MessageComponentInteractionDataResolved contains the resolved data of selected option.
+type MessageComponentInteractionDataResolved struct {
+	Users    map[string]*User    `json:"users"`
+	Members  map[string]*Member  `json:"members"`
+	Roles    map[string]*Role    `json:"roles"`
+	Channels map[string]*Channel `json:"channels"`
 }
 
 // Type returns the type of interaction data.
@@ -548,13 +579,13 @@ type InteractionResponse struct {
 
 // InteractionResponseData is response data for an interaction.
 type InteractionResponseData struct {
-	TTS             bool               `json:"tts"`
-	Content         string             `json:"content"`
-	Components      []MessageComponent `json:"components"`
-	Embeds          []*MessageEmbed    `json:"embeds"`
-	AllowedMentions *AllowedMentions   `json:"allowed_mentions,omitempty"`
-	//Flags           uint64             `json:"flags,omitempty"`
-	Files []*File `json:"-"`
+	TTS             bool                  `json:"tts"`
+	Content         string                `json:"content"`
+	Components      []MessageComponent    `json:"components"`
+	Embeds          []*MessageEmbed       `json:"embeds"`
+	AllowedMentions *AllowedMentions      `json:"allowed_mentions,omitempty"`
+	Files           []*File               `json:"-"`
+	Attachments     *[]*MessageAttachment `json:"attachments,omitempty"`
 
 	// NOTE: only MessageFlagsSuppressEmbeds and MessageFlagsEphemeral can be set.
 	Flags MessageFlags `json:"flags,omitempty"`

@@ -169,6 +169,7 @@ func handleGetCommand(w http.ResponseWriter, r *http.Request) (web.TemplateData,
 
 	templateData["CC"] = cc
 	templateData["Commands"] = true
+	templateData["IsGuildPremium"] = premium.ContextPremium(r.Context())
 
 	return serveGroupSelected(r, templateData, cc.GroupID.Int64, activeGuild.ID)
 }
@@ -298,6 +299,17 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 	activeGuild, templateData := web.GetBaseCPContextData(ctx)
 
 	cmd := ctx.Value(common.ContextKeyParsedForm).(*CustomCommand)
+	//cmdEdit := ctx.Value(common.ContextKeyParsedForm).(*CustomCommand)
+	cmdSaved, err := models.FindCustomCommandG(context.Background(), activeGuild.ID, int64(cmd.ID))
+	if cmdSaved.Disabled == true && cmd.ToDBModel().Disabled == false {
+		c, err := models.CustomCommands(qm.Where("guild_id = ? and disabled = false", activeGuild.ID)).CountG(ctx)
+		if err != nil {
+			return templateData, err
+		}
+		if int(c) >= MaxCommandsForContext(ctx) {
+			return templateData, web.NewPublicError(fmt.Sprintf("Max %d enabled custom commands allowed (or %d for premium servers)", MaxCommands, MaxCommandsPremium))
+		}
+	}
 
 	// ensure that the group specified is owned by this guild
 	if cmd.GroupID != 0 {
@@ -309,6 +321,10 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 		if c < 1 {
 			return templateData.AddAlerts(web.ErrorAlert("Unknown group")), nil
 		}
+	}
+
+	if !premium.ContextPremium(ctx) && cmd.TriggerOnEdit {
+		return templateData.AddAlerts(web.ErrorAlert("`Trigger on edits` is a premium feature, your command wasn't saved, please save again after disabling `Trigger on edits`")), nil
 	}
 
 	dbModel := cmd.ToDBModel()
@@ -330,7 +346,7 @@ func handleUpdateCommand(w http.ResponseWriter, r *http.Request) (web.TemplateDa
 			return templateData, err
 		}
 	}
-	_, err := dbModel.UpdateG(ctx, boil.Blacklist("last_run", "next_run", "local_id", "guild_id", "last_error", "last_error_time", "run_count"))
+	_, err = dbModel.UpdateG(ctx, boil.Blacklist("last_run", "next_run", "local_id", "guild_id", "last_error", "last_error_time", "run_count"))
 	if err != nil {
 		return templateData, nil
 	}

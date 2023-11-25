@@ -82,8 +82,9 @@
     // string manipulation
     "hasPrefix":true, "hasSuffix":true, "joinStr":true, "lower":true,
     "normalizeAccents":true, "normalizeConfusables":true,
-    "print":true, "println":true, "printf":true, "slice":true, "split":true, "title":true,
-    "trim":true, "trimLeft":true, "trimRight":true, "trimSpace":true,
+    "print":true, "println":true, "printf":true,
+    "sanitizeText":true, "slice":true, "split":true, 
+    "title":true, "trim":true, "trimLeft":true, "trimRight":true, "trimSpace":true,
     "upper":true, "urlescape":true, "urlunescape":true,
     
     // time functions
@@ -106,6 +107,8 @@
     "execTemplate":true,
     "lastMessages":true,
     "pinMessage":true,
+    "publishMessage":true,
+    "publishResponse":true,
     "sendDM":true, 
     "sendMessage":true,
     "sendMessageRetID":true,
@@ -151,12 +154,16 @@
     "getChannel":true,
     "getChannelPins":true,
     "getChannelOrThread":true,
+    "getGuildMembers":true,
+    "getGuildPreview":true,
     "getMember":true,
     "getMemberTimezone":true,
     "getMessage":true,
     "getMessageReactions":true,
     "getPinCount":true,
     "getThread":true,
+    "getThreadsAllActive":true,
+    "getThreadsArchived":true,
     "getUser":true,
     "getUserCount":true,
     "onlineCount":true,
@@ -183,6 +190,7 @@
     // templexec
     "exec":true,
     "execAdmin":true,
+    "execBot":true,
     "userArg":true,
 
     // Role functions

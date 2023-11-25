@@ -33,11 +33,7 @@ const (
 	MaxTimeOutDuration     = 40320 * time.Minute
 	MinTimeOutDuration     = time.Minute
 	DefaultTimeoutDuration = 10 * time.Minute
-)
-
-const (
-	DefaultDMMessage = `You have been {{.ModAction}}
-{{if .Reason}}**Reason:** {{.Reason}}{{end}}`
+	DefaultDMMessage       = "You have been {{.ModAction}}\n**Reason:** {{.Reason}}"
 )
 
 func getMemberWithFallback(gs *dstate.GuildSet, user *discordgo.User) (ms *dstate.MemberState, notFound bool) {
@@ -104,7 +100,7 @@ func punish(config *Config, p Punishment, guildID int64, channel *dstate.Channel
 
 	fullReason := reason
 	if author.ID != common.BotUser.ID {
-		fullReason = author.Username + "#" + author.Discriminator + ": " + reason
+		fullReason = author.String() + ": " + reason
 	}
 
 	switch p {
@@ -752,8 +748,9 @@ func WarnUser(config *Config, guildID int64, channel *dstate.ChannelState, msg *
 	warning := &WarningModel{
 		GuildID:               guildID,
 		UserID:                discordgo.StrID(target.ID),
+		Username:              target.GlobalName,
 		AuthorID:              discordgo.StrID(author.ID),
-		AuthorUsernameDiscrim: author.Username + "#" + author.Discriminator,
+		AuthorUsernameDiscrim: author.String(),
 
 		Message: message,
 	}

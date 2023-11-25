@@ -157,8 +157,9 @@ type CustomCommand struct {
 	Channels        []int64 `json:"channels" schema:"channels"`
 
 	// If set, then one of the following channels are required, otherwise they are ignored
-	RequireRoles bool    `json:"require_roles" schema:"require_roles"`
-	Roles        []int64 `json:"roles" schema:"roles"`
+	RequireRoles  bool    `json:"require_roles" schema:"require_roles"`
+	Roles         []int64 `json:"roles" schema:"roles"`
+	TriggerOnEdit bool    `json:"trigger_on_edit" schema:"trigger_on_edit"`
 
 	GroupID int64
 
@@ -202,17 +203,6 @@ func (cc *CustomCommand) Validate(tmpl web.TemplateData) (ok bool) {
 		tmpl.AddAlerts(web.ErrorAlert("Minimum interval is 1 minute..."))
 		return false
 	}
-
-	/*// from master
-	if cc.TriggerTypeForm == "interval_minutes" && (cc.TimeTriggerInterval < MinIntervalTriggerDurationMinutes || cc.TimeTriggerInterval > MaxIntervalTriggerDurationMinutes) {
-		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Minute interval can be between %v and %v", MinIntervalTriggerDurationMinutes, MaxIntervalTriggerDurationMinutes)))
-		return false
-	}
-
-	if cc.TriggerTypeForm == "interval_hours" && (cc.TimeTriggerInterval < MinIntervalTriggerDurationHours || cc.TimeTriggerInterval > MaxIntervalTriggerDurationHours) {
-		tmpl.AddAlerts(web.ErrorAlert(fmt.Sprintf("Hourly interval can be between %v and %v", MinIntervalTriggerDurationHours, MaxIntervalTriggerDurationHours)))
-		return false
-	}*/
 
 	// check max interval limits
 	var intvMax bool
@@ -259,8 +249,9 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 
 		Responses: cc.Responses,
 
-		ShowErrors: cc.ShowErrors,
-		Disabled:   !cc.Disabled,
+		ShowErrors:    cc.ShowErrors,
+		Disabled:      !cc.Disabled,
+		TriggerOnEdit: cc.TriggerOnEdit,
 
 		ThreadsEnabled:   cc.ThreadsEnabled,
 		NormalizeUnicode: cc.NormalizeUnicode,
@@ -294,6 +285,13 @@ func (cc *CustomCommand) ToDBModel() *models.CustomCommand {
 }
 
 func CmdRunsInCategory(cc *models.CustomCommand, parentChannel int64) bool {
+	gs := bot.State.GetGuild(cc.GuildID)
+	cs := gs.GetChannelOrThread(parentChannel)
+	threadChannelParent := int64(0)
+	if cs != nil {
+		threadChannelParent = cs.ParentID
+	}
+
 	if cc.GroupID.Valid {
 		// check group restrictions
 		if common.ContainsInt64Slice(cc.R.Group.IgnoreCategories, parentChannel) {
@@ -310,6 +308,10 @@ func CmdRunsInCategory(cc *models.CustomCommand, parentChannel int64) bool {
 	// check command specific restrictions
 	for _, v := range cc.Categories {
 		if v == parentChannel {
+			return cc.CategoriesWhitelistMode
+		}
+
+		if threadChannelParent != 0 && v == threadChannelParent {
 			return cc.CategoriesWhitelistMode
 		}
 	}

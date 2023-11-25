@@ -1,7 +1,7 @@
 {{define "cp_custom_commands_edit_cmd"}}
 {{template "cp_head" .}}
 <header class="page-header">
-    <h2>Custom commands</h2>
+    <h2><i class="fas fa-closed-captioning"></i>&nbsp;Custom commands</h2>
 </header>
 
 {{template "cp_alerts" .}}
@@ -164,7 +164,18 @@
                                                 <input type="text" class="pagst-trigger form-control" name="trigger" placeholder="void"
                                                 value="{{.CC.TextTrigger}}" oninput="onTriggerChanged(this)">
                                             </div>
-                                            {{checkbox "case_sensitive" "case_sensitive" "Case Sensitive" .CC.TextTriggerCaseSensitive}}
+                                            <table class="mb-3">
+                                                <tr>
+                                                    <td style="padding-right:42px">
+                                                        {{checkbox "case_sensitive" "case_sensitive" "Case Sensitive" .CC.TextTriggerCaseSensitive}}
+                                                    </td>
+                                                    {{if .IsGuildPremium -}}
+                                                    <td>
+                                                        {{checkbox "trigger_on_edit" "trigger_on_edit" "Trigger on edits?" .CC.TriggerOnEdit}}
+                                                    </td>
+                                                    {{- end}}
+                                                </tr>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
@@ -186,6 +197,13 @@
                                                     {{checkbox "normalize_unicode" "normalize_unicode" "Normalize Unicode Accents & Confusables" .CC.NormalizeUnicode}}
                                                 </td>
                                             </tr>
+                                             {{if .IsGuildPremium -}}
+                                            <tr>
+                                                <td colspan="2">
+                                                    {{checkbox "trigger_on_edit" "trigger_on_edit" "Trigger on edits?" .CC.TriggerOnEdit}}
+                                                </td>
+                                            </tr>
+                                            {{- end}}
                                         </table>
                                     </div>
                                 </div>

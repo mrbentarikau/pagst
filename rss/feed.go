@@ -144,7 +144,7 @@ func (p *Plugin) CheckRSSFeed(feedByte []byte, directFeed *gofeed.Feed, feedURL 
 		return nil
 	}
 
-	if time.Since(*parsedPublishedAt) > time.Minute*30 && lastRSSLink != "" {
+	if time.Since(*parsedPublishedAt) > time.Minute*30 && lastRSSLink == feed.Items[0].Link {
 		// just a safeguard against empty parsedPublishedAt
 		return nil
 	}
@@ -173,7 +173,8 @@ func (p *Plugin) postRSSFeed(subs models.RSSFeedSlice, lastRSSTime, publishedAt 
 		if count >= 10 {
 			break
 		}
-		if lastRSSTime.After(*v.PublishedParsed) || time.Since(*v.PublishedParsed) > time.Minute*30 || lastRSSLink == v.Link {
+
+		if lastRSSTime.After(*v.PublishedParsed) || time.Since(*v.PublishedParsed) > time.Hour*12 || lastRSSLink == v.Link {
 			continue
 		}
 
@@ -190,7 +191,7 @@ func (p *Plugin) postRSSFeed(subs models.RSSFeedSlice, lastRSSTime, publishedAt 
 	}
 
 	if len(filteredFeedItems) > 0 {
-
+		logger.Infof("FILTERED RSS FEEDS FOUND %d - %s", len(filteredFeedItems), feed.Title)
 		for _, sub := range subs {
 			if sub.Enabled {
 				go p.sendNewRSSFeedMessage(sub.GuildID, sub.ChannelID, sub.MentionRole, feed, sub.FeedName, filteredFeedItems)
@@ -374,7 +375,7 @@ func createRSSEmbed(feed *gofeed.Feed, filteredItems []*gofeed.Item, feedName st
 			},
 		}
 
-		if feedItem.Image != nil {
+		if feedItem.Image != nil && feedItem.Image.URL != feed.Image.URL {
 			embed.Image = &discordgo.MessageEmbedImage{
 				URL: feedItem.Image.URL,
 			}

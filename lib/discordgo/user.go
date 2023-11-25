@@ -2,7 +2,7 @@ package discordgo
 
 import (
 	"fmt"
-	"strings"
+	"strconv"
 
 	"github.com/mrbentarikau/pagst/lib/gojay"
 )
@@ -27,6 +27,9 @@ const (
 	UserFlagVerifiedBot               UserFlags = 1 << 16
 	UserFlagVerifiedBotDeveloper      UserFlags = 1 << 17
 	UserFlagDiscordCertifiedModerator UserFlags = 1 << 18
+	UserFlagBotHTTPInteractions       UserFlags = 1 << 19
+	UserFlagSpammer                   UserFlags = 1 << 20
+	UserFlagActiveBotDeveloper        UserFlags = 1 << 22
 )
 
 // A User stores all data for an individual Discord user.
@@ -40,6 +43,10 @@ type User struct {
 
 	// The user's username.
 	Username string `json:"username"`
+
+	// The user's display name, if it is set.
+	// For bots, this is the application name.
+	GlobalName string `json:"global_name"`
 
 	// The hash of the user's avatar. Use Session.UserAvatar
 	// to retrieve the avatar itself.
@@ -93,8 +100,17 @@ type User struct {
 }
 
 // String returns a unique identifier of the form username#discriminator
+// or username only if the discriminator is "0"
 func (u *User) String() string {
-	return fmt.Sprintf("%s#%s", u.Username, u.Discriminator)
+	// If the user has been migrated from the legacy username system, their discriminator is "0".
+	// See https://support-dev.discord.com/hc/en-us/articles/13667755828631
+	if u.Discriminator == "0" {
+		return u.Username
+	}
+
+	// The code below handles applications and users without a migrated username.
+	// https://support-dev.discord.com/hc/en-us/articles/13667755828631
+	return u.Username + "#" + u.Discriminator
 }
 
 // Mention return a string which mentions the user
@@ -109,6 +125,8 @@ func (u *User) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
 		return DecodeSnowflake(&u.ID, dec)
 	case "username":
 		return dec.String(&u.Username)
+	case "global_name":
+		return dec.String(&u.GlobalName)
 	case "avatar":
 		return dec.String(&u.Avatar)
 	case "locale":
@@ -133,27 +151,31 @@ func (u *User) NKeys() int {
 //	size:    The size of the user's avatar as a power of two
 //	         if size is an empty string, no size parameter will
 //	         be added to the URL.
-func (u *User) AvatarURL(size string) string {
-	var URL string
-	if u.Avatar == "" {
-		URL = EndpointDefaultUserAvatar(u.Discriminator)
-	} else if strings.HasPrefix(u.Avatar, "a_") {
-		URL = EndpointUserAvatarAnimated(u.ID, u.Avatar)
-	} else {
-		URL = EndpointUserAvatar(u.ID, u.Avatar)
+func (u *User) AvatarURL(sizeArg ...string) string {
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
 	}
 
-	if size != "" {
-		return URL + "?size=" + size
-	}
-	return URL
+	return avatarURL(
+		u.Avatar,
+		EndpointDefaultUserAvatar(u.DefaultAvatarIndex()),
+		EndpointUserAvatar(u.ID, u.Avatar),
+		EndpointUserAvatarAnimated(u.ID, u.Avatar),
+		size,
+	)
 }
 
 // BannerURL returns the URL of the users's banner image.
 //
-//	size:    The size of the desired banner image as a power of two
-//	         Image size can be any power of two between 16 and 4096.
-func (u *User) BannerURL(size string) string {
+//		size:    The size of the desired banner image as a power of two
+//	        Image size can be any power of two between 16 and 4096.
+func (u *User) BannerURL(sizeArg ...string) string {
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+
 	return bannerURL(u.Banner, EndpointUserBanner(u.ID, u.Banner), EndpointUserBannerAnimated(u.ID, u.Banner), size)
 }
 
@@ -162,4 +184,14 @@ func (u *User) BannerURL(size string) string {
 type SelfUser struct {
 	*User
 	Token string `json:"token"`
+}
+
+// AvatarIndex returns the index of the user's avatar
+func (u *User) DefaultAvatarIndex() int64 {
+	if u.Discriminator == "0" {
+		return (u.ID >> 22) % 6
+	}
+
+	id, _ := strconv.Atoi(u.Discriminator)
+	return int64(id % 5)
 }

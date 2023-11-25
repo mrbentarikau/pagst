@@ -2,19 +2,18 @@ package bot
 
 import (
 	"context"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"emperror.dev/errors"
 
-	"github.com/bwmarrin/snowflake"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/bwmarrin/snowflake"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
 )
 
@@ -118,28 +117,28 @@ func SnowflakeToTime(i int64) time.Time {
 	return t
 }
 
-func SetStatus(streaming, status, idle string, activity string) {
-	if status == "" {
-		r, _ := regexp.Compile(`\d+\.\d+(\.\d+)?`)
-		status = "v" + r.FindString(common.VERSION) + " :)"
+func SetStatus(activityType, statusType, statusText, streamingUrl string) {
+	if statusText == "" {
+		statusText = common.VERSION + " :)"
 	}
+	err1 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_activity_type", activityType))
+	err2 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_type", statusType))
+	err3 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_text", statusText))
+	err4 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_streaming_url", streamingUrl))
 
-	err1 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_streaming", streaming))
-	err2 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_name", status))
-	err3 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_idle", idle))
-	err4 := common.RedisPool.Do(radix.Cmd(nil, "SET", "status_activity", activity))
 	if err1 != nil {
 		logger.WithError(err1).Error("failed setting bot status in redis")
 	}
-
 	if err2 != nil {
 		logger.WithError(err2).Error("failed setting bot status in redis")
 	}
+
 	if err3 != nil {
-		logger.WithError(err2).Error("failed setting bot status in redis")
+		logger.WithError(err3).Error("failed setting bot status in redis")
 	}
+
 	if err4 != nil {
-		logger.WithError(err2).Error("failed setting bot status in redis")
+		logger.WithError(err4).Error("failed setting bot status in redis")
 	}
 
 	pubsub.Publish("bot_status_changed", -1, nil)
@@ -208,7 +207,7 @@ func BotPermissions(gs *dstate.GuildSet, channelID int64) (int64, error) {
 }
 
 func SendMessage(guildID int64, channelID int64, msg string) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages)
+	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -219,7 +218,7 @@ func SendMessage(guildID int64, channelID int64, msg string) (permsOK bool, resp
 }
 
 func SendMessageGS(gs *dstate.GuildSet, channelID int64, msg string) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermissionGS(gs, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages)
+	hasPerms, err := BotHasPermissionGS(gs, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -229,7 +228,7 @@ func SendMessageGS(gs *dstate.GuildSet, channelID int64, msg string) (permsOK bo
 }
 
 func SendMessageEmbed(guildID int64, channelID int64, embed *discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionEmbedLinks)
+	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel|discordgo.PermissionEmbedLinks)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -240,7 +239,7 @@ func SendMessageEmbed(guildID int64, channelID int64, embed *discordgo.MessageEm
 }
 
 func SendMessageEmbedGS(gs *dstate.GuildSet, channelID int64, msg *discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermissionGS(gs, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionEmbedLinks)
+	hasPerms, err := BotHasPermissionGS(gs, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel|discordgo.PermissionEmbedLinks)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -251,7 +250,7 @@ func SendMessageEmbedGS(gs *dstate.GuildSet, channelID int64, msg *discordgo.Mes
 }
 
 func SendMessageEmbedList(guildID int64, channelID int64, embeds []*discordgo.MessageEmbed) (permsOK bool, resp *discordgo.Message, err error) {
-	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionEmbedLinks)
+	hasPerms, err := BotHasPermission(guildID, channelID, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel|discordgo.PermissionEmbedLinks)
 	if !hasPerms {
 		return false, nil, err
 	}
@@ -285,59 +284,66 @@ func NodeID() string {
 	return NodeConn.GetIDLock()
 }
 
+// ParseActivityType parses the activity type from a string
+func ParseActivityType(activityType string) (discordgo.ActivityType, error) {
+	switch strings.ToLower(activityType) {
+	case "playing":
+		return discordgo.ActivityTypePlaying, nil
+	case "streaming":
+		return discordgo.ActivityTypeStreaming, nil
+	case "listening":
+		return discordgo.ActivityTypeListening, nil
+	case "watching":
+		return discordgo.ActivityTypeWatching, nil
+	case "custom":
+		return discordgo.ActivityTypeCustom, nil
+	case "competing":
+		return discordgo.ActivityTypeCompeting, nil
+	default:
+		return 0, errors.New("Invalid activity type")
+	}
+}
+
 // RefreshStatus updates the provided sessions status according to the current status set
 func RefreshStatus(session *discordgo.Session) {
+	var activityTypeStr, statusTypeStr, statusText, streamingUrl string
+	//var activityType discordgo.ActivityType
+	var statusType discordgo.Status
+	err1 := common.RedisPool.Do(radix.Cmd(&activityTypeStr, "GET", "status_activity_type"))
+	err2 := common.RedisPool.Do(radix.Cmd(&statusTypeStr, "GET", "status_type"))
+	err3 := common.RedisPool.Do(radix.Cmd(&statusText, "GET", "status_text"))
+	err4 := common.RedisPool.Do(radix.Cmd(&streamingUrl, "GET", "status_streaming_url"))
 
-	var streamingURL string
-	var status string
-	var idle string
-	var activity string
-	var idleState *discordgo.UpdateStatusData
-	var now = 0
-	var gameType discordgo.ActivityType
-
-	err1 := common.RedisPool.Do(radix.Cmd(&streamingURL, "GET", "status_streaming"))
-	err2 := common.RedisPool.Do(radix.Cmd(&status, "GET", "status_name"))
-	err3 := common.RedisPool.Do(radix.Cmd(&idle, "GET", "status_idle"))
-	err4 := common.RedisPool.Do(radix.Cmd(&activity, "GET", "status_activity"))
 	if err1 != nil {
-		logger.WithError(err1).Error("failed retrieving bot streaming status")
+		logger.WithError(err1).Error("failed retrieving bot activity type")
 	}
 	if err2 != nil {
-		logger.WithError(err2).Error("failed retrieving bot status")
+		logger.WithError(err2).Error("failed retrieving bot status type")
 	}
 	if err3 != nil {
-		logger.WithError(err3).Error("failed retrieving bot status")
+		logger.WithError(err3).Error("failed retrieving bot status text")
 	}
 	if err4 != nil {
-		logger.WithError(err4).Error("failed retrieving bot status")
+		logger.WithError(err4).Error("failed retrieving bot streaming url")
 	}
-
-	if streamingURL != "" {
-		gameType = discordgo.ActivityTypeStreaming
-		//session.UpdateStreamingStatus(0, status, streamingURL)
-	} else {
-		activity = strings.ToLower(activity)
-		if activity == "listening" {
-			gameType = discordgo.ActivityTypeListening
-		} else if activity == "watching" {
-			gameType = discordgo.ActivityTypeWatching
-		} else {
-			gameType = discordgo.ActivityTypeGame
-		}
+	switch statusTypeStr {
+	case "online":
+		statusType = discordgo.StatusOnline
+	case "idle":
+		statusType = discordgo.StatusIdle
+	case "dnd":
+		statusType = discordgo.StatusDoNotDisturb
+	case "offline":
+		statusType = discordgo.StatusInvisible
+	default:
+		statusType = discordgo.StatusOnline
 	}
-
-	if idle != "" {
-		idleState = &discordgo.UpdateStatusData{Status: "idle"}
-		now = int(time.Now().Unix() * 1000)
-		idleState.IdleSince = &now
-	} else {
-		idleState = &discordgo.UpdateStatusData{Status: "online"}
-		idleState.IdleSince = &now
+	activityType, err5 := ParseActivityType(activityTypeStr)
+	if err5 != nil {
+		logger.WithError(err5).Error("failed parsing activity type, exiting RefreshStatus")
+		return
 	}
-
-	idleState.Game = &discordgo.Activity{Name: status, Type: gameType, URL: streamingURL}
-	session.UpdateStatusComplex(*idleState)
+	session.UpdateStatus(activityType, statusType, statusText, streamingUrl)
 }
 
 // IsMemberAbove returns weather ms1 is above ms2 in terms of roles (e.g the highest role of ms1 is higher than the highest role of ms2)

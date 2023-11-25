@@ -102,7 +102,7 @@ func (d *Data) SendFollowupMessage(reply interface{}, allowedMentions discordgo.
 
 		switch d.TriggerType {
 		case TriggerTypeSlashCommands:
-			m, err := d.Session.CreateFollowupMessage(d.SlashCommandTriggerData.Interaction.ApplicationID, d.SlashCommandTriggerData.Interaction.Token, &discordgo.WebhookParams{
+			m, err := d.Session.FollowupMessageCreate(d.SlashCommandTriggerData.Interaction, true, &discordgo.WebhookParams{
 				Embeds:          []*discordgo.MessageEmbed{t},
 				AllowedMentions: &allowedMentions,
 			})
@@ -127,7 +127,7 @@ func (d *Data) SendFollowupMessage(reply interface{}, allowedMentions discordgo.
 					AllowedMentions: &allowedMentions,
 				}
 
-				m, err := d.Session.CreateFollowupMessage(d.SlashCommandTriggerData.Interaction.ApplicationID, d.SlashCommandTriggerData.Interaction.Token, params)
+				m, err := d.Session.FollowupMessageCreate(d.SlashCommandTriggerData.Interaction, true, params)
 				if err != nil {
 					return msgs, err
 				}
@@ -170,7 +170,7 @@ func (d *Data) SendFollowupMessage(reply interface{}, allowedMentions discordgo.
 				params.Embeds = t.Embeds
 			}
 
-			m, err := d.Session.CreateFollowupMessage(d.SlashCommandTriggerData.Interaction.ApplicationID, d.SlashCommandTriggerData.Interaction.Token, params)
+			m, err := d.Session.FollowupMessageCreate(d.SlashCommandTriggerData.Interaction, true, params)
 			return []*discordgo.Message{m}, err
 
 		default:

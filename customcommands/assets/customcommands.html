@@ -22,7 +22,7 @@
 </style>
 
 <header class="page-header">
-    <h2>Custom commands</h2>
+    <h2><i class="fas fa-closed-captioning"></i>&nbsp;Custom commands</h2>
 </header>
 
 {{template "cp_alerts" .}}
@@ -185,6 +185,7 @@
                 {{else if eq .TriggerType 6}}
                      {{if eq .ReactionTriggerMode 1}} added{{else if eq .ReactionTriggerMode 2}} removed{{else}} added/removed{{end}}{{template "cc_restrictions" .}}
                 {{end}}
+                {{if .TriggerOnEdit}}&nbsp;<sup><i title="Trigger on Edit" class="fa-solid fa-pen-nib"></i></sup>{{end}}
                 {{if .Note.String}}&nbsp;<sup><i title="Notes for #{{.LocalID}}: {{if gt (toRune ($notes := .Note.String)|len) 32}}{{slice (toRune $notes) 0 32|str}}...{{else}}{{$notes}}{{end}}" class="fa-solid fa-comment fa-sm"></i></sup>{{end}}
                 </a>
             </h2>
@@ -280,7 +281,7 @@
     {{else if eq .insideDot.TriggerType 6}}
         {{$triggerStyleClasses = "cc-trigger-reaction"}}
     {{end}}
-    <a {{if .insideDot.Disabled}}style="background-color:#5a2c26!important;padding:15px 20px 10px 20px" title="{{printf `Custom Command #%d disabled...` .insideDot.LocalID}}"{{else}} style="padding:15px 20px 10px 20px"{{end}} data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown"><span title="Run count: {{humanizeThousands .insideDot.RunCount}}">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType -}}</span>
+   <a style="padding:15px 20px 13px 20px"{{if .insideDot.Disabled}}title="{{printf `Custom Command #%d disabled...` .insideDot.LocalID}}"{{end}} data-toggle="collapse" data-parent="#accordion" href="#collapse_cmd{{.insideDot.LocalID}}" aria-expanded="false" aria-controls="collapse_cmd{{.insideDot.LocalID}}" class="{{$triggerStyleClasses}} cc-collapsibleDown {{if .insideDot.Disabled}}cc-view-disabled{{end}}"><span title="Run count: {{humanizeThousands .insideDot.RunCount}}">#{{.insideDot.LocalID}} - {{index .dot.CCTriggerTypes .insideDot.TriggerType -}}</span>
 {{end}}
 
 {{define "cc_restrictions"}}

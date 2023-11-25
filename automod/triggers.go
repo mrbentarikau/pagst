@@ -1,6 +1,7 @@
 package automod
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/mrbentarikau/pagst/antiphishing"
 	"github.com/mrbentarikau/pagst/automod/models"
-	"github.com/mrbentarikau/pagst/automod_legacy"
+	"github.com/mrbentarikau/pagst/automod_basic"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
@@ -539,7 +540,7 @@ func (inv *ServerInviteTrigger) UserSettings() []*SettingDef {
 }
 
 func (inv *ServerInviteTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.ChannelState, m *discordgo.Message, mdStripped string) (bool, error) {
-	containsBadInvited := automod_legacy.CheckMessageForBadInvites(m.Content, m.GuildID)
+	containsBadInvited := automod_basic.CheckMessageForBadInvites(m.Content, m.GuildID)
 	return containsBadInvited, nil
 }
 
@@ -872,6 +873,7 @@ type MultiMsgMentionTriggerData struct {
 	Threshold       int
 	Interval        int
 	CountDuplicates bool
+	IgnoreReplies   bool
 }
 
 var _ MessageTrigger = (*MultiMsgMentionTrigger)(nil)
@@ -923,6 +925,11 @@ func (mt *MultiMsgMentionTrigger) UserSettings() []*SettingDef {
 			Key:  "CountDuplicates",
 			Kind: SettingTypeBool,
 		},
+		{
+			Name: "Ignore reply mentions",
+			Key:  "IgnoreReplies",
+			Kind: SettingTypeBool,
+		},
 	}
 }
 
@@ -947,6 +954,10 @@ func (mt *MultiMsgMentionTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 		age := now.Sub(v.ParsedCreatedAt)
 		if age > within {
 			break
+		}
+
+		if settings.IgnoreReplies && v.ReferencedMessage != nil {
+			continue
 		}
 
 		if mt.ChannelBased || v.Author.ID == triggerCtx.MS.User.ID {
@@ -1905,3 +1916,51 @@ func (nwl *UserStatusWordlistTrigger) CheckUserStatus(t *TriggerContext) (bool, 
 	return false, nil
 }
 */
+
+/////////////////////////////////////////////////////////////
+
+var _ AutomodListener = (*AutomodExecution)(nil)
+
+type AutomodExecution struct {
+}
+type AutomodExecutionData struct {
+	RuleID string
+}
+
+func (am *AutomodExecution) Kind() RulePartType {
+	return RulePartTrigger
+}
+
+func (am *AutomodExecution) DataType() interface{} {
+	return &AutomodExecutionData{}
+}
+func (am *AutomodExecution) Name() (name string) {
+	return "Message triggers Discord Automod"
+}
+
+func (am *AutomodExecution) Description() (description string) {
+	return "Triggers when a message is detected by Discord Automod"
+}
+func (am *AutomodExecution) UserSettings() []*SettingDef {
+	return []*SettingDef{
+		{
+			Name: "Rule ID (leave blank for all)",
+			Key:  "RuleID",
+			Kind: SettingTypeString,
+		},
+	}
+}
+
+func (am *AutomodExecution) CheckRuleID(triggerCtx *TriggerContext, ruleID int64) (bool, error) {
+	dataCast := triggerCtx.Data.(*AutomodExecutionData)
+
+	if dataCast.RuleID == fmt.Sprint(ruleID) {
+		return true, nil
+	}
+
+	if dataCast.RuleID == "" {
+		return true, nil
+	}
+
+	return false, nil
+}

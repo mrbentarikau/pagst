@@ -31,8 +31,20 @@ type WolframAlpha struct {
 			Numsubpods string `xml:"numsubpods,attr"`
 			Primary    string `xml:"primary,attr"`
 			Subpod     []struct {
-				Text         string `xml:",chardata"`
-				Title        string `xml:"title,attr"`
+				Text  string `xml:",chardata"`
+				Title string `xml:"title,attr"`
+				Img   struct {
+					Text            string `xml:",chardata"`
+					Src             string `xml:"src,attr"`
+					Alt             string `xml:"alt,attr"`
+					Title           string `xml:"title,attr"`
+					Width           string `xml:"width,attr"`
+					Height          string `xml:"height,attr"`
+					Type            string `xml:"type,attr"`
+					Themes          string `xml:"themes,attr"`
+					Colorinvertable string `xml:"colorinvertable,attr"`
+					Contenttype     string `xml:"contenttype,attr"`
+				} `xml:"img"`
 				Plaintext    string `xml:"plaintext"`
 				Microsources struct {
 					Text        string `xml:",chardata"`
@@ -69,6 +81,12 @@ type WolframAlpha struct {
 							Short string `xml:"short,attr"`
 							Long  string `xml:"long,attr"`
 						} `xml:"unit"`
+						Img struct {
+							Text   string `xml:",chardata"`
+							Src    string `xml:"src,attr"`
+							Width  string `xml:"width,attr"`
+							Height string `xml:"height,attr"`
+						} `xml:"img"`
 					} `xml:"units"`
 					Link struct {
 						Text     string `xml:",chardata"`

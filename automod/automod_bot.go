@@ -19,6 +19,7 @@ import (
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -32,6 +33,7 @@ func (p *Plugin) BotInit() {
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleMsgUpdate, eventsystem.EventMessageUpdate)
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleGuildMemberJoin, eventsystem.EventGuildMemberAdd)
 	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleVoiceStateUpdate, eventsystem.EventVoiceStateUpdate)
+	eventsystem.AddHandlerAsyncLastLegacy(p, p.handleAutomodExecution, eventsystem.EventAutoModerationActionExecution)
 	//eventsystem.AddHandlerAsyncLastLegacy(p, p.handlePresenceUpdate, eventsystem.EventPresenceUpdate)
 
 	scheduledevents2.RegisterHandler("amod2_reset_channel_ratelimit", ResetChannelRatelimitData{}, handleResetChannelRatelimit)
@@ -333,6 +335,56 @@ func (p *Plugin) checkJoin(ms *dstate.MemberState) {
 	})
 }
 
+func (p *Plugin) handleAutomodExecution(evt *eventsystem.EventData) {
+	eventData := evt.AutoModerationActionExecution()
+
+	if !evt.HasFeatureFlag(featureFlagEnabled) || evt.GS.ID == 0 {
+		return
+	}
+
+	cs := evt.GS.GetChannelOrThread(eventData.ChannelID)
+	if cs == nil {
+		return
+	}
+
+	redisKey := fmt.Sprintf("automodv2_rule_execution_%d", eventData.MessageID)
+
+	var exists string
+
+	if err := common.RedisPool.Do(radix.Cmd(&exists, "GET", redisKey)); err != nil {
+		return
+	}
+	if exists == "1" {
+		return
+	}
+
+	// Expires a temporary value after 5 seconds
+	if err := common.RedisPool.Do(radix.Cmd(nil, "SET", redisKey, "1", "EX", "5")); err != nil {
+		return
+	}
+
+	ms, err := bot.GetMember(evt.GS.ID, eventData.UserID)
+	if err != nil {
+		logger.WithError(err).WithField("guild", eventData.GuildID).Error("failed getting guild member")
+		return
+	}
+
+	message, _ := common.BotSession.ChannelMessage(eventData.ChannelID, eventData.MessageID)
+
+	p.CheckTriggers(nil, evt.GS, ms, message, cs, func(trig *ParsedPart) (activated bool, err error) {
+		cast, ok := trig.Part.(AutomodListener)
+		if !ok {
+			return false, nil
+		}
+
+		return cast.CheckRuleID(&TriggerContext{
+			GS:   evt.GS,
+			MS:   ms,
+			Data: trig.ParsedSettings,
+		}, eventData.RuleID)
+	})
+}
+
 func (p *Plugin) CheckTriggers(rulesets []*ParsedRuleset, gs *dstate.GuildSet, ms *dstate.MemberState, msg *discordgo.Message, cs *dstate.ChannelState, checkF func(trp *ParsedPart) (activated bool, err error)) bool {
 
 	if rulesets == nil {
@@ -532,7 +584,7 @@ func (p *Plugin) RulesetRulesTriggeredCondsPassed(ruleset *ParsedRuleset, trigge
 			RuleName:      rule.Model.Name,
 			RulesetName:   rule.Model.R.Ruleset.Name,
 			UserID:        ctxData.MS.User.ID,
-			UserName:      ctxData.MS.User.Username + "#" + ctxData.MS.User.Discriminator,
+			UserName:      ctxData.MS.User.String(),
 			Extradata:     serializedExtraData,
 		}
 	}

@@ -14,6 +14,15 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 )
 
+type WouldYouRather struct {
+	OptionA string
+	OptionB string
+}
+
+func randomQuestion() WouldYouRather {
+	return Questions[rand.Intn(len(Questions))]
+}
+
 var Command = &commands.YAGCommand{
 	CmdCategory: commands.CategoryFun,
 	Name:        "WouldYouRather",
@@ -23,10 +32,22 @@ var Command = &commands.YAGCommand{
 		{Name: "raw", Help: "Raw output"},
 	},
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
+		var q1, q2 string
+		var err error
+		var nonErrare bool
 
-		q1, q2, err := wouldYouRather()
-		if err != nil {
-			return nil, err
+		question := randomQuestion()
+		q1 = question.OptionA
+		q2 = question.OptionB
+
+		if rand.Intn(2) > 0 {
+			nonErrare = true
+			q1, q2, err = wouldYouRather()
+			if err != nil {
+				nonErrare = false
+				q1 = question.OptionA
+				q2 = question.OptionB
+			}
 		}
 
 		wyrDescription := fmt.Sprintf("**EITHER...**\n🇦 %s\n\n **OR...**\n🇧 %s", q1, q2)
@@ -34,15 +55,18 @@ var Command = &commands.YAGCommand{
 		content := &discordgo.MessageEmbed{
 			Author: &discordgo.MessageEmbedAuthor{
 				Name:    "Would you rather?",
-				URL:     "http://either.io",
 				IconURL: "https://pagst.xyz/static/icons/favicon-32x32.png",
 			},
 			Color:       int(rand.Int63n(16777215)),
 			Description: wyrDescription,
 			Footer: &discordgo.MessageEmbedFooter{
-				Text:    fmt.Sprintf("Requested by: %s#%s", data.Author.Username, data.Author.Discriminator),
+				Text:    fmt.Sprintf("Requested by: %s", data.Author.String()),
 				IconURL: discordgo.EndpointUserAvatar(data.Author.ID, data.Author.Avatar),
 			},
+		}
+
+		if nonErrare {
+			content.Author.URL = "http://wouldurather.io"
 		}
 
 		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
@@ -69,7 +93,7 @@ var Command = &commands.YAGCommand{
 }
 
 func wouldYouRather() (q1 string, q2 string, err error) {
-	req, err := http.NewRequest("GET", "http://either.io/", nil)
+	req, err := http.NewRequest("GET", "https://wouldurather.io/", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -85,8 +109,8 @@ func wouldYouRather() (q1 string, q2 string, err error) {
 		return
 	}
 
-	r1 := doc.Find("div.result.result-1 > .option-text")
-	r2 := doc.Find("div.result.result-2 > .option-text")
+	r1 := doc.Find("#box1 > .option1")
+	r2 := doc.Find("#box2 > .option2")
 
 	if len(r1.Nodes) < 1 || len(r2.Nodes) < 1 {
 		return "", "", errors.New("Failed finding questions, format may have changed.")

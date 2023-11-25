@@ -11,6 +11,7 @@ const (
 	applicationCommandDeleteEventType            = "APPLICATION_COMMAND_DELETE"
 	applicationCommandPermissionsUpdateEventType = "APPLICATION_COMMAND_PERMISSIONS_UPDATE"
 	applicationCommandUpdateEventType            = "APPLICATION_COMMAND_UPDATE"
+	auditLogEntryCreateEventType                 = "AUDIT_LOG_ENTRY_CREATE"
 	autoModerationActionExecutionEventType       = "AUTO_MODERATION_ACTION_EXECUTION"
 	autoModerationRuleCreateEventType            = "AUTO_MODERATION_RULE_CREATE"
 	autoModerationRuleDeleteEventType            = "AUTO_MODERATION_RULE_DELETE"
@@ -18,16 +19,20 @@ const (
 	channelCreateEventType                       = "CHANNEL_CREATE"
 	channelDeleteEventType                       = "CHANNEL_DELETE"
 	channelPinsUpdateEventType                   = "CHANNEL_PINS_UPDATE"
+	channelTopicUpdateEventType                  = "CHANNEL_TOPIC_UPDATE"
 	channelUpdateEventType                       = "CHANNEL_UPDATE"
 	connectEventType                             = "__CONNECT__"
 	disconnectEventType                          = "__DISCONNECT__"
 	eventEventType                               = "__EVENT__"
+	guildAuditLogEntryCreateEventType            = "GUILD_AUDIT_LOG_ENTRY_CREATE"
 	guildBanAddEventType                         = "GUILD_BAN_ADD"
 	guildBanRemoveEventType                      = "GUILD_BAN_REMOVE"
 	guildCreateEventType                         = "GUILD_CREATE"
 	guildDeleteEventType                         = "GUILD_DELETE"
 	guildEmojisUpdateEventType                   = "GUILD_EMOJIS_UPDATE"
 	guildIntegrationsUpdateEventType             = "GUILD_INTEGRATIONS_UPDATE"
+	guildJoinRequestDeleteEventType              = "GUILD_JOIN_REQUEST_DELETE"
+	guildJoinRequestUpdateEventType              = "GUILD_JOIN_REQUEST_UPDATE"
 	guildMemberAddEventType                      = "GUILD_MEMBER_ADD"
 	guildMemberRemoveEventType                   = "GUILD_MEMBER_REMOVE"
 	guildMemberUpdateEventType                   = "GUILD_MEMBER_UPDATE"
@@ -40,6 +45,8 @@ const (
 	guildScheduledEventUpdateEventType           = "GUILD_SCHEDULED_EVENT_UPDATE"
 	guildScheduledEventUserAddEventType          = "GUILD_SCHEDULED_EVENT_USER_ADD"
 	guildScheduledEventUserRemoveEventType       = "GUILD_SCHEDULED_EVENT_USER_REMOVE"
+	guildSoundboardSoundCreateEventType          = "GUILD_SOUNDBOARD_SOUND_CREATE"
+	guildSoundboardSoundDeleteEventType          = "GUILD_SOUNDBOARD_SOUND_DELETE"
 	guildStickersUpdateEventType                 = "GUILD_STICKERS_UPDATE"
 	guildUpdateEventType                         = "GUILD_UPDATE"
 	integrationCreateEventType                   = "INTEGRATION_CREATE"
@@ -76,6 +83,7 @@ const (
 	typingStartEventType                         = "TYPING_START"
 	userNoteUpdateEventType                      = "USER_NOTE_UPDATE"
 	userUpdateEventType                          = "USER_UPDATE"
+	voiceChannelStatusUpdateEventType            = "VOICE_CHANNEL_STATUS_UPDATE"
 	voiceServerUpdateEventType                   = "VOICE_SERVER_UPDATE"
 	voiceStateUpdateEventType                    = "VOICE_STATE_UPDATE"
 	webhooksUpdateEventType                      = "WEBHOOKS_UPDATE"
@@ -157,6 +165,26 @@ func (eh applicationCommandUpdateEventHandler) New() interface{} {
 // Handle is the handler for ApplicationCommandUpdate events.
 func (eh applicationCommandUpdateEventHandler) Handle(s *Session, i interface{}) {
 	if t, ok := i.(*ApplicationCommandUpdate); ok {
+		eh(s, t)
+	}
+}
+
+// auditLogEntryCreateEventHandler is an event handler for AuditLogEntryCreate events.
+type auditLogEntryCreateEventHandler func(*Session, *AuditLogEntryCreate)
+
+// Type returns the event type for AuditLogEntryCreate events.
+func (eh auditLogEntryCreateEventHandler) Type() string {
+	return auditLogEntryCreateEventType
+}
+
+// New returns a new instance of AuditLogEntryCreate.
+func (eh auditLogEntryCreateEventHandler) New() interface{} {
+	return &AuditLogEntryCreate{}
+}
+
+// Handle is the handler for AuditLogEntryCreate events.
+func (eh auditLogEntryCreateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*AuditLogEntryCreate); ok {
 		eh(s, t)
 	}
 }
@@ -301,6 +329,26 @@ func (eh channelPinsUpdateEventHandler) Handle(s *Session, i interface{}) {
 	}
 }
 
+// channelTopicUpdateEventHandler is an event handler for ChannelTopicUpdate events.
+type channelTopicUpdateEventHandler func(*Session, *ChannelTopicUpdate)
+
+// Type returns the event type for ChannelTopicUpdate events.
+func (eh channelTopicUpdateEventHandler) Type() string {
+	return channelTopicUpdateEventType
+}
+
+// New returns a new instance of ChannelTopicUpdate.
+func (eh channelTopicUpdateEventHandler) New() interface{} {
+	return &ChannelTopicUpdate{}
+}
+
+// Handle is the handler for ChannelTopicUpdate events.
+func (eh channelTopicUpdateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*ChannelTopicUpdate); ok {
+		eh(s, t)
+	}
+}
+
 // channelUpdateEventHandler is an event handler for ChannelUpdate events.
 type channelUpdateEventHandler func(*Session, *ChannelUpdate)
 
@@ -362,6 +410,26 @@ func (eh eventEventHandler) Type() string {
 // Handle is the handler for Event events.
 func (eh eventEventHandler) Handle(s *Session, i interface{}) {
 	if t, ok := i.(*Event); ok {
+		eh(s, t)
+	}
+}
+
+// guildAuditLogEntryCreateEventHandler is an event handler for GuildAuditLogEntryCreate events.
+type guildAuditLogEntryCreateEventHandler func(*Session, *GuildAuditLogEntryCreate)
+
+// Type returns the event type for GuildAuditLogEntryCreate events.
+func (eh guildAuditLogEntryCreateEventHandler) Type() string {
+	return guildAuditLogEntryCreateEventType
+}
+
+// New returns a new instance of GuildAuditLogEntryCreate.
+func (eh guildAuditLogEntryCreateEventHandler) New() interface{} {
+	return &GuildAuditLogEntryCreate{}
+}
+
+// Handle is the handler for GuildAuditLogEntryCreate events.
+func (eh guildAuditLogEntryCreateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildAuditLogEntryCreate); ok {
 		eh(s, t)
 	}
 }
@@ -482,6 +550,46 @@ func (eh guildIntegrationsUpdateEventHandler) New() interface{} {
 // Handle is the handler for GuildIntegrationsUpdate events.
 func (eh guildIntegrationsUpdateEventHandler) Handle(s *Session, i interface{}) {
 	if t, ok := i.(*GuildIntegrationsUpdate); ok {
+		eh(s, t)
+	}
+}
+
+// guildJoinRequestDeleteEventHandler is an event handler for GuildJoinRequestDelete events.
+type guildJoinRequestDeleteEventHandler func(*Session, *GuildJoinRequestDelete)
+
+// Type returns the event type for GuildJoinRequestDelete events.
+func (eh guildJoinRequestDeleteEventHandler) Type() string {
+	return guildJoinRequestDeleteEventType
+}
+
+// New returns a new instance of GuildJoinRequestDelete.
+func (eh guildJoinRequestDeleteEventHandler) New() interface{} {
+	return &GuildJoinRequestDelete{}
+}
+
+// Handle is the handler for GuildJoinRequestDelete events.
+func (eh guildJoinRequestDeleteEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildJoinRequestDelete); ok {
+		eh(s, t)
+	}
+}
+
+// guildJoinRequestUpdateEventHandler is an event handler for GuildJoinRequestUpdate events.
+type guildJoinRequestUpdateEventHandler func(*Session, *GuildJoinRequestUpdate)
+
+// Type returns the event type for GuildJoinRequestUpdate events.
+func (eh guildJoinRequestUpdateEventHandler) Type() string {
+	return guildJoinRequestUpdateEventType
+}
+
+// New returns a new instance of GuildJoinRequestUpdate.
+func (eh guildJoinRequestUpdateEventHandler) New() interface{} {
+	return &GuildJoinRequestUpdate{}
+}
+
+// Handle is the handler for GuildJoinRequestUpdate events.
+func (eh guildJoinRequestUpdateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildJoinRequestUpdate); ok {
 		eh(s, t)
 	}
 }
@@ -722,6 +830,46 @@ func (eh guildScheduledEventUserRemoveEventHandler) New() interface{} {
 // Handle is the handler for GuildScheduledEventUserRemove events.
 func (eh guildScheduledEventUserRemoveEventHandler) Handle(s *Session, i interface{}) {
 	if t, ok := i.(*GuildScheduledEventUserRemove); ok {
+		eh(s, t)
+	}
+}
+
+// guildSoundboardSoundCreateEventHandler is an event handler for GuildSoundboardSoundCreate events.
+type guildSoundboardSoundCreateEventHandler func(*Session, *GuildSoundboardSoundCreate)
+
+// Type returns the event type for GuildSoundboardSoundCreate events.
+func (eh guildSoundboardSoundCreateEventHandler) Type() string {
+	return guildSoundboardSoundCreateEventType
+}
+
+// New returns a new instance of GuildSoundboardSoundCreate.
+func (eh guildSoundboardSoundCreateEventHandler) New() interface{} {
+	return &GuildSoundboardSoundCreate{}
+}
+
+// Handle is the handler for GuildSoundboardSoundCreate events.
+func (eh guildSoundboardSoundCreateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildSoundboardSoundCreate); ok {
+		eh(s, t)
+	}
+}
+
+// guildSoundboardSoundDeleteEventHandler is an event handler for GuildSoundboardSoundDelete events.
+type guildSoundboardSoundDeleteEventHandler func(*Session, *GuildSoundboardSoundDelete)
+
+// Type returns the event type for GuildSoundboardSoundDelete events.
+func (eh guildSoundboardSoundDeleteEventHandler) Type() string {
+	return guildSoundboardSoundDeleteEventType
+}
+
+// New returns a new instance of GuildSoundboardSoundDelete.
+func (eh guildSoundboardSoundDeleteEventHandler) New() interface{} {
+	return &GuildSoundboardSoundDelete{}
+}
+
+// Handle is the handler for GuildSoundboardSoundDelete events.
+func (eh guildSoundboardSoundDeleteEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*GuildSoundboardSoundDelete); ok {
 		eh(s, t)
 	}
 }
@@ -1441,6 +1589,26 @@ func (eh userUpdateEventHandler) Handle(s *Session, i interface{}) {
 	}
 }
 
+// voiceChannelStatusUpdateEventHandler is an event handler for VoiceChannelStatusUpdate events.
+type voiceChannelStatusUpdateEventHandler func(*Session, *VoiceChannelStatusUpdate)
+
+// Type returns the event type for VoiceChannelStatusUpdate events.
+func (eh voiceChannelStatusUpdateEventHandler) Type() string {
+	return voiceChannelStatusUpdateEventType
+}
+
+// New returns a new instance of VoiceChannelStatusUpdate.
+func (eh voiceChannelStatusUpdateEventHandler) New() interface{} {
+	return &VoiceChannelStatusUpdate{}
+}
+
+// Handle is the handler for VoiceChannelStatusUpdate events.
+func (eh voiceChannelStatusUpdateEventHandler) Handle(s *Session, i interface{}) {
+	if t, ok := i.(*VoiceChannelStatusUpdate); ok {
+		eh(s, t)
+	}
+}
+
 // voiceServerUpdateEventHandler is an event handler for VoiceServerUpdate events.
 type voiceServerUpdateEventHandler func(*Session, *VoiceServerUpdate)
 
@@ -1513,6 +1681,8 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return applicationCommandPermissionsUpdateEventHandler(v)
 	case func(*Session, *ApplicationCommandUpdate):
 		return applicationCommandUpdateEventHandler(v)
+	case func(*Session, *AuditLogEntryCreate):
+		return auditLogEntryCreateEventHandler(v)
 	case func(*Session, *AutoModerationActionExecution):
 		return autoModerationActionExecutionEventHandler(v)
 	case func(*Session, *AutoModerationRuleCreate):
@@ -1527,6 +1697,8 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return channelDeleteEventHandler(v)
 	case func(*Session, *ChannelPinsUpdate):
 		return channelPinsUpdateEventHandler(v)
+	case func(*Session, *ChannelTopicUpdate):
+		return channelTopicUpdateEventHandler(v)
 	case func(*Session, *ChannelUpdate):
 		return channelUpdateEventHandler(v)
 	case func(*Session, *Connect):
@@ -1535,6 +1707,8 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return disconnectEventHandler(v)
 	case func(*Session, *Event):
 		return eventEventHandler(v)
+	case func(*Session, *GuildAuditLogEntryCreate):
+		return guildAuditLogEntryCreateEventHandler(v)
 	case func(*Session, *GuildBanAdd):
 		return guildBanAddEventHandler(v)
 	case func(*Session, *GuildBanRemove):
@@ -1547,6 +1721,10 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return guildEmojisUpdateEventHandler(v)
 	case func(*Session, *GuildIntegrationsUpdate):
 		return guildIntegrationsUpdateEventHandler(v)
+	case func(*Session, *GuildJoinRequestDelete):
+		return guildJoinRequestDeleteEventHandler(v)
+	case func(*Session, *GuildJoinRequestUpdate):
+		return guildJoinRequestUpdateEventHandler(v)
 	case func(*Session, *GuildMemberAdd):
 		return guildMemberAddEventHandler(v)
 	case func(*Session, *GuildMemberRemove):
@@ -1571,6 +1749,10 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return guildScheduledEventUserAddEventHandler(v)
 	case func(*Session, *GuildScheduledEventUserRemove):
 		return guildScheduledEventUserRemoveEventHandler(v)
+	case func(*Session, *GuildSoundboardSoundCreate):
+		return guildSoundboardSoundCreateEventHandler(v)
+	case func(*Session, *GuildSoundboardSoundDelete):
+		return guildSoundboardSoundDeleteEventHandler(v)
 	case func(*Session, *GuildStickersUpdate):
 		return guildStickersUpdateEventHandler(v)
 	case func(*Session, *GuildUpdate):
@@ -1643,6 +1825,8 @@ func handlerForInterface(handler interface{}) EventHandler {
 		return userNoteUpdateEventHandler(v)
 	case func(*Session, *UserUpdate):
 		return userUpdateEventHandler(v)
+	case func(*Session, *VoiceChannelStatusUpdate):
+		return voiceChannelStatusUpdateEventHandler(v)
 	case func(*Session, *VoiceServerUpdate):
 		return voiceServerUpdateEventHandler(v)
 	case func(*Session, *VoiceStateUpdate):
@@ -1659,6 +1843,7 @@ func init() {
 	registerInterfaceProvider(applicationCommandDeleteEventHandler(nil))
 	registerInterfaceProvider(applicationCommandPermissionsUpdateEventHandler(nil))
 	registerInterfaceProvider(applicationCommandUpdateEventHandler(nil))
+	registerInterfaceProvider(auditLogEntryCreateEventHandler(nil))
 	registerInterfaceProvider(autoModerationActionExecutionEventHandler(nil))
 	registerInterfaceProvider(autoModerationRuleCreateEventHandler(nil))
 	registerInterfaceProvider(autoModerationRuleDeleteEventHandler(nil))
@@ -1666,13 +1851,17 @@ func init() {
 	registerInterfaceProvider(channelCreateEventHandler(nil))
 	registerInterfaceProvider(channelDeleteEventHandler(nil))
 	registerInterfaceProvider(channelPinsUpdateEventHandler(nil))
+	registerInterfaceProvider(channelTopicUpdateEventHandler(nil))
 	registerInterfaceProvider(channelUpdateEventHandler(nil))
+	registerInterfaceProvider(guildAuditLogEntryCreateEventHandler(nil))
 	registerInterfaceProvider(guildBanAddEventHandler(nil))
 	registerInterfaceProvider(guildBanRemoveEventHandler(nil))
 	registerInterfaceProvider(guildCreateEventHandler(nil))
 	registerInterfaceProvider(guildDeleteEventHandler(nil))
 	registerInterfaceProvider(guildEmojisUpdateEventHandler(nil))
 	registerInterfaceProvider(guildIntegrationsUpdateEventHandler(nil))
+	registerInterfaceProvider(guildJoinRequestDeleteEventHandler(nil))
+	registerInterfaceProvider(guildJoinRequestUpdateEventHandler(nil))
 	registerInterfaceProvider(guildMemberAddEventHandler(nil))
 	registerInterfaceProvider(guildMemberRemoveEventHandler(nil))
 	registerInterfaceProvider(guildMemberUpdateEventHandler(nil))
@@ -1685,6 +1874,8 @@ func init() {
 	registerInterfaceProvider(guildScheduledEventUpdateEventHandler(nil))
 	registerInterfaceProvider(guildScheduledEventUserAddEventHandler(nil))
 	registerInterfaceProvider(guildScheduledEventUserRemoveEventHandler(nil))
+	registerInterfaceProvider(guildSoundboardSoundCreateEventHandler(nil))
+	registerInterfaceProvider(guildSoundboardSoundDeleteEventHandler(nil))
 	registerInterfaceProvider(guildStickersUpdateEventHandler(nil))
 	registerInterfaceProvider(guildUpdateEventHandler(nil))
 	registerInterfaceProvider(integrationCreateEventHandler(nil))
@@ -1720,6 +1911,7 @@ func init() {
 	registerInterfaceProvider(typingStartEventHandler(nil))
 	registerInterfaceProvider(userNoteUpdateEventHandler(nil))
 	registerInterfaceProvider(userUpdateEventHandler(nil))
+	registerInterfaceProvider(voiceChannelStatusUpdateEventHandler(nil))
 	registerInterfaceProvider(voiceServerUpdateEventHandler(nil))
 	registerInterfaceProvider(voiceStateUpdateEventHandler(nil))
 	registerInterfaceProvider(webhooksUpdateEventHandler(nil))

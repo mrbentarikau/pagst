@@ -61,27 +61,36 @@ var cmds = []*commands.YAGCommand{
 	{
 		CmdCategory:  commands.CategoryTool,
 		Name:         "Remindme",
-		Description:  "Schedules a reminder, example: 'remindme 1h30min are you still alive?'\n\nSwitch -repeat will repeat the reminder starting with min duration of 1 hour.\nSwitch -time needs quoted date in either your registered time zone (using the `setz` command) or UTC. Adds first argument's duration and if repeat, sets duration to 24h. 'remindme 5m are you still alive? -time \"tomorrow 12:45\"'",
+		Description:  "Schedules a reminder, example: 'remindme 1h30min are you still alive?'\n\nSwitch -repeat will repeat the reminder starting with min duration of 1 hour.\nFlag -time needs quoted date in either your registered time zone (using the `setz` command) or UTC. Adds first argument's duration and if repeat, sets duration to 24h. 'remindme 5m are you still alive? -time \"tomorrow 12:45\"'.\n Using -time and 0 duration, first command argument is made to reminder text.",
 		Aliases:      []string{"remind", "reminder"},
 		RequiredArgs: 2,
 		Arguments: []*dcmd.ArgDef{
-			{Name: "Duration", Type: &commands.DurationArg{}},
+			{Name: "Duration", Type: dcmd.String},
 			{Name: "Message", Type: dcmd.String},
 		},
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "channel", Type: dcmd.Channel},
 			{Name: "repeat", Help: "Repeat the reminder at set duration"},
 			{Name: "time", Help: "Exact time for the reminder", Type: dcmd.String},
+			{Name: "noping", Help: "Don't ping the user in reminder response"},
 		},
 		ApplicationCommandEnabled: true,
 		DefaultEnabled:            true,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
+			var reminderMessage string
 			currentReminders, _ := GetUserReminders(parsed.Author.ID)
 			if len(currentReminders) >= 25 {
 				return "You can have a maximum of 25 active reminders, list your reminders with the `reminders` command", nil
 			}
 
-			fromNow := parsed.Args[0].Value.(time.Duration)
+			if parsed.Author.Bot {
+				return "Cannot create reminder for Bots, you're most likely trying to use execAdmin to create a reminder, use exec", nil
+			}
+
+			fromNow, err := common.ParseDuration(parsed.Args[0].Str())
+			if err != nil {
+				fromNow = 0
+			}
 			durString := common.HumanizeDuration(common.DurationPrecisionSeconds, fromNow)
 			when := time.Now().Add(fromNow)
 
@@ -90,7 +99,16 @@ var cmds = []*commands.YAGCommand{
 				repeatDuration = fromNow
 			}
 
+			disableMention := false
+			if parsed.Switch("noping").Value != nil && parsed.Switch("noping").Value.(bool) {
+				disableMention = true
+			}
+
 			switchTime := parsed.Switch("time")
+			if fromNow == 0 && switchTime != nil {
+				reminderMessage += fmt.Sprintf("%s ", parsed.Args[0].Str())
+			}
+
 			if switchTime.Value != nil {
 				dateParser := createDateParser()
 				if parsed.Switch("repeat").Value != nil && parsed.Switch("repeat").Value.(bool) {
@@ -117,22 +135,21 @@ var cmds = []*commands.YAGCommand{
 			}
 
 			id := parsed.ChannelID
-
 			if c := parsed.Switch("channel"); c.Value != nil {
+				id = c.Value.(*dstate.ChannelState).ID
 				hasPerms, err := bot.AdminOrPermMS(parsed.GuildData.GS.ID, id, parsed.GuildData.MS, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel)
 				if err != nil {
 					return "Failed checking permissions, please try again or join the support server.", err
 				}
 
-				id = c.Value.(*dstate.ChannelState).ID
 				nok := commands.CanExecuteInChannel(parsed, id)
 
 				if !hasPerms || !nok {
 					return "You do not have permissions to send messages there", nil
 				}
 			}
-
-			_, err := NewReminder(parsed.Author.ID, parsed.GuildData.GS.ID, id, parsed.Args[1].Str(), when, repeatDuration)
+			reminderMessage += parsed.Args[1].Str()
+			_, err = NewReminder(parsed.Author.ID, parsed.GuildData.GS.ID, id, reminderMessage, when, repeatDuration, disableMention)
 			if err != nil {
 				return nil, err
 			}
@@ -145,6 +162,7 @@ var cmds = []*commands.YAGCommand{
 		Name:                      "Reminders",
 		Description:               "Lists your active reminders",
 		ApplicationCommandEnabled: true,
+		IsResponseEphemeral:       true,
 		DefaultEnabled:            true,
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "raw", Help: "Raw, legacy output"},
@@ -162,10 +180,13 @@ var cmds = []*commands.YAGCommand{
 				return nil, err
 			}
 
+			out := "You have no reminders. Create reminders with the `Remindme` command."
 			if !pagination {
-				out := "Your reminders:\n"
-				out += stringReminders(currentReminders, false)
-				out += "```Remove a reminder with 'delreminder/rmreminder (id)' where id is the first number for each reminder above.\nTo clear all reminders, use 'delreminder' with the '-a' switch.```"
+				if len(currentReminders) > 0 {
+					out = "Your reminders:\n"
+					out += stringReminders(currentReminders, false)
+					out += "\nRemove a reminder with `delreminder/rmreminder (id)` where id is the first number for each reminder above.\nTo clear all reminders, use `delreminder` with the `-a` switch."
+				}
 				return out, nil
 			}
 
@@ -181,8 +202,7 @@ var cmds = []*commands.YAGCommand{
 					return fmt.Sprintf("Something went wrong: %s", err), nil
 				}
 			} else {
-				paginatedEmbed := embedCreator(currentReminders, 0, maxLength, 0, parsed)
-				return paginatedEmbed, nil
+				return out, nil
 			}
 
 			return pm, nil
@@ -194,6 +214,7 @@ var cmds = []*commands.YAGCommand{
 		Aliases:                   []string{"channelreminders"},
 		Description:               "Lists reminders in channel, only users with 'manage channel' permissions can use this.",
 		ApplicationCommandEnabled: true,
+		IsResponseEphemeral:       true,
 		DefaultEnabled:            true,
 		ArgSwitches: []*dcmd.ArgDef{
 			{Name: "raw", Help: "Raw, legacy output"},
@@ -219,21 +240,29 @@ var cmds = []*commands.YAGCommand{
 				return nil, err
 			}
 
+			out := "You have no reminders. Create reminders with the `Remindme` command."
 			if !pagination {
-				out := "Reminders in this channel:\n"
-				out += stringReminders(currentReminders, true)
-				out += "```Remove a reminder with 'delreminder/rmreminder (id)' where id is the first number for each reminder above```"
+				if len(currentReminders) > 0 {
+					out := "Reminders in this channel:\n"
+					out += stringReminders(currentReminders, true)
+					out += "```Remove a reminder with 'delreminder/rmreminder (id)' where id is the first number for each reminder above```"
+				}
 				return out, nil
 			}
 
-			pm, err := paginatedmessages.CreatePaginatedMessage(
-				parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
-					i := page - 1
-					paginatedEmbed := embedCreator(currentReminders, i, maxLength, 1, parsed)
-					return paginatedEmbed, nil
-				})
-			if err != nil {
-				return fmt.Sprintf("Something went wrong: %s", err), nil
+			var pm *paginatedmessages.PaginatedMessage
+			if len(currentReminders) > 0 {
+				pm, err = paginatedmessages.CreatePaginatedMessage(
+					parsed.GuildData.GS.ID, parsed.ChannelID, 1, int(math.Ceil(float64(len(currentReminders))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {
+						i := page - 1
+						paginatedEmbed := embedCreator(currentReminders, i, maxLength, 1, parsed)
+						return paginatedEmbed, nil
+					})
+				if err != nil {
+					return fmt.Sprintf("Something went wrong: %s", err), nil
+				}
+			} else {
+				return out, nil
 			}
 
 			return pm, nil
@@ -253,6 +282,7 @@ var cmds = []*commands.YAGCommand{
 			{Name: "userid", Type: dcmd.Int, Default: 0, Help: "userID"},
 		},
 		ApplicationCommandEnabled: true,
+		IsResponseEphemeral:       true,
 		DefaultEnabled:            true,
 		RunFunc: func(parsed *dcmd.Data) (interface{}, error) {
 			var reminder Reminder

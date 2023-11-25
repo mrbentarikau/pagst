@@ -50,6 +50,7 @@ var RulePartMap = map[int]RulePart{
 	35: &MessageLengthTrigger{Inverted: true},
 	36: &SlowmodeTrigger{ChannelBased: false, Links: true},
 	37: &SlowmodeTrigger{ChannelBased: true, Links: true},
+	38: &AutomodExecution{},
 
 	/*
 		9X:  &UserStatusRegexTrigger{BaseRegexTrigger{Inverse: false}},
@@ -292,4 +293,11 @@ type VoiceStateListener interface {
 	RulePart
 
 	CheckVoiceState(triggerCtx *TriggerContext, cs *dstate.ChannelState) (isAffected bool, err error)
+}
+
+// AutomodListener is a trigger for when Discord's built in automod kicks in
+type AutomodListener interface {
+	RulePart
+
+	CheckRuleID(triggerCtx *TriggerContext, ruleID int64) (isAffected bool, err error)
 }

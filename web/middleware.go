@@ -29,6 +29,7 @@ import (
 
 var (
 	confGAID = config.RegisterOption("yagpdb.ga_id", "Google analytics id", "")
+	confGA4  = config.RegisterOption("yagpdb.google_ga4", "Google analytics GA4 id", "")
 )
 
 // Misc mw that adds some headers, (Strict-Transport-Security)
@@ -69,7 +70,7 @@ func BaseTemplateDataMiddleware(inner http.Handler) http.Handler {
 	mw := func(w http.ResponseWriter, r *http.Request) {
 		// we store the light theme and sidebar_collapsed stuff in cookies
 		lightTheme := false
-		if cookie, err := r.Cookie("light_theme"); err == nil {
+		if cookie, err := r.Cookie("nord_theme"); err == nil {
 			if cookie.Value != "false" {
 				lightTheme = true
 			}
@@ -90,6 +91,7 @@ func BaseTemplateDataMiddleware(inner http.Handler) http.Handler {
 			"SidebarCollapsed": collapseSidebar,
 			"SidebarItems":     sideBarItems,
 			"GAID":             confGAID.GetString(),
+			"GA4":              confGA4.GetString(),
 		}
 
 		baseData["BaseURL"] = BaseURL()

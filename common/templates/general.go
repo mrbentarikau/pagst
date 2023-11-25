@@ -294,6 +294,11 @@ func CreateMessageSend(values ...interface{}) (*discordgo.MessageSend, error) {
 			msg.Reference = &discordgo.MessageReference{
 				MessageID: mID,
 			}
+		case "silent":
+			if val == nil || val == false {
+				continue
+			}
+			msg.Flags |= discordgo.MessageFlagsSuppressNotifications
 		default:
 			return nil, errors.New(`invalid key "` + key + `" passed to send message builder`)
 		}
@@ -352,6 +357,11 @@ func CreateMessageEdit(values ...interface{}) (*discordgo.MessageEdit, error) {
 				}
 				msg.Embeds = []*discordgo.MessageEmbed{embed}
 			}
+		case "silent":
+			if val == nil || val == false {
+				continue
+			}
+			msg.Flags |= discordgo.MessageFlagsSuppressNotifications
 		case "allowed_mentions":
 			if val == nil {
 				msg.AllowedMentions = discordgo.AllowedMentions{}
@@ -385,7 +395,7 @@ func parseAllowedMentions(Data interface{}) (*discordgo.AllowedMentions, error) 
 	allowedMentions := &discordgo.AllowedMentions{}
 	for k, v := range converted {
 
-		switch k {
+		switch strings.ToLower(k) {
 		case "parse":
 			var parseMentions []discordgo.AllowedMentionType
 			var parseSlice Slice
@@ -394,12 +404,12 @@ func parseAllowedMentions(Data interface{}) (*discordgo.AllowedMentions, error) 
 			case Slice, *Slice:
 				conv, err := parseSlice.AppendSlice(v)
 				if err != nil {
-					return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "parse"`)
+					return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "Parse", accepts a slice only`)
 				}
 				for _, elem := range conv.(Slice) {
 					elemConv, _ := elem.(string)
 					if elemConv != "users" && elemConv != "roles" && elemConv != "everyone" {
-						return nil, errors.New(`Allowed Mentions Parsing: invalid slice element in "parse"`)
+						return nil, errors.New(`Allowed Mentions Parsing: invalid slice element in "Parse", accepts "roles", "users", and "everyone"`)
 					}
 					parseMentions = append(parseMentions, discordgo.AllowedMentionType(elemConv))
 				}
@@ -413,73 +423,44 @@ func parseAllowedMentions(Data interface{}) (*discordgo.AllowedMentions, error) 
 				allowedMentions.Parse = parseMentions
 			}
 
-		case "users":
+		case "users", "roles":
 			var newslice discordgo.IDSlice
 			var parseSlice Slice
-
 			switch v.(type) {
 			case Slice, *Slice:
 				conv, err := parseSlice.AppendSlice(v)
 				if err != nil {
-					return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "Users"`)
-				}
-				for _, elem := range conv.(Slice) {
-					if ToInt64(elem) == 0 {
-						return nil, errors.New(`Allowed Mentions Parsing: "users" IDSlice: invalid ID passed-` + ToString(elem))
-					}
-					newslice = append(newslice, ToInt64(elem))
-				}
-				if len(newslice) > 100 {
-					newslice = newslice[:100]
-				}
-				allowedMentions.Users = newslice
-			default:
-				if ToInt64(v) == 0 {
-					return nil, errors.New(`Allowed Mentions Parsing: "users" IDSlice: invalid ID passed-` + ToString(v))
-				}
-
-				newslice = append(newslice, ToInt64(v))
-				allowedMentions.Users = newslice
-			}
-
-		case "roles":
-			var newslice discordgo.IDSlice
-			var parseSlice Slice
-
-			switch v.(type) {
-			case Slice, *Slice:
-				conv, err := parseSlice.AppendSlice(v)
-				if err != nil {
-					return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "roles"`)
+					return nil, fmt.Errorf(`Allowed Mentions parsing: invalid datatype passed to "%s", accepts a slice of snowflakes only`, k)
 				}
 				for _, elem := range conv.(Slice) {
 					if (ToInt64(elem)) == 0 {
-						return nil, errors.New(`Allowed Mentions Parsing: "roles" IDSlice: invalid ID passed-` + ToString(elem))
+						return nil, fmt.Errorf(`Allowed Mentions parsing: "%s" IDSlice: invalid ID passed -`+fmt.Sprint(elem), k)
 					}
 					newslice = append(newslice, ToInt64(elem))
 				}
 				if len(newslice) > 100 {
 					newslice = newslice[:100]
 				}
-				allowedMentions.Roles = newslice
+				if strings.ToLower(k) == "users" {
+					allowedMentions.Users = newslice
+				} else {
+					allowedMentions.Roles = newslice
+				}
 			default:
-				if (ToInt64(v)) == 0 {
-					return nil, errors.New(`Allowed Mentions Parsing: "roles" IDSlice: invalid ID passed-` + ToString(v))
+				if ToInt64(v) == 0 {
+					return nil, fmt.Errorf(`Allowed Mentions Parsing: "%s" IDSlice: invalid ID passed -`+fmt.Sprint(v), k)
 				}
 
 				newslice = append(newslice, ToInt64(v))
-				allowedMentions.Roles = newslice
+				allowedMentions.Users = newslice
 			}
 
-		case "reply":
-			switch v := v.(type) {
-			case bool:
-				if v {
-					allowedMentions.RepliedUser = true
-				}
-			default:
-				return nil, errors.New(`Allowed Mentions Parsing: "reply" not a bool: ` + ToString(v))
+		case "replied_user":
+			isRepliedUserMention, ok := v.(bool)
+			if !ok {
+				return nil, errors.New(`Allowed Mentions Parsing : invalid datatype passed to "reply", accepts a bool only`)
 			}
+			allowedMentions.RepliedUser = isRepliedUserMention
 
 		default:
 			return nil, errors.New(`Allowed Mentions Parsing : invalid key "` + k + `" for Allowed Mentions`)
@@ -1227,10 +1208,6 @@ func shuffle(seq interface{}) (interface{}, error) {
 		return nil, errors.New("can't iterate over a nil value")
 	}
 
-	/*switch seqv.Kind() {
-	case reflect.Array, reflect.Slice, reflect.String:
-		// okay
-	default:*/
 	if seqv.Kind() != reflect.Slice {
 		return nil, errors.New("can't iterate over " + reflect.ValueOf(seq).Type().String())
 	}
@@ -1249,80 +1226,32 @@ func shuffle(seq interface{}) (interface{}, error) {
 }
 
 func tmplToInt(from interface{}) int {
-	switch t := from.(type) {
-	case int:
-		return t
-	case int8:
-		return int(t)
-	case int16:
-		return int(t)
-	case int32:
-		return int(t)
-	case int64:
-		return int(t)
-	case float32:
-		return int(t)
-	case float64:
-		return int(t)
-	case uint:
-		return int(t)
-	case uint8:
-		return int(t)
-	case uint16:
-		return int(t)
-	case uint32:
-		return int(t)
-	case uint64:
-		return int(t)
-	case string:
-		parsed, _ := strconv.ParseInt(t, 10, 64)
+	switch t := reflect.ValueOf(from); t.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return int(t.Int())
+	case reflect.Float32, reflect.Float64:
+		return int(t.Float())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return int(t.Uint())
+	case reflect.String:
+		parsed, _ := strconv.ParseInt(strings.TrimSpace(t.String()), 10, 64)
 		return int(parsed)
-	case time.Duration:
-		return int(t)
-	case time.Month:
-		return int(t)
-	case time.Weekday:
-		return int(t)
 	default:
 		return 0
 	}
 }
 
 func ToInt64(from interface{}) int64 {
-	switch t := from.(type) {
-	case int:
-		return int64(t)
-	case int8:
-		return int64(t)
-	case int16:
-		return int64(t)
-	case int32:
-		return int64(t)
-	case int64:
-		return int64(t)
-	case float32:
-		return int64(t)
-	case float64:
-		return int64(t)
-	case uint:
-		return int64(t)
-	case uint8:
-		return int64(t)
-	case uint16:
-		return int64(t)
-	case uint32:
-		return int64(t)
-	case uint64:
-		return int64(t)
-	case string:
-		parsed, _ := strconv.ParseInt(t, 10, 64)
+	switch t := reflect.ValueOf(from); t.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return t.Int()
+	case reflect.Float32, reflect.Float64:
+		return int64(t.Float())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return int64(t.Uint())
+	case reflect.String:
+		parsed, _ := strconv.ParseInt(strings.TrimSpace(t.String()), 10, 64)
 		return parsed
-	case time.Duration:
-		return int64(t)
-	case time.Month:
-		return int64(t)
-	case time.Weekday:
-		return int64(t)
 	default:
 		return 0
 	}
@@ -1380,82 +1309,44 @@ func ToInt64Base16(from interface{}) int64 {
 	}
 }
 
-func ToString(from interface{}) string {
-	switch t := from.(type) {
-	case int:
-		return strconv.Itoa(t)
-	case int8:
-		return strconv.FormatInt(int64(t), 10)
-	case int16:
-		return strconv.FormatInt(int64(t), 10)
-	case int32:
-		return strconv.FormatInt(int64(t), 10)
-	case int64:
-		return strconv.FormatInt(t, 10)
-	case float32:
-		return strconv.FormatFloat(float64(t), 'E', -1, 32)
-	case float64:
-		return strconv.FormatFloat(t, 'E', -1, 64)
-	case uint:
-		return strconv.FormatUint(uint64(t), 10)
-	case uint8:
-		return strconv.FormatUint(uint64(t), 10)
-	case uint16:
-		return strconv.FormatUint(uint64(t), 10)
-	case uint32:
-		return strconv.FormatUint(uint64(t), 10)
-	case uint64:
-		return strconv.FormatUint(uint64(t), 10)
-	case []rune:
-		return string(t)
-	case []byte:
-		return string(t)
-	case fmt.Stringer:
-		return t.String()
-	case string:
-		return t
+func ToFloat64(from interface{}) float64 {
+	switch t := reflect.ValueOf(from); t.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(t.Int())
+	case reflect.Float32, reflect.Float64:
+		return t.Float()
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return float64(t.Uint())
+	case reflect.String:
+		parsed, _ := strconv.ParseFloat(strings.TrimSpace(t.String()), 64)
+		return parsed
 	default:
-		return ""
+		return 0
 	}
 }
 
-func ToFloat64(from interface{}) float64 {
-	switch t := from.(type) {
-	case int:
-		return float64(t)
-	case int8:
-		return float64(t)
-	case int16:
-		return float64(t)
-	case int32:
-		return float64(t)
-	case int64:
-		return float64(t)
-	case float32:
-		return float64(t)
-	case float64:
-		return float64(t)
-	case uint:
-		return float64(t)
-	case uint8:
-		return float64(t)
-	case uint16:
-		return float64(t)
-	case uint32:
-		return float64(t)
-	case uint64:
-		return float64(t)
-	case string:
-		parsed, _ := strconv.ParseFloat(t, 64)
-		return parsed
-	case time.Duration:
-		return float64(t)
-	case time.Month:
-		return float64(t)
-	case time.Weekday:
-		return float64(t)
+func ToString(from interface{}) string {
+	switch t := reflect.ValueOf(from); t.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return strconv.FormatInt(t.Int(), 10)
+	case reflect.Float32, reflect.Float64:
+		return strconv.FormatFloat(t.Float(), 'E', -1, 64)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return strconv.FormatUint(t.Uint(), 10)
+	case reflect.String:
+		return t.String()
 	default:
-		return 0
+		switch t := from.(type) {
+		case []byte:
+			return string(t)
+		case []rune:
+			return string(t)
+		case fmt.Stringer:
+			return t.String()
+		default:
+			return ""
+		}
+
 	}
 }
 
@@ -1539,10 +1430,33 @@ func DecodeStringToHex(from interface{}) ([]byte, error) {
 	return decoded, nil
 }
 
-func tmplJson(v interface{}) (string, error) {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return "", err
+func tmplJson(v interface{}, flags ...bool) (string, error) {
+	var b []byte
+	var err error
+
+	switch len(flags) {
+
+	case 0:
+		b, err = json.Marshal(v)
+		if err != nil {
+			return "", err
+		}
+
+	case 1:
+		if flags[0] {
+			b, err = json.MarshalIndent(v, "", "\t")
+			if err != nil {
+				return "", err
+			}
+		} else {
+			b, err = json.Marshal(v)
+			if err != nil {
+				return "", err
+			}
+		}
+
+	default:
+		return "", errors.New("Too many flags")
 	}
 
 	return string(b), nil

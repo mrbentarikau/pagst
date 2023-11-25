@@ -118,9 +118,14 @@ const (
 
 	GatewayIntentGuildScheduledEvents        GatewayIntent = 1 << 16
 	GatewayIntentAutoModerationConfiguration GatewayIntent = 1 << 20
-	GatewayIntentAutoModerationExecution     GatewayIntent = 1 << 21
+	// - AUTO_MODERATION_RULE_CREATE
+	// - AUTO_MODERATION_RULE_UPDATE
+	// - AUTO_MODERATION_RULE_DELETE
+	GatewayIntentAutoModerationExecution GatewayIntent = 1 << 21
+	// - AUTO_MODERATION_ACTION_EXECUTION
 
 	/* old stuff */
+
 	GatewayIntentsAllWithoutPrivileged = GatewayIntentGuilds |
 		GatewayIntentGuildBans |
 		GatewayIntentGuildEmojis |
@@ -817,52 +822,78 @@ func (g *GatewayConnection) Close() error {
 	return nil
 }
 
-func newUpdateStatusData(idle int, gameType ActivityType, game, url string) *UpdateStatusData {
+func newUpdateStatusData(activityType ActivityType, statusType Status, statusText, streamingUrl string) *UpdateStatusData {
 	usd := &UpdateStatusData{
-		Status: "online",
+		AFK:    false,
+		Status: statusType,
+	}
+	now := int(time.Now().Unix())
+	if statusType == StatusIdle {
+		usd.IdleSince = &now
 	}
 
-	if idle > 0 {
-		usd.IdleSince = &idle
-	}
-
-	if game != "" {
-		usd.Game = &Activity{
-			Name: game,
-			Type: gameType,
-			URL:  url,
+	if statusText != "" {
+		usd.Activity = &Activity{
+			Name:  statusText,
+			State: statusText,
+			Type:  activityType,
+			URL:   streamingUrl,
 		}
 	}
-
 	return usd
 }
 
 // UpdateStatus is used to update the user's status.
-// If idle>0 then set status to idle.
-// If game!="" then set game.
-// if otherwise, set status to active, and no game.
-func (s *Session) UpdateStatus(idle int, game string) (err error) {
-	return s.UpdateStatusComplex(*newUpdateStatusData(idle, ActivityTypeGame, game, ""))
+// Set the custom status to statusText.
+// Set the online status to statusType.
+func (s *Session) UpdateStatus(activityType ActivityType, statusType Status, statusText, streamingUrl string) (err error) {
+	if streamingUrl != "" {
+		activityType = ActivityTypeStreaming
+	}
+	return s.UpdateStatusComplex(*newUpdateStatusData(activityType, statusType, statusText, streamingUrl))
+}
+
+// UpdatePlayingStatus is used to update the user's playing status.
+// Set the game being played to status.
+// Set the online status to statusType.
+func (s *Session) UpdatePlayingStatus(statusText string, statusType Status) (err error) {
+	return s.UpdateStatusComplex(*newUpdateStatusData(ActivityTypePlaying, statusType, statusText, ""))
 }
 
 // UpdateStreamingStatus is used to update the user's streaming status.
-// If idle>0 then set status to idle.
-// If game!="" then set game.
-// If game!="" and url!="" then set the status type to streaming with the URL set.
-// if otherwise, set status to active, and no game.
-func (s *Session) UpdateStreamingStatus(idle int, game string, url string) (err error) {
-	gameType := ActivityTypeGame
-	if url != "" {
-		gameType = ActivityTypeStreaming
-	}
-	return s.UpdateStatusComplex(*newUpdateStatusData(idle, gameType, game, url))
+// Set the name of the stream to status.
+// Set the online status to statusType.
+// Set the stream URL to url.
+func (s *Session) UpdateStreamingStatus(statusText string, statusType Status, url string) (err error) {
+	return s.UpdateStatusComplex(*newUpdateStatusData(ActivityTypeStreaming, statusType, statusText, url))
 }
 
-// UpdateListeningStatus is used to set the user to "Listening to..."
-// If game!="" then set to what user is listening to
-// Else, set user to active and no game.
-func (s *Session) UpdateListeningStatus(game string) (err error) {
-	return s.UpdateStatusComplex(*newUpdateStatusData(0, ActivityTypeListening, game, ""))
+// UpdateListeningStatus is used to update the user's listening status
+// Set what the user is listening to to status.
+// Set the online status to statusType.
+func (s *Session) UpdateListeningStatus(statusText string, statusType Status) (err error) {
+	return s.UpdateStatusComplex(*newUpdateStatusData(ActivityTypeListening, statusType, statusText, ""))
+}
+
+// UpdateWatchingStatus is used to update the user's watching status
+// Set what the user is watching to status.
+// Set the online status to statusType.
+func (s *Session) UpdateWatchingStatus(statusText string, statusType Status) (err error) {
+	return s.UpdateStatusComplex(*newUpdateStatusData(ActivityTypeWatching, statusType, statusText, ""))
+}
+
+// UpdateCustomStatus is used to update the user's custom status
+// Set the user's custom text to status.
+// Set the online status to statusType.
+func (s *Session) UpdateCustomStatus(statusText string, statusType Status) (err error) {
+	return s.UpdateStatusComplex(*newUpdateStatusData(ActivityTypeCustom, statusType, statusText, ""))
+}
+
+// UpdateCompetingStatus is used to update the user's competing status
+// Set what the user is competing in to status.
+// Set the online status to statusType.
+func (s *Session) UpdateCompetingStatus(statusText string, statusType Status) (err error) {
+	return s.UpdateStatusComplex(*newUpdateStatusData(ActivityTypeCompeting, statusType, statusText, ""))
 }
 
 func (s *Session) UpdateStatusComplex(usd UpdateStatusData) (err error) {
@@ -1445,10 +1476,11 @@ type resumeData struct {
 type UpdateStatusData struct {
 	IdleSince *int `json:"since"`
 	// this name Game is just random, can be anything for Activities[0] value
-	Game       *Activity   `json:"game"`
+	//Game       *Activity   `json:"game"`
 	AFK        bool        `json:"afk"`
-	Status     string      `json:"status"`
+	Status     Status      `json:"status"`
 	Activities []*Activity `json:"activities"`
+	Activity   *Activity   `json:"game"`
 }
 
 type RequestGuildMembersData struct {
