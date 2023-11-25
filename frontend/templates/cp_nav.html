@@ -159,12 +159,6 @@
                             <span>Home</span>
                         </a>
                     </li>
-                    <!--<li>
-                        <a class="nav-link" data-partial-load="true" href="/manage/{{.ActiveGuild.ID}}/stats">
-                            <i class="fas fa-chart-bar" aria-hidden="true"></i>
-                            <span>Stats</span>
-                        </a>
-                    </li>-->
                     {{range (index .SidebarItems "Top")}}
                         {{if le $ag.GuildState.MemberCount 500}}
                             {{template "sidebar_item" (dict "ActiveGuild" $ag "Item" .)}}
@@ -177,6 +171,17 @@
                         </a>
                         <ul class="nav nav-children">
                             {{range (index .SidebarItems "Core")}}
+                            {{template "sidebar_item" (dict "ActiveGuild" $ag "Item" .)}}
+                            {{end}}
+                        </ul>
+                    </li>
+                    <li class="nav-parent">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-user-shield" aria-hidden="true"></i>
+                            <span>Moderation</span>
+                        </a>
+                        <ul class="nav nav-children">
+                            {{range (index .SidebarItems "Moderation")}}
                             {{template "sidebar_item" (dict "ActiveGuild" $ag "Item" .)}}
                             {{end}}
                         </ul>

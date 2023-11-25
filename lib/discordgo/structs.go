@@ -2237,74 +2237,6 @@ func (a *Activities) UnmarshalJSONArray(dec *gojay.Decoder) error {
 	return nil
 }
 
-// GameType is the type of "game" (see GameType* consts) in the Game struct
-type GameType int
-
-// Valid GameType values
-const (
-	GameTypeGame GameType = iota
-	GameTypeStreaming
-	GameTypeListening
-	GameTypeWatching
-	GameTypeCustom
-	GameTypeCompeting
-)
-
-// A Game struct holds the name of the "playing .." game for a user
-type Game struct {
-	Name          string     `json:"name"`
-	Type          GameType   `json:"type"`
-	URL           string     `json:"url,omitempty"`
-	Details       string     `json:"details,omitempty"`
-	State         string     `json:"state,omitempty"`
-	TimeStamps    TimeStamps `json:"timestamps,omitempty"`
-	Assets        Assets     `json:"assets,omitempty"`
-	ApplicationID string     `json:"application_id,omitempty"`
-	Instance      int8       `json:"instance,omitempty"`
-	// TODO: Party and Secrets (unknown structure)
-}
-
-// implement gojay.UnmarshalerJSONObject
-func (g *Game) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
-	switch key {
-	case "name":
-		return dec.String(&g.Name)
-	case "type":
-		return dec.Int((*int)(&g.Type))
-	case "url":
-		return dec.String(&g.URL)
-	case "details":
-		return dec.String(&g.Details)
-	case "state":
-		return dec.String(&g.State)
-	case "timestamps":
-		return dec.Object(&g.TimeStamps)
-	case "assets":
-	case "application_id":
-		var i interface{}
-		err := dec.Interface(&i)
-		if err != nil {
-			return err
-		}
-		switch t := i.(type) {
-		case int64:
-			g.ApplicationID = strconv.FormatInt(t, 10)
-		case int32:
-			g.ApplicationID = strconv.FormatInt(int64(t), 10)
-		case string:
-			g.ApplicationID = t
-		}
-	case "instance":
-		return dec.Int8(&g.Instance)
-	}
-
-	return nil
-}
-
-func (g *Game) NKeys() int {
-	return 0
-}
-
 // Activity defines the Activity sent with GatewayStatusUpdate
 // https://discord.com/developers/docs/topics/gateway#activity-object
 // KRAAKA! appID
@@ -2459,6 +2391,17 @@ type ActivityType int
 
 // Valid ActivityType values
 const (
+	ActivityTypePlaying ActivityType = iota
+	ActivityTypeStreaming
+	ActivityTypeListening
+	ActivityTypeWatching
+	ActivityTypeCustom
+	ActivityTypeCompeting
+)
+
+/*
+// Valid ActivityType values
+const (
 	ActivityTypeGame      ActivityType = 0
 	ActivityTypeStreaming ActivityType = 1
 	ActivityTypeListening ActivityType = 2
@@ -2466,6 +2409,7 @@ const (
 	ActivityTypeCustom    ActivityType = 4
 	ActivityTypeCompeting ActivityType = 5
 )
+*/
 
 // Identify is sent during initial handshake with the discord gateway.
 // https://discord.com/developers/docs/topics/gateway#identify
@@ -2531,61 +2475,6 @@ const (
 	// StageInstancePrivacyLevelGuildOnly The Stage instance is visible to only guild members.
 	StageInstancePrivacyLevelGuildOnly StageInstancePrivacyLevel = 2
 )
-
-/*
-// Block contains Discord JSON Error Response codes
-const (
-	ErrCodeUnknownAccount     = 10001
-	ErrCodeUnknownApplication = 10002
-	ErrCodeUnknownChannel     = 10003
-	ErrCodeUnknownGuild       = 10004
-	ErrCodeUnknownIntegration = 10005
-	ErrCodeUnknownInvite      = 10006
-	ErrCodeUnknownMember      = 10007
-	ErrCodeUnknownMessage     = 10008
-	ErrCodeUnknownOverwrite   = 10009
-	ErrCodeUnknownProvider    = 10010
-	ErrCodeUnknownRole        = 10011
-	ErrCodeUnknownToken       = 10012
-	ErrCodeUnknownUser        = 10013
-	ErrCodeUnknownEmoji       = 10014
-	ErrCodeUnknownWebhook     = 10015
-
-	ErrCodeBotsCannotUseEndpoint  = 20001
-	ErrCodeOnlyBotsCanUseEndpoint = 20002
-
-	ErrCodeMaximumGuildsReached     = 30001
-	ErrCodeMaximumFriendsReached    = 30002
-	ErrCodeMaximumPinsReached       = 30003
-	ErrCodeMaximumGuildRolesReached = 30005
-	ErrCodeTooManyReactions         = 30010
-
-	ErrCodeUnauthorized = 40001
-
-	ErrCodeMissingAccess                             = 50001
-	ErrCodeInvalidAccountType                        = 50002
-	ErrCodeCannotExecuteActionOnDMChannel            = 50003
-	ErrCodeEmbedCisabled                             = 50004
-	ErrCodeCannotEditFromAnotherUser                 = 50005
-	ErrCodeCannotSendEmptyMessage                    = 50006
-	ErrCodeCannotSendMessagesToThisUser              = 50007
-	ErrCodeCannotSendMessagesInVoiceChannel          = 50008
-	ErrCodeChannelVerificationLevelTooHigh           = 50009
-	ErrCodeOAuth2ApplicationDoesNotHaveBot           = 50010
-	ErrCodeOAuth2ApplicationLimitReached             = 50011
-	ErrCodeInvalidOAuthState                         = 50012
-	ErrCodeMissingPermissions                        = 50013
-	ErrCodeInvalidAuthenticationToken                = 50014
-	ErrCodeNoteTooLong                               = 50015
-	ErrCodeTooFewOrTooManyMessagesToDelete           = 50016
-	ErrCodeCanOnlyPinMessageToOriginatingChannel     = 50019
-	ErrCodeCannotExecuteActionOnSystemMessage        = 50021
-	ErrCodeMessageProvidedTooOldForBulkDelete        = 50034
-	ErrCodeInvalidFormBody                           = 50035
-	ErrCodeInviteAcceptedToGuildApplicationsBotNotIn = 50036
-
-	ErrCodeReactionBlocked = 90001
-)*/
 
 // InviteUser is a partial user obejct from the invite event(s)
 type InviteUser struct {
@@ -2723,125 +2612,6 @@ type InteractionApplicationCommandCallbackData struct {
 	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"` // allowed mentions object
 	Flags           int              `json:"flags,omitempty"`            //	set to 64 to make your response ephemeral
 }
-
-// Constants for the different bit offsets of text channel permissions
-const (
-	// Deprecated: PermissionReadMessages has been replaced with PermissionViewChannel for text and voice channels
-	PermissionReadMessages           int64 = 0x0000000000000400
-	PermissionSendMessages           int64 = 0x0000000000000800
-	PermissionSendTTSMessages        int64 = 0x0000000000001000
-	PermissionManageMessages         int64 = 0x0000000000002000
-	PermissionEmbedLinks             int64 = 0x0000000000004000
-	PermissionAttachFiles            int64 = 0x0000000000008000
-	PermissionReadMessageHistory     int64 = 0x0000000000010000
-	PermissionMentionEveryone        int64 = 0x0000000000020000
-	PermissionUseExternalEmojis      int64 = 0x0000000000040000
-	PermissionUseSlashCommands       int64 = 0x0000000080000000
-	PermissionUseApplicationCommands int64 = PermissionUseSlashCommands
-	PermissionManageThreads          int64 = 0x0000000400000000
-	PermissionCreatePublicThreads    int64 = 0x0000000800000000
-	PermissionUsePublicThreads       int64 = PermissionCreatePublicThreads
-	PermissionCreatePrivateThreads   int64 = 0x0000001000000000
-	PermissionUsePrivateThreads      int64 = PermissionCreatePrivateThreads
-	PermissionUseExternalStickers    int64 = 0x0000002000000000
-	PermissionSendMessagesInThreads  int64 = 0x0000004000000000
-
-	// Allows sending voice messages.
-	PermissionSendVoiceMessages int64 = 1 << 46
-)
-
-// Constants for the different bit offsets of voice permissions
-const (
-	PermissionVoicePrioritySpeaker  int64 = 0x0000000000000100
-	PermissionPrioritySpeaker       int64 = PermissionVoicePrioritySpeaker
-	PermissionVoiceStreamVideo      int64 = 0x0000000000000200
-	PermissionStream                int64 = PermissionVoiceStreamVideo
-	PermissionVoiceConnect          int64 = 0x0000000000100000
-	PermissionVoiceSpeak            int64 = 0x0000000000200000
-	PermissionVoiceMuteMembers      int64 = 0x0000000000400000
-	PermissionVoiceDeafenMembers    int64 = 0x0000000000800000
-	PermissionVoiceMoveMembers      int64 = 0x0000000001000000
-	PermissionVoiceUseVAD           int64 = 0x0000000002000000
-	PermissionVoiceRequestToSpeak   int64 = 0x0000000100000000
-	PermissionRequestToSpeak        int64 = PermissionVoiceRequestToSpeak
-	PermissionUseActivities         int64 = 0x0000008000000000
-	PermissionUseEmbeddedActivities int64 = PermissionUseActivities
-
-	// Allows for using soundboard in a voice channel.
-	PermissionUseSoundboard int64 = 1 << 42
-
-	// Allows the usage of custom soundboard sounds from other servers.
-	PermissionUseExternalSounds int64 = 1 << 45
-)
-
-// Constants for general management.
-const (
-	PermissionChangeNickname          int64 = 0x0000000004000000
-	PermissionManageNicknames         int64 = 0x0000000008000000
-	PermissionManageRoles             int64 = 0x0000000010000000
-	PermissionManageWebhooks          int64 = 0x0000000020000000
-	PermissionManageEmojis            int64 = 0x0000000040000000
-	PermissionManageEmojisAndStickers int64 = PermissionManageEmojis
-	// Allows management and editing of emojis, stickers, and soundboard sounds.
-	PermissionManageGuildExpressions int64 = 1 << 30
-	PermissionManageEvents           int64 = 0x0000000200000000
-
-	// Allows for viewing role subscription insights.
-	PermissionViewCreatorMonetizationAnalytics int64 = 1 << 41
-
-	// Allows for creating emojis, stickers, and soundboard sounds, and editing and deleting those created by the current user.
-	PermissionCreateGuildExpressions int64 = 1 << 43
-
-	// Allows for creating scheduled events, and editing and deleting those created by the current user.
-	PermissionCreateEvents int64 = 1 << 44
-)
-
-// Constants for the different bit offsets of general permissions
-const (
-	PermissionCreateInstantInvite int64 = 0x0000000000000001
-	PermissionKickMembers         int64 = 0x0000000000000002
-	PermissionBanMembers          int64 = 0x0000000000000004
-	PermissionAdministrator       int64 = 0x0000000000000008
-	PermissionManageChannels      int64 = 0x0000000000000010
-	PermissionManageServer        int64 = 0x0000000000000020
-	PermissionManageGuild         int64 = PermissionManageServer
-	PermissionAddReactions        int64 = 0x0000000000000040
-	PermissionViewAuditLogs       int64 = 0x0000000000000080
-	PermissionViewChannel         int64 = 0x0000000000000400
-	PermissionViewGuildInsights   int64 = 0x0000000000080000
-	PermissionModerateMembers     int64 = 0x0000010000000000
-
-	PermissionAllText = PermissionViewChannel |
-		PermissionSendMessages |
-		PermissionSendTTSMessages |
-		PermissionManageMessages |
-		PermissionEmbedLinks |
-		PermissionAttachFiles |
-		PermissionReadMessageHistory |
-		PermissionMentionEveryone
-	PermissionAllVoice = PermissionViewChannel |
-		PermissionVoiceConnect |
-		PermissionVoiceSpeak |
-		PermissionVoiceMuteMembers |
-		PermissionVoiceDeafenMembers |
-		PermissionVoiceMoveMembers |
-		PermissionVoiceUseVAD |
-		PermissionVoicePrioritySpeaker
-	PermissionAllChannel = PermissionAllText |
-		PermissionAllVoice |
-		PermissionCreateInstantInvite |
-		PermissionManageRoles |
-		PermissionManageChannels |
-		PermissionAddReactions |
-		PermissionViewAuditLogs
-	PermissionAll = PermissionAllChannel |
-		PermissionKickMembers |
-		PermissionBanMembers |
-		PermissionManageServer |
-		PermissionAdministrator |
-		PermissionManageWebhooks |
-		PermissionManageEmojis
-)
 
 // Block contains Discord JSON Error Response codes
 const (

@@ -8,6 +8,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
+
 	"github.com/mediocregopher/radix/v3"
 )
 
@@ -16,51 +17,62 @@ var Command = &commands.YAGCommand{
 	CmdCategory:          commands.CategoryDebug,
 	HideFromCommandsPage: true,
 	Name:                 "setstatus",
-	Description:          "Sets the bot's status, streaming url,\nactivity type (gaming/listening/watching)\nand toggles idle state. Bot Admin Only.",
+	Description:          "Sets the bot's presence type, status text, online status, and optional streaming URL. Bot Admin Only",
 	HideFromHelp:         true,
 	Arguments: []*dcmd.ArgDef{
 		{Name: "status", Type: dcmd.String, Default: ""},
 	},
 	ArgSwitches: []*dcmd.ArgDef{
-		{Name: "url", Type: dcmd.String, Default: "", Help: "Status text"},
-		{Name: "activity", Type: dcmd.String, Default: "", Help: "Activity type"},
-		{Name: "idle", Help: "Idle switch"},
+		{Name: "url", Type: dcmd.String, Help: "The URL to the stream. Must be on twitch.tv or youtube.com. Activity type will always be streaming if this is set.", Default: ""},
+		{Name: "type", Type: dcmd.String, Help: "Set activity type. Allowed values are 'playing', 'streaming', 'listening', 'watching', 'custom', 'competing'.", Default: "custom"},
+		{Name: "state", Type: dcmd.String, Help: "Set online status. Allowed values are 'online', 'idle', 'dnd', 'offline'.", Default: "online"},
+		{Name: "default", Help: "Defaults to online with version number as custom status"},
 	},
 	RunFunc: util.RequireBotAdmin(func(data *dcmd.Data) (interface{}, error) {
-		var idle, idleState, activityType string
+		var statusType, activityType string
 
-		err := common.RedisPool.Do(radix.Cmd(&idle, "GET", "status_idle"))
+		statusText := data.Args[0].Str()
+		streamingUrl := data.Switch("url").Str()
+
+		err := common.RedisPool.Do(radix.Cmd(&statusType, "GET", "status_type"))
 		if err != nil {
-			fmt.Println((fmt.Errorf("failed retrieving bot streaming status")).Error())
+			fmt.Println((fmt.Errorf("failed retrieving bot status_type")).Error())
 		}
-		idleState = idle
 
-		err2 := common.RedisPool.Do(radix.Cmd(&activityType, "GET", "status_activity"))
+		if statusType == "" || data.Switches["state"].Raw != nil {
+			statusType = data.Switch("state").Str()
+		}
+
+		err2 := common.RedisPool.Do(radix.Cmd(&activityType, "GET", "status_activity_type"))
 		if err2 != nil {
-			fmt.Println((fmt.Errorf("failed retrieving bot streaming status")).Error())
+			fmt.Println((fmt.Errorf("failed retrieving bot status_activity_type")).Error())
 		}
 
-		if data.Switch("activity").Str() != "" {
-			activityType = data.Switch("activity").Str()
+		if activityType == "" || data.Switches["type"].Raw != nil {
+			activityType = data.Switch("type").Str()
 		}
 
-		streamingURL := data.Switch("url").Str()
-		if data.Switches["idle"].Value != nil && data.Switches["idle"].Value.(bool) {
-			if idle == "" {
-				idle = "enabled"
-				idleState = "enabled"
-			} else {
-				idle = ""
-				idleState = "disabled"
-			}
+		// default all
+		if data.Switches["default"].Value != nil && data.Switches["default"].Value.(bool) {
+			activityType = data.Switch("type").Str()
+			statusType = data.Switch("state").Str()
 		}
 
-		bot.SetStatus(streamingURL, data.Args[0].Str(), idle, activityType)
-		if idleState != "" {
-			return "Doneso... Your idle state is " + idleState, nil
-		} else {
-			return "Doneso", nil
+		switch activityType {
+		case "playing", "streaming", "listening", "watching", "custom", "competing":
+			// Valid activity type, do nothing
+		default:
+			return nil, commands.NewUserError(fmt.Sprintf("Invalid activity type %q. Allowed values are 'playing', 'streaming', 'listening', 'watching', 'custom', 'competing'", activityType))
 		}
 
+		switch statusType {
+		case "online", "idle", "dnd", "offline":
+			// Valid status type, do nothing
+		default:
+			return nil, commands.NewUserError(fmt.Sprintf("Invalid status type %q. Allowed values are 'online', 'idle', 'dnd', 'offline'", statusType))
+		}
+
+		bot.SetStatus(activityType, statusType, statusText, streamingUrl)
+		return "Doneso", nil
 	}),
 }
