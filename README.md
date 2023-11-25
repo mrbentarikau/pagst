@@ -26,7 +26,7 @@ original code is in Jonas747's git > [GitHub](https://github.com/jonas747/yagpdb
 ![#Praise Testers!](https://i.imgur.com/PLHxiSj.png)
 • [buthed010203](https://github.com/buthed010203)
 • [jo3-l](https://github.com/jo3-l)
-• [Pedro-Pessoa](https://github.com/Pedro-Pessoa)
+• [Pedro Henrique Pessoa](https://github.com/phenpessoa)
 • [Shadow21AR](https://github.com/shadow21ar)   
 
 
