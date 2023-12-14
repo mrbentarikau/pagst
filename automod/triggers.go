@@ -594,7 +594,7 @@ func (a *AntiPhishingLinkTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 			return false, nil
 		}
 
-		if trasparencyReport.UnsafeContent == 2 || trasparencyReport.ScoreTotal >= 2 {
+		if trasparencyReport.UnsafeContent == 2 { // || trasparencyReport.ScoreTotal >= 2
 			return true, nil
 		}
 
