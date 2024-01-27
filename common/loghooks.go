@@ -62,9 +62,7 @@ func (p *STDLogProxy) Write(b []byte) (n int, err error) {
 	stack := filepath.Base(name) + ":" + filepath.Base(file) + ":" + strconv.Itoa(line)
 
 	logLine := string(b)
-	if strings.HasSuffix(logLine, "\n") {
-		logLine = strings.TrimSuffix(logLine, "\n")
-	}
+	logLine = strings.TrimSuffix(logLine, "\n")
 
 	l := logrus.WithField("stck", stack)
 	if strings.Contains(strings.ToLower(logLine), "error") {

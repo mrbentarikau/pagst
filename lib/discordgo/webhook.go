@@ -27,16 +27,16 @@ const (
 
 // WebhookParams is a struct for webhook params, used in the WebhookExecute command.
 type WebhookParams struct {
-	Content         string                `json:"content,omitempty"`
-	Username        string                `json:"username,omitempty"`
-	AvatarURL       string                `json:"avatar_url,omitempty"`
-	TTS             bool                  `json:"tts,omitempty"`
-	File            *File                 `json:"-"`
-	Files           []*File               `json:"-"`
-	Components      []MessageComponent    `json:"components"`
-	Embeds          []*MessageEmbed       `json:"embeds,omitempty"`
-	Attachments     *[]*MessageAttachment `json:"attachments,omitempty"`
-	AllowedMentions *AllowedMentions      `json:"allowed_mentions,omitempty"`
+	Content         string               `json:"content,omitempty"`
+	Username        string               `json:"username,omitempty"`
+	AvatarURL       string               `json:"avatar_url,omitempty"`
+	TTS             bool                 `json:"tts,omitempty"`
+	File            *File                `json:"-"`
+	Files           []*File              `json:"-"`
+	Components      []MessageComponent   `json:"components"`
+	Embeds          []*MessageEmbed      `json:"embeds,omitempty"`
+	Attachments     []*MessageAttachment `json:"attachments,omitempty"`
+	AllowedMentions *AllowedMentions     `json:"allowed_mentions,omitempty"`
 	// Name of the thread to create.
 	// NOTE: can only be used in forum channels.
 	ThreadName string `json:"thread_name,omitempty"`

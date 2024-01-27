@@ -62,11 +62,13 @@ the punishment, is an <a href="https://docs.yagpdb.xyz/reference/templates#user"
             </div>
         </div>
     </div>
+    {{if .WriteAccess}}
     <div class="row">
         <div class="col-lg-12">
             <button type="submit" class="btn btn-primary btn-lg btn-block">Save</button>
         </div>
     </div>
+    {{end}}
     <!-- /.row -->
 </form>
 <div id="clear-server-warnings-modal" class="modal-block modal-full-color modal-block-danger mfp-hide">
@@ -498,12 +500,13 @@ the punishment, is an <a href="https://docs.yagpdb.xyz/reference/templates#user"
         </div>
     </div>
 </div>
+{{if .WriteAccess}}
 <div class="row">
     <div class="col">
-        <a class="mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#clear-server-warnings-modal">Delete all
-            warnings</a>
+        <a class="mb-1 mt-1 mr-1 modal-basic btn btn-info btn-sm" href="#clear-server-warnings-modal">Delete all warnings</a>
     </div>
 </div>
+{{end}}
 {{end}}
 
 {{define "moderation_lockdown"}}

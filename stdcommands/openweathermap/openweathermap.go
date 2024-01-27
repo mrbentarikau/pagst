@@ -3,6 +3,7 @@
 package openweathermap
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -139,7 +140,8 @@ func weatherFromAPI(where string, geoCode *owmGeoCodeStruct) (*openWeatherMap, e
 		return nil, commands.NewPublicError("No results for `", where, "`. Be more specific...")
 	}
 
-	queryErr := json.Unmarshal(body, &weather)
+	readerToDecoder := bytes.NewReader(body)
+	queryErr := json.NewDecoder(readerToDecoder).Decode(&weather)
 	if queryErr != nil {
 		return nil, queryErr
 	}
@@ -154,7 +156,8 @@ func geoCodingAPI(where string) (*owmGeoCodeStruct, error) {
 
 	body, _ := requestAPI(queryURL)
 
-	queryErr := json.Unmarshal(body, &coordinates)
+	readerToDecoder := bytes.NewReader(body)
+	queryErr := json.NewDecoder(readerToDecoder).Decode(&coordinates)
 	if queryErr != nil {
 		return nil, queryErr
 	}

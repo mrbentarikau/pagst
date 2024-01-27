@@ -110,6 +110,7 @@ var (
 
 		// misc
 		"adjective":          common.RandomAdjective,
+		"adjectiveNoAPI":     common.RandomAdjectiveNoAPI,
 		"cembed":             CreateEmbed,
 		"complexMessage":     CreateMessageSend,
 		"complexMessageEdit": CreateMessageEdit,
@@ -526,7 +527,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 		}
 	}
 
-	isDM := c.CurrentFrame.SendResponseInDM || (c.CurrentFrame.CS != nil && c.CurrentFrame.CS.IsPrivate())
+	isDM := c.CurrentFrame.SendResponseInDM || (c.CurrentFrame.CS != nil && c.CurrentFrame.CS.IsDMChannel())
 
 	var embeds []*discordgo.MessageEmbed
 	embeds = append(embeds, c.CurrentFrame.EmbedsToSend...)
@@ -546,7 +547,7 @@ func (c *Context) SendResponse(content string) (*discordgo.Message, error) {
 					discordgo.Button{
 						Label:    "Show Server Info",
 						Style:    discordgo.PrimaryButton,
-						Emoji:    discordgo.ComponentEmoji{Name: "📬"},
+						Emoji:    &discordgo.ComponentEmoji{Name: "📬"},
 						CustomID: fmt.Sprintf("DM_%d", c.GS.ID),
 					},
 				},
@@ -663,14 +664,20 @@ func (c *Context) addContextFunc(name string, f interface{}) {
 
 func baseContextFuncs(c *Context) {
 	// Channel functions
+	c.addContextFunc("addThreadMember", c.tmplThreadMemberAdd)
+	c.addContextFunc("createForumPost", c.tmplCreateForumPost)
+	c.addContextFunc("createThread", c.tmplCreateThread)
+	c.addContextFunc("deleteForumPost", c.tmplDeleteThread)
+	c.addContextFunc("deleteThread", c.tmplDeleteThread)
+	c.addContextFunc("editChannelName", c.tmplEditChannelName)
+	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
 	c.addContextFunc("getChannel", c.tmplGetChannel)
 	c.addContextFunc("getChannelPins", c.tmplGetChannelPins(false))
 	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
 	c.addContextFunc("getThread", c.tmplGetThread)
-	c.addContextFunc("getThreadsAllActive", c.tmplGetGuildThreadsActive)
+	c.addContextFunc("getThreadsActive", c.tmplGetGuildThreadsActive)
 	c.addContextFunc("getThreadsArchived", c.tmplGetThreadsArchived)
-	c.addContextFunc("editChannelName", c.tmplEditChannelName)
-	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
+	c.addContextFunc("removeThreadMember", c.tmplThreadMemberRemove)
 
 	// Member & User
 	c.addContextFunc("currentUserAgeHuman", c.tmplCurrentUserAgeHuman)

@@ -354,7 +354,7 @@ func createRSSEmbed(feed *gofeed.Feed, filteredItems []*gofeed.Item, feedName st
 
 		}
 		bm := bluemonday.StripTagsPolicy()
-		feedDescription := common.CutStringShort(feedItem.Description, 4000)
+		feedDescription := common.CutStringShort(feedItem.Description, 2000)
 
 		if feedName == "No name" || feedName == "" {
 			feedName = feed.Title

@@ -1212,10 +1212,7 @@ func shuffle(seq interface{}) (interface{}, error) {
 		return nil, errors.New("can't iterate over " + reflect.ValueOf(seq).Type().String())
 	}
 
-	//shuffled := reflect.MakeSlice(reflect.TypeOf(seq), seqv.Len(), seqv.Len())
 	shuffled := reflect.MakeSlice(seqv.Type(), seqv.Len(), seqv.Len())
-
-	rand.Seed(time.Now().UTC().UnixNano())
 	randomIndices := rand.Perm(seqv.Len())
 
 	for index, value := range randomIndices {

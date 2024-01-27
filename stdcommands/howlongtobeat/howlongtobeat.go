@@ -150,6 +150,11 @@ func embedCreator(hltbData []HowlongToBeatData, i int, paginated bool) *discordg
 			&discordgo.MessageEmbedField{Name: "Review Score", Value: fmt.Sprintf("%d%%", hltbData[i].ReviewScore)})
 	}
 
+	if hltbData[i].ProfileSteam > 0 {
+		embed.Fields = append(embed.Fields,
+			&discordgo.MessageEmbedField{Name: "Steam", Value: fmt.Sprintf("[link](https://store.steampowered.com/app/%d)", hltbData[i].ProfileSteam)})
+	}
+
 	if !paginated {
 		embed.Footer = &discordgo.MessageEmbedFooter{Text: "howlongtobeat.com"}
 		embed.Timestamp = time.Now().Format(time.RFC3339)

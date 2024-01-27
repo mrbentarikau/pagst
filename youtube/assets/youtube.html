@@ -93,8 +93,10 @@
                                 <code>{{"{{.VideoThumbnail}}"}}</code>
                             <br/><code>{{"{{.FullSnippet}}"}}</code> holds all <a href="https://developers.google.com/youtube/v3/docs/videos#properties" target="_blank">snippet data</a> passed via feed. <code>{{"{{.ContentDetails}}"}}</code> from the same link provides information about the video content. <code>{{"{{.LiveStreamingDetails}}"}}</code> holds all data concerning live/upcoming streams e.g. <code>{{"{{.LiveStreamingDetails.ScheduledStartTime}}"}}</code> - also covered in the link above.
                             </p>
+                            {{if .Dot.WriteAccess}}
                             <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstAnnounceSave" class="btn btn-sm btn-success btn-block" formaction="/manage/{{.Dot.ActiveGuild.ID}}/youtube/handle_announce" data-async-form-alertsonly>Save</button>
                             </span>
+                            {{end}}
                         </div>
                     </div>
                     <div class="form-group">
@@ -133,7 +135,7 @@
                             </td>
                         </tr>
                     </table>
-                    <button type="submit" id="yt-add-btn" class="btn btn-success btn-block">Add</button>
+                    {{if .Dot.WriteAccess}}<button type="submit" id="yt-add-btn" class="btn btn-success btn-block">Add</button>{{end}}
                 </form>
             </div>
         </section>
@@ -161,7 +163,7 @@
                             <th>YT Shorts</th>
                             <th>YT Livestreams</th>
                             <th>YT Enabled</th>
-                            <th>Actions</th>
+                            {{if $dot.WriteAccess}}<th>Actions</th>{{end}}
                         </tr>
                     </thead>
                     <tbody>
@@ -198,12 +200,14 @@
                             <td>
                                 {{checkbox "Enabled" (joinStr "" "feed-enabled-" $v.ID) `Feed enabled` $v.Enabled.Bool (joinStr "" `form="sub-item-` $v.ID `"`)}}
                             </td>
+                            {{if $dot.WriteAccess}}
                             <td>
                                 <button form="sub-item-{{$v.ID}}" type="submit" class="btn btn-success"
                                     formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{$v.ID}}/update">Save</button>
                                 <button form="sub-item-{{$v.ID}}" type="submit" class="btn btn-danger"
                                     formaction="/manage/{{$dot.ActiveGuild.ID}}/youtube/{{$v.ID}}/delete">Delete</button>
                             </td>
+                            {{end}}
                         </tr>
                         {{end}}
                     </tbody>

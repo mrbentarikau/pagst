@@ -15,9 +15,12 @@ import (
 	"github.com/mrbentarikau/pagst/common/mqueue"
 	"github.com/mrbentarikau/pagst/feeds"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+
+	//twitterscraper "github.com/mrbentarikau/pagst/lib/twitter-scraper"
 	"github.com/mrbentarikau/pagst/premium"
 	"github.com/mrbentarikau/pagst/twitter/models"
 	"github.com/mediocregopher/radix/v3"
+
 	twitterscraper "github.com/n0madic/twitter-scraper"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -26,6 +29,7 @@ import (
 )
 
 var _ feeds.Plugin = (*Plugin)(nil)
+var avatarURL string = "https://abs.twimg.com/responsive-web/client-web/icon-ios.77d25eba.png"
 
 func KeyLastTweetTime(id string) string { return "twitter_last_tweet_time:" + id }
 func KeyLastTweetID(id string) string   { return "twitter_last_tweet_id:" + id }
@@ -62,6 +66,10 @@ func (p *Plugin) runFeedLoop() {
 			p.feedsLock.Unlock()
 			p.runFeed(newFeeds)
 		case <-startDelay:
+			//p.feedsLock.Lock()
+			//newFeeds := p.feeds
+			//p.feedsLock.Unlock()
+			//p.runFeed(newFeeds)
 		case wg := <-p.Stop:
 			wg.Done()
 			return
@@ -116,7 +124,7 @@ func (p *Plugin) checkTweet(tweet *twitterscraper.Tweet) *twitterscraper.Tweet {
 func (p *Plugin) getTweetsForUser(username string, attempt int, delay time.Duration) {
 	var tweets = make([]*twitterscraper.Tweet, 0)
 	logrus.Infof("Getting tweets for user %s", username)
-	for tweet := range p.twitterScraper.GetTweets(context.Background(), username, 50) {
+	for tweet := range p.twitterScraper.GetTweets(context.Background(), username, 25) {
 		if tweet.Error != nil {
 			errString := tweet.Error.Error()
 			isNotFound := strings.Contains(errString, "not found")
@@ -211,6 +219,7 @@ func (p *Plugin) handleTweet(t *twitterscraper.Tweet) {
 OUTER:
 	for _, f := range tFeeds {
 		tweetUser, _ := strconv.ParseInt(t.UserID, 10, 64)
+
 		if tweetUser != f.TwitterUserID {
 			continue
 		}
@@ -227,7 +236,7 @@ OUTER:
 			continue
 		}
 
-		if t.IsReply && !f.IncludeReplies {
+		if (t.IsReply || t.InReplyToStatus != nil) && !f.IncludeReplies {
 			continue
 		}
 
@@ -253,7 +262,7 @@ OUTER:
 	if err != nil {
 		logrus.WithError(err).Errorf("Failed getting user info for userID %s", t.Username)
 	}
-	webhookUsername := "Twitter • " + common.ConfBotName.GetString()
+	webhookUsername := "X/Twitter • " + common.ConfBotName.GetString()
 	embed := p.createTweetEmbed(t, &user)
 	for _, v := range relevantFeeds {
 		go analytics.RecordActiveUnit(v.GuildID, p, "posted_twitter_message")
@@ -272,9 +281,10 @@ OUTER:
 			GuildID:   v.GuildID,
 			ChannelID: v.ChannelID,
 
-			MessageStr:      content,
-			MessageEmbed:    embed,
-			UseWebhook:      true,
+			MessageStr:   content,
+			MessageEmbed: embed,
+			UseWebhook:   true,
+			//WebhookAvatarURL: avatarURL,
 			WebhookUsername: webhookUsername,
 
 			AllowedMentions: discordgo.AllowedMentions{
@@ -296,17 +306,17 @@ func (p *Plugin) createTweetEmbed(tweet *twitterscraper.Tweet, user *twitterscra
 	var text string
 
 	if tweet.RetweetedStatus != nil {
-		text += fmt.Sprintf("[Retweet:](https://twitter.com/%s/status/%s) ", tweet.RetweetedStatus.Username, tweet.RetweetedStatus.ID)
+		text += fmt.Sprintf("[Retweet:](https://x.com/%s/status/%s) ", tweet.RetweetedStatus.Username, tweet.RetweetedStatus.ID)
 	} else if tweet.InReplyToStatus != nil {
-		text += fmt.Sprintf("[Reply:](https://twitter.com/%s/status/%s) ", tweet.InReplyToStatus.Username, tweet.InReplyToStatus.ID)
+		text += fmt.Sprintf("[Reply:](https://x.com/%s/status/%s) ", tweet.InReplyToStatus.Username, tweet.InReplyToStatus.ID)
 	} else if tweet.QuotedStatus != nil {
-		text += fmt.Sprintf("[Quote:](https://twitter.com/%s/status/%s) ", tweet.QuotedStatus.Username, tweet.QuotedStatus.ID)
+		text += fmt.Sprintf("[Quote:](https://x.com/%s/status/%s) ", tweet.QuotedStatus.Username, tweet.QuotedStatus.ID)
 	}
 
 	text += tweet.Text
 
 	for _, ht := range tweet.Hashtags {
-		text = strings.Replace(text, (`#` + ht), fmt.Sprintf("[#%[1]s](https://twitter.com/hashtag/%[1]s?src=hashtag_click)", ht), -1)
+		text = strings.Replace(text, (`#` + ht), fmt.Sprintf("[#%[1]s](https://x.com/hashtag/%[1]s?src=hashtag_click)", ht), -1)
 		// just in case
 		//re := regexp.MustCompile(`#` + ht)
 		//text = re.ReplaceAllString(text, fmt.Sprintf("[#%[1]s](https://twitter.com/hashtag/%[1]s?src=hashtag_click)", ht))
@@ -323,8 +333,9 @@ func (p *Plugin) createTweetEmbed(tweet *twitterscraper.Tweet, user *twitterscra
 		Author:      author,
 		Description: html.UnescapeString(text),
 		Footer: &discordgo.MessageEmbedFooter{
-			IconURL: "https://abs.twimg.com/icons/apple-touch-icon-192x192.png",
-			Text:    "Twitter"},
+			//IconURL: "https://abs.twimg.com/icons/apple-touch-icon-192x192.png",
+			IconURL: avatarURL,
+			Text:    "X/Twitter"},
 		Timestamp: timeStr,
 		Color:     0x38A1F3,
 	}

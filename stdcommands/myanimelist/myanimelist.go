@@ -1,6 +1,7 @@
 package myanimelist
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -95,13 +96,14 @@ var Command = &commands.YAGCommand{
 			return "No title provided...", nil
 		}
 
-		body, err := util.RequestFromAPI(querySearch, extraHeaders)
+		responseBytes, err := util.RequestFromAPI(querySearch, extraHeaders)
 
 		if err != nil {
 			return "No such title found...", err
 		}
 
-		err = json.Unmarshal([]byte(body), &malSearch)
+		readerToDecoder := bytes.NewReader(responseBytes)
+		err = json.NewDecoder(readerToDecoder).Decode(&malSearch)
 		if err != nil {
 			return "error unmarshaling " + malHost + " query, site could be under maintenance", err
 		}

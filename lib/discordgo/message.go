@@ -260,14 +260,14 @@ type MessageSend struct {
 	// TODO: Remove this when compatibility is not required.
 	File *File `json:"-"`
 	// TODO: Remove this when compatibility is not required. >
-	Embed *MessageEmbed `json:"embed,omitempty"`
+	Embed *MessageEmbed `json:"-"`
 }
 
 // MessageEdit is used to chain parameters via ChannelMessageEditComplex, which
 // is also where you should get the instance from.
 type MessageEdit struct {
 	Content         *string            `json:"content,omitempty"`
-	Components      []MessageComponent `json:"components"`
+	Components      []MessageComponent `json:"components,omitempty"`
 	Embeds          []*MessageEmbed    `json:"embeds,omitempty"`
 	AllowedMentions AllowedMentions    `json:"allowed_mentions,omitempty"`
 	Flags           MessageFlags       `json:"-"`
@@ -298,6 +298,13 @@ func (m *MessageEdit) SetContent(str string) *MessageEdit {
 }
 
 // SetEmbed is a convenience function for setting the embed,
+// so you can chain commands.
+func (m *MessageEdit) SetEmbed(embed *MessageEmbed) *MessageEdit {
+	m.Embeds = []*MessageEmbed{embed}
+	return m
+}
+
+// SetEmbeds is a convenience function for setting the embed,
 // so you can chain commands.
 func (m *MessageEdit) SetEmbeds(embeds []*MessageEmbed) *MessageEdit {
 	m.Embeds = embeds
@@ -407,9 +414,19 @@ func (e *MessageEmbed) MarshalJSON() ([]byte, error) {
 
 // MessageReactions holds a reactions object for a message.
 type MessageReactions struct {
-	Count int    `json:"count"`
-	Me    bool   `json:"me"`
-	Emoji *Emoji `json:"emoji"`
+	Count        int                          `json:"count"`
+	CountDetails MessageReactionsCountDetails `json:"count_details"`
+	Me           bool                         `json:"me"`
+	MeBurst      bool                         `json:"me_burst"`
+	Emoji        *Emoji                       `json:"emoji"`
+	BurstColors  []string                     `json:"burst_colors"`
+}
+
+// MessageReactionsCountDetails holds normal and super reaction counts for the
+// associated emoji.
+type MessageReactionsCountDetails struct {
+	Burst  int `json:"burst"`
+	Normal int `json:"normal"`
 }
 
 // ContentWithMentionsReplaced will replace all @<id> mentions with the

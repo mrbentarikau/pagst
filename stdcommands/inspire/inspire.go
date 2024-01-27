@@ -1,6 +1,7 @@
 package inspire
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -117,7 +118,9 @@ func handleRequestBody(rBody []byte) (string, error) {
 	var mindful MindfulnessMode
 	var mindfulness string
 
-	err := json.Unmarshal(rBody, &mindful)
+	readerToDecoder := bytes.NewReader(rBody)
+	err := json.NewDecoder(readerToDecoder).Decode(&mindful)
+
 	if err != nil {
 		return "", err
 	}

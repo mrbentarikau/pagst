@@ -48,7 +48,7 @@ func (p *Plugin) InitWeb() {
 
 	web.AddHTMLTemplate("twitter/assets/twitter.html", PageHTML)
 	web.AddSidebarItem(web.SidebarCategoryFeeds, &web.SidebarItem{
-		Name: "Twitter Feeds",
+		Name: "X/Twitter Feeds",
 		URL:  "twitter",
 		Icon: "fab fa-twitter",
 	})
@@ -93,17 +93,18 @@ func (p *Plugin) HandleNew(w http.ResponseWriter, r *http.Request) (web.Template
 
 	//if premium.ContextPremiumTier(ctx) != premium.PremiumTierPremium {
 	if !premium.ContextPremium(ctx) {
-		return templateData.AddAlerts(web.ErrorAlert("Twitter feeds are paid premium only")), nil
+		return templateData.AddAlerts(web.ErrorAlert("X/Twitter feeds are paid premium only")), nil
 	}
 
-	// limit it to max 25 feeds
+	// limit it to max feeds
+	var maxFeeds int64 = 15
 	currentCount, err := models.TwitterFeeds(models.TwitterFeedWhere.GuildID.EQ(activeGuild.ID)).CountG(ctx)
 	if err != nil {
 		return templateData, err
 	}
 
-	if currentCount >= 25 {
-		return templateData.AddAlerts(web.ErrorAlert("Max 25 feeds per server")), nil
+	if currentCount >= maxFeeds {
+		return templateData.AddAlerts(web.ErrorAlert(fmt.Sprintf("Max %d feeds per server", maxFeeds))), nil
 	}
 
 	form := ctx.Value(common.ContextKeyParsedForm).(*Form)
@@ -172,7 +173,7 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 	_, templateData = web.GetBaseCPContextData(ctx)
 
 	if !premium.ContextPremium(ctx) {
-		return templateData.AddAlerts(web.ErrorAlert("Twitter feeds are premium only")), nil
+		return templateData.AddAlerts(web.ErrorAlert("X/Twitter feeds are premium only")), nil
 	}
 
 	sub := ctx.Value(ContextKeySub).(*models.TwitterFeed)
@@ -211,7 +212,7 @@ var _ web.PluginWithServerHomeWidget = (*Plugin)(nil)
 func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
 	ag, templateData := web.GetBaseCPContextData(r.Context())
 
-	templateData["WidgetTitle"] = "Twitter feeds"
+	templateData["WidgetTitle"] = "X/Twitter feeds"
 	templateData["SettingsPath"] = "/twitter"
 
 	numFeeds, err := models.TwitterFeeds(models.TwitterFeedWhere.GuildID.EQ(ag.ID)).CountG(r.Context())
@@ -225,7 +226,7 @@ func (p *Plugin) LoadServerHomeWidget(w http.ResponseWriter, r *http.Request) (w
 		templateData["WidgetDisabled"] = true
 	}
 
-	const format = `<p>Active Twitter feeds: <code>%d</code></p>`
+	const format = `<p>Active X/Twitter feeds: <code>%d</code></p>`
 	templateData["WidgetBody"] = template.HTML(fmt.Sprintf(format, numFeeds))
 
 	return templateData, nil

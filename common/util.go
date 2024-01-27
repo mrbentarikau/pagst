@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"math/rand"
 	"path/filepath"
@@ -21,6 +22,7 @@ import (
 	"github.com/forPelevin/gomoji"
 	"github.com/lib/pq"
 	"github.com/mediocregopher/radix/v3"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/rivo/uniseg"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/image/colornames"
@@ -41,6 +43,7 @@ var LinkRegexBotlabs = regexp.MustCompile(`(?i)([a-z\d]+:\/\/)([\w_-]+(?:(?:\.[\
 var LinkRegex = regexp.MustCompile(`(?i)([a-z\d]+://)((\w+:\w+@)?([a-z\d.-]+\.[a-z]{2,64})(:\d+)?(/.*)?)`)
 var DomainFinderRegex = regexp.MustCompile(`(?i)(?:[a-z\d](?:[a-z\d-]{0,61}[a-z\d])?\.)+[a-z\d][a-z\d-]{0,61}[a-z\d]`)
 var ThanksRegex = regexp.MustCompile(`(?i)(?:\A|.+)(?:\+(?:\s+|rep)?|t(?:y(?:sm|vm)?|h(?:a?nks?|n?x)(?:\s+(?:yo)?u)?(?:\s+(?:so|very)\s+much|\s+?a?\s*lot)?)|danke?s?)+.*<@!?\d{17,19}>(?:.+|\z)`)
+var UGCHtmlPolicy = bluemonday.NewPolicy().AllowElements("h1", "h2", "h3", "h4", "h5", "h6", "p", "ol", "ul", "li", "dl", "dd", "dt", "blockquote", "table", "thead", "th", "tr", "td", "tbody", "del", "i", "b")
 
 type GuildWithConnected struct {
 	*discordgo.UserGuild
@@ -93,12 +96,17 @@ func SendTempMessage(session *discordgo.Session, duration time.Duration, cID int
 }
 
 func RandomAdjective() string {
-	adjective := Adjectives[rand.Intn(len(Adjectives))]
+	adjective := RandomAdjectiveNoAPI()
 
 	if rand.Intn(2) > 0 {
 		adjective = wordFromAPI(adjective, false)
 	}
 
+	return adjective
+}
+
+func RandomAdjectiveNoAPI() string {
+	adjective := Adjectives[rand.Intn(len(Adjectives))]
 	return adjective
 }
 
@@ -371,7 +379,7 @@ func RemoveRoleDS(ms *dstate.MemberState, role int64) error {
 }
 
 var StringPerms = map[int64]string{
-	discordgo.PermissionReadMessages:       "Read Messages",
+	discordgo.PermissionViewChannel:        "Read Messages",
 	discordgo.PermissionSendMessages:       "Send Messages",
 	discordgo.PermissionSendTTSMessages:    "Send TTS Messages",
 	discordgo.PermissionManageMessages:     "Manage Messages",
@@ -462,7 +470,7 @@ func HumanizePermissions(perms int64) (res []string) {
 	if perms&discordgo.PermissionViewGuildInsights == discordgo.PermissionViewGuildInsights {
 		res = append(res, "ViewGuildInsights")
 	}
-	if perms&discordgo.PermissionReadMessages == discordgo.PermissionReadMessages {
+	if perms&discordgo.PermissionViewChannel == discordgo.PermissionViewChannel {
 		res = append(res, "ReadMessages")
 	}
 	if perms&discordgo.PermissionSendMessages == discordgo.PermissionSendMessages {
@@ -845,4 +853,12 @@ func ParseCodeblock(input string) string {
 	logger.Debugf("Found matches: %#v", parts)
 	logger.Debugf("Returning %s", parts[1])
 	return parts[1]
+}
+
+func Base64DecodeToString(str string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }

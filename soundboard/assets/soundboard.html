@@ -44,7 +44,9 @@
                         <input type="text" class="form-control" name="SoundURL" placeholder="URL">
                         <p class="help-block">Specify a sound url instead of uploading a sound (direct link to a media file, NOT a youtube link)</p>
                     </div>
+                    {{if .WriteAccess}}
                     <input type="submit" class="btn btn-success" value="Upload/Download!">
+                    {{end}}
                 </form>
             </div>
         </div>
@@ -64,7 +66,9 @@
                             <th>Allowed roles</th>
                             <th>Blacklisted role</th>
                             <th>Status</th>
+                            {{if $dot.WriteAccess}}
                             <th>Actions</th>
+                            {{end}}
                         </tr>
                     </thead>
                     <tbody>
@@ -91,11 +95,12 @@
                             <td>
                                 <p class="form-control-static">{{if eq .Status 0}}Queued{{else if eq .Status 1}}Ready{{else if eq .Status 2}}Processing{{else if eq .Status 3}}Too long{{else if eq .Status 4}}Failed, contact support{{end}}</p>
                             </td>
-                            
+                            {{if $dot.WriteAccess}}
                             <td>
                                 <button form="sound-item-{{.ID}}" type="submit" class="btn btn-success" formaction="/manage/{{$dot.ActiveGuild.ID}}/soundboard/update">Save</button>
                                 <button form="sound-item-{{.ID}}" type="submit" class="btn btn-danger" formaction="/manage/{{$dot.ActiveGuild.ID}}/soundboard/delete">Delete</button>
                             </td>
+                            {{end}}
                         </tr>
                         {{end}}
                     </tbody>

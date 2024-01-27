@@ -54,8 +54,6 @@ func initSchema(schema string, name string) {
 		UnlockRedisKey("schema_init")
 		logger.WithError(err).Fatal("failed initializing postgres db schema for ", name)
 	}
-
-	return
 }
 
 func checkSkipSchemaInit(schema string, name string) (exists bool, err error) {
@@ -138,6 +136,4 @@ func InitSchemas(name string, schemas ...string) {
 		actualName := fmt.Sprintf("%s[%d]", name, i)
 		initSchema(v, actualName)
 	}
-
-	return
 }

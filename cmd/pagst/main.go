@@ -41,6 +41,7 @@ import (
 	"github.com/mrbentarikau/pagst/streaming"
 	"github.com/mrbentarikau/pagst/tickets"
 	"github.com/mrbentarikau/pagst/timezonecompanion"
+	"github.com/mrbentarikau/pagst/trivia"
 	"github.com/mrbentarikau/pagst/twitter"
 	"github.com/mrbentarikau/pagst/verification"
 	"github.com/mrbentarikau/pagst/yageconomy"
@@ -89,6 +90,7 @@ func main() {
 	streaming.RegisterPlugin()
 	tickets.RegisterPlugin()
 	timezonecompanion.RegisterPlugin()
+	trivia.RegisterPlugin()
 	twitter.RegisterPlugin()
 	verification.RegisterPlugin()
 	yageconomy.RegisterPlugin()

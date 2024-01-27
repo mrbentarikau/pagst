@@ -4,7 +4,7 @@ jobs: # basic units of work in a run
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       # - image: circleci/golang:1.16 #
-      - image: cimg/go:1.18 #
+      - image: cimg/go:1.20 #
 
     # directory where steps are run. Path must conform to the Go Workspace requirements
     working_directory: /home/circleci/go/src/github.com/mrbentarikau/pagst

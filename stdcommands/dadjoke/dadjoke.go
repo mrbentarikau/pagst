@@ -1,12 +1,12 @@
 package dadjoke
 
 import (
+	"bytes"
 	"encoding/json"
-	"io"
-	"net/http"
 
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 // Create the struct that we will serialize the API response into.
@@ -24,34 +24,19 @@ var Command = &commands.YAGCommand{
 	DefaultEnabled:            true,
 	ApplicationCommandEnabled: true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
-		//Define the request and website we will navigate to.
-		req, err := http.NewRequest("GET", "https://icanhazdadjoke.com", nil)
-		if err != nil {
-			return nil, err
-		}
-
-		//Set the headers that will be sent to the API to determine the response.
-		req.Header.Set("Accept", "application/json")
-		req.Header.Set("User-Agent", "PAGST/20.42.6702")
-
-		client := &http.Client{}
-		apiResp, err := client.Do(req)
-		if err != nil {
-			return nil, err
-		}
-
-		//Once the rest of the function is done close our connection the API.
-		defer apiResp.Body.Close()
+		var extraHeaders = map[string]string{"Accept": "application/json"}
+		queryURL := "https://icanhazdadjoke.com"
 
 		//Read the API response.
-		bytes, err := io.ReadAll(apiResp.Body)
+		responseBytes, err := util.RequestFromAPI(queryURL, extraHeaders)
 		if err != nil {
 			return nil, err
 		}
 
 		//Create our struct and unmarshal the content into it.
 		joke := Joke{}
-		err = json.Unmarshal(bytes, &joke)
+		readerToDecoder := bytes.NewReader(responseBytes)
+		err = json.NewDecoder(readerToDecoder).Decode(&joke)
 		if err != nil {
 			return nil, err
 		}

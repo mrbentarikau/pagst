@@ -2,6 +2,7 @@ package automod
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"time"
 
@@ -433,7 +434,7 @@ func (timeout *TimeoutUserEffect) DataType() interface{} {
 
 func (timeout *TimeoutUserEffect) UserSettings() []*SettingDef {
 	return []*SettingDef{
-		&SettingDef{
+		{
 			Name:    "Duration (minutes)",
 			Key:     "Duration",
 			Min:     int(moderation.MinTimeOutDuration.Minutes()),
@@ -441,7 +442,7 @@ func (timeout *TimeoutUserEffect) UserSettings() []*SettingDef {
 			Kind:    SettingTypeInt,
 			Default: int(moderation.DefaultTimeoutDuration.Minutes()),
 		},
-		&SettingDef{
+		{
 			Name: "Custom message (empty for default)",
 			Key:  "CustomReason",
 			Min:  0,
@@ -708,8 +709,9 @@ func (gf *GiveRoleEffect) Apply(ctxData *TriggeredRuleData, settings interface{}
 type RemoveRoleEffect struct{}
 
 type RemoveRoleEffectData struct {
-	Duration int `valid:",0,604800,trimspace"`
-	Role     int64
+	RemoveAllRoles bool
+	Duration       int `valid:",0,604800,trimspace"`
+	Role           int64
 }
 
 func (rr *RemoveRoleEffect) Kind() RulePartType {
@@ -735,6 +737,12 @@ func (rf *RemoveRoleEffect) UserSettings() []*SettingDef {
 			Key:  "Role",
 			Kind: SettingTypeRole,
 		},
+		{
+			Name:    "Remove all roles (this is permanent)",
+			Key:     "RemoveAllRoles",
+			Kind:    SettingTypeBool,
+			Default: false,
+		},
 	}
 }
 
@@ -748,6 +756,24 @@ func (rf *RemoveRoleEffect) Description() (description string) {
 
 func (rf *RemoveRoleEffect) Apply(ctxData *TriggeredRuleData, settings interface{}) error {
 	settingsCast := settings.(*RemoveRoleEffectData)
+
+	if settingsCast.RemoveAllRoles {
+		managedRoles := make([]string, 0)
+		for _, id := range ctxData.MS.Member.Roles {
+			r := ctxData.GS.GetRole(id)
+			if r != nil && r.Managed {
+				managedRoles = append(managedRoles, strconv.FormatInt(id, 10))
+			}
+		}
+
+		guildMemberParams := &discordgo.GuildMemberParams{Roles: &managedRoles}
+		_, err := common.BotSession.GuildMemberEdit(ctxData.GS.ID, ctxData.MS.User.ID, guildMemberParams)
+		if err != nil {
+			return err
+		} else {
+			return nil
+		}
+	}
 
 	if !common.ContainsInt64Slice(ctxData.MS.Member.Roles, settingsCast.Role) {
 		return nil

@@ -38,6 +38,9 @@ var PageHTMLEditCmd string
 //go:embed assets/customcommands.html
 var PageHTMLMain string
 
+//go:embed assets/customcommands-database.html
+var PageHTMLDatabase string
+
 // GroupForm is the form bindings used when creating or updating groups
 type GroupForm struct {
 	ID   int64
@@ -55,6 +58,11 @@ type GroupForm struct {
 	ThreadsEnabled bool `valid:"threads_enabled,true"`
 }
 
+type SearchForm struct {
+	Query string
+	Type  string
+}
+
 var (
 	panelLogKeyNewCommand        = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_new_command", FormatString: "Created a new custom command: %d"})
 	panelLogKeyUpdatedCommand    = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_updated_command", FormatString: "Updated custom command: %d"})
@@ -64,6 +72,8 @@ var (
 	panelLogKeyNewGroup     = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_new_group", FormatString: "Created a new custom command group: %s"})
 	panelLogKeyUpdatedGroup = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_updated_group", FormatString: "Updated custom command group: %s"})
 	panelLogKeyRemovedGroup = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_removed_group", FormatString: "Removed custom command group: %d"})
+
+	panelLogKeyDeleteCCDBEntry = cplogs.RegisterActionFormat(&cplogs.ActionFormat{Key: "customcommands_db_entry_delete", FormatString: "Deleted CC DBEntry: %d"})
 )
 
 // InitWeb implements web.Plugin
@@ -76,9 +86,18 @@ func (p *Plugin) InitWeb() {
 		Icon: "fas fa-closed-captioning",
 	})
 
+	web.AddHTMLTemplate("customcommands/assets/customcommands-database.html", PageHTMLDatabase)
+	web.AddSidebarItem(web.SidebarCategoryCore, &web.SidebarItem{
+		Name: "CC Database",
+		URL:  "customcommands/database",
+		Icon: "fas fa-database",
+	})
+
 	getHandler := web.ControllerHandler(handleCommands, "cp_custom_commands")
 	getCmdHandler := web.ControllerHandler(handleGetCommand, "cp_custom_commands_edit_cmd")
 	getGroupHandler := web.ControllerHandler(handleGetCommandsGroup, "cp_custom_commands")
+	getDBHandler := web.ControllerHandler(handleGetDatabase, "cp_custom_commands_database")
+	getDBSearchHandler := web.ControllerHandler(handleSearchDatabase, "cp_custom_commands_database")
 
 	subMux := goji.SubMux()
 	web.CPMux.Handle(pat.New("/customcommands"), subMux)
@@ -102,6 +121,11 @@ func (p *Plugin) InitWeb() {
 	subMux.Handle(pat.Get(""), getHandler)
 	subMux.Handle(pat.Get("/"), getHandler)
 
+	subMux.Handle(pat.Get("/database"), getDBHandler)
+	subMux.Handle(pat.Get("/database/"), getDBHandler)
+	subMux.Handle(pat.Post("/database/search"), web.ControllerPostHandler(handleSearchDatabase, getDBSearchHandler, SearchForm{}))
+	subMux.Handle(pat.Post("/database/delete/:id"), web.ControllerPostHandler(handleDeleteDatabaseEntry, getDBHandler, nil))
+
 	subMux.Handle(pat.Get("/commands/:cmd/"), getCmdHandler)
 
 	subMux.Handle(pat.Get("/groups/:group/"), web.ControllerHandler(handleGetCommandsGroup, "cp_custom_commands"))
@@ -118,6 +142,107 @@ func (p *Plugin) InitWeb() {
 	subMux.Handle(pat.Post("/groups/:group/update"), web.ControllerPostHandler(handleUpdateGroup, getGroupHandler, GroupForm{}))
 	subMux.Handle(pat.Post("/groups/:group/delete"), web.ControllerPostHandler(handleDeleteGroup, getHandler, nil))
 	subMux.Use(web.NotFound())
+}
+
+func handleGetDatabase(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
+	var err error
+
+	ctx := r.Context()
+	activeGuild, templateData := web.GetBaseCPContextData(ctx)
+
+	beforeID := 0
+	wantBefore := r.URL.Query().Get("before")
+	if wantBefore != "" {
+		beforeID, err = strconv.Atoi(wantBefore)
+		if err != nil {
+			templateData.AddAlerts(web.ErrorAlert("Failed parsing before id"))
+		}
+	} else {
+		templateData["FirstPage"] = true
+	}
+
+	afterID := 0
+	wantAfter := r.URL.Query().Get("after")
+	if wantAfter != "" {
+		afterID, err = strconv.Atoi(wantAfter)
+		if err != nil {
+			templateData.AddAlerts(web.ErrorAlert("Failed parsing after id"))
+		}
+		templateData["FirstPage"] = false
+	}
+
+	result, err := getDatabaseEntries(ctx, activeGuild.ID, int64(beforeID), int64(afterID), 100)
+	if err != nil {
+		return templateData, err
+	}
+
+	entries := convertEntries(result)
+
+	templateData["DBEntries"] = entries
+	if len(entries) > 0 {
+		templateData["Oldest"] = entries[len(entries)-1].ID
+		templateData["Newest"] = entries[0].ID
+	}
+
+	return templateData, nil
+}
+
+func handleSearchDatabase(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
+	ctx := r.Context()
+	activeGuild, templateData := web.GetBaseCPContextData(ctx)
+
+	search := ctx.Value(common.ContextKeyParsedForm).(*SearchForm)
+	if search.Query == "" {
+		return handleGetDatabase(w, r)
+	}
+
+	qms := []qm.QueryMod{
+		models.TemplatesUserDatabaseWhere.GuildID.EQ(activeGuild.ID),
+		qm.OrderBy("id desc"),
+	}
+
+	switch search.Type {
+	case "id":
+		qms = append(qms, qm.Where("id = ?", search.Query))
+	case "user_id":
+		qms = append(qms, qm.Where("user_id = ?", search.Query))
+	case "key":
+		qms = append(qms, qm.Where("key ILIKE ?", search.Query))
+	}
+
+	result, err := models.TemplatesUserDatabases(qms...).AllG(ctx)
+	if err != nil {
+		return templateData, err
+	}
+
+	entries := convertEntries(result)
+
+	templateData["DBEntries"] = entries
+	if len(entries) > 0 {
+		templateData["Oldest"] = entries[len(entries)-1].ID
+		templateData["Newest"] = entries[0].ID
+	}
+
+	return templateData, nil
+}
+
+func handleDeleteDatabaseEntry(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {
+	ctx := r.Context()
+	activeGuild, templateData := web.GetBaseCPContextData(ctx)
+
+	id, err := strconv.ParseInt(pat.Param(r, "id"), 10, 64)
+	if err != nil {
+		return templateData, err
+	}
+
+	_, err = models.TemplatesUserDatabases(qm.Where("guild_id = ? AND id = ?", activeGuild.ID, id)).DeleteAll(ctx, common.PQ)
+	if err != nil {
+		return templateData, err
+	}
+
+	go cplogs.RetryAddEntry(web.NewLogEntryFromContext(r.Context(), panelLogKeyDeleteCCDBEntry, &cplogs.Param{Type: cplogs.ParamTypeInt, Value: id}))
+
+	return templateData.AddAlerts(), nil
 }
 
 func handleCommands(w http.ResponseWriter, r *http.Request) (web.TemplateData, error) {

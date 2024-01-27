@@ -17,12 +17,9 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/safebrowsing"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 )
 
-var tChain = transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+// var tChain = transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 var forwardSlashReplacer = strings.NewReplacer("\\", "")
 
 /////////////////////////////////////////////////////////////
@@ -585,20 +582,22 @@ func (a *AntiPhishingLinkTrigger) CheckMessage(triggerCtx *TriggerContext, cs *d
 		return true, nil
 	}
 
-	matches := common.LinkRegexJonas.FindAllString(forwardSlashReplacer.Replace(m.Content), -1)
+	/*
+		matches := common.LinkRegexJonas.FindAllString(forwardSlashReplacer.Replace(m.Content), -1)
 
-	for _, v := range matches {
-		trasparencyReport, err := common.TransparencyReportQuery(v)
-		if err != nil {
-			logger.WithError(err).Error("Failed checking URLs from Google's Transparency Report API.")
-			return false, nil
+		for _, v := range matches {
+			trasparencyReport, err := common.TransparencyReportQuery(v)
+			if err != nil {
+				logger.WithError(err).Error("Failed checking URLs from Google's Transparency Report API.")
+				return false, nil
+			}
+
+			if trasparencyReport.UnsafeContent == 2 { // || trasparencyReport.ScoreTotal >= 2
+				return true, nil
+			}
+
 		}
-
-		if trasparencyReport.UnsafeContent == 2 || trasparencyReport.ScoreTotal >= 2 {
-			return true, nil
-		}
-
-	}
+	*/
 
 	return false, nil
 }
@@ -831,14 +830,8 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 			}
 		}
 
-		/*if s.Links && !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(v.Content)) {
-			continue // were only checking messages with links
-		}*/
-
 		if s.Links {
-			//&& !common.LinkRegex.MatchString(forwardSlashReplacer.Replace(v.Content)) {
 			linksLen := len(common.LinkRegexJonas.FindAllString(forwardSlashReplacer.Replace(v.Content), -1))
-			//continue // were only checking messages with links
 			if linksLen < 1 {
 				continue // we're only checking messages with links
 			}

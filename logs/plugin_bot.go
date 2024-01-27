@@ -68,7 +68,7 @@ var cmdLogs = &commands.YAGCommand{
 		if cmd.Switch("channel").Value != nil {
 			cID = cmd.Switch("channel").Value.(*dstate.ChannelState).ID
 
-			hasPerms, err := bot.AdminOrPermMS(cmd.GuildData.CS.GuildID, cID, cmd.GuildData.MS, discordgo.PermissionSendMessages|discordgo.PermissionReadMessages|discordgo.PermissionReadMessageHistory)
+			hasPerms, err := bot.AdminOrPermMS(cmd.GuildData.CS.GuildID, cID, cmd.GuildData.MS, discordgo.PermissionSendMessages|discordgo.PermissionViewChannel|discordgo.PermissionReadMessageHistory)
 			if err != nil {
 				return "Failed checking permissions, please try again or join the support server.", err
 			}
@@ -81,7 +81,7 @@ var cmdLogs = &commands.YAGCommand{
 		l, err := CreateChannelLog(cmd.Context(), nil, cmd.GuildData.GS.ID, cID, cmd.Author.Username, cmd.Author.ID, num)
 		if err != nil {
 			if err == ErrChannelBlacklisted {
-				return "This channel is blacklisted from creating message logs, this can be changed in the control panel.", nil
+				return "This channel/thread's parent is blacklisted from creating message logs, this can be changed in the control panel.", nil
 			}
 
 			return "", err

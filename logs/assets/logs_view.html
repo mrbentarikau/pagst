@@ -8,7 +8,7 @@
 </style>
 <header class="page-header">
     <form action="/manage/{{.ActiveGuild.ID}}/logging/fulldelete2" method="post">
-        <h2>Message logs for {{.ActiveGuild.Name}} #{{.Logs.ChannelName}} <small>(ID: {{.Logs.ChannelID}})</small>{{if .IsAdmin}} <input type="submit" class="btn btn-lg btn-danger" value="Delete" />{{end}}</h2>
+        <h2>Message logs for {{.ActiveGuild.Name}} #{{.Logs.ChannelName}} <small>(ID: {{.Logs.ChannelID}})</small>{{if and .IsAdmin .WriteAccess}} <input type="submit" class="btn btn-lg btn-danger" value="Delete" />{{end}}</h2>
         <input type="text" name="ID" class="hidden" value="{{.Logs.ID}}">
     </form>
 </header>
@@ -22,7 +22,7 @@
                     <div><b>{{.BotName}}</b> <a class="pagst" href="../../../privacy_policy" rel="noopener">Privacy Policy</a></div>
                 </tr>
                 <tr>
-                    {{if .IsAdmin}}<th>Actions</th>{{end}}
+                    {{if and .IsAdmin .WriteAccess}}<th>Actions</th>{{end}}
                     <th id="time-col">Time (UTC) <i class="fa fa-caret-up"></i></th>
                     <th>Author</th>
                     <th class="pagst-log-message">Message</th>
@@ -34,7 +34,7 @@
                 {{$CanViewDeleted := .CanViewDeleted}}
                 {{range $i, $v := .Messages}}
                 <tr id="log-row-{{$i}}" class="popover-trigger log-row" data-toggle="popover" data-trigger="click" title="Message info" data-placement="top"  data-content="Author ID: {{.Model.AuthorID}} Message ID: {{.Model.ID}}">
-                    {{if $IsAdmin}}
+                    {{if and $IsAdmin $.WriteAccess}}
                     <td>{{if not .Model.Deleted}}<button id="msg-button-{{.Model.ID}}" class="btn btn-sm btn-danger" noconfirm onclick="deleteMessage('{{.Model.ID}}')">Delete</button>{{end}}</td>{{end}}
                     <td class="text-nowrap">{{.Timestamp}}</td>
                     <td style="{{if .Color}}color: #{{.Color}};{{end}}font-weight: 600;">{{.Model.AuthorUsername}}</td>

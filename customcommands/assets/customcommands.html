@@ -83,9 +83,11 @@
                                         {{roleOptionsMulti .ActiveGuild.Roles nil .CurrentCommandGroup.IgnoreRoles}}
                                     </select>
                                 </div>
+                                {{if .WriteAccess}}
                                 <div class="form-group">
                                     <button type="submit" class="btn btn-success btn-block">Save group settings</button>
                                 </div>
+                                {{end}}
                             </div>
                             <div class="row" style="width:33%">
                                 <div class="col-6">
@@ -103,6 +105,7 @@
                                             {{catChannelOptionsMulti .ActiveGuild.Channels .CurrentCommandGroup.IgnoreCategories }}
                                         </select>
                                     </div>
+                                    {{if .WriteAccess}}
                                     <div class="form-group">
                                         <button type="submit"
                                             title="Group #{{.CurrentCommandGroup.ID}} - {{.CurrentCommandGroup.Name}} &#013;Deleted group's commands become ungrouped."
@@ -110,6 +113,7 @@
                                             formaction="/manage/{{.ActiveGuild.ID}}/customcommands/groups/{{.CurrentCommandGroup.ID}}/delete">Delete
                                             group</button>
                                     </div>
+                                    {{end}}
                                 </div>
                                 <div class="col-6">
                                     <div class="form-group">
@@ -132,6 +136,7 @@
                     </form>
                     {{end}}
                     <p>You have created <code>{{.CCCount}}</code> custom commands against the total limit of <code>{{.CCLimit}}</code><br/>CC count in this group: <code>{{len .CustomCommands}}</code><br/>{{.AdditionalMessage}}</p>
+                    {{if .WriteAccess}}
                     <form method="post" action="/manage/{{.ActiveGuild.ID}}/customcommands/commands/new" id="pagstNewCommand">
                         <script type="text/javascript" src="/static/js/shortcuts.js"></script>
                             <script>shortcut.add("shift+alt+c",function(){document.getElementById('pagstNewCommand').submit();});</script>
@@ -139,6 +144,7 @@
                             value="{{if .CurrentCommandGroup}}{{.CurrentCommandGroup.ID}}{{end}}">
                         <button type="submit" class="btn btn-success" {{if ge .CCCount .CCLimit}}disabled{{end}}>Create a new Custom Command</button>
                     </form>
+                    {{end}}
                 </div>
             </div>
         </div>
@@ -152,6 +158,7 @@
     {{range .CustomCommands}}
     <div class="card"> 
         <div class="card-header clearfix">
+            {{if $dot.WriteAccess}}
             <form class="form-horizontal" method="post" method="post" action="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/update" data-async-form>
                 <div class="pull-right">
                     {{if and (eq .TriggerType 5) (not .Disabled)}}
@@ -169,6 +176,7 @@
                     {{end}}
                 </div>
             </form>
+            {{end}}
             <h2 class="card-title">
                 {{$dotSDict := sdict "dot" $dot "insideDot" .}}
                 {{template "cc_beginning" $dotSDict -}}

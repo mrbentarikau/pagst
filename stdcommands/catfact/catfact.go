@@ -1,15 +1,12 @@
 package catfact
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
-	"net/http"
-	"strings"
 
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
@@ -35,22 +32,19 @@ var Command = &commands.YAGCommand{
 
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var catStuff *CatStuff
-		var cf string
-		//var cf, cPicLink string
 
 		queryFact := "https://catfact.ninja/fact"
-		// queryPic := "https://aws.random.cat/meow"
-
-		cf = Catfacts[rand.Intn(len(Catfacts))]
+		cf := Catfacts[rand.Intn(len(Catfacts))]
 
 		request := rand.Intn(2)
 		if request > 0 {
-			catStuffBody, err := util.RequestFromAPI(queryFact)
+			responseBytes, err := util.RequestFromAPI(queryFact)
 			if err != nil {
 				return cf, nil
 			}
 
-			queryErr := json.Unmarshal([]byte(catStuffBody), &catStuff)
+			readerToDecoder := bytes.NewReader(responseBytes)
+			queryErr := json.NewDecoder(readerToDecoder).Decode(&catStuff)
 			if queryErr == nil {
 				cf = catStuff.Fact
 			}
@@ -61,24 +55,9 @@ var Command = &commands.YAGCommand{
 			return cf, nil
 		}
 
-		//return cf, nil
-		/*
-			if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
-				return cf, nil
-			}
-
-			catStuffBody, err := util.RequestFromAPI(queryPic)
-			if err != nil {
-				return cf, nil
-			}
-
-			queryErr := json.Unmarshal([]byte(catStuffBody), &catStuff)
-			if queryErr == nil {
-				cPicLink = catStuff.File
-			} else {
-				return cf, nil
-			}
-		*/
+		if data.Switches["raw"].Value != nil && data.Switches["raw"].Value.(bool) {
+			return cf, nil
+		}
 
 		embed := &discordgo.MessageEmbed{
 			Description: cf,
@@ -96,30 +75,12 @@ var Command = &commands.YAGCommand{
 func catScarper() (string, error) {
 	query := fmt.Sprintf("http://random.cat/view/%d", rand.Intn(1677))
 
-	req, err := http.NewRequest("GET", query, nil)
+	body, err := util.RequestFromAPI(query)
 	if err != nil {
 		return "", err
 	}
 
-	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "Something wonky happened getting results, random.cat is probably down", err
-	}
-
-	if resp.StatusCode != 200 {
-		return "", commands.NewPublicError("HTTP Response was not 200, but ", resp.StatusCode)
-	}
-
-	defer resp.Body.Close()
-
-	bytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	toReader := strings.NewReader(string(bytes))
+	toReader := bytes.NewReader(body)
 	parseData, err := goquery.NewDocumentFromReader(toReader)
 	if err != nil {
 		return "", err

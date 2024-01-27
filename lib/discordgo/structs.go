@@ -423,7 +423,7 @@ type Channel struct {
 	AvailableTags []ForumTag `json:"available_tags,omitempty"`
 
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
-	AppliedTags []string `json:"applied_tags,omitempty"`
+	AppliedTags IDSlice `json:"applied_tags,omitempty"`
 
 	// Emoji to use as the default reaction to a forum post.
 	DefaultReactionEmoji ForumDefaultReaction `json:"default_reaction_emoji,omitempty"`
@@ -459,6 +459,10 @@ func (t ChannelType) IsThread() bool {
 	return t == ChannelTypeGuildPrivateThread || t == ChannelTypeGuildPublicThread
 }
 
+func (t ChannelType) IsForum() bool {
+	return t == ChannelTypeGuildForum
+}
+
 // A ChannelEdit holds Channel Feild data for a channel edit.
 type ChannelEdit struct {
 	Name                          string                 `json:"name,omitempty"`
@@ -486,7 +490,7 @@ type ChannelEdit struct {
 	DefaultForumLayout   *ForumLayout          `json:"default_forum_layout,omitempty"`
 
 	// NOTE: forum threads only
-	AppliedTags *[]string `json:"applied_tags,omitempty"`
+	AppliedTags *IDSlice `json:"applied_tags,omitempty"`
 }
 
 // A ChannelFollow holds data returned after following a news channel
@@ -527,7 +531,7 @@ type ThreadStart struct {
 	RateLimitPerUser    int         `json:"rate_limit_per_user,omitempty"`
 
 	// NOTE: forum threads only
-	AppliedTags []string `json:"applied_tags,omitempty"`
+	AppliedTags IDSlice `json:"applied_tags,omitempty"`
 }
 
 // ThreadMetadata contains a number of thread-specific channel fields that are not needed by other channel types.
@@ -1417,6 +1421,12 @@ type RoleParams struct {
 	Permissions *int64 `json:"permissions,string,omitempty"`
 	// Whether this role is mentionable
 	Mentionable *bool `json:"mentionable,omitempty"`
+	// The role's unicode emoji.
+	// NOTE: can only be set if the guild has the ROLE_ICONS feature.
+	UnicodeEmoji *string `json:"unicode_emoji,omitempty"`
+	// The role's icon image encoded in base64.
+	// NOTE: can only be set if the guild has the ROLE_ICONS feature.
+	Icon *string `json:"icon,omitempty"`
 }
 
 // Roles are a collection of Role
@@ -1586,6 +1596,20 @@ type Member struct {
 	// The time at which the member's timeout will expire.
 	// Time in the past or nil if the user is not timed out.
 	TimeoutExpiresAt *time.Time `json:"communication_disabled_until,omitempty"`
+}
+
+// String returns a unique identifier of the form username#discriminator
+// or username only if the discriminator is "0"
+func (m *Member) String() string {
+	// If the user has been migrated from the legacy username system, their discriminator is "0".
+	// See https://support-dev.discord.com/hc/en-us/articles/13667755828631
+	if m.User.Discriminator == "0" {
+		return m.User.Username
+	}
+
+	// The code below handles applications and users without a migrated username.
+	// https://support-dev.discord.com/hc/en-us/articles/13667755828631
+	return m.User.Username + "#" + m.User.Discriminator
 }
 
 func (m *Member) GetGuildID() int64 {
@@ -2482,135 +2506,6 @@ type InviteUser struct {
 	Avatar        string `json:"avatar"`
 	Discriminator string `json:"discriminator"`
 	Username      string `json:"username"`
-}
-
-func (a *ApplicationCommandInteractionDataResolved) UnmarshalJSON(b []byte) error {
-	var temp *applicationCommandInteractionDataResolvedTemp
-	err := json.Unmarshal(b, &temp)
-	if err != nil {
-		return err
-	}
-
-	*a = ApplicationCommandInteractionDataResolved{
-		Users:    make(map[int64]*User),
-		Members:  make(map[int64]*Member),
-		Roles:    make(map[int64]*Role),
-		Channels: make(map[int64]*Channel),
-	}
-
-	for k, v := range temp.Channels {
-		parsed, err := strconv.ParseInt(k, 10, 64)
-		if err != nil {
-			return err
-		}
-		a.Channels[parsed] = v
-	}
-
-	for k, v := range temp.Roles {
-		parsed, err := strconv.ParseInt(k, 10, 64)
-		if err != nil {
-			return err
-		}
-		a.Roles[parsed] = v
-	}
-
-	for k, v := range temp.Members {
-		parsed, err := strconv.ParseInt(k, 10, 64)
-		if err != nil {
-			return err
-		}
-		a.Members[parsed] = v
-	}
-
-	for k, v := range temp.Users {
-		parsed, err := strconv.ParseInt(k, 10, 64)
-		if err != nil {
-			return err
-		}
-		a.Users[parsed] = v
-	}
-
-	return nil
-}
-
-type applicationCommandInteractionDataResolvedTemp struct {
-	Users    map[string]*User    `json:"users"`
-	Members  map[string]*Member  `json:"members"`
-	Roles    map[string]*Role    `json:"roles"`
-	Channels map[string]*Channel `json:"channels"`
-}
-
-type applicationCommandInteractionDataOptionTemporary struct {
-	Name    string                                     `json:"name"`    // the name of the parameter
-	Type    ApplicationCommandOptionType               `json:"type"`    // value of ApplicationCommandOptionType
-	Value   json.RawMessage                            `json:"value"`   // the value of the pair
-	Options []*ApplicationCommandInteractionDataOption `json:"options"` // present if this option is a group or subcommand
-}
-
-func (a *ApplicationCommandInteractionDataOption) UnmarshalJSON(b []byte) error {
-	var temp *applicationCommandInteractionDataOptionTemporary
-	err := json.Unmarshal(b, &temp)
-	if err != nil {
-		return err
-	}
-
-	*a = ApplicationCommandInteractionDataOption{
-		Name:    temp.Name,
-		Type:    temp.Type,
-		Options: temp.Options,
-	}
-
-	switch temp.Type {
-	case ApplicationCommandOptionString:
-		v := ""
-		err = json.Unmarshal(temp.Value, &v)
-		a.Value = v
-	case ApplicationCommandOptionInteger:
-		v := int64(0)
-		err = json.Unmarshal(temp.Value, &v)
-		a.Value = v
-	case ApplicationCommandOptionBoolean:
-		v := false
-		err = json.Unmarshal(temp.Value, &v)
-		a.Value = v
-	case ApplicationCommandOptionUser, ApplicationCommandOptionChannel, ApplicationCommandOptionRole:
-		// parse the snowflake
-		v := ""
-		err = json.Unmarshal(temp.Value, &v)
-		if err == nil {
-			a.Value, err = strconv.ParseInt(v, 10, 64)
-		}
-	case ApplicationCommandOptionSubCommand:
-	case ApplicationCommandOptionSubCommandGroup:
-	}
-
-	return err
-}
-
-/*
-	type InteractionResponse struct {
-		Kind InteractionResponseType                    `json:"type"` // the type of response
-		Data *InteractionApplicationCommandCallbackData `json:"data"` // an optional response message
-	}
-
-type InteractionResponseType int
-
-const (
-
-	InteractionResponseTypePong                             InteractionResponseType = 1 // ACK a Ping
-	InteractionResponseTypeAcknowledge                      InteractionResponseType = 2 // DEPRECATED ACK a command without sending a message, eating the user's input
-	InteractionResponseTypeChannelMessage                   InteractionResponseType = 3 // DEPRECATED respond with a message, eating the user's input
-	InteractionResponseTypeChannelMessageWithSource         InteractionResponseType = 4 // respond to an interaction with a message
-	InteractionResponseTypeDeferredChannelMessageWithSource InteractionResponseType = 5 // ACK an interaction and edit a response later, the user sees a loading state
-
-)
-*/
-type InteractionApplicationCommandCallbackData struct {
-	TTS             bool             `json:"tts,omitempty"`              //	is the response TTS
-	Content         *string          `json:"content,omitempty"`          //	message content
-	Embeds          []MessageEmbed   `json:"embeds,omitempty"`           // supports up to 10 embeds
-	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"` // allowed mentions object
-	Flags           int              `json:"flags,omitempty"`            //	set to 64 to make your response ephemeral
 }
 
 // Block contains Discord JSON Error Response codes
