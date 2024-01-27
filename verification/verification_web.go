@@ -18,7 +18,6 @@ import (
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	"github.com/mrbentarikau/pagst/verification/models"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/null/v8"
@@ -178,7 +177,7 @@ func (p *Plugin) handleGetVerifyPage(w http.ResponseWriter, r *http.Request) (we
 	}
 
 	unsafe := blackfriday.MarkdownCommon([]byte(msg))
-	html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
+	html := common.UGCHtmlPolicy.SanitizeBytes(unsafe)
 	templateData["RenderedPageContent"] = template.HTML(html)
 
 	return templateData, nil

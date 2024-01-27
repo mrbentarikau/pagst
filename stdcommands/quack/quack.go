@@ -2,6 +2,7 @@
 package quack
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -30,13 +31,14 @@ var Command = &commands.YAGCommand{
 		quackURL = "https://" + common.ConfHost.GetString() + "/static/img/quacknotfound.png"
 		query := "https://random-d.uk/api/quack"
 
-		quackBody, err := util.RequestFromAPI(query)
+		responseBytes, err := util.RequestFromAPI(query)
 		if err != nil {
 			return "", err
 		}
 
-		queryErr := json.Unmarshal([]byte(quackBody), &quack)
-		if queryErr != nil {
+		readerToDecoder := bytes.NewReader(responseBytes)
+		err = json.NewDecoder(readerToDecoder).Decode(&quack)
+		if err != nil {
 			descr = fmt.Sprintf("%s\nQuackAPI wonky... ducks are sad : /", err)
 		} else {
 			quackURL = quack.URL

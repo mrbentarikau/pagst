@@ -1,6 +1,7 @@
 package isthereanydeal
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -82,7 +83,8 @@ var Command = &commands.YAGCommand{
 			return nil, err
 		}
 
-		err = json.Unmarshal([]byte(body), &itadSearch)
+		readerToDecoder := bytes.NewReader(body)
+		err = json.NewDecoder(readerToDecoder).Decode(&itadSearch)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +124,8 @@ var Command = &commands.YAGCommand{
 						return nil, err
 					}
 
-					err = json.Unmarshal([]byte(body), &itadPriceLow)
+					readerToDecoder := bytes.NewReader(body)
+					err = json.NewDecoder(readerToDecoder).Decode(&itadPriceLow)
 					if err != nil {
 						continue
 					}
@@ -149,7 +152,8 @@ var Command = &commands.YAGCommand{
 			return nil, err
 		}
 
-		err = json.Unmarshal([]byte(body), &itadPrice)
+		readerToDecoder = bytes.NewReader(body)
+		err = json.NewDecoder(readerToDecoder).Decode(&itadPrice)
 		if err != nil {
 			return nil, err
 		}
@@ -183,7 +187,8 @@ var Command = &commands.YAGCommand{
 				return nil, err
 			}
 
-			err = json.Unmarshal([]byte(body), &itadGameInfo)
+			readerToDecoder = bytes.NewReader(body)
+			err = json.NewDecoder(readerToDecoder).Decode(&itadGameInfo)
 			if err != nil {
 				return nil, err
 			}

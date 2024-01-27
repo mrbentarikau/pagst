@@ -1,16 +1,15 @@
 package xkcd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
-	"net/http"
 
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 type Xkcd struct {
@@ -95,31 +94,19 @@ var Command = &commands.YAGCommand{
 
 func getComic(number ...int64) (*Xkcd, error) {
 	xkcd := Xkcd{}
-	queryUrl := XkcdHost + XkcdJson
+	queryURL := XkcdHost + XkcdJson
 
 	if len(number) >= 1 {
-		queryUrl = fmt.Sprintf(XkcdHost+"%d/"+XkcdJson, number[0])
+		queryURL = fmt.Sprintf(XkcdHost+"%d/"+XkcdJson, number[0])
 	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	responseBytes, err := util.RequestFromAPI(queryURL)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	queryErr := json.Unmarshal(body, &xkcd)
+	readerToDecoder := bytes.NewReader(responseBytes)
+	queryErr := json.NewDecoder(readerToDecoder).Decode(&xkcd)
 	if queryErr != nil {
 		return nil, queryErr
 	}

@@ -1,6 +1,8 @@
 package poll
 
 import (
+	"fmt"
+
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
@@ -34,11 +36,21 @@ var (
 			{Name: "Option9", Type: dcmd.String},
 			{Name: "Option10", Type: dcmd.String},
 		},
+		ArgSwitches: []*dcmd.ArgDef{
+			{Name: "desc", Type: dcmd.String, Help: "Text in the 'description' field"},
+		},
 		RunFunc: createPoll,
 	}
 )
 
 func createPoll(data *dcmd.Data) (interface{}, error) {
+	// Helper function to return value of a switch + whether it was set.
+	getSwitch := func(key string) (value interface{}, set bool) {
+		value = data.Switch(key).Value
+		set = value != nil
+		return
+	}
+
 	topic := data.Args[0].Str()
 	options := data.Args[1:]
 	for i, option := range options {
@@ -49,6 +61,10 @@ func createPoll(data *dcmd.Data) (interface{}, error) {
 	}
 
 	var description string
+	if desc, set := getSwitch("desc"); set {
+		description = fmt.Sprintf("%s\n\n", desc.(string))
+	}
+
 	for i, option := range options {
 		if i != 0 {
 			description += "\n"

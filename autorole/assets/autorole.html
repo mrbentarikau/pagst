@@ -66,7 +66,7 @@
                             {{checkbox "AssignRoleAfterScreening" "AssignRoleAfterScreening" `Only assign the role after a member has completed Discord's Membership Screening` .Autorole.AssignRoleAfterScreening}}
                         </div>
                         <br/>
-                        <button type="submit" class="btn btn-success btn-lg btn-block">Save</button>
+                        {{if .WriteAccess}}<button type="submit" class="btn btn-success btn-lg btn-block">Save</button>{{end}}
                     </div>
                 </div>
             </fieldset>
@@ -76,7 +76,7 @@
     </div>
     <!-- /.row -->
 </form>
-{{if or .FullScanEnabled .IsPremium}}
+{{if and (or .FullScanEnabled .IsPremium) .WriteAccess}}
 <form method="post" action="/manage/{{.ActiveGuild.ID}}/autorole/fullscan" data-async-form>
     <div class="row">
         <div class="col-lg-12">

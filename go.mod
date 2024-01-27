@@ -1,6 +1,6 @@
 module github.com/mrbentarikau/pagst
 
-go 1.18
+go 1.20
 
 require (
 	emperror.dev/errors v0.4.3

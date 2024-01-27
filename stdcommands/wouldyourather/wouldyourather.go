@@ -1,9 +1,9 @@
 package wouldyourather
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
-	"net/http"
 
 	"emperror.dev/errors"
 	"github.com/PuerkitoBio/goquery"
@@ -12,6 +12,7 @@ import (
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 type WouldYouRather struct {
@@ -93,18 +94,15 @@ var Command = &commands.YAGCommand{
 }
 
 func wouldYouRather() (q1 string, q2 string, err error) {
-	req, err := http.NewRequest("GET", "https://wouldurather.io/", nil)
+	query := "https://wouldurather.io/"
+
+	body, err := util.RequestFromAPI(query)
 	if err != nil {
-		panic(err)
+		return "", "", err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	toReader := bytes.NewReader(body)
+	doc, err := goquery.NewDocumentFromReader(toReader)
 	if err != nil {
 		return
 	}

@@ -1,24 +1,25 @@
 package bashquotes
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/mrbentarikau/pagst/commands"
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
+	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
 func ShouldRegister() bool {
 	dialHost := "bash.org:http"
 	timeout := 1 * time.Second
-	_, err := net.DialTimeout("tcp", dialHost, timeout)
+	conn, err := net.DialTimeout("tcp", dialHost, timeout)
+	if conn != nil {
+		defer conn.Close()
+	}
 	return err == nil
 }
 
@@ -42,30 +43,12 @@ var Command = &commands.YAGCommand{
 			query = fmt.Sprintf("%s?%d", bashHost, data.Args[0].Int64())
 		}
 
-		req, err := http.NewRequest("GET", query, nil)
+		body, err := util.RequestFromAPI(query)
 		if err != nil {
 			return "", err
 		}
 
-		req.Header.Set("User-Agent", common.ConfBotUserAgent.GetString())
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return "Something wonky happened getting results, bash.org is probably down", err
-		}
-
-		if resp.StatusCode != 200 {
-			return "", commands.NewPublicError("HTTP Response was not 200, but ", resp.StatusCode)
-		}
-
-		defer resp.Body.Close()
-
-		bytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return "", err
-		}
-
-		toReader := strings.NewReader(string(bytes))
+		toReader := bytes.NewReader(body)
 		parseData, err := goquery.NewDocumentFromReader(toReader)
 		if err != nil {
 			return nil, err

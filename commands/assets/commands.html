@@ -58,7 +58,7 @@
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="form-group">
-                                    <label for="prefix">Command Prefix<br><b>Note: Changing the prefix does not change the flag usage in commands. They will still begin with <code>-</code></b></label>
+                                    <label for="prefix">Command Prefix<br><b>Note: Changing the prefix does not change the flag usage in commands.<br/>They will still begin with <code>-</code></b></label>
                                     <div class="row-lg-6">
                                         <p id="example-command-usage">Example command usage: <code>{{.CommandPrefix}}rolemenu create &lt;name&gt; -nodm</code></p>
                                     </div>
@@ -70,15 +70,17 @@
                                 <i>...vast void...</i>
                             </div>
                         </div>
+                        {{if .WriteAccess}}
                         <div class="row mt-4">
                             <div class="col-lg-12">
                                 <button type="submit" class="btn btn-primary btn-lg btn-block">Save Prefix</button>
                             </div>
                         </div>
+                        {{end}}
                     </form>
                     <div class="row mt-4 border-top border-info pt-4">
                         <div class="col-lg-12">
-                            {{mTemplate "commands_channel_override" "ActiveGuild" .ActiveGuild "Commands" .SortedCommands "Override" .GlobalCommandSettings}}
+                            {{mTemplate "commands_channel_override" "ActiveGuild" .ActiveGuild "Commands" .SortedCommands "Override" .GlobalCommandSettings "WriteAccess" .WriteAccess}}
                         </div>
                     </div>
                 </div>
@@ -87,7 +89,7 @@
                 <div id="override-{{.ID}}" class="tab-pane">
                     <div class="row mt-4">
                         <div class="col-lg-12">
-                            {{mTemplate "commands_channel_override" "ActiveGuild" $dot.ActiveGuild "Commands" $dot.SortedCommands "Override" .}}
+                            {{mTemplate "commands_channel_override" "ActiveGuild" $dot.ActiveGuild "Commands" $dot.SortedCommands "Override" . "WriteAccess" $dot.WriteAccess}}
                         </div>
                     </div>
                 </div>
@@ -95,7 +97,7 @@
                 <div id="new-override" class="tab-pane">
                     <div class="row mt-4">
                         <div class="col-lg-12">
-                            {{mTemplate "commands_channel_override" "ActiveGuild" .ActiveGuild "Commands" .SortedCommands}}
+                            {{mTemplate "commands_channel_override" "ActiveGuild" .ActiveGuild "Commands" .SortedCommands "WriteAccess" .WriteAccess}}
                         </div>
                     </div>
                 </div>
@@ -258,7 +260,7 @@
             </div>
         </div>
     </div>
-    {{if .Override}}
+    {{if and .Override .WriteAccess}}
     <button type="submit" class="btn btn-success" value="Save" data-async-form-alertsonly>Save channel
         override</button>
     {{if not .Override.Global}}
@@ -266,7 +268,7 @@
         formaction="/manage/{{.ActiveGuild.ID}}/commands/settings/channel_overrides/{{.Override.ID}}/delete">Delete
         Channel override</button>
     {{end}}
-    {{else}}
+    {{else if .WriteAccess}}
     <input type="submit" class="btn btn-success" value="Create">
     {{end}}
 </form>
@@ -274,11 +276,11 @@
 <div class="row pt-4">
     <div class="col">
         <div class="accordion accordion-tertiary" id="cmd-accordion-{{.Override.ID}}">
-            {{mTemplate "commands_command_override" "ActiveGuild" .ActiveGuild "Parent" .Override "Commands" .Commands}}
+            {{mTemplate "commands_command_override" "ActiveGuild" .ActiveGuild "Parent" .Override "Commands" .Commands "WriteAccess" .WriteAccess}}
 
             {{$dot := .}}
             {{if .Override.R}}{{range $i, $v := .Override.R.CommandsCommandOverrides}}
-            {{mTemplate "commands_command_override" "ActiveGuild" $dot.ActiveGuild "Parent" $dot.Override "Commands" $dot.Commands "Override" . "Index" $i}}
+            {{mTemplate "commands_command_override" "ActiveGuild" $dot.ActiveGuild "Parent" $dot.Override "Commands" $dot.Commands "Override" . "Index" $i "WriteAccess" $dot.WriteAccess}}
             {{end}}{{end}}
         </div>
     </div>
@@ -391,13 +393,13 @@
                         </select>
                     </div>
                 </div>
-                {{if .Override}}
+                {{if and .Override .WriteAccess}}
                 <button type="submit" class="btn btn-success" value="Save command override"
                     data-async-form-alertsonly>Save command override</button>
                 <button type="submit" class="btn btn-danger" value="Delete command override"
                     formaction="/manage/{{.ActiveGuild.ID}}/commands/settings/channel_overrides/{{if .Parent.Global}}global{{else}}{{.Parent.ID}}{{end}}/command_overrides/{{.Override.ID}}/delete">Delete
                     command override</button>
-                {{else}}
+                {{else if .WriteAccess}}
                 <input type="submit" class="btn btn-success" value="Create command override">
                 {{end}}
             </div>

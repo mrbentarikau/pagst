@@ -43,6 +43,8 @@ var (
 
 	ConfRedditRandomJSON = config.RegisterOption("yagpdb.redditquotes_json", "Subreddit random.json", "r/caubert/random.json")
 
+	ConfHTTPProxy = config.RegisterOption("yagpdb.http.proxy", "Common Proxy URL", "")
+
 	BotOwners []int64
 
 	//EnabledFeeds = make([]string, 0)

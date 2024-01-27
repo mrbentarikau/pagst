@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	stdlog "log"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -43,7 +42,7 @@ var (
 
 	RedisPoolSize = 0
 
-	Testing = os.Getenv("YAGPDB_TESTING") != ""
+	Testing = os.Getenv("PAGSTDB_TESTING") != ""
 
 	CurrentRunCounter int64
 
@@ -57,9 +56,6 @@ var (
 
 // CoreInit initializes the essential parts
 func CoreInit(loadConfig bool) error {
-
-	rand.Seed(time.Now().UnixNano())
-
 	stdlog.SetOutput(&STDLogProxy{})
 	stdlog.SetFlags(0)
 

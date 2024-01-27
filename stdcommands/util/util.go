@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
@@ -23,18 +24,16 @@ func RequestFromAPI(query string, extraHeaders ...map[string]string) ([]byte, er
 			req.Header.Set(k, v)
 		}
 	}
-
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: time.Second * 7}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		return nil, commands.NewPublicError("HTTP err: ", resp.StatusCode)
-
 	}
-
-	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

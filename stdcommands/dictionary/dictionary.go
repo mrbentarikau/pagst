@@ -1,6 +1,7 @@
 package dictionary
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -37,7 +38,7 @@ var Command = &commands.YAGCommand{
 		query := strings.ToLower(data.Args[0].Str())
 		url := "https://api.dictionaryapi.dev/api/v2/entries/en/" + url.QueryEscape(query)
 
-		body, err := util.RequestFromAPI(url)
+		responseBytes, err := util.RequestFromAPI(url)
 		if err != nil {
 			if err.Error() == "HTTP err: 404" {
 				return fmt.Sprintf("Could not find a definition for word: `%s`.", query), nil
@@ -46,7 +47,8 @@ var Command = &commands.YAGCommand{
 		}
 
 		var res []DictionaryResponse
-		err = json.Unmarshal(body, &res)
+		readerToDecoder := bytes.NewReader(responseBytes)
+		err = json.NewDecoder(readerToDecoder).Decode(&res)
 		if err != nil || len(res[0].Meanings) == 0 {
 			logrus.WithError(err).Error("Failed getting response from dictionaryAPI.dev")
 			return "Could not find a definition for that word.", err
