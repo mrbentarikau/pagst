@@ -32,6 +32,18 @@ const (
 	UserFlagActiveBotDeveloper        UserFlags = 1 << 22
 )
 
+// UserPremiumType is the premium type of a user (see UserPremiumType* consts)
+// https://discord.com/developers/docs/resources/user#user-object-premium-types
+type UserPremiumType int
+
+// Valid UserPremiumType values
+const (
+	UserPremiumTypeNone         UserPremiumType = 0
+	UserPremiumTypeNitroClassic UserPremiumType = 1
+	UserPremiumTypeNitro        UserPremiumType = 2
+	UserPremiumTypeNitroBasic   UserPremiumType = 3
+)
+
 // A User stores all data for an individual Discord user.
 type User struct {
 	// The ID of the user.
@@ -89,7 +101,7 @@ type User struct {
 
 	// The type of Nitro subscription on a user's account.
 	// Only available when the request is authorized via a Bearer token.
-	PremiumType int `json:"premium_type"`
+	PremiumType UserPremiumType `json:"premium_type"`
 
 	// Whether the user is an Official Discord System user (part of the urgent message system).
 	System bool `json:"system"`

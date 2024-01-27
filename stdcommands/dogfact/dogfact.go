@@ -1,6 +1,7 @@
 package dogfact
 
 import (
+	"bytes"
 	"encoding/json"
 	"math/rand"
 
@@ -38,12 +39,13 @@ var Command = &commands.YAGCommand{
 
 		request := rand.Intn(2)
 		if request > 0 {
-			dogStuffBody, err := util.RequestFromAPI(queryFact)
+			responseBytes, err := util.RequestFromAPI(queryFact)
 			if err != nil {
 				return df, nil
 			}
 
-			bodyErr := json.Unmarshal([]byte(dogStuffBody), &dogStuff)
+			readerToDecoder := bytes.NewReader(responseBytes)
+			bodyErr := json.NewDecoder(readerToDecoder).Decode(&dogStuff)
 			if bodyErr == nil && len(dogStuff.Facts) > 0 {
 				df = dogStuff.Facts[0]
 			}
@@ -53,12 +55,13 @@ var Command = &commands.YAGCommand{
 			return df, nil
 		}
 
-		dogStuffBody, err := util.RequestFromAPI(queryPic)
+		responseBytes, err := util.RequestFromAPI(queryPic)
 		if err != nil {
 			return df, nil
 		}
 
-		queryErr := json.Unmarshal([]byte(dogStuffBody), &dogStuff)
+		readerToDecoder := bytes.NewReader(responseBytes)
+		queryErr := json.NewDecoder(readerToDecoder).Decode(&dogStuff)
 		if queryErr == nil {
 			dPicLink = dogStuff.Message
 		} else {

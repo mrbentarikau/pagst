@@ -786,7 +786,7 @@ func SetGuildMemberMiddleware(inner http.Handler) http.Handler {
 		}
 
 		read, write, guildOwner := IsAdminRequest(ctx, r)
-		ctx = SetContextTemplateData(ctx, map[string]interface{}{"IsAdmin": read || write, "GuildOwner": guildOwner})
+		ctx = SetContextTemplateData(ctx, map[string]interface{}{"IsAdmin": read || write, "GuildOwner": guildOwner, "WriteAccess": write})
 		ctx = context.WithValue(ctx, common.ContextKeyIsAdmin, read || write)
 
 		if read && !write {

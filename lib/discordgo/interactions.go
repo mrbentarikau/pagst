@@ -384,6 +384,129 @@ type MessageComponentInteractionData struct {
 	Values []string `json:"values"`
 }
 
+func (a *ApplicationCommandInteractionDataResolved) UnmarshalJSON(b []byte) error {
+	var temp *applicationCommandInteractionDataResolvedTemp
+	err := json.Unmarshal(b, &temp)
+	if err != nil {
+		return err
+	}
+
+	*a = ApplicationCommandInteractionDataResolved{
+		Users:       make(map[int64]*User),
+		Members:     make(map[int64]*Member),
+		Roles:       make(map[int64]*Role),
+		Channels:    make(map[int64]*Channel),
+		Messages:    make(map[int64]*Message),
+		Attachments: make(map[int64]*MessageAttachment),
+	}
+
+	for k, v := range temp.Messages {
+		parsed, err := strconv.ParseInt(k, 10, 64)
+		if err != nil {
+			return err
+		}
+		a.Messages[parsed] = v
+	}
+
+	for k, v := range temp.Attachments {
+		parsed, err := strconv.ParseInt(k, 10, 64)
+		if err != nil {
+			return err
+		}
+		a.Attachments[parsed] = v
+	}
+
+	for k, v := range temp.Channels {
+		parsed, err := strconv.ParseInt(k, 10, 64)
+		if err != nil {
+			return err
+		}
+		a.Channels[parsed] = v
+	}
+
+	for k, v := range temp.Roles {
+		parsed, err := strconv.ParseInt(k, 10, 64)
+		if err != nil {
+			return err
+		}
+		a.Roles[parsed] = v
+	}
+
+	for k, v := range temp.Members {
+		parsed, err := strconv.ParseInt(k, 10, 64)
+		if err != nil {
+			return err
+		}
+		a.Members[parsed] = v
+	}
+
+	for k, v := range temp.Users {
+		parsed, err := strconv.ParseInt(k, 10, 64)
+		if err != nil {
+			return err
+		}
+		a.Users[parsed] = v
+	}
+
+	return nil
+}
+
+type applicationCommandInteractionDataResolvedTemp struct {
+	Users       map[string]*User              `json:"users"`
+	Members     map[string]*Member            `json:"members"`
+	Roles       map[string]*Role              `json:"roles"`
+	Channels    map[string]*Channel           `json:"channels"`
+	Messages    map[string]*Message           `json:"messages"`
+	Attachments map[string]*MessageAttachment `json:"attachments"`
+}
+
+type applicationCommandInteractionDataOptionTemporary struct {
+	Name    string                                     `json:"name"`    // the name of the parameter
+	Type    ApplicationCommandOptionType               `json:"type"`    // value of ApplicationCommandOptionType
+	Value   json.RawMessage                            `json:"value"`   // the value of the pair
+	Options []*ApplicationCommandInteractionDataOption `json:"options"` // present if this option is a group or subcommand
+}
+
+func (a *ApplicationCommandInteractionDataOption) UnmarshalJSON(b []byte) error {
+	var temp *applicationCommandInteractionDataOptionTemporary
+	err := json.Unmarshal(b, &temp)
+	if err != nil {
+		return err
+	}
+
+	*a = ApplicationCommandInteractionDataOption{
+		Name:    temp.Name,
+		Type:    temp.Type,
+		Options: temp.Options,
+	}
+
+	switch temp.Type {
+	case ApplicationCommandOptionString:
+		v := ""
+		err = json.Unmarshal(temp.Value, &v)
+		a.Value = v
+	case ApplicationCommandOptionInteger:
+		v := int64(0)
+		err = json.Unmarshal(temp.Value, &v)
+		a.Value = v
+	case ApplicationCommandOptionBoolean:
+		v := false
+		err = json.Unmarshal(temp.Value, &v)
+		a.Value = v
+	case ApplicationCommandOptionUser, ApplicationCommandOptionChannel, ApplicationCommandOptionRole:
+		// parse the snowflake
+		v := ""
+		err = json.Unmarshal(temp.Value, &v)
+		if err == nil {
+			a.Value, err = strconv.ParseInt(v, 10, 64)
+		}
+	case ApplicationCommandOptionSubCommand:
+	case ApplicationCommandOptionSubCommandGroup:
+	}
+
+	return err
+}
+
 // MessageComponentInteractionDataResolved contains the resolved data of selected option.
 type MessageComponentInteractionDataResolved struct {
 	Users    map[string]*User    `json:"users"`
@@ -597,6 +720,14 @@ type InteractionResponseData struct {
 
 	CustomID string `json:"custom_id,omitempty"`
 	Title    string `json:"title,omitempty"`
+}
+
+type InteractionApplicationCommandCallbackData struct {
+	TTS             bool             `json:"tts,omitempty"`              //	is the response TTS
+	Content         *string          `json:"content,omitempty"`          //	message content
+	Embeds          []MessageEmbed   `json:"embeds,omitempty"`           // supports up to 10 embeds
+	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"` // allowed mentions object
+	Flags           int              `json:"flags,omitempty"`            //	set to 64 to make your response ephemeral
 }
 
 // VerifyInteraction implements message verification of the discord interactions api

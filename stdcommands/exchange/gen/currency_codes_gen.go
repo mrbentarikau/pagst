@@ -7,18 +7,22 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"text/template"
+	"time"
 
 	"github.com/mrbentarikau/pagst/stdcommands/util"
 )
 
-const templateSource = `// GENERATED using gen/currency_codes_gen.go
+var cTime = time.Now().UTC()
 
+const templateSource = `// GENERATED using gen/currency_codes_gen.go
+{{- printf "\n// %s" (cTime.Format "02-01-2006 15:04:05") }}
 // Symbols from https://api.frankfurter.app/currencies
 
 package exchange
@@ -32,7 +36,7 @@ var Currencies = map[string]string{
 `
 
 var (
-	parsedTemplate = template.Must(template.New("").Parse(templateSource))
+	parsedTemplate = template.Must(template.New("").Funcs(template.FuncMap{"cTime": currentTime}).Parse(templateSource))
 	flagOut        string
 )
 
@@ -55,7 +59,8 @@ func main() {
 	}
 
 	check := &Currencies{}
-	err = json.Unmarshal([]byte(body), &check)
+	readerToDecoder := bytes.NewReader(body)
+	err = json.NewDecoder(readerToDecoder).Decode(&check)
 	if err != nil {
 		return
 	}
@@ -71,3 +76,7 @@ func main() {
 }
 
 type Currencies map[string]string
+
+func currentTime() time.Time {
+	return time.Now().UTC()
+}

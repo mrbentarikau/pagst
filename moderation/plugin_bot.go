@@ -133,6 +133,10 @@ func RefreshMuteOverrides(guildID int64, createRole bool) {
 		return
 	}
 
+	if !config.MuteEnabled {
+		return
+	}
+
 	if !config.MuteManageRole {
 		return
 	}
@@ -608,7 +612,12 @@ func HandleGuildMemberUpdate(evt *eventsystem.EventData) (retry bool, err error)
 	if err != nil {
 		return true, errors.WithStackIf(err)
 	}
+
 	if config.MuteRole == "" {
+		return false, nil
+	}
+
+	if !config.MuteEnabled {
 		return false, nil
 	}
 

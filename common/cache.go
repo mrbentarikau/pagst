@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrNotFound    = errors.New("Not found")
+	ErrNotFound    = errors.New("not found")
 	CacheKeyPrefix = "cache_"
 
 	Cache *ccache.Cache

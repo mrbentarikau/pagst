@@ -114,7 +114,7 @@
                     {{checkbox "show_spoilers" (printf "format-new-show-spoilers-%t" .ShowSpoilers) `Show spoilers<small class="ml-2">(Posts tagged as spoiler, will be shown)</small>` false}}
                 </div>
             </div>
-            <button type="submit" class="btn btn-success btn-block">Add</button>
+            {{if .Dot.WriteAccess}}<button type="submit" class="btn btn-success btn-block">Add</button>{{end}}
         </form>
     </div> <!-- col -->
 </div> <!-- row -->
@@ -186,6 +186,7 @@
                     <span class="mb-2">Enabled</span>
                     {{checkbox "feed_enabled" (joinStr "" "feed-enabled-" .ID) `` (not .Disabled)}}
                 </div>
+                {{if $.Dot.WriteAccess}}
                 <div class="form-group col">
                     <div class="btn-group mt-4">
                         <button form="feed-item-{{.ID}}" type="submit" class="btn btn-success ml-sm-3"
@@ -194,6 +195,7 @@
                             formaction="/manage/{{$guild}}/reddit/{{.ID}}/delete">Delete</button>
                     </div>
                 </div>
+                {{end}}
             </div>
         </div>
         <!-- /.col-lg-12 -->

@@ -8,7 +8,7 @@
 </style>
 
 <header class="page-header">
-    <h2><i class="fab fa-twitter"></i>&nbsp;Twitter Feeds</h2>
+    <h2><i class="fab fa-twitter"></i>&nbsp;X/Twitter Feeds</h2>
 </header>
 
 {{template "cp_alerts" .}}
@@ -27,7 +27,7 @@
                         users</p>
                     <p><b>If Server Channel is set to "None" the added or already active Twitter feed will be disabled.</b></p>
                     <div class="form-group">
-                        <label for="yt-channel-user">Twitter Username</label>
+                        <label for="yt-channel-user">X/Twitter Username</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-prepend"><span class="input-group-text">@</span></span>
                             <input type="text" class="form-control" id="yt-channel-user" name="TwitterUser">
@@ -56,7 +56,7 @@
     <div class="col">
         <section class="card">
             <header class="card-header">
-                <h2 class="card-title">Current Twitter feeds</h2>
+                <h2 class="card-title">Current X/Twitter feeds</h2>
             </header>
             <div class="card-body">
                 <p>Feeds in red are disabled due to expired premium or channel was set to none and will be enabled again once
@@ -68,7 +68,7 @@
                     <div class="row border-bottom border-secondary pb-3 {{if not .Enabled}}feed-item-disabled{{end}}">
                         <input type="text" class="hidden" name="id" value="{{.ID}}">
                         <div class="form-group col">
-                            <label>Twitter username</label>
+                            <label>X/Twitter username</label>
                             <p class="form-control-static"><a class="feedlink" href="https://twitter.com/{{.TwitterUsername}}" target="_blank">{{.TwitterUsername}}</a> (<code>{{.TwitterUserID}}</code>)</p>
                         </div>
                         <div class="form-group col">
@@ -87,11 +87,13 @@
                                 {{end}}
                             </select>
                         </div>
+                        <!--
                         <div class="form-group col">
                             {{$id_include_replies := (joinStr "" "feed-" .ID "-replies")}}
                             <label for="{{$id_include_replies}}">Include Replies</label>
                             {{checkbox "IncludeReplies" $id_include_replies `` .IncludeReplies}}
                         </div>
+                        -->
                         <div class="form-group col">
                             {{$id_include_rts := (joinStr "" "feed-" .ID "-rts")}}
                             <label for="{{$id_include_rts}}">Include Retweets</label>

@@ -46,6 +46,10 @@ func cmdFuncTopCommands(data *dcmd.Data) (interface{}, error) {
 		return out, nil
 	}
 
+	if len(results) < 1 {
+		return fmt.Sprintf("No commands executed in %d hours...", hours), nil
+	}
+
 	maxLength := 25
 	pm, err := paginatedmessages.CreatePaginatedMessage(
 		data.GuildData.GS.ID, data.ChannelID, 1, int(math.Ceil(float64(len(results))/float64(maxLength))), func(p *paginatedmessages.PaginatedMessage, page int) (interface{}, error) {

@@ -11,10 +11,11 @@ import (
 // we also cant use discordgo.Channel because that would likely break a lot of custom commands at this point.
 type CtxChannel struct {
 	// These fields never change
-	ID        int64
-	GuildID   int64
-	IsPrivate bool
-	IsThread  bool
+	ID              int64
+	GuildID         int64
+	IsDMChannel     bool
+	IsPrivateThread bool
+	IsThread        bool
 
 	Name                 string                           `json:"name"`
 	Type                 discordgo.ChannelType            `json:"type"`
@@ -26,6 +27,47 @@ type CtxChannel struct {
 	ParentID             int64                            `json:"parent_id"`
 	RateLimitPerUser     int                              `json:"rate_limit_per_user"`
 	OwnerID              int64                            `json:"owner_id"`
+	IsForum              bool
+
+	// The set of tags that can be used in a forum channel.
+	AvailableTags []discordgo.ForumTag `json:"available_tags"`
+
+	// The IDs of the set of tags that have been applied to a thread in a forum channel.
+	AppliedTags []int64 `json:"applied_tags"`
+	// Emoji to use as the default reaction to a forum post.
+	DefaultReactionEmoji discordgo.ForumDefaultReaction `json:"default_reaction_emoji"`
+
+	// The initial RateLimitPerUser to set on newly created threads in a channel.
+	// This field is copied to the thread at creation time and does not live update.
+	DefaultThreadRateLimitPerUser int `json:"default_thread_rate_limit_per_user"`
+
+	// The default sort order type used to order posts in forum channels.
+	// Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin.
+	DefaultSortOrder *discordgo.ForumSortOrderType `json:"default_sort_order"`
+
+	// The default forum layout view used to display posts in forum channels.
+	// Defaults to ForumLayoutNotSet, which indicates a layout view has not been set by a channel admin.
+	DefaultForumLayout discordgo.ForumLayout `json:"default_forum_layout"`
+}
+
+// CtxThreadStart is almost a 1:1 copy of discordgo.ThreadStart but with some added fields
+type CtxThreadStart struct {
+	Name                string                `json:"name"`
+	AutoArchiveDuration int                   `json:"auto_archive_duration,omitempty"`
+	Type                discordgo.ChannelType `json:"type,omitempty"`
+	Invitable           bool                  `json:"invitable"`
+	RateLimitPerUser    int                   `json:"rate_limit_per_user,omitempty"`
+
+	Content *discordgo.MessageSend `json:"content,omitempty"`
+
+	// NOTE: forum threads only - these are names not ids
+	AppliedTagNames []string `json:"applied_tag_names,omitempty"`
+
+	// NOTE: forum threads only - IDs
+	AppliedTags []int64 `json:"applied_tags,omitempty"`
+
+	// NOTE: message threads only
+	MessageID int64 `json:"message_id,omitempty"`
 }
 
 func (c *CtxChannel) Mention() (string, error) {
@@ -44,20 +86,28 @@ func CtxChannelFromCS(cs *dstate.ChannelState) *CtxChannel {
 	}
 
 	ctxChannel := &CtxChannel{
-		ID:                   cs.ID,
-		IsPrivate:            cs.IsPrivate(),
-		IsThread:             cs.Type.IsThread(),
-		GuildID:              cs.GuildID,
-		Name:                 cs.Name,
-		Type:                 cs.Type,
-		Topic:                cs.Topic,
-		NSFW:                 cs.NSFW,
-		Position:             cs.Position,
-		Bitrate:              cs.Bitrate,
-		PermissionOverwrites: cop,
-		ParentID:             cs.ParentID,
-		RateLimitPerUser:     cs.RateLimitPerUser,
-		OwnerID:              cs.OwnerID,
+		ID:                            cs.ID,
+		IsForum:                       cs.Type.IsForum(),
+		IsDMChannel:                   cs.IsDMChannel(),
+		IsPrivateThread:               cs.IsPrivateThread(),
+		IsThread:                      cs.Type.IsThread(),
+		GuildID:                       cs.GuildID,
+		Name:                          cs.Name,
+		Type:                          cs.Type,
+		Topic:                         cs.Topic,
+		NSFW:                          cs.NSFW,
+		Position:                      cs.Position,
+		Bitrate:                       cs.Bitrate,
+		PermissionOverwrites:          cop,
+		ParentID:                      cs.ParentID,
+		RateLimitPerUser:              cs.RateLimitPerUser,
+		OwnerID:                       cs.OwnerID,
+		AvailableTags:                 cs.AvailableTags,
+		AppliedTags:                   cs.AppliedTags,
+		DefaultReactionEmoji:          cs.DefaultReactionEmoji,
+		DefaultThreadRateLimitPerUser: cs.DefaultThreadRateLimitPerUser,
+		DefaultSortOrder:              cs.DefaultSortOrder,
+		DefaultForumLayout:            cs.DefaultForumLayout,
 	}
 
 	return ctxChannel

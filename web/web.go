@@ -314,7 +314,7 @@ func setupRoutes() *goji.Mux {
 	}
 
 	AddSidebarItem(SidebarCategoryCore, &SidebarItem{
-		Name: "Core",
+		Name: "Control panel access",
 		URL:  "core",
 		Icon: "fas fa-cog",
 	})

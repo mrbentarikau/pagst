@@ -2,6 +2,8 @@ package discordlogger
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/bot"
@@ -13,13 +15,13 @@ import (
 
 var (
 	// Send bot leaves joins to this discord channel
-	confBotLeavesJoins = config.RegisterOption("yagpdb.botleavesjoins", "Channel to log added/left servers to", 0)
+	confBotLeavesJoins = config.RegisterOption("yagpdb.botleavesjoins", "Channel to log added/left servers to, comma separated channelIDs", "")
 
 	logger = common.GetPluginLogger(&Plugin{})
 )
 
 func Register() {
-	if confBotLeavesJoins.GetInt() != 0 {
+	if len(confBotLeavesJoins.GetString()) > 0 {
 		logger.Info("Listening for bot leaves and join")
 		common.RegisterPlugin(&Plugin{})
 	}
@@ -66,7 +68,7 @@ func EventHandler(evt *eventsystem.EventData) (retry bool, err error) {
 		}
 
 		count = count - 1
-		msg = fmt.Sprintf(":x: Left guild **%s** :(", guildData.Name)
+		msg = fmt.Sprintf(":x: Left guild **%s** guildID: %d :(", common.ReplaceServerInvites(guildData.Name, 0, "[removed-server-invite]"), guildData.ID)
 
 		leftGuildOwnerName := "Unknown"
 		guildOwnerName, err := common.BotSession.User(guildData.OwnerID)
@@ -75,14 +77,22 @@ func EventHandler(evt *eventsystem.EventData) (retry bool, err error) {
 		}
 
 		msg += fmt.Sprintf(" owned by %s ID: %d", leftGuildOwnerName, guildData.OwnerID)
-		//From master code
-		//msg = fmt.Sprintf(":x: Left guild **%s** :(", common.ReplaceServerInvites(guildData.Name, 0, "[removed-server-invite]"))
+
 	case eventsystem.EventNewGuild:
 		guild := evt.GuildCreate().Guild
-		msg = fmt.Sprintf(":white_check_mark: Joined guild **%s** :D", common.ReplaceServerInvites(guild.Name, 0, "[removed-server-invite]"))
-		msg += fmt.Sprintf(" owned by %s ID: %d", (bot.State.GetMember(guild.ID, guild.OwnerID)).User.Username, guild.OwnerID)
+		msg = fmt.Sprintf(":white_check_mark: Joined guild **%s** guildID: %d :D", common.ReplaceServerInvites(guild.Name, 0, "[removed-server-invite]"), guild.ID)
+		msg += fmt.Sprintf(" owned by %s userID: %d", (bot.State.GetMember(guild.ID, guild.OwnerID)).User.Username, guild.OwnerID)
 	}
+
 	msg += fmt.Sprintf(" (now connected to %d servers)", count)
-	_, err = common.BotSession.ChannelMessageSend(int64(confBotLeavesJoins.GetInt()), msg)
+
+	leavesJoinsChannelsStr := confBotLeavesJoins.GetString()
+	splitJCString := strings.Split(leavesJoinsChannelsStr, ",")
+	for _, c := range splitJCString {
+		parsedChan, _ := strconv.ParseInt(c, 10, 64)
+		if parsedChan != 0 {
+			_, err = common.BotSession.ChannelMessageSend(parsedChan, msg)
+		}
+	}
 	return bot.CheckDiscordErrRetry(err), errors.WithStackIf(err)
 }

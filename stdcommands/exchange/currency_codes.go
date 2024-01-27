@@ -1,5 +1,5 @@
 // GENERATED using gen/currency_codes_gen.go
-
+// 27-01-2024 16:05:36
 // Symbols from https://api.frankfurter.app/currencies
 
 package exchange

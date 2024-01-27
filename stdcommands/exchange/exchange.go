@@ -3,6 +3,7 @@ package exchange
 //go:generate go run gen/currency_codes_gen.go -o currency_codes.go
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -71,12 +72,13 @@ var Command = &commands.YAGCommand{
 		}
 
 		query := fmt.Sprintf("https://api.frankfurter.app/latest?amount=%.3f&from=%s&to=%s", amount, from, to)
-		body, err := util.RequestFromAPI(query)
+		responseBytes, err := util.RequestFromAPI(query)
 		if err != nil {
 			return nil, err
 		}
 
-		err = json.Unmarshal([]byte(body), &exchangeRateResult)
+		readerToDecoder := bytes.NewReader(responseBytes)
+		err = json.NewDecoder(readerToDecoder).Decode(&exchangeRateResult)
 		if err != nil {
 			return nil, err
 		}

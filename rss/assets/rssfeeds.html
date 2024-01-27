@@ -82,8 +82,10 @@
                             <label>RSS Feed Announce Message (<span class="announce-length-counter">{{toRune .Dot.RSSFeedAnnounceMsg|len}}</span>/2000)</label>
                             <textarea class="form-control" rows="5" id="rss-announce-msg" name="RSSFeedAnnounceMsg" oninput="onCCChanged(this)">{{.Dot.RSSFeedAnnounceMsg}}</textarea>
                             <p class="help-block">Additional template data is:<code>{{"{{.RSSEmbed}}"}}</code>,<code>{{"{{.RSSFeed}}"}}</code>,<code>{{"{{.RSSFeedItem}}"}}</code>,<code>{{"{{.RSSName}}"}}</code>,<code>{{"{{.SelectedRoleID}}"}}</code></p>
+                            {{if .Dot.WriteAccess}}
                             <span style="display: inline-block;vertical-align: middle;"><button type="submit" id="pagstAnnounceSave" class="btn btn-sm btn-success btn-block" formaction="/manage/{{.Dot.ActiveGuild.ID}}/rssfeeds/handle_announce" data-async-form-alertsonly>Save</button>
                             </span>
+                            {{end}}
                         </div>
                     </div>
                     <div class="form-group">
@@ -112,7 +114,7 @@
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-success btn-block">Add</button>
+                    {{if .Dot.WriteAccess}}<button type="submit" class="btn btn-success btn-block">Add</button>{{end}}
                 </form>
             </div>
         </section>
@@ -138,7 +140,7 @@
                                     <th width="20%">Discord channel</th>
                                     <th width="20%">Mention role</th>
                                     <th>Enabled</th>
-                                    <th>Actions</th>
+                                    {{if $.Dot.WriteAccess}}<th>Actions</th>{{end}}
                                 </tr>
                             </thead>
                             <tbody>
@@ -163,10 +165,12 @@
                                 <td>
                                     {{checkbox "Enabled" (joinStr "" "feed-enabled-" .ID) `Enabled` .Enabled ""}}
                                 </td>
+                                {{if $.Dot.WriteAccess}}
                                 <td>
                                 <button class="btn btn-success" type="submit">Save</button>
                                 <button form="sub-item-{{.ID}}" type="submit" class="btn btn-danger" formaction="/manage/{{$dot.ActiveGuild.ID}}/rssfeeds/{{.ID}}/delete">Delete</button>
                                 </td>
+                                {{end}}
                                 </tr>
                             </tbody>
                         </table>
