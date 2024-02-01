@@ -26,6 +26,7 @@ jobs: # basic units of work in a run
           command: |
             VERSION=$(git describe --tags)
             cd cmd/pagst
+            go generate ../../stdcommands/exchange
             go install -ldflags "-X github.com/mrbentarikau/pagst/common.VERSION=${VERSION}"
             cd -
       - run: cd cmd/shardorchestrator && go install && cd -
