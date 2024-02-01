@@ -18,6 +18,8 @@ cmd/pagst/shutdown_logs
 cmd/pagst/safebrowsing_db
 cmd/pagst/static/video/*
 
+stdcommands/exchange/currency_codes.go
+
 # We don't want filthy pre-configured config files here ! >:O
 # The graw agent file
 *.agent
