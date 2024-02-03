@@ -267,7 +267,7 @@ type MessageSend struct {
 // is also where you should get the instance from.
 type MessageEdit struct {
 	Content         *string            `json:"content,omitempty"`
-	Components      []MessageComponent `json:"components,omitempty"`
+	Components      []MessageComponent `json:"components"`
 	Embeds          []*MessageEmbed    `json:"embeds,omitempty"`
 	AllowedMentions AllowedMentions    `json:"allowed_mentions,omitempty"`
 	Flags           MessageFlags       `json:"-"`
