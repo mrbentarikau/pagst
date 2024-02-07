@@ -203,7 +203,7 @@
             <div class="card-body p-0 cc-panel">
                 {{if .Note.String}}<span style="color:#a1a1a1"><i>{{.Note.String}}</i></span><br/>{{end}}
                 
-                <pre class="m-0"><div class="code gotmplmd">{{with .Responses}}{{index . 0}}{{end}}</div></pre>
+                <pre class="m-0"><div class="code gotmplmd">{{with .Responses}}{{$rLenght := 512}}{{$response := index . 0}}{{if ge (len $response) $rLenght}}{{slice $response 0 $rLenght}}...<br/><br/><i>response length of {{len $response}} cut to {{$rLenght}}.</i>{{else}}{{$response}}{{end}}{{end}}</div></pre>
                 
             </div>
         </div>
