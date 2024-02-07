@@ -671,6 +671,7 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("deleteThread", c.tmplDeleteThread)
 	c.addContextFunc("editChannelName", c.tmplEditChannelName)
 	c.addContextFunc("editChannelTopic", c.tmplEditChannelTopic)
+	c.addContextFunc("editThread", c.tmplEditThread)
 	c.addContextFunc("getChannel", c.tmplGetChannel)
 	c.addContextFunc("getChannelPins", c.tmplGetChannelPins(false))
 	c.addContextFunc("getChannelOrThread", c.tmplGetChannelOrThread)
@@ -778,6 +779,7 @@ func baseContextFuncs(c *Context) {
 	c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
 	c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
 	c.addContextFunc("getGuild", c.tmplGetGuild)
+	c.addContextFunc("getGuildChannel", c.tmplGetGuildChannel)
 }
 
 type limitedWriter struct {

@@ -11,43 +11,44 @@ import (
 // we also cant use discordgo.Channel because that would likely break a lot of custom commands at this point.
 type CtxChannel struct {
 	// These fields never change
-	ID              int64
-	GuildID         int64
+	ID      int64
+	GuildID int64
+
+	IsForum         bool
 	IsDMChannel     bool
 	IsPrivateThread bool
 	IsThread        bool
 
 	Name                 string                           `json:"name"`
-	Type                 discordgo.ChannelType            `json:"type"`
 	Topic                string                           `json:"topic"`
+	Type                 discordgo.ChannelType            `json:"type"`
 	NSFW                 bool                             `json:"nsfw"`
+	Icon                 string                           `json:"icon"`
 	Position             int                              `json:"position"`
 	Bitrate              int                              `json:"bitrate"`
+	UserLimit            int                              `json:"user_limit"`
 	PermissionOverwrites []*discordgo.PermissionOverwrite `json:"permission_overwrites"`
 	ParentID             int64                            `json:"parent_id"`
 	RateLimitPerUser     int                              `json:"rate_limit_per_user"`
 	OwnerID              int64                            `json:"owner_id"`
-	IsForum              bool
+	ThreadMetadata       *discordgo.ThreadMetadata        `json:"thread_metadata"`
 
 	// The set of tags that can be used in a forum channel.
 	AvailableTags []discordgo.ForumTag `json:"available_tags"`
 
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
 	AppliedTags []int64 `json:"applied_tags"`
-	// Emoji to use as the default reaction to a forum post.
-	DefaultReactionEmoji discordgo.ForumDefaultReaction `json:"default_reaction_emoji"`
-
-	// The initial RateLimitPerUser to set on newly created threads in a channel.
-	// This field is copied to the thread at creation time and does not live update.
-	DefaultThreadRateLimitPerUser int `json:"default_thread_rate_limit_per_user"`
-
-	// The default sort order type used to order posts in forum channels.
-	// Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin.
-	DefaultSortOrder *discordgo.ForumSortOrderType `json:"default_sort_order"`
 
 	// The default forum layout view used to display posts in forum channels.
 	// Defaults to ForumLayoutNotSet, which indicates a layout view has not been set by a channel admin.
 	DefaultForumLayout discordgo.ForumLayout `json:"default_forum_layout"`
+
+	// Emoji to use as the default reaction to a forum post.
+	DefaultReactionEmoji discordgo.ForumDefaultReaction `json:"default_reaction_emoji"`
+
+	// The default sort order type used to order posts in forum channels.
+	// Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin.
+	DefaultSortOrder *discordgo.ForumSortOrderType `json:"default_sort_order"`
 }
 
 // CtxThreadStart is almost a 1:1 copy of discordgo.ThreadStart but with some added fields
@@ -86,28 +87,33 @@ func CtxChannelFromCS(cs *dstate.ChannelState) *CtxChannel {
 	}
 
 	ctxChannel := &CtxChannel{
-		ID:                            cs.ID,
-		IsForum:                       cs.Type.IsForum(),
-		IsDMChannel:                   cs.IsDMChannel(),
-		IsPrivateThread:               cs.IsPrivateThread(),
-		IsThread:                      cs.Type.IsThread(),
-		GuildID:                       cs.GuildID,
-		Name:                          cs.Name,
-		Type:                          cs.Type,
-		Topic:                         cs.Topic,
-		NSFW:                          cs.NSFW,
-		Position:                      cs.Position,
-		Bitrate:                       cs.Bitrate,
-		PermissionOverwrites:          cop,
-		ParentID:                      cs.ParentID,
-		RateLimitPerUser:              cs.RateLimitPerUser,
-		OwnerID:                       cs.OwnerID,
-		AvailableTags:                 cs.AvailableTags,
-		AppliedTags:                   cs.AppliedTags,
-		DefaultReactionEmoji:          cs.DefaultReactionEmoji,
-		DefaultThreadRateLimitPerUser: cs.DefaultThreadRateLimitPerUser,
-		DefaultSortOrder:              cs.DefaultSortOrder,
-		DefaultForumLayout:            cs.DefaultForumLayout,
+		ID:              cs.ID,
+		GuildID:         cs.GuildID,
+		IsForum:         cs.Type.IsForum(),
+		IsDMChannel:     cs.IsDMChannel(),
+		IsPrivateThread: cs.IsPrivateThread(),
+		IsThread:        cs.Type.IsThread(),
+
+		Name:                 cs.Name,
+		Type:                 cs.Type,
+		Topic:                cs.Topic,
+		NSFW:                 cs.NSFW,
+		Icon:                 cs.Icon,
+		Position:             cs.Position,
+		Bitrate:              cs.Bitrate,
+		UserLimit:            cs.UserLimit,
+		PermissionOverwrites: cop,
+		ParentID:             cs.ParentID,
+		RateLimitPerUser:     cs.RateLimitPerUser,
+		OwnerID:              cs.OwnerID,
+		ThreadMetadata:       cs.ThreadMetadata,
+
+		AvailableTags: cs.AvailableTags,
+		AppliedTags:   cs.AppliedTags,
+
+		DefaultForumLayout:   cs.DefaultForumLayout,
+		DefaultSortOrder:     cs.DefaultSortOrder,
+		DefaultReactionEmoji: cs.DefaultReactionEmoji,
 	}
 
 	return ctxChannel

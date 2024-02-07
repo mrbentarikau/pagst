@@ -154,24 +154,30 @@ func ChannelStateFromDgo(c *discordgo.Channel) ChannelState {
 	}
 
 	return ChannelState{
-		ID:                            c.ID,
-		GuildID:                       c.GuildID,
-		PermissionOverwrites:          pos,
-		ParentID:                      c.ParentID,
-		Name:                          c.Name,
-		Topic:                         c.Topic,
-		Type:                          c.Type,
-		NSFW:                          c.NSFW,
-		Position:                      c.Position,
-		Bitrate:                       c.Bitrate,
-		RateLimitPerUser:              c.RateLimitPerUser,
-		OwnerID:                       c.OwnerID,
-		AvailableTags:                 c.AvailableTags,
-		AppliedTags:                   c.AppliedTags,
-		DefaultReactionEmoji:          c.DefaultReactionEmoji,
-		DefaultThreadRateLimitPerUser: c.DefaultThreadRateLimitPerUser,
-		DefaultSortOrder:              c.DefaultSortOrder,
+		ID:               c.ID,
+		GuildID:          c.GuildID,
+		Name:             c.Name,
+		Topic:            c.Topic,
+		Type:             c.Type,
+		NSFW:             c.NSFW,
+		Icon:             c.Icon,
+		Position:         c.Position,
+		Bitrate:          c.Bitrate,
+		UserLimit:        c.UserLimit,
+		ParentID:         c.ParentID,
+		RateLimitPerUser: c.RateLimitPerUser,
+		OwnerID:          c.OwnerID,
+		ThreadMetadata:   c.ThreadMetadata,
+
+		PermissionOverwrites: pos,
+
+		AppliedTags:   c.AppliedTags,
+		AvailableTags: c.AvailableTags,
+
 		DefaultForumLayout:            c.DefaultForumLayout,
+		DefaultReactionEmoji:          c.DefaultReactionEmoji,
+		DefaultSortOrder:              c.DefaultSortOrder,
+		DefaultThreadRateLimitPerUser: c.DefaultThreadRateLimitPerUser,
 	}
 }
 

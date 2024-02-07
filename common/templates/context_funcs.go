@@ -1110,15 +1110,27 @@ func (c *Context) tmplCreateThread(channel, name interface{}, values ...interfac
 			key = strings.ToLower(key)
 			switch key {
 			case "invitable":
-				invitable = val.(bool)
+				value, ok := val.(bool)
+				if !ok {
+					return nil, fmt.Errorf("value for \"%s\" is not of type bool", key)
+				}
+				invitable = value
 			case "message_id":
 				mID = ToInt64(val)
 			case "private":
-				if val.(bool) {
-					threadType = discordgo.ChannelTypeGuildPrivateThread
+				_, ok := val.(bool)
+				if !ok {
+					return nil, fmt.Errorf("value for \"%s\" is not of type bool", key)
 				}
+				threadType = discordgo.ChannelTypeGuildPrivateThread
 			case "slowmode":
 				rateLimit = tmplToInt(val)
+				if rateLimit < 0 {
+					rateLimit = 0
+				}
+				if rateLimit > 21600 {
+					rateLimit = 21600
+				}
 			}
 		}
 	}
@@ -1147,6 +1159,86 @@ func (c *Context) tmplCreateThread(channel, name interface{}, values ...interfac
 
 	c.AddThreadToGuildSet(&tstate)
 
+	return CtxChannelFromCS(&tstate), nil
+}
+
+func (c *Context) tmplEditThread(channel interface{}, values ...interface{}) (*CtxChannel, error) {
+	if c.IncreaseCheckCallCounterPremium("edit_thread", 1, 1) {
+		return nil, ErrTooManyCalls
+	}
+	var cID int64
+	cID = c.ChannelArg(channel)
+	if cID == 0 {
+		// thread probably not in state and is archived
+		cID = ToInt64(channel)
+
+		dgoChannel, err := common.BotSession.Channel(cID)
+		if err != nil {
+			return nil, errors.New("channel/thread not found")
+		}
+
+		if !dgoChannel.Type.IsThread() {
+			return nil, errors.New("not a thread")
+		}
+	} else {
+		cstate := c.GS.GetThread(cID)
+		if cstate == nil {
+			return nil, errors.New("channel/thread not in state")
+		}
+		if !cstate.Type.IsThread() {
+			return nil, errors.New("not a thread")
+		}
+	}
+
+	channelEdit := &discordgo.ChannelEdit{}
+
+	if len(values) > 0 {
+		threadSdict, err := StringKeyDictionary(values...)
+		if err != nil {
+			return nil, err
+		}
+
+		for key, val := range threadSdict {
+			key = strings.ToLower(key)
+			switch key {
+			case "archived", "closed":
+				value, ok := val.(bool)
+				if !ok {
+					return nil, fmt.Errorf("value for \"%s\" is not of type bool", key)
+				}
+				channelEdit.Archived = &value
+			case "invitable":
+				value, ok := val.(bool)
+				if !ok {
+					return nil, fmt.Errorf("value for \"%s\" is not of type bool", key)
+				}
+				channelEdit.Invitable = &value
+			case "locked":
+				value, ok := val.(bool)
+				if !ok {
+					return nil, fmt.Errorf("value for \"%s\" is not of type bool", key)
+				}
+				channelEdit.Locked = &value
+			case "slowmode":
+				rateLimit := tmplToInt(val)
+				if rateLimit < 0 {
+					rateLimit = 0
+				}
+				if rateLimit > 21600 {
+					rateLimit = 21600
+				}
+				channelEdit.RateLimitPerUser = &rateLimit
+			}
+		}
+	}
+
+	var ctxThread *discordgo.Channel
+	ctxThread, err := common.BotSession.ChannelEdit(cID, channelEdit)
+	if err != nil {
+		return nil, err
+	}
+
+	tstate := dstate.ChannelStateFromDgo(ctxThread)
 	return CtxChannelFromCS(&tstate), nil
 }
 
@@ -1249,6 +1341,12 @@ func ProcessOptionalForumPostArgs(c *dstate.ChannelState, values ...interface{})
 		switch key {
 		case "slowmode":
 			rateLimit = tmplToInt(val)
+			if rateLimit < 0 {
+				rateLimit = 0
+			}
+			if rateLimit > 21600 {
+				rateLimit = 21600
+			}
 		case "tags":
 			if c.AvailableTags == nil {
 				break
@@ -2759,6 +2857,19 @@ func (c *Context) tmplGetGuild(arg interface{}) (guild *dstate.GuildSet, err err
 	guildID := ToInt64(arg)
 
 	guild, err = discorddata.GetFullGuild(guildID)
+	return
+}
+
+func (c *Context) tmplGetGuildChannel(arg interface{}) (channel *discordgo.Channel, err error) {
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
+	}
+
+	if c.IncreaseCheckCallCounter("guild_getGuildChannel", 3) {
+		return nil, ErrTooManyCalls
+	}
+
+	channel, err = common.BotSession.Channel(ToInt64(arg))
 	return
 }
 

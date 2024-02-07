@@ -17,8 +17,7 @@
                 </header>
                 <div class="card-body">
                     <div class="form-group">
-                        <label>Allow people with the following roles <code>read</code> access the control panel
-                            <b>(beta)</b></label><br>
+                        <label>Allow people with the following roles <code>read</code> access the control panel</label><br>
                         <select class="multiselect" name="AllowedReadOnlyRoles" data-plugin-multiselect
                             multiple="multiple">
                             {{roleOptionsMulti .ActiveGuild.Roles nil .CoreConfig.AllowedReadOnlyRoles}}

@@ -398,13 +398,6 @@ func RemoveStreamingSparse(client radix.Client, config *Config, guildID int64, m
 func RemoveStreaming(client radix.Client, config *Config, guildID int64, memberID int64, currentRoles []int64) {
 	client.Do(radix.FlatCmd(nil, "SREM", KeyCurrentlyStreaming(guildID), memberID))
 	go RemoveStreamingRole(guildID, memberID, config.GiveRole, currentRoles)
-
-	// Was not streaming before if we removed 0 elements
-	// var removed bool
-	// client.Do(radix.FlatCmd(&removed, "SREM", KeyCurrentlyStreaming(guildID), memberID))
-	// if removed && config.GiveRole != 0 {
-	// 	go common.BotSession.GuildMemberRoleRemove(guildID, memberID, config.GiveRole)
-	// }
 }
 
 func SendStreamingAnnouncement(config *Config, guild *dstate.GuildSet, ms *dstate.MemberState, url string, gameName string, streamTitle string, streamPlatform string) {
@@ -424,9 +417,11 @@ func SendStreamingAnnouncement(config *Config, guild *dstate.GuildSet, ms *dstat
 
 	// make sure the channel exists
 	foundChannel := false
+	var channel *dstate.ChannelState
 	for _, v := range guild.Channels {
 		if v.ID == config.AnnounceChannel {
 			foundChannel = true
+			channel = guild.GetChannel(config.AnnounceChannel)
 		}
 	}
 
@@ -441,7 +436,7 @@ func SendStreamingAnnouncement(config *Config, guild *dstate.GuildSet, ms *dstat
 
 	go analytics.RecordActiveUnit(guild.ID, &Plugin{}, "sent_streaming_announcement")
 
-	ctx := templates.NewContext(guild, nil, ms)
+	ctx := templates.NewContext(guild, channel, ms)
 	ctx.Data["URL"] = url
 	ctx.Data["url"] = url
 	ctx.Data["Game"] = gameName
