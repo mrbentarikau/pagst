@@ -1099,7 +1099,7 @@ func (c *Context) tmplCreateThread(channel, name interface{}, values ...interfac
 	rateLimit := cstate.DefaultThreadRateLimitPerUser
 	var mID int64
 	var invitable bool
-	aaDuration := 4320
+	var aaDuration int = cstate.DefaultAutoArchiveDuration
 
 	if len(values) > 0 {
 		threadSdict, err := StringKeyDictionary(values...)

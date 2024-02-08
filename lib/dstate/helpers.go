@@ -174,6 +174,7 @@ func ChannelStateFromDgo(c *discordgo.Channel) ChannelState {
 		AppliedTags:   c.AppliedTags,
 		AvailableTags: c.AvailableTags,
 
+		DefaultAutoArchiveDuration:    c.DefaultAutoArchiveDuration,
 		DefaultForumLayout:            c.DefaultForumLayout,
 		DefaultReactionEmoji:          c.DefaultReactionEmoji,
 		DefaultSortOrder:              c.DefaultSortOrder,

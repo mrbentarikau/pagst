@@ -425,21 +425,23 @@ type Channel struct {
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
 	AppliedTags IDSlice `json:"applied_tags,omitempty"`
 
+	// Default duration, copied onto newly created threads, in minutes, threads will stop showing in the channel list after the specified period of inactivity, can be set to: 60, 1440, 4320, 10080
+	DefaultAutoArchiveDuration int `json:"default_auto_archive_duration,omitempty"`
+
+	// The default forum layout view used to display posts in forum channels.
+	// Defaults to ForumLayoutNotSet, which indicates a layout view has not been set by a channel admin.
+	DefaultForumLayout ForumLayout `json:"default_forum_layout,omitempty"`
+
 	// Emoji to use as the default reaction to a forum post.
 	DefaultReactionEmoji ForumDefaultReaction `json:"default_reaction_emoji,omitempty"`
-
-	// maybe future problems here KRAAKA
-	// The initial RateLimitPerUser to set on newly created threads in a channel.
-	// This field is copied to the thread at creation time and does not live update.
-	DefaultThreadRateLimitPerUser int `json:"default_thread_rate_limit_per_user,omitempty"`
 
 	// The default sort order type used to order posts in forum channels.
 	// Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin.
 	DefaultSortOrder *ForumSortOrderType `json:"default_sort_order,omitempty"`
 
-	// The default forum layout view used to display posts in forum channels.
-	// Defaults to ForumLayoutNotSet, which indicates a layout view has not been set by a channel admin.
-	DefaultForumLayout ForumLayout `json:"default_forum_layout,omitempty"`
+	// The initial RateLimitPerUser to set on newly created threads in a channel.
+	// This field is copied to the thread at creation time and does not live update.
+	DefaultThreadRateLimitPerUser int `json:"default_thread_rate_limit_per_user,omitempty"`
 }
 
 func (c *Channel) GetChannelID() int64 {
@@ -476,6 +478,7 @@ type ChannelEdit struct {
 	RateLimitPerUser              *int                   `json:"rate_limit_per_user,omitempty"`
 	Flags                         *ChannelFlags          `json:"flags,omitempty"`
 	DefaultThreadRateLimitPerUser *int                   `json:"default_thread_rate_limit_per_user,omitempty"`
+	DefaultAutoArchiveDuration    *int                   `json:"default_auto_archive_duration,omitempty"`
 
 	// NOTE: threads only
 	Archived            *bool `json:"archived,omitempty"`

@@ -317,6 +317,7 @@ type ChannelState struct {
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
 	AppliedTags []int64 `json:"applied_tags"`
 
+	DefaultAutoArchiveDuration    int                            `json:"default_auto_archive_duration"`
 	DefaultReactionEmoji          discordgo.ForumDefaultReaction `json:"default_reaction_emoji"`
 	DefaultThreadRateLimitPerUser int                            `json:"default_thread_rate_limit_per_user"`
 	DefaultSortOrder              *discordgo.ForumSortOrderType  `json:"default_sort_order"`
