@@ -279,6 +279,9 @@ type MessageEdit struct {
 
 	ID      int64
 	Channel int64
+
+	// TODO: Remove this when compatibility is not required.
+	Embed *MessageEmbed `json:"-"`
 }
 
 // NewMessageEdit returns a MessageEdit struct, initialized

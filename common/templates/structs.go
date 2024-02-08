@@ -39,6 +39,9 @@ type CtxChannel struct {
 	// The IDs of the set of tags that have been applied to a thread in a forum channel.
 	AppliedTags []int64 `json:"applied_tags"`
 
+	// Default duration, copied onto newly created threads, in minutes, threads will stop showing in the channel list after the specified period of inactivity, can be set to: 60, 1440, 4320, 10080
+	DefaultAutoArchiveDuration int `json:"default_auto_archive_duration"`
+
 	// The default forum layout view used to display posts in forum channels.
 	// Defaults to ForumLayoutNotSet, which indicates a layout view has not been set by a channel admin.
 	DefaultForumLayout discordgo.ForumLayout `json:"default_forum_layout"`
@@ -49,6 +52,10 @@ type CtxChannel struct {
 	// The default sort order type used to order posts in forum channels.
 	// Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin.
 	DefaultSortOrder *discordgo.ForumSortOrderType `json:"default_sort_order"`
+
+	// The initial RateLimitPerUser to set on newly created threads in a channel.
+	// This field is copied to the thread at creation time and does not live update.
+	DefaultThreadRateLimitPerUser int `json:"default_auto_archive_duration"`
 }
 
 // CtxThreadStart is almost a 1:1 copy of discordgo.ThreadStart but with some added fields
@@ -111,9 +118,11 @@ func CtxChannelFromCS(cs *dstate.ChannelState) *CtxChannel {
 		AvailableTags: cs.AvailableTags,
 		AppliedTags:   cs.AppliedTags,
 
-		DefaultForumLayout:   cs.DefaultForumLayout,
-		DefaultSortOrder:     cs.DefaultSortOrder,
-		DefaultReactionEmoji: cs.DefaultReactionEmoji,
+		DefaultAutoArchiveDuration:    cs.DefaultAutoArchiveDuration,
+		DefaultForumLayout:            cs.DefaultForumLayout,
+		DefaultSortOrder:              cs.DefaultSortOrder,
+		DefaultReactionEmoji:          cs.DefaultReactionEmoji,
+		DefaultThreadRateLimitPerUser: cs.DefaultThreadRateLimitPerUser,
 	}
 
 	return ctxChannel
