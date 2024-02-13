@@ -166,7 +166,6 @@ var Command = &commands.YAGCommand{
 			// PriceLow:   &itadPriceLowOld,
 			// GameInfo:   &itadGameInfo,
 		}
-
 		itadEmbed := embedCreator(itadComplete, 0, paginatedView, compactView)
 		var pm *paginatedmessages.PaginatedMessage
 		if paginatedView {
@@ -204,13 +203,20 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 
 	itadCSD := (*itadComplete.SearchData)[i]
 	var itadPriceDealsSlice []ItadPricesDeal
+
 	for _, value := range *itadComplete.Price {
 		if value.ID == itadCSD.ID {
 			itadPriceDealsSlice = value.Deals
 		}
+
 	}
 
 	priceHistoryLow := (*itadComplete.Price)[i].Deals[0].HistoryLow.Amount
+	for _, v := range itadPriceDealsSlice {
+		if v.HistoryLow.Amount < priceHistoryLow {
+			priceHistoryLow = v.HistoryLow.Amount
+		}
+	}
 
 	for pos, v := range itadPriceDealsSlice {
 		if currencyFromShop == "EUR" {
