@@ -5,7 +5,7 @@ import "time"
 type ItadComplete struct {
 	Price      *ItadPrices
 	SearchData *ItadSearchResults
-	//GameInfo   *ItadGameInfo
+	GameInfo   *ItadGameInfo
 	//PriceLow   *ItadShopPriceLowest
 }
 
@@ -64,30 +64,40 @@ type ItadPricesDeal struct {
 }
 
 type ItadGameInfo struct {
-	Data map[string]GameInfo `json:"data"`
-}
-
-type GameInfo struct {
-	Title        string      `json:"title"`
-	Image        string      `json:"image"`
-	Greenlight   interface{} `json:"greenlight"`
-	IsPackage    bool        `json:"is_package"`
-	IsDlc        bool        `json:"is_dlc"`
-	Achievements bool        `json:"achievements"`
-	TradingCards bool        `json:"trading_cards"`
-	EarlyAccess  bool        `json:"early_access"`
-	Reviews      struct {
-		Steam struct {
-			PercPositive int    `json:"perc_positive"`
-			Total        int    `json:"total"`
-			Text         string `json:"text"`
-			Timestamp    int    `json:"timestamp"`
-		} `json:"steam"`
+	ID           string   `json:"id"`
+	Slug         string   `json:"slug"`
+	Title        string   `json:"title"`
+	Type         string   `json:"type"`
+	Mature       bool     `json:"mature"`
+	EarlyAccess  bool     `json:"earlyAccess"`
+	Achievements bool     `json:"achievements"`
+	TradingCards bool     `json:"tradingCards"`
+	Appid        int      `json:"appid"`
+	Tags         []string `json:"tags"`
+	ReleaseDate  string   `json:"releaseDate"`
+	Developers   []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"developers"`
+	Publishers []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"publishers"`
+	Reviews []struct {
+		Score  int    `json:"score"`
+		Source string `json:"source"`
+		Count  int    `json:"count"`
+		URL    string `json:"url"`
 	} `json:"reviews"`
-	Urls struct {
-		Game    string `json:"game"`
-		History string `json:"history"`
-		Package string `json:"package"`
-		Dlc     string `json:"dlc"`
-	} `json:"urls"`
+	Stats struct {
+		Rank       int `json:"rank"`
+		Waitlisted int `json:"waitlisted"`
+		Collected  int `json:"collected"`
+	} `json:"stats"`
+	Players struct {
+		Recent int `json:"recent"`
+		Day    int `json:"day"`
+		Week   int `json:"week"`
+		Peak   int `json:"peak"`
+	} `json:"players"`
 }

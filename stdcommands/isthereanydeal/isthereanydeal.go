@@ -143,28 +143,27 @@ var Command = &commands.YAGCommand{
 			return compactData, nil
 		}
 
-		// Query for thumbnail image and other game info
-		/*
-			var itadGameInfo ItadGameInfo
-			if !compactView {
-				queryInfo := fmt.Sprintf("%s/v01/game/info/?key=%s&plains=%s", itadAPIHost, itadAPIKey, plainsBuilder.String())
-				body, err = util.RequestFromAPI(queryInfo)
-				if err != nil {
-					return nil, err
-				}
-
-				readerToDecoder = bytes.NewReader(body)
-				err = json.NewDecoder(readerToDecoder).Decode(&itadGameInfo)
-				if err != nil {
-					return nil, err
-				}
+		// Query for thumbnail image (appID) and other game info
+		var itadGameInfo ItadGameInfo
+		if !compactView && !paginatedView {
+			queryInfo := fmt.Sprintf("%s/games/info/v2?key=%s&id=%s", itadAPIHost, itadAPIKey, itadSearchResults[0].ID)
+			body, err = util.RequestFromAPI(queryInfo)
+			if err != nil {
+				return nil, err
 			}
-		*/
+
+			readerToDecoder = bytes.NewReader(body)
+			err = json.NewDecoder(readerToDecoder).Decode(&itadGameInfo)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		itadComplete := &ItadComplete{
+			GameInfo:   &itadGameInfo,
 			Price:      &itadPrices,
 			SearchData: &itadSearchResults,
 			// PriceLow:   &itadPriceLowOld,
-			// GameInfo:   &itadGameInfo,
 		}
 		itadEmbed := embedCreator(itadComplete, 0, paginatedView, compactView)
 		var pm *paginatedmessages.PaginatedMessage
@@ -307,6 +306,12 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 		Description: embedDescription,
 
 		Color: int(rand.Int63n(16777215)),
+	}
+
+	if !compact && itadComplete.GameInfo.Appid != 0 {
+		embed.Image = &discordgo.MessageEmbedImage{
+			URL: fmt.Sprintf("https://cdn.cloudflare.steamstatic.com/steam/apps/%d/header.jpg", itadComplete.GameInfo.Appid),
+		}
 	}
 
 	if !paginated {
