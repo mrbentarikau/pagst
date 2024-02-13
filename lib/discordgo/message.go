@@ -166,7 +166,7 @@ type Message struct {
 	Flags MessageFlags `json:"flags"`
 
 	// An array of Sticker objects, if any were sent.
-	Stickers []*Sticker `json:"sticker_items"`
+	StickerItems []*StickerItem `json:"sticker_items"`
 
 	// The thread that was started from this message, includes thread member object
 	Thread *Channel `json:"thread,omitempty"`
