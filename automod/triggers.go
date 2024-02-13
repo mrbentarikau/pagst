@@ -793,7 +793,7 @@ func (s *SlowmodeTrigger) CheckMessage(triggerCtx *TriggerContext, cs *dstate.Ch
 		return false, nil
 	}
 
-	if s.Stickers && len(m.Stickers) < 1 {
+	if s.Stickers && len(m.StickerItems) < 1 {
 		return false, nil
 	}
 

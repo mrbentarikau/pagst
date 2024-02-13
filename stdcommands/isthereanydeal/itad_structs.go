@@ -1,70 +1,66 @@
 package isthereanydeal
 
+import "time"
+
 type ItadComplete struct {
-	GameInfo ItadGameInfo
-	Price    ItadPrice
-	PriceLow ItadShopPriceLowest
-	Search   ItadSearch
+	Price      *ItadPrices
+	SearchData *ItadSearchResults
+	//GameInfo   *ItadGameInfo
+	//PriceLow   *ItadShopPriceLowest
 }
 
-type ItadSearch struct {
-	Data struct {
-		Results []ItadSearchResult `json:"results"`
-		Urls    struct {
-			Search string `json:"search"`
-		} `json:"urls"`
-	} `json:"data"`
+type ItadSearchResults []struct {
+	ID     string `json:"id"`
+	Slug   string `json:"slug"`
+	Title  string `json:"title"`
+	Type   string `json:"type"`
+	Mature bool   `json:"mature"`
 }
 
-type ItadSearchResult struct {
-	ID                    int    `json:"id"`
-	Plain                 string `json:"plain"`
-	Title                 string `json:"title"`
-	JaroWinklerSimilarity float64
+type ItadPrices []struct {
+	ID    string           `json:"id"`
+	Deals []ItadPricesDeal `json:"deals"`
 }
 
-type ItadPlains struct {
-	Data map[string]ItadPlainsStore `json:"data"`
-}
-
-type ItadPlainsStore map[string]string
-
-type ItadPrice struct {
-	Meta struct {
-		Currency string `json:"currency"`
-	} `json:".meta"`
-	Data map[string]ItadPlainPriceList `json:"data,omitempty"`
-}
-
-type ItadPlainPriceList struct {
-	List []struct {
-		PriceNew float64 `json:"price_new"`
-		PriceOld float64 `json:"price_old"`
-		PriceCut int     `json:"price_cut"`
-		URL      string  `json:"url"`
-		Shop     struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		} `json:"shop"`
-		Drm []interface{} `json:"drm"`
-	} `json:"list,omitempty"`
-	Urls struct {
-		Game string `json:"game"`
-	} `json:"urls,omitempty"`
-}
-
-type ItadShopPriceLowest struct {
-	Meta struct {
-		Currency string `json:"currency"`
-	} `json:".meta"`
-	Data    map[string][]ItadPriceLowest  `json:"data,omitempty"`
-	Compact map[string]map[string]float64 `json:"-"`
-}
-
-type ItadPriceLowest struct {
-	Shop  string  `json:"shop"`
-	Price float64 `json:"price"`
-	//Compact map[string]float64 `json:"-"`
+type ItadPricesDeal struct {
+	Shop struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"shop"`
+	Price struct {
+		Amount    float64 `json:"amount"`
+		AmountInt int     `json:"amountInt"`
+		Currency  string  `json:"currency"`
+	} `json:"price"`
+	Regular struct {
+		Amount    float64 `json:"amount"`
+		AmountInt int     `json:"amountInt"`
+		Currency  string  `json:"currency"`
+	} `json:"regular"`
+	Cut      int `json:"cut"`
+	Voucher  any `json:"voucher"`
+	StoreLow struct {
+		Amount    float64 `json:"amount"`
+		AmountInt int     `json:"amountInt"`
+		Currency  string  `json:"currency"`
+	} `json:"storeLow"`
+	HistoryLow struct {
+		Amount    float64 `json:"amount"`
+		AmountInt int     `json:"amountInt"`
+		Currency  string  `json:"currency"`
+	} `json:"historyLow"`
+	Flag string `json:"flag"`
+	Drm  []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"drm"`
+	Platforms []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"platforms"`
+	Timestamp time.Time `json:"timestamp"`
+	Expiry    time.Time `json:"expiry"`
+	URL       string    `json:"url"`
 }
 
 type ItadGameInfo struct {
