@@ -217,20 +217,14 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 		}
 	}
 
+	currencyFormatting := "%[1]s%.2[2]f"
+	if currencyFromShop == "EUR" {
+		currencyFormatting = "%.2[2]f%[1]s"
+	}
+
 	for pos, v := range itadPriceDealsSlice {
-		if currencyFromShop == "EUR" {
-			embedPriceNew = fmt.Sprintf("%.2f%s", v.Price.Amount, embedCurrency)
-			if !compact {
-				embedPriceLow = fmt.Sprintf("%.2f%s", v.StoreLow.Amount, embedCurrency)
-				embedPriceOld = fmt.Sprintf("%.2f%s", v.Regular.Amount, embedCurrency)
-			}
-		} else {
-			embedPriceNew = fmt.Sprintf("%s%.2f", embedCurrency, v.Price.Amount)
-			if !compact {
-				embedPriceLow = fmt.Sprintf("%s%.2f", embedCurrency, v.StoreLow.Amount)
-				embedPriceOld = fmt.Sprintf("%s%.2f", embedCurrency, v.Regular.Amount)
-			}
-		}
+		embedPriceNew = fmt.Sprintf(currencyFormatting, embedCurrency, v.Price.Amount)
+
 		priceLowAvg += v.StoreLow.Amount
 		priceNewAvg += v.Price.Amount
 		priceOldAvg += v.Regular.Amount
@@ -240,6 +234,9 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 				embedPricingHeader += fmt.Sprintf("`Price Cut |%8s |%8s |%8s |` Store\n", "Current", "Lowest", "Regular")
 				embedDescription = embedPricingHeader
 			}
+
+			embedPriceLow = fmt.Sprintf(currencyFormatting, embedCurrency, v.StoreLow.Amount)
+			embedPriceOld = fmt.Sprintf(currencyFormatting, embedCurrency, v.Regular.Amount)
 
 			embedDescription += fmt.Sprintf("`%9s |%8s |%8s |%8s |` [%s](%s)\n",
 				fmt.Sprintf("%d%%", v.Cut),
@@ -267,29 +264,18 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 
 	lenItadPDSlice := len(itadPriceDealsSlice)
 	if lenItadPDSlice != 0 {
-		if currencyFromShop == "EUR" {
-			embedHistLow = fmt.Sprintf("%.2f%s", priceHistoryLow, embedCurrency)
-			embedPriceNewAvg = fmt.Sprintf("%.2f%s", priceNewAvg/float64(lenItadPDSlice), embedCurrency)
-			if !compact {
-				embedPriceLowAvg = fmt.Sprintf("%.2f%s", priceLowAvg/float64(lenItadPDSlice), embedCurrency)
-				embedPriceOldAvg = fmt.Sprintf("%.2f%s", priceOldAvg/float64(lenItadPDSlice), embedCurrency)
-			}
-		} else {
-			embedHistLow = fmt.Sprintf("%s%.2f", embedCurrency, priceHistoryLow)
-			embedPriceNewAvg = fmt.Sprintf("%s%.2f", embedCurrency, priceNewAvg/float64(lenItadPDSlice))
-			if !compact {
-				embedPriceLowAvg = fmt.Sprintf("%s%.2f", embedCurrency, priceLowAvg/float64(lenItadPDSlice))
-				embedPriceOldAvg = fmt.Sprintf("%s%.2f", embedCurrency, priceOldAvg/float64(lenItadPDSlice))
-			}
-		}
+		embedHistLow = fmt.Sprintf(currencyFormatting, embedCurrency, priceHistoryLow)
+		embedPriceNewAvg = fmt.Sprintf(currencyFormatting, embedCurrency, priceNewAvg/float64(lenItadPDSlice))
 		if !compact {
+			embedPriceLowAvg = fmt.Sprintf(currencyFormatting, embedCurrency, priceLowAvg/float64(lenItadPDSlice))
+			embedPriceOldAvg = fmt.Sprintf(currencyFormatting, embedCurrency, priceOldAvg/float64(lenItadPDSlice))
+
 			embedDescription += fmt.Sprintf("`Average     %7s |%8s |%8s |`\n", embedPriceNewAvg, embedPriceLowAvg, embedPriceOldAvg)
 			embedDescription += fmt.Sprintf("`History low %7s |`\n", embedHistLow)
 		} else {
 			embedDescription += fmt.Sprintf("`Avg: %8s|`\n", embedPriceNewAvg)
 			embedDescription += fmt.Sprintf("`Min: %8s|`\n", embedHistLow)
 		}
-
 	} else {
 		embedDescription = "```No tracked stores are currently selling this game in this region/country...```"
 	}

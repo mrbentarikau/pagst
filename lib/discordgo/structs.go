@@ -1567,6 +1567,22 @@ type Assets struct {
 	SmallText    string `json:"small_text,omitempty"`
 }
 
+// MemberFlags represent flags of a guild member.
+// https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-flags
+type MemberFlags int
+
+// Block containing known MemberFlags values.
+const (
+	// Member has left and rejoined the guild
+	MemberFlagDidRejoin MemberFlags = 1 << 0
+	// Member has completed onboarding
+	MemberFlagCompletedOnboarding MemberFlags = 1 << 1
+	// Member is exempt from guild verification requirements
+	MemberFlagBypassVerification MemberFlags = 1 << 2
+	// Member has started onboarding
+	MemberFlagStartedOnboarding MemberFlags = 1 << 3
+)
+
 // A Member stores user information for Guild members. A guild
 // member represents a certain user's presence in a guild.
 type Member struct {
@@ -1579,14 +1595,14 @@ type Member struct {
 	// The nickname of the member, if they have one.
 	Nick string `json:"nick,omitempty"`
 
-	// The guild avatar hash of the member, if they have one.
-	Avatar string `json:"avatar,omitempty"`
-
 	// Whether the member is deafened at a guild level.
 	Deaf bool `json:"deaf,omitempty"`
 
 	// Whether the member is muted at a guild level.
 	Mute bool `json:",omitempty"`
+
+	// The guild avatar hash of the member, if they have one.
+	Avatar string `json:"avatar,omitempty"`
 
 	// The underlying user on which the member is based.
 	User *User `json:"user,omitempty"`
@@ -1594,11 +1610,15 @@ type Member struct {
 	// A list of IDs of the roles which are possessed by the member.
 	Roles IDSlice `json:"roles,omitempty"`
 
-	// Is true while the member hasn't accepted the membership screen.
-	Pending bool `json:"pending,omitempty"`
-
 	// When the user used their Nitro boost on the server
 	PremiumSince *time.Time `json:"premium_since,omitempty"`
+
+	// The flags of this member. This is a combination of bit masks; the presence of a certain
+	// flag can be checked by performing a bitwise AND between this int and the flag.
+	Flags MemberFlags `json:"flags"`
+
+	// Is true while the member hasn't accepted the membership screen.
+	Pending bool `json:"pending,omitempty"`
 
 	// Total permissions of the member in the channel, including overrides, returned when in the interaction object.
 	Permissions int64 `json:"permissions,string,omitempty"`
