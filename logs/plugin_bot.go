@@ -103,6 +103,9 @@ var cmdWhois = &commands.YAGCommand{
 	Arguments: []*dcmd.ArgDef{
 		{Name: "User", Type: &commands.MemberArg{}},
 	},
+	ArgSwitches: []*dcmd.ArgDef{
+		{Name: "perms", Help: "User permissions in channel Whois was executed"},
+	},
 	ApplicationCommandEnabled: true,
 	ApplicationCommandType:    2,
 	DefaultEnabled:            false,
@@ -110,6 +113,12 @@ var cmdWhois = &commands.YAGCommand{
 		config, err := GetConfig(common.PQ, parsed.Context(), parsed.GuildData.GS.ID)
 		if err != nil {
 			return nil, err
+		}
+
+		var permissionsSwitch bool
+
+		if parsed.Switches["perms"].Value != nil && parsed.Switches["perms"].Value.(bool) {
+			permissionsSwitch = true
 		}
 
 		var member *dstate.MemberState
@@ -235,16 +244,6 @@ var cmdWhois = &commands.YAGCommand{
 			fmt.Println((fmt.Errorf("unknown member")).Error())
 		}
 
-		perms, err := parsed.GuildData.GS.GetMemberPermissions(parsed.GuildData.CS.ID, member.User.ID, target.Member.Roles)
-		if err != nil {
-			fmt.Println((fmt.Errorf("unable to calculate perms")).Error())
-		}
-
-		var humanized []string
-		if perms > 0 {
-			humanized = common.HumanizePermissions(int64(perms))
-		}
-
 		embed := &discordgo.MessageEmbed{
 			Title: fmt.Sprintf("%s %s %s", member.User.String(), nick, onlineStatus),
 			Fields: []*discordgo.MessageEmbedField{
@@ -283,15 +282,28 @@ var cmdWhois = &commands.YAGCommand{
 					Value:  memberStatus,
 					Inline: true,
 				},
-				{
-					Name:   fmt.Sprintf("Permissions in:\n#%s", parsed.GuildData.CS.Name),
-					Value:  fmt.Sprintf("`%d`\n%s", perms, strings.Join(humanized, ", ")),
-					Inline: false,
-				},
 			},
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
 				URL: member.User.AvatarURL("256"),
 			},
+		}
+
+		if permissionsSwitch {
+			perms, err := parsed.GuildData.GS.GetMemberPermissions(parsed.GuildData.CS.ID, member.User.ID, target.Member.Roles)
+			if err != nil {
+				fmt.Println((fmt.Errorf("unable to calculate perms")).Error())
+			}
+
+			var humanized []string
+			if perms > 0 {
+				humanized = common.HumanizePermissions(int64(perms))
+			}
+
+			embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+				Name:   fmt.Sprintf("Permissions in:\n#%s", parsed.GuildData.CS.Name),
+				Value:  fmt.Sprintf("`%d`\n%s", perms, strings.Join(humanized, ", ")),
+				Inline: false,
+			})
 		}
 
 		var trackingUNDisabled, trackingNNDisabled bool
