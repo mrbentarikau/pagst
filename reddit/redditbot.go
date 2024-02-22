@@ -441,24 +441,13 @@ func (p *PostHandlerImpl) createPostMessage(post *reddit.Link) (string, string, 
 	}
 
 	var authorInfo *reddit.Account
-	if len(embed.Description) >= 140 {
-		authorInfo, err = p.redditClient.GetUserInfo(post.Author)
-		if err == nil {
-			authorIcon = html.UnescapeString(authorInfo.IconImg)
-		}
-
-		embed.Author.IconURL = authorIcon
-		embedSpoilers.Author.IconURL = authorIcon
-
+	authorInfo, err = p.redditClient.GetUserInfo(post.Author)
+	if err == nil {
+		authorIcon = html.UnescapeString(authorInfo.IconImg)
 	}
 
-	if len(embed.Description) >= 280 {
-		embed.Author.IconURL = ""
-		embedSpoilers.Author.IconURL = ""
-
-		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: html.UnescapeString(authorInfo.IconImg)}
-		embedSpoilers.Thumbnail = embed.Thumbnail
-	}
+	embed.Author.IconURL = authorIcon
+	embedSpoilers.Author.IconURL = authorIcon
 
 	if post.Ups > 1 {
 		embed.Footer.Text += fmt.Sprintf("\nRating: %d ⬆ %d ⬇\nr/%s", post.Ups, post.Downs, post.Subreddit)

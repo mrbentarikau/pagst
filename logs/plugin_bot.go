@@ -22,6 +22,9 @@ import (
 	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var _ bot.BotInitHandler = (*Plugin)(nil)
@@ -161,7 +164,7 @@ var cmdWhois = &commands.YAGCommand{
 			memberStatus = "Has no active status, is invisible/offline or is not in the bot's cache."
 		} else {
 			if member.Presence.Game.Type == 4 {
-				memberStatus = fmt.Sprintf("%s: %s", member.Presence.Game.Name, member.Presence.Game.State)
+				memberStatus = fmt.Sprintf("Custom Status: %s", member.Presence.Game.State)
 			} else {
 				presenceName := "Unknown"
 				if member.Presence.Game.Type >= 0 && len(state) > int(member.Presence.Game.Type) {
@@ -191,25 +194,36 @@ var cmdWhois = &commands.YAGCommand{
 				onlineStatus = "Offline/Invisible"
 			}
 		}
-
 		if member.User.ID == common.BotUser.ID {
 			//State does not have bot's own PresenceStatus
 
-			var idle string
+			var idle, botStatusText, botActivity string
 
 			err := common.RedisPool.Do(radix.Cmd(&idle, "GET", "status_idle"))
 			if err != nil {
 				fmt.Println((fmt.Errorf("failed retrieving bot state")).Error())
 			}
 
-			err = common.RedisPool.Do(radix.Cmd(&memberStatus, "GET", "status_name"))
+			err = common.RedisPool.Do(radix.Cmd(&botStatusText, "GET", "status_text"))
 			if err != nil {
 				fmt.Println((fmt.Errorf("failed retrieving bot status name")).Error())
+			}
+
+			err = common.RedisPool.Do(radix.Cmd(&botActivity, "GET", "status_activity_type"))
+			if err != nil {
+				fmt.Println((fmt.Errorf("failed retrieving bot activity type")).Error())
 			}
 
 			if idle == "enabled" {
 				onlineStatus = "Idle"
 			}
+
+			if botActivity == "custom" {
+				memberStatus = "Custom Status:"
+			} else {
+				memberStatus = cases.Title(language.Und).String(botActivity)
+			}
+			memberStatus += fmt.Sprintf(": %s", botStatusText)
 		}
 
 		if onlineStatus != "" {

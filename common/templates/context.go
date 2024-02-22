@@ -763,7 +763,10 @@ func baseContextFuncs(c *Context) {
 	// Regexp functions
 	c.addContextFunc("reFind", c.reFind)
 	c.addContextFunc("reFindAll", c.reFindAll)
+	c.addContextFunc("reFindAllIndex", c.reFindAllIndex)
 	c.addContextFunc("reFindAllSubmatches", c.reFindAllSubmatches)
+	c.addContextFunc("reFindAllSubmatchesIndex", c.reFindAllSubmatchesIndex)
+	c.addContextFunc("reFindIndex", c.reFindIndex)
 	c.addContextFunc("reReplace", c.reReplace)
 	c.addContextFunc("reSplit", c.reSplit)
 
