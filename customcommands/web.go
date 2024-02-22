@@ -82,6 +82,11 @@ func (p *Plugin) InitWeb() {
 	web.AddHTMLTemplate("customcommands/assets/customcommands.html", PageHTMLMain)
 	web.AddHTMLTemplate("customcommands/assets/customcommands-editcmd.html", PageHTMLEditCmd)
 	web.AddSidebarItem(web.SidebarCategoryCore, &web.SidebarItem{
+		Name: "Templating:",
+		URL:  "",
+		Icon: "",
+	})
+	web.AddSidebarItem(web.SidebarCategoryCore, &web.SidebarItem{
 		Name: "Custom commands",
 		URL:  "customcommands",
 		Icon: "fas fa-closed-captioning",

@@ -615,7 +615,7 @@ div.highlight,div>pre{background-color:transparent!important; color:#a1a1a1!impo
 [class="ccTextTriggerSpan"]{color:#aa8900!important; font-style:italic!important}
 
 /*alert bar*/
-.alert-warning,.alert-warning,.alert-warning.alert-link{background-color:#ffeeba!important;color:#1a1a1a!important;text-align:center!important}
+.alert-warning,.alert-warning,.alert-warning.alert-link{background-color:#fff091!important;color:#1a1a1a!important;text-align:center!important}
 
 button.close,.alert-info{background-color: #282828!important; border-color: #2e2e2e!important;color:#aa8900!important}
 .inner-wrapper>.sidebar-left{margin-bottom: 0px!important}
