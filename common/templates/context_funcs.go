@@ -1772,6 +1772,15 @@ func (c *Context) reFind(r, s string) (string, error) {
 	return compiled.FindString(s), nil
 }
 
+func (c *Context) reFindIndex(r, s string) ([]int, error) {
+	compiled, err := c.compileRegex(r)
+	if err != nil {
+		return nil, err
+	}
+
+	return compiled.FindStringIndex(s), nil
+}
+
 func (c *Context) reFindAll(r, s string, i ...int) ([]string, error) {
 	compiled, err := c.compileRegex(r)
 	if err != nil {
@@ -1790,6 +1799,24 @@ func (c *Context) reFindAll(r, s string, i ...int) ([]string, error) {
 	return compiled.FindAllString(s, n), nil
 }
 
+func (c *Context) reFindAllIndex(r, s string, i ...int) ([][]int, error) {
+	compiled, err := c.compileRegex(r)
+	if err != nil {
+		return nil, err
+	}
+
+	var n int
+	if len(i) > 0 {
+		n = i[0]
+	}
+
+	if n > 1000 || n <= 0 {
+		n = 1000
+	}
+
+	return compiled.FindAllStringIndex(s, n), nil
+}
+
 func (c *Context) reFindAllSubmatches(r, s string, i ...int) ([][]string, error) {
 	compiled, err := c.compileRegex(r)
 	if err != nil {
@@ -1806,6 +1833,24 @@ func (c *Context) reFindAllSubmatches(r, s string, i ...int) ([][]string, error)
 	}
 
 	return compiled.FindAllStringSubmatch(s, n), nil
+}
+
+func (c *Context) reFindAllSubmatchesIndex(r, s string, i ...int) ([][]int, error) {
+	compiled, err := c.compileRegex(r)
+	if err != nil {
+		return nil, err
+	}
+
+	var n int
+	if len(i) > 0 {
+		n = i[0]
+	}
+
+	if n > 100 || n <= 0 {
+		n = 100
+	}
+
+	return compiled.FindAllStringSubmatchIndex(s, n), nil
 }
 
 func (c *Context) reReplace(r, s, repl string) (string, error) {
