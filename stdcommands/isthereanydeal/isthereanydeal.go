@@ -207,10 +207,10 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 		if value.ID == itadCSD.ID {
 			itadPriceDealsSlice = value.Deals
 		}
-
 	}
 
-	priceHistoryLow := (*itadComplete.Price)[i].Deals[0].HistoryLow.Amount
+	// let's put the historical low sky high
+	priceHistoryLow := 9999.99
 	for _, v := range itadPriceDealsSlice {
 		if v.HistoryLow.Amount < priceHistoryLow {
 			priceHistoryLow = v.HistoryLow.Amount
@@ -258,7 +258,6 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 				v.Shop.Name,
 				v.URL,
 			)
-
 		}
 	}
 
