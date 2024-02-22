@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/mrbentarikau/pagst/commands"
@@ -28,19 +26,6 @@ type TriviaResponse struct {
 }
 
 func FetchQuestions(amount int) ([]*TriviaQuestion, error) {
-	client := &http.Client{}
-	proxy := common.ConfHTTPProxy.GetString()
-	if len(proxy) > 0 {
-		proxyUrl, err := url.Parse(proxy)
-		if err == nil {
-			client.Transport = &http.Transport{
-				Proxy: http.ProxyURL(proxyUrl),
-			}
-		} else {
-			logger.WithError(err).Error("Invalid Proxy URL, getting questions without proxy, request maybe ratelimited")
-		}
-	}
-
 	url := fmt.Sprintf("https://opentdb.com/api.php?amount=%d&encode=base64", amount)
 	responseBytes, err := util.RequestFromAPI(url)
 	if err != nil {
@@ -85,8 +70,8 @@ func (q *TriviaQuestion) Decode() {
 // RandomizeOptionOrder randomizes the option order and returns the result
 // this also adds the answer to the list of options
 func (q *TriviaQuestion) RandomizeOptionOrder() {
-	cop := make([]string, len(q.Options)+1)
-	copy(cop, q.Options)
+	cop := make([]string, len(defaultOptionEmojis))
+	copy(cop, q.Options[:len(defaultOptionEmojis)-1])
 	cop[len(cop)-1] = q.Answer
 
 	rand.Shuffle(len(cop), func(i, j int) {

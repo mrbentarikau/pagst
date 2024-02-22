@@ -123,7 +123,7 @@ func ValidateComplexMessageEmbeds(embeds []*MessageEmbed) []*MessageEmbed {
 		if e == nil || IsEmbedEmpty(e) {
 			totalNils++
 		} else {
-			if e.Type != "" {
+			if e.Type == "" {
 				e.Type = "rich"
 			}
 			parsedEmbeds = append(parsedEmbeds, e)

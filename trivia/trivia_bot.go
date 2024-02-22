@@ -41,6 +41,7 @@ type pickedOption struct {
 }
 
 type triviaSession struct {
+	localTrivia     bool
 	Manager         *triviaSessionManager
 	GuildID         int64
 	ChannelID       int64
@@ -57,8 +58,14 @@ type triviaSession struct {
 }
 
 var ErrSessionInChannel = errors.New("a trivia session already exists in this channel")
+var defaultOptionEmojis = []string{
+	"\U0001F1E6", // Regional ind. A
+	"\U0001F1E7", // Regional ind. B
+	"\U0001F1E8", // Regional ind. C
+	"\U0001F1E9", // Regional ind. D
+}
 
-func (tm *triviaSessionManager) NewTrivia(guildID int64, channelID int64) error {
+func (tm *triviaSessionManager) NewTrivia(guildID, channelID int64, localQuestions bool) error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 	for _, v := range tm.sessions {
@@ -67,24 +74,50 @@ func (tm *triviaSessionManager) NewTrivia(guildID int64, channelID int64) error 
 		}
 	}
 
-	triviaQuestions, err := FetchQuestions(1)
-	if err != nil {
-		return err
+	var optionEmojis []string = defaultOptionEmojis
+	var question *TriviaQuestion
+	var triviaQuestions []*TriviaQuestion
+	var err error
+
+	if !localQuestions {
+		triviaQuestions, err = FetchQuestions(1)
+		if err != nil {
+			localQuestions = true
+		}
+
+		if len(triviaQuestions) > 0 {
+			question = triviaQuestions[0]
+		} else {
+			localQuestions = true
+		}
 	}
 
-	question := triviaQuestions[0]
-	var optionEmojis []string
+	if localQuestions {
+		categories := make([]string, 0)
+		for cat := range LocalQuestions {
+			categories = append(categories, cat)
+		}
+
+		if len(categories) == 0 {
+			return fmt.Errorf("no local Trivia questions")
+		}
+
+		rand.Shuffle(len(categories), func(i, j int) { categories[i], categories[j] = categories[j], categories[i] })
+
+		// making a copy because of a pointer for var 'question'
+		insideLocalQuestions := make([]TriviaQuestion, len(LocalQuestions[categories[0]]))
+		copy(insideLocalQuestions, LocalQuestions[categories[0]])
+
+		question = &insideLocalQuestions[rand.Intn(len(insideLocalQuestions))]
+		question.Category = categories[0]
+		question.Type = "Multiple"
+		question.RandomizeOptionOrder()
+	}
+
 	if question.Type == "boolean" {
 		optionEmojis = []string{
 			"\U0001F1F9", // Regional ind. T
 			"\U0001F1EB", // Regional ind. F
-		}
-	} else {
-		optionEmojis = []string{
-			"\U0001F1E6", // Regional ind. A
-			"\U0001F1E7", // Regional ind. B
-			"\U0001F1E8", // Regional ind. C
-			"\U0001F1E9", // Regional ind. D
 		}
 	}
 
@@ -96,6 +129,7 @@ func (tm *triviaSessionManager) NewTrivia(guildID int64, channelID int64) error 
 		Question:     question,
 		optionEmojis: optionEmojis,
 		EmbedColor:   int(rand.Int63n(0xffffff)),
+		localTrivia:  localQuestions,
 	}
 
 	tm.sessions = append(tm.sessions, session)
@@ -240,14 +274,25 @@ func (t *triviaSession) buildButtons() []discordgo.MessageComponent {
 }
 
 func (t *triviaSession) buildEmbed() *discordgo.MessageEmbed {
+	var qDifficulty string
+	if t.Question.Difficulty != "" {
+		qDifficulty = fmt.Sprintf("(%s)", t.Question.Difficulty)
+	}
 	embed := &discordgo.MessageEmbed{}
-	embed.Title = fmt.Sprintf("Trivia Category: %s (%s)", t.Question.Category, t.Question.Difficulty)
+	embed.Title = fmt.Sprintf("Trivia Category: %s %s", t.Question.Category, qDifficulty)
 	embed.Description += fmt.Sprintf("\n ## %s \n", t.Question.Question)
 	embed.Color = t.EmbedColor
 
-	embed.Footer = &discordgo.MessageEmbedFooter{
-		Text:    "Powered by Opentdb.com",
-		IconURL: "https://opentdb.com/images/logo-banner.png",
+	if t.localTrivia {
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text:    "Powered by " + common.ConfBotName.GetString() + " in-built Trivia",
+			IconURL: common.BotUser.AvatarURL("512"),
+		}
+	} else {
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text:    "Powered by Opentdb.com",
+			IconURL: "https://opentdb.com/images/logo-banner.png",
+		}
 	}
 
 	optionsField := &discordgo.MessageEmbedField{

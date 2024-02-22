@@ -3,12 +3,15 @@ package util
 import (
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 )
+
+var logger = common.GetFixedPrefixLogger("stdcommands_util")
 
 func RequestFromAPI(query string, extraHeaders ...map[string]string) ([]byte, error) {
 	req, err := http.NewRequest("GET", query, nil)
@@ -25,6 +28,18 @@ func RequestFromAPI(query string, extraHeaders ...map[string]string) ([]byte, er
 		}
 	}
 	client := &http.Client{Timeout: time.Second * 7}
+	proxy := common.ConfHTTPProxy.GetString()
+	if len(proxy) > 0 {
+		proxyURL, err := url.Parse(proxy)
+		if err == nil {
+			client.Transport = &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			}
+		} else {
+			logger.WithError(err).Error("Invalid Proxy URL, getting questions without proxy, request maybe ratelimited")
+		}
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

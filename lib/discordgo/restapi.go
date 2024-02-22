@@ -1982,55 +1982,12 @@ func (s *Session) ChannelMessageSendComplex(channelID int64, msg *MessageSend, o
 
 	var response []byte
 	if len(files) > 0 {
-		body := &bytes.Buffer{}
-		bodywriter := multipart.NewWriter(body)
-
-		var payload []byte
-		payload, err = json.Marshal(msg)
-		if err != nil {
-			return
+		contentType, body, encodeErr := MultipartBodyWithJSON(msg, files)
+		if encodeErr != nil {
+			return st, encodeErr
 		}
 
-		var p io.Writer
-
-		h := make(textproto.MIMEHeader)
-		h.Set("Content-Disposition", `form-data; name="payload_json"`)
-		h.Set("Content-Type", "application/json")
-
-		p, err = bodywriter.CreatePart(h)
-		if err != nil {
-			return
-		}
-
-		if _, err = p.Write(payload); err != nil {
-			return
-		}
-
-		for i, file := range files {
-			h := make(textproto.MIMEHeader)
-			h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file%d"; filename="%s"`, i, quoteEscaper.Replace(file.Name)))
-			contentType := file.ContentType
-			if contentType == "" {
-				contentType = "application/octet-stream"
-			}
-			h.Set("Content-Type", contentType)
-
-			p, err = bodywriter.CreatePart(h)
-			if err != nil {
-				return
-			}
-
-			if _, err = io.Copy(p, file.Reader); err != nil {
-				return
-			}
-		}
-
-		err = bodywriter.Close()
-		if err != nil {
-			return
-		}
-
-		response, err = s.request("POST", endpoint, bodywriter.FormDataContentType(), body.Bytes(), nil, endpoint, options...)
+		response, err = s.request("POST", endpoint, contentType, body, nil, endpoint, options...)
 	} else {
 		response, err = s.RequestWithBucketID("POST", endpoint, msg, nil, endpoint, options...)
 	}
@@ -2129,7 +2086,6 @@ func (s *Session) ChannelMessageEdit(channelID, messageID int64, content string,
 func (s *Session) ChannelMessageEditComplex(msg *MessageEdit, options ...RequestOption) (st *Message, err error) {
 	msg.Embeds = ValidateComplexMessageEmbeds(msg.Embeds)
 
-	//response, err := s.RequestWithBucketID("PATCH", EndpointChannelMessage(msg.Channel, msg.ID), msg, nil, EndpointChannelMessage(msg.Channel, 0))
 	endpoint := EndpointChannelMessage(msg.Channel, msg.ID)
 
 	var response []byte
