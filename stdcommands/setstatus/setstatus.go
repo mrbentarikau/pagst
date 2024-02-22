@@ -25,7 +25,8 @@ var Command = &commands.YAGCommand{
 	ArgSwitches: []*dcmd.ArgDef{
 		{Name: "url", Type: dcmd.String, Help: "The URL to the stream. Must be on twitch.tv or youtube.com. Activity type will always be streaming if this is set.", Default: ""},
 		{Name: "type", Type: dcmd.String, Help: "Set activity type. Allowed values are 'playing', 'streaming', 'listening', 'watching', 'custom', 'competing'.", Default: "custom"},
-		{Name: "state", Type: dcmd.String, Help: "Set online status. Allowed values are 'online', 'idle', 'dnd', 'offline'.", Default: "online"},
+		{Name: "state", Type: dcmd.String, Help: "Additional activity state. User's current party status, or text used for a custom status.", Default: ""},
+		{Name: "status", Type: dcmd.String, Help: "Set online status. Allowed values are 'online', 'idle', 'dnd', 'offline'.", Default: "online"},
 		{Name: "default", Help: "Defaults to online with version number as custom status"},
 	},
 	RunFunc: util.RequireBotAdmin(func(data *dcmd.Data) (interface{}, error) {
@@ -33,14 +34,18 @@ var Command = &commands.YAGCommand{
 
 		statusText := data.Args[0].Str()
 		streamingUrl := data.Switch("url").Str()
+		stateText := data.Switch("state").Str()
+		if stateText == "" {
+			stateText = statusText
+		}
 
 		err := common.RedisPool.Do(radix.Cmd(&statusType, "GET", "status_type"))
 		if err != nil {
 			fmt.Println((fmt.Errorf("failed retrieving bot status_type")).Error())
 		}
 
-		if statusType == "" || data.Switches["state"].Raw != nil {
-			statusType = data.Switch("state").Str()
+		if statusType == "" || data.Switches["status"].Raw != nil {
+			statusType = data.Switch("status").Str()
 		}
 
 		err2 := common.RedisPool.Do(radix.Cmd(&activityType, "GET", "status_activity_type"))
@@ -55,7 +60,7 @@ var Command = &commands.YAGCommand{
 		// default all
 		if data.Switches["default"].Value != nil && data.Switches["default"].Value.(bool) {
 			activityType = data.Switch("type").Str()
-			statusType = data.Switch("state").Str()
+			statusType = data.Switch("status").Str()
 		}
 
 		switch activityType {
@@ -72,7 +77,7 @@ var Command = &commands.YAGCommand{
 			return nil, commands.NewUserError(fmt.Sprintf("Invalid status type %q. Allowed values are 'online', 'idle', 'dnd', 'offline'", statusType))
 		}
 
-		bot.SetStatus(activityType, statusType, statusText, streamingUrl)
+		bot.SetStatus(activityType, statusType, statusText, stateText, streamingUrl)
 		return "Doneso", nil
 	}),
 }
