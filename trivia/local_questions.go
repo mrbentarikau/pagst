@@ -1,4 +1,5 @@
 // local trivia uses some questions from Pixel Puzzles Trivia - SteamAppID: 1005210
+// this is just snippet to show how local trivia looks like
 package trivia
 
 var LocalQuestions = map[string][]TriviaQuestion{

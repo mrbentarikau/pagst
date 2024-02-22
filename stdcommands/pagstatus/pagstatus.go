@@ -26,7 +26,7 @@ var Command = &commands.YAGCommand{
 	RunFunc:     cmdFuncYagStatus,
 }
 
-var logger = common.GetFixedPrefixLogger("yagstatuc_cmd")
+var logger = common.GetFixedPrefixLogger("pagstatus_cmd")
 
 func cmdFuncYagStatus(data *dcmd.Data) (interface{}, error) {
 	var memStats runtime.MemStats
@@ -71,14 +71,14 @@ func cmdFuncYagStatus(data *dcmd.Data) (interface{}, error) {
 		},
 		Title: common.ConfBotName.GetString() + " status, version " + common.VERSION,
 		Fields: []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{Name: "Servers", Value: fmt.Sprint(servers), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Go Version", Value: runtime.Version(), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Uptime", Value: fmt.Sprintf("Bot: %s\nHost: %s", common.HumanizeDuration(common.DurationPrecisionSeconds, uptime), hostUptime), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Goroutines", Value: fmt.Sprint(numGoroutines), Inline: true},
-			&discordgo.MessageEmbedField{Name: "GC Pause Fraction", Value: fmt.Sprintf("%.3f%%", memStats.GCCPUFraction*100), Inline: true},
-			&discordgo.MessageEmbedField{Name: "Process Mem (alloc, sys, freed)", Value: fmt.Sprintf("%.1fMB, %.1fMB, %.1fMB", float64(memStats.Alloc)/1000000, float64(memStats.Sys)/1000000, (float64(memStats.TotalAlloc)/1000000)-allocated), Inline: true},
-			&discordgo.MessageEmbedField{Name: "System Mem (used, total)", Value: sysMemStats, Inline: true},
-			&discordgo.MessageEmbedField{Name: "System Load (1, 5, 15)", Value: sysLoadStats, Inline: true},
+			{Name: "Servers", Value: fmt.Sprint(servers), Inline: true},
+			{Name: "Go Version", Value: runtime.Version(), Inline: true},
+			{Name: "Uptime", Value: fmt.Sprintf("Bot: %s\nHost: %s", common.HumanizeDuration(common.DurationPrecisionSeconds, uptime), hostUptime), Inline: true},
+			{Name: "Goroutines", Value: fmt.Sprint(numGoroutines), Inline: true},
+			{Name: "GC Pause Fraction", Value: fmt.Sprintf("%.3f%%", memStats.GCCPUFraction*100), Inline: true},
+			{Name: "Process Mem (alloc, sys, freed)", Value: fmt.Sprintf("%.1fMB, %.1fMB, %.1fMB", float64(memStats.Alloc)/1000000, float64(memStats.Sys)/1000000, (float64(memStats.TotalAlloc)/1000000)-allocated), Inline: true},
+			{Name: "System Mem (used, total)", Value: sysMemStats, Inline: true},
+			{Name: "System Load (1, 5, 15)", Value: sysLoadStats, Inline: true},
 		},
 	}
 
