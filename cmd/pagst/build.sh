@@ -9,12 +9,12 @@ if [ -f $targetFile ]; then
 	fileDate=$(date -r $targetFile +%s)
 else
 	echo currency_codes.go does not exist
-	fileDate=21600
+	fileDate=86400
 fi
 
 dateDifference=$(($currentDate - $fileDate))
 
-if [ $dateDifference -ge 21600 ]; then
+if [ $dateDifference -ge 86400 ]; then
 	echo Genereting Currency Exchange money symbols
 	go generate ../../stdcommands/exchange	
 else
