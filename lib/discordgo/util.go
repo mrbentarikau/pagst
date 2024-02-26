@@ -151,3 +151,17 @@ func iconURL(iconHash, staticIconURL, animatedIconURL, size string) string {
 	}
 	return URL
 }
+
+func splashURL(splashHash, splashURL, size string) string {
+	var URL string
+	if splashHash == "" {
+		return ""
+	}
+
+	URL = splashURL
+
+	if size != "" {
+		return URL + "?size=" + size
+	}
+	return URL
+}

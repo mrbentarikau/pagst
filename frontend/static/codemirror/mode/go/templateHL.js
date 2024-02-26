@@ -170,6 +170,7 @@
     "getAuditLogEntries":true,
     "getBotCount":true,
     "getGuildMembers":true,
+    "getGuild":true,
     "getGuildPreview":true,
     "getMember":true,
     "getMemberTimezone":true,

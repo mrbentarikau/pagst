@@ -2921,7 +2921,7 @@ func (c *Context) tmplGetGuildMembers(args ...interface{}) (members []*discordgo
 	return
 }
 
-func (c *Context) tmplGetGuildPreview(arg interface{}) (guildPreview *discordgo.GuildPreview, err error) {
+func (c *Context) tmplGetGuildPreview(arg ...interface{}) (guildPreview *discordgo.GuildPreview, err error) {
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
 	}
@@ -2930,13 +2930,17 @@ func (c *Context) tmplGetGuildPreview(arg interface{}) (guildPreview *discordgo.
 		return nil, ErrTooManyCalls
 	}
 
-	guildID := ToInt64(arg)
+	guildID := c.GS.GuildState.ID
+
+	if len(arg) > 0 {
+		guildID = ToInt64(arg[0])
+	}
 
 	guildPreview, err = common.BotSession.GuildPreview(guildID)
 	return
 }
 
-func (c *Context) tmplGetGuild(arg interface{}) (guild *dstate.GuildSet, err error) {
+func (c *Context) tmplGetGuild(arg ...interface{}) (guild *dstate.GuildSet, err error) {
 	if c.MS == nil {
 		return nil, nil
 	}
@@ -2954,7 +2958,11 @@ func (c *Context) tmplGetGuild(arg interface{}) (guild *dstate.GuildSet, err err
 		return nil, ErrTooManyAPICalls
 	}
 
-	guildID := ToInt64(arg)
+	guildID := c.GS.GuildState.ID
+
+	if len(arg) > 0 {
+		guildID = ToInt64(arg[0])
+	}
 
 	guild, err = discorddata.GetFullGuild(guildID)
 	return
