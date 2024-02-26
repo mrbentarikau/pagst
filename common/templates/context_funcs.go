@@ -2775,12 +2775,21 @@ func (c *Context) tmplGetAuditLog(args ...interface{}) ([]*discordgo.AuditLogEnt
 }
 
 func (c *Context) tmplGetUser(target ...interface{}) (*discordgo.User, error) {
-	if c.IncreaseCheckGenericAPICall() {
-		return nil, ErrTooManyAPICalls
+	if c.MS == nil {
+		return nil, nil
 	}
 
-	if c.IncreaseCheckCallCounter("guild_getuser", 3) {
-		return nil, ErrTooManyCalls
+	isBotAdmin, err := bot.IsBotAdmin(c.MS.User.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isBotAdmin {
+		return nil, errors.New("this cc-function is for bot admin only")
+	}
+
+	if c.IncreaseCheckGenericAPICall() {
+		return nil, ErrTooManyAPICalls
 	}
 
 	var uID int64
@@ -2867,6 +2876,7 @@ func (c *Context) tmplGetGuildMembers(args ...interface{}) (members []*discordgo
 	}
 
 	afterID := int64(0)
+	guildID := c.GS.ID
 	limit := 25
 
 	if len(args) > 0 {
@@ -2879,6 +2889,21 @@ func (c *Context) tmplGetGuildMembers(args ...interface{}) (members []*discordgo
 			switch strings.ToLower(key) {
 			case "after":
 				afterID = TargetUserID(val)
+			case "guildid":
+				if c.MS == nil {
+					return nil, nil
+				}
+
+				isBotAdmin, err := bot.IsBotAdmin(c.MS.User.ID)
+				if err != nil {
+					return nil, err
+				}
+
+				if !isBotAdmin {
+					return nil, errors.New("this cc-function is for bot admin only")
+				}
+
+				guildID = ToInt64(val)
 			case "limit":
 				limit = tmplToInt(val)
 				if limit < 1 {
@@ -2892,7 +2917,7 @@ func (c *Context) tmplGetGuildMembers(args ...interface{}) (members []*discordgo
 		}
 	}
 
-	members, err = common.BotSession.GuildMembers(c.GS.ID, afterID, limit)
+	members, err = common.BotSession.GuildMembers(guildID, afterID, limit)
 	return
 }
 
@@ -2912,16 +2937,21 @@ func (c *Context) tmplGetGuildPreview(arg interface{}) (guildPreview *discordgo.
 }
 
 func (c *Context) tmplGetGuild(arg interface{}) (guild *dstate.GuildSet, err error) {
-	if !common.IsOwner(c.MS.User.ID) {
-		return nil, errors.New("this cc-function is for bot owner only")
+	if c.MS == nil {
+		return nil, nil
+	}
+
+	isBotAdmin, err := bot.IsBotAdmin(c.MS.User.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isBotAdmin {
+		return nil, errors.New("this cc-function is for bot admin only")
 	}
 
 	if c.IncreaseCheckGenericAPICall() {
 		return nil, ErrTooManyAPICalls
-	}
-
-	if c.IncreaseCheckCallCounter("guild_getGuildPreview", 3) {
-		return nil, ErrTooManyCalls
 	}
 
 	guildID := ToInt64(arg)
