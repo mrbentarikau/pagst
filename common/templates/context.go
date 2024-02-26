@@ -779,10 +779,10 @@ func baseContextFuncs(c *Context) {
 
 	// testing grounds
 	c.addContextFunc("getAuditLogEntries", c.tmplGetAuditLog)
-	c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
-	c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
 	c.addContextFunc("getGuild", c.tmplGetGuild)
 	c.addContextFunc("getGuildChannel", c.tmplGetGuildChannel)
+	c.addContextFunc("getGuildIntegrations", c.tmplGetGuildIntegrations)
+	c.addContextFunc("guildMemberMove", c.tmplGuildMemberMove)
 }
 
 type limitedWriter struct {

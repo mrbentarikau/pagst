@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mrbentarikau/pagst/lib/gojay"
 	"github.com/gorilla/websocket"
+	"github.com/mrbentarikau/pagst/lib/gojay"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 )
@@ -1272,6 +1272,18 @@ type GuildPreview struct {
 	Stickers []*Sticker `json:"stickers"`
 }
 
+// BannerURL returns a URL to the guild's banner.
+//
+//	size:    The size of the desired banner image as a power of two
+//	         Image size can be any power of two between 16 and 4096.
+func (g *Guild) BannerURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
+	}
+	return bannerURL(g.Banner, EndpointGuildBanner(g.ID, g.Banner), EndpointGuildBannerAnimated(g.ID, g.Banner), size)
+}
+
 // IconURL returns a URL to the guild's icon.
 //
 //	size:    The size of the desired icon image as a power of two
@@ -1294,16 +1306,22 @@ func (g *GuildPreview) IconURL(args ...string) string {
 	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
 }
 
-// BannerURL returns a URL to the guild's banner.
-//
-//	size:    The size of the desired banner image as a power of two
-//	         Image size can be any power of two between 16 and 4096.
-func (g *Guild) BannerURL(args ...string) string {
+func (g *GuildPreview) SplashURL(args ...string) string {
 	size := "256"
 	if len(args) > 0 {
 		size = args[0]
 	}
-	return bannerURL(g.Banner, EndpointGuildBanner(g.ID, g.Banner), EndpointGuildBannerAnimated(g.ID, g.Banner), size)
+
+	return splashURL(g.Splash, EndpointGuildSplash(g.ID, g.Splash), size)
+}
+
+func (g *GuildPreview) DiscoverySplashURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
+	}
+
+	return splashURL(g.DiscoverySplash, EndpointGuildDiscoverySplash(g.ID, g.DiscoverySplash), size)
 }
 
 // A Guild feature indicates the presence of a feature in a guild

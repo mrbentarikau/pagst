@@ -193,6 +193,46 @@ func (gs *GuildSet) BannerURL(sizeArg ...string) string {
 	return url
 }
 
+func (gs *GuildSet) SplashURL(sizeArg ...string) string {
+	if gs.Splash == "" {
+		return ""
+	}
+
+	var url string
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+
+	url = discordgo.EndpointGuildSplash(gs.ID, gs.Splash)
+
+	if size != "" {
+		url += "?size=" + size
+	}
+
+	return url
+}
+
+func (gs *GuildSet) DiscoverySplashURL(sizeArg ...string) string {
+	if gs.DiscoverySplash == "" {
+		return ""
+	}
+
+	var url string
+	size := "256"
+	if len(sizeArg) > 0 {
+		size = sizeArg[0]
+	}
+
+	url = discordgo.EndpointGuildDiscoverySplash(gs.ID, gs.DiscoverySplash)
+
+	if size != "" {
+		url += "?size=" + size
+	}
+
+	return url
+}
+
 type GuildState struct {
 	ID          int64  `json:"id,string"`
 	Available   bool   `json:"available"`
