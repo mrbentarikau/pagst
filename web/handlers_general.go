@@ -15,6 +15,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot/botrest"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
@@ -24,7 +25,6 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/web/discordblog"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
 	"github.com/volatiletech/null/v8"
 	"goji.io/pat"
@@ -628,7 +628,7 @@ func GetUserGuilds(ctx context.Context) ([]*common.GuildWithConnected, error) {
 	var guilds []*discordgo.UserGuild
 	err := common.GetCacheDataJson(discordgo.StrID(user.ID)+":guilds", &guilds)
 	if err != nil {
-		guilds, err = session.UserGuilds(0, 0, 0)
+		guilds, err = session.UserGuilds(0, 0, 0, false)
 		if err != nil {
 			CtxLogger(ctx).WithError(err).Error("Failed getting user guilds")
 			return nil, err
@@ -637,7 +637,7 @@ func GetUserGuilds(ctx context.Context) ([]*common.GuildWithConnected, error) {
 		LogIgnoreErr(common.SetCacheDataJson(discordgo.StrID(user.ID)+":guilds", 10, guilds))
 	}
 
-	// wrap the guilds with some more info, such as wether the bot is on the server
+	// wrap the guilds with some more info, such as weather the bot is on the server
 	wrapped, err := common.GetGuildsWithConnected(guilds)
 	if err != nil {
 		CtxLogger(ctx).WithError(err).Error("Failed wrapping guilds")

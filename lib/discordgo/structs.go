@@ -1225,12 +1225,14 @@ const (
 
 // A UserGuild holds a brief version of a Guild
 type UserGuild struct {
-	ID          int64          `json:"id,string"`
-	Name        string         `json:"name"`
-	Icon        string         `json:"icon"`
-	Owner       bool           `json:"owner"`
-	Permissions int64          `json:"permissions,string"`
-	Features    []GuildFeature `json:"features"`
+	ID                       int64          `json:"id,string"`
+	Name                     string         `json:"name"`
+	Icon                     string         `json:"icon"`
+	Owner                    bool           `json:"owner"`
+	Permissions              int64          `json:"permissions,string"`
+	Features                 []GuildFeature `json:"features"`
+	ApproximateMemberCount   int            `json:"approximate_member_count"`
+	ApproximatePresenceCount int            `json:"approximate_presence_count"`
 }
 
 // A GuildPreview holds data related to a specific public Discord Guild, even if the user is not in the guild.
