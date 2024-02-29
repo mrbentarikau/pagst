@@ -12,10 +12,11 @@ import (
 )
 
 var Command = &commands.YAGCommand{
-	Cooldown:    5,
-	CmdCategory: commands.CategoryFun,
-	Name:        "TopServers",
-	Description: "Responds with the top 20 servers I'm on",
+	Cooldown:     5,
+	CmdCategory:  commands.CategoryDebug,
+	Name:         "topservers",
+	HideFromHelp: true,
+	Description:  "Responds with the top 20 servers I'm on",
 	Arguments: []*dcmd.ArgDef{
 		{Name: "Skip", Help: "Entries to skip", Type: dcmd.Int, Default: 0},
 	},
