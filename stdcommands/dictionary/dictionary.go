@@ -12,19 +12,19 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
-	"github.com/microcosm-cc/bluemonday"
 	"github.com/sirupsen/logrus"
 )
 
 var Command = &commands.YAGCommand{
 	CmdCategory:  commands.CategoryFun,
-	Name:         "dictionary",
+	Name:         "Dictionary",
 	Aliases:      []string{"owldict", "owl", "dict"},
 	Description:  "Get the definition of an English word using dictionaryapi.dev",
 	RequiredArgs: 1,
