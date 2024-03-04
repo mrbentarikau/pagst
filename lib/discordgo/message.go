@@ -586,3 +586,14 @@ const (
 	MessageActivityTypeListen      MessageActivityType = 3
 	MessageActivityTypeJoinRequest MessageActivityType = 5
 )
+
+// DisplayName returns the member's guild nickname if they have one,
+// otherwise it returns their discord display name.
+func (m *Message) DisplayName() string {
+	if m.Member.Nick != "" {
+		return m.Member.Nick
+	} else if m.Author.Bot {
+		return m.Author.Username
+	}
+	return m.Author.GlobalName
+}
