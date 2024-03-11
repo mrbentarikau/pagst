@@ -124,17 +124,11 @@ type Message struct {
 	// A list of users mentioned in the message.
 	Mentions []*User `json:"mentions"`
 
-	// Is sent with Rich Presence-related chat embeds
-	Activity *MessageActivity `json:"activity"`
-
-	// Is sent with Rich Presence-related chat embeds
-	Application *MessageApplication `json:"application"`
+	// A list of reactions to the message.
+	Reactions []*MessageReactions `json:"reactions"`
 
 	// Whether the message is pinned or not.
 	Pinned bool `json:"pinned"`
-
-	// A list of reactions to the message.
-	Reactions []*MessageReactions `json:"reactions"`
 
 	// The type of the message.
 	Type MessageType `json:"type"`
@@ -142,6 +136,19 @@ type Message struct {
 	WebhookID int64 `json:"webhook_id,string"`
 
 	Member *Member `json:"member"`
+
+	// Channels specifically mentioned in this message
+	// Not all channel mentions in a message will appear in mention_channels.
+	// Only textual channels that are visible to everyone in a lurkable guild will ever be included.
+	// Only cross-posted messages (via Channel Following) currently include mention_channels at all.
+	// If no mentions in the message meet these requirements, this field will not be sent.
+	MentionChannels []*Channel `json:"mention_channels"`
+
+	// Is sent with Rich Presence-related chat embeds
+	Activity *MessageActivity `json:"activity"`
+
+	// Is sent with Rich Presence-related chat embeds
+	Application *MessageApplication `json:"application"`
 
 	// MessageReference contains reference data sent with crossposted or reply messages.
 	// This does not contain the reference *to* this message; this is for when *this* message references another.
@@ -165,11 +172,30 @@ type Message struct {
 	// be checked by performing a bitwise AND between this int and the flag.
 	Flags MessageFlags `json:"flags"`
 
-	// An array of Sticker objects, if any were sent.
-	StickerItems []*StickerItem `json:"sticker_items"`
-
 	// The thread that was started from this message, includes thread member object
 	Thread *Channel `json:"thread,omitempty"`
+
+	// An array of Sticker objects, if any were sent.
+	StickerItems []*StickerItem `json:"sticker_items"`
+}
+
+// UnmarshalJSON is a helper function to unmarshal the Message.
+func (m *Message) UnmarshalJSON(data []byte) error {
+	type message Message
+	var v struct {
+		message
+		RawComponents []unmarshalableMessageComponent `json:"components"`
+	}
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		return err
+	}
+	*m = Message(v.message)
+	m.Components = make([]MessageComponent, len(v.RawComponents))
+	for i, v := range v.RawComponents {
+		m.Components[i] = v.MessageComponent
+	}
+	return err
 }
 
 func (m *Message) GetGuildID() int64 {

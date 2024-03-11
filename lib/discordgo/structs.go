@@ -111,22 +111,22 @@ type Session struct {
 	onceHandlers map[string][]*eventHandlerInstance
 
 	// The websocket connection.
-	wsConn *websocket.Conn
+	// wsConn *websocket.Conn
 
 	// When nil, the session is not listening.
-	listening chan interface{}
+	// listening chan interface{}
 
 	// sequence tracks the current gateway api websocket sequence number
-	sequence *int64
+	// sequence *int64
 
 	// stores sessions current Discord Gateway
-	gateway string
+	// gateway string
 
 	// stores session ID of current Gateway connection
-	sessionID string
+	// sessionID string
 
 	// used to make sure gateway websocket writes do not happen concurrently
-	wsMutex sync.Mutex
+	// wsMutex sync.Mutex
 }
 
 // An Application struct stores values for a Discord OAuth2 Application
@@ -926,6 +926,97 @@ func (g *Guild) Channel(id int64) *Channel {
 	return nil
 }
 
+// IconURL returns a URL to the guild's icon.
+//
+//	size:    The size of the desired icon image as a power of two
+//	         Image size can be any power of two between 16 and 4096.
+func (g *Guild) IconURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
+	}
+
+	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
+}
+
+// BannerURL returns a URL to the guild's banner.
+//
+//	size:    The size of the desired banner image as a power of two
+//	         Image size can be any power of two between 16 and 4096.
+func (g *Guild) BannerURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
+	}
+	return bannerURL(g.Banner, EndpointGuildBanner(g.ID, g.Banner), EndpointGuildBannerAnimated(g.ID, g.Banner), size)
+}
+
+// A GuildPreview holds data related to a specific public Discord Guild, even if the user is not in the guild.
+type GuildPreview struct {
+	// The ID of the guild.
+	ID int64 `json:"id,string"`
+
+	// The name of the guild. (2â€“100 characters)
+	Name string `json:"name"`
+
+	// The hash of the guild's icon. Use Session.GuildIcon
+	// to retrieve the icon itself.
+	Icon string `json:"icon"`
+
+	// The hash of the guild's splash.
+	Splash string `json:"splash"`
+
+	// The hash of the guild's discovery splash.
+	DiscoverySplash string `json:"discovery_splash"`
+
+	// A list of the custom emojis present in the guild.
+	Emojis []*Emoji `json:"emojis"`
+
+	// The list of enabled guild features
+	Features []string `json:"features"`
+
+	// Approximate number of members in this guild
+	// NOTE: this field is only filled when using GuildWithCounts
+	ApproximateMemberCount int `json:"approximate_member_count"`
+
+	// Approximate number of non-offline members in this guild
+	// NOTE: this field is only filled when using GuildWithCounts
+	ApproximatePresenceCount int `json:"approximate_presence_count"`
+
+	// the description for the guild
+	Description string `json:"description"`
+
+	// Stickers
+	Stickers []*Sticker `json:"stickers"`
+}
+
+func (g *GuildPreview) IconURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
+	}
+
+	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
+}
+
+func (g *GuildPreview) SplashURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
+	}
+
+	return splashURL(g.Splash, EndpointGuildSplash(g.ID, g.Splash), size)
+}
+
+func (g *GuildPreview) DiscoverySplashURL(args ...string) string {
+	size := "256"
+	if len(args) > 0 {
+		size = args[0]
+	}
+
+	return splashURL(g.DiscoverySplash, EndpointGuildDiscoverySplash(g.ID, g.DiscoverySplash), size)
+}
+
 // GuildScheduledEvent is a representation of a scheduled event in a guild. Only for retrieval of the data.
 // https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event
 type GuildScheduledEvent struct {
@@ -996,12 +1087,11 @@ type GuildScheduledEventParams struct {
 	Image string `json:"image,omitempty"`
 }
 
-/*
 // MarshalJSON is a helper function to marshal GuildScheduledEventParams
 func (p GuildScheduledEventParams) MarshalJSON() ([]byte, error) {
 	type guildScheduledEventParams GuildScheduledEventParams
 
-	if p.EntityType == GuildScheduledEventEntityTypeExternal && p.ChannelID == "" {
+	if p.EntityType == GuildScheduledEventEntityTypeExternal && p.ChannelID == 0 {
 		return Marshal(struct {
 			guildScheduledEventParams
 			ChannelID json.RawMessage `json:"channel_id"`
@@ -1012,7 +1102,7 @@ func (p GuildScheduledEventParams) MarshalJSON() ([]byte, error) {
 	}
 
 	return Marshal(guildScheduledEventParams(p))
-}*/
+}
 
 // GuildScheduledEventEntityMetadata holds additional metadata for guild scheduled event.
 type GuildScheduledEventEntityMetadata struct {
@@ -1101,6 +1191,16 @@ type GuildOnboarding struct {
 	Mode *GuildOnboardingMode `json:"mode,omitempty"`
 }
 
+// GuildOnboardingPromptType is the type of prompt during onboarding
+// https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-types
+type GuildOnboardingPromptType int
+
+// Block containing known GuildOnboardingPromptType values
+const (
+	GuildOnboardingPromptTypeMultipleChoice GuildOnboardingPromptType = 0
+	GuildOnboardingPromptTypeDropdown       GuildOnboardingPromptType = 1
+)
+
 // GuildOnboardingPrompt is a prompt shown during onboarding and in customize community
 // https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure
 type GuildOnboardingPrompt struct {
@@ -1127,16 +1227,6 @@ type GuildOnboardingPrompt struct {
 	// Indicates whether the prompt is present in the onboarding flow. If false, the prompt will only appear in the Channels & Roles tab
 	InOnboarding bool `json:"in_onboarding"`
 }
-
-// GuildOnboardingPromptType is the type of prompt during onboarding
-// https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-types
-type GuildOnboardingPromptType int
-
-// Block containing known GuildOnboardingPromptType values
-const (
-	GuildOnboardingPromptTypeMultipleChoice GuildOnboardingPromptType = 0
-	GuildOnboardingPromptTypeDropdown       GuildOnboardingPromptType = 1
-)
 
 // GuildOnboardingPromptOption is an option available within an onboarding prompt
 // https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure
@@ -1204,6 +1294,16 @@ type GuildTemplateParams struct {
 	Description string `json:"description,omitempty"`
 }
 
+// MessageNotifications is the notification level for a guild
+// https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level
+type MessageNotifications int
+
+// Block containing known MessageNotifications values
+const (
+	MessageNotificationsAllMessages  MessageNotifications = 0
+	MessageNotificationsOnlyMentions MessageNotifications = 1
+)
+
 // SystemChannelFlag is the type of flags in the system channel (see SystemChannelFlag* consts)
 // https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags
 type SystemChannelFlag int
@@ -1216,114 +1316,22 @@ const (
 	SystemChannelFlagsSuppressJoinNotificationReplies    SystemChannelFlag = 1 << 3
 )
 
-/*const (
-	SystemChannelFlagsSuppressJoin         SystemChannelFlag = 1 << 0
-	SystemChannelFlagsSuppressPremium      SystemChannelFlag = 1 << 1
-	SystemChannelFlagsSupressGuildReminder SystemChannelFlag = 1 << 2
-	SystemChannelFlagsSupressJoinReplies   SystemChannelFlag = 1 << 3
-)*/
-
 // A UserGuild holds a brief version of a Guild
 type UserGuild struct {
-	ID                       int64          `json:"id,string"`
-	Name                     string         `json:"name"`
-	Icon                     string         `json:"icon"`
-	Owner                    bool           `json:"owner"`
-	Permissions              int64          `json:"permissions,string"`
-	Features                 []GuildFeature `json:"features"`
-	ApproximateMemberCount   int            `json:"approximate_member_count"`
-	ApproximatePresenceCount int            `json:"approximate_presence_count"`
-}
-
-// A GuildPreview holds data related to a specific public Discord Guild, even if the user is not in the guild.
-type GuildPreview struct {
-	// The ID of the guild.
-	ID int64 `json:"id,string"`
-
-	// The name of the guild. (2â€“100 characters)
-	Name string `json:"name"`
-
-	// The hash of the guild's icon. Use Session.GuildIcon
-	// to retrieve the icon itself.
-	Icon string `json:"icon"`
-
-	// The hash of the guild's splash.
-	Splash string `json:"splash"`
-
-	// The hash of the guild's discovery splash.
-	DiscoverySplash string `json:"discovery_splash"`
-
-	// A list of the custom emojis present in the guild.
-	Emojis []*Emoji `json:"emojis"`
-
-	// The list of enabled guild features
-	Features []string `json:"features"`
+	ID          int64          `json:"id,string"`
+	Name        string         `json:"name"`
+	Icon        string         `json:"icon"`
+	Owner       bool           `json:"owner"`
+	Permissions int64          `json:"permissions,string"`
+	Features    []GuildFeature `json:"features"`
 
 	// Approximate number of members in this guild
-	// NOTE: this field is only filled when using GuildWithCounts
+	// NOTE: this field is only filled when withCounts is true
 	ApproximateMemberCount int `json:"approximate_member_count"`
 
-	// Approximate number of non-offline members in this guild
-	// NOTE: this field is only filled when using GuildWithCounts
+	// Approximate number of members in this guild
+	// NOTE: this field is only filled when withCounts is true
 	ApproximatePresenceCount int `json:"approximate_presence_count"`
-
-	// the description for the guild
-	Description string `json:"description"`
-
-	// Stickers
-	Stickers []*Sticker `json:"stickers"`
-}
-
-// BannerURL returns a URL to the guild's banner.
-//
-//	size:    The size of the desired banner image as a power of two
-//	         Image size can be any power of two between 16 and 4096.
-func (g *Guild) BannerURL(args ...string) string {
-	size := "256"
-	if len(args) > 0 {
-		size = args[0]
-	}
-	return bannerURL(g.Banner, EndpointGuildBanner(g.ID, g.Banner), EndpointGuildBannerAnimated(g.ID, g.Banner), size)
-}
-
-// IconURL returns a URL to the guild's icon.
-//
-//	size:    The size of the desired icon image as a power of two
-//	         Image size can be any power of two between 16 and 4096.
-func (g *Guild) IconURL(args ...string) string {
-	size := "256"
-	if len(args) > 0 {
-		size = args[0]
-	}
-
-	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
-}
-
-func (g *GuildPreview) IconURL(args ...string) string {
-	size := "256"
-	if len(args) > 0 {
-		size = args[0]
-	}
-
-	return iconURL(g.Icon, EndpointGuildIcon(g.ID, g.Icon), EndpointGuildIconAnimated(g.ID, g.Icon), size)
-}
-
-func (g *GuildPreview) SplashURL(args ...string) string {
-	size := "256"
-	if len(args) > 0 {
-		size = args[0]
-	}
-
-	return splashURL(g.Splash, EndpointGuildSplash(g.ID, g.Splash), size)
-}
-
-func (g *GuildPreview) DiscoverySplashURL(args ...string) string {
-	size := "256"
-	if len(args) > 0 {
-		size = args[0]
-	}
-
-	return splashURL(g.DiscoverySplash, EndpointGuildDiscoverySplash(g.ID, g.DiscoverySplash), size)
 }
 
 // A Guild feature indicates the presence of a feature in a guild
@@ -1412,7 +1420,22 @@ type Role struct {
 
 	// The emoji assigned to this role.
 	UnicodeEmoji string `json:"unicode_emoji"`
+
+	// The flags of the role, which describe its extra features.
+	// This is a combination of bit masks; the presence of a certain flag can
+	// be checked by performing a bitwise AND between this int and the flag.
+	Flags RoleFlags `json:"flags"`
 }
+
+// RoleFlags represent the flags of a Role.
+// https://discord.com/developers/docs/topics/permissions#role-object-role-flags
+type RoleFlags int
+
+// Block containing known RoleFlags values.
+const (
+	// RoleFlagInPrompt indicates whether the Role is selectable by members in an onboarding prompt.
+	RoleFlagInPrompt RoleFlags = 1 << 0
+)
 
 // Mention returns a string which mentions the role
 func (r *Role) Mention() string {

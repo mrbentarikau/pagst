@@ -192,7 +192,7 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 	var priceNewAvg, priceLowAvg, priceOldAvg float64
 
 	embedCurrency := Currency["USD"]
-	if len(*itadComplete.Price) > 0 && len((*itadComplete.Price)[i].Deals) > 0 {
+	if len(*itadComplete.Price) > 0 && len(*itadComplete.Price) > i && len((*itadComplete.Price)[i].Deals) > 0 {
 		currencyFromShop = (*itadComplete.Price)[i].Deals[0].Price.Currency
 		currencySymbol := Currency[currencyFromShop]
 		if currencySymbol != "" {
@@ -296,6 +296,10 @@ func embedCreator(itadComplete *ItadComplete, i int, paginated, compact bool) *d
 	if !compact && itadComplete.GameInfo.Appid != 0 {
 		embed.Image = &discordgo.MessageEmbedImage{
 			URL: fmt.Sprintf("https://cdn.cloudflare.steamstatic.com/steam/apps/%d/header.jpg", itadComplete.GameInfo.Appid),
+		}
+	} else if !compact && itadComplete.GameInfo.Assets.Banner400 != "" {
+		embed.Image = &discordgo.MessageEmbedImage{
+			URL: itadComplete.GameInfo.Assets.Banner400,
 		}
 	}
 

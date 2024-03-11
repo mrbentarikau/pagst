@@ -64,11 +64,18 @@ type ItadPricesDeal struct {
 }
 
 type ItadGameInfo struct {
-	ID           string   `json:"id"`
-	Slug         string   `json:"slug"`
-	Title        string   `json:"title"`
-	Type         string   `json:"type"`
-	Mature       bool     `json:"mature"`
+	ID     string `json:"id"`
+	Slug   string `json:"slug"`
+	Title  string `json:"title"`
+	Type   string `json:"type"`
+	Mature bool   `json:"mature"`
+	Assets struct {
+		Boxart    string `json:"boxart"`
+		Banner145 string `json:"banner145"`
+		Banner300 string `json:"banner300"`
+		Banner400 string `json:"banner400"`
+		Banner600 string `json:"banner600"`
+	} `json:"assets"`
 	EarlyAccess  bool     `json:"earlyAccess"`
 	Achievements bool     `json:"achievements"`
 	TradingCards bool     `json:"tradingCards"`
@@ -100,4 +107,7 @@ type ItadGameInfo struct {
 		Week   int `json:"week"`
 		Peak   int `json:"peak"`
 	} `json:"players"`
+	Urls struct {
+		Game string `json:"game"`
+	} `json:"urls"`
 }
