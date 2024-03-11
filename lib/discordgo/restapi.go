@@ -19,7 +19,6 @@ import (
 	_ "image/jpeg" // For JPEG decoding
 	_ "image/png"  // For PNG decoding
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -388,9 +387,20 @@ func (s *Session) innerDoRequest(method, urlStr, contentType string, b []byte, e
 	return req, resp, err
 }
 
+/*
 func unmarshal(data []byte, v interface{}) error {
 	err := json.Unmarshal(data, v)
 	return err
+}
+*/
+
+func unmarshal(data []byte, v interface{}) error {
+	err := Unmarshal(data, v)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrJSONUnmarshal, err)
+	}
+
+	return nil
 }
 
 // RequestWithoutBucket make a request that doesn't bound to rate limit
@@ -442,7 +452,7 @@ func (s *Session) RequestWithoutBucket(method, urlStr, contentType string, b []b
 		}
 	}()
 
-	response, err = ioutil.ReadAll(resp.Body)
+	response, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}

@@ -221,8 +221,8 @@ type SelectMenu struct {
 	// NOTE: Number of entries should be in the range defined by MinValues and MaxValues.
 	DefaultValues []SelectMenuDefaultValue `json:"default_values,omitempty"`
 
-	Options  []*SelectMenuOption `json:"options,omitempty"`
-	Disabled bool                `json:"disabled"`
+	Options  []SelectMenuOption `json:"options,omitempty"`
+	Disabled bool               `json:"disabled"`
 
 	// NOTE: Can only be used in SelectMenu with Channel menu type.
 	ChannelTypes []ChannelType `json:"channel_types,omitempty"`
@@ -236,7 +236,7 @@ func (s SelectMenu) Type() ComponentType {
 	return SelectMenuComponent
 }
 
-// MarshalJSON is a method for marshaling SelectMenu to a JSON object.
+// MarshalJSON is a method for marshalling SelectMenu to a JSON object.
 func (s SelectMenu) MarshalJSON() ([]byte, error) {
 	type selectMenu SelectMenu
 
