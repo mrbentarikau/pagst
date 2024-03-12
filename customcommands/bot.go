@@ -169,9 +169,10 @@ var cmdEvalCommand = &commands.YAGCommand{
 
 		tmplCtx := templates.NewContext(guildData.GS, channel, guildData.MS)
 		tmplCtx.ExecutedFrom = templates.ExecutedFromEvalCC
+		tmplCtx.Msg = data.TraditionalTriggerData.Message
 
 		// preapre message specific data
-		m := data.TraditionalTriggerData.Message
+		m := tmplCtx.Msg
 
 		args := dcmd.SplitArgs(m.Content)
 		argsStr := make([]string, len(args))

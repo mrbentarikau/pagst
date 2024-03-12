@@ -260,10 +260,11 @@ func (sys *System) FillDataInteraction(s *discordgo.Session, interaction *discor
 		user = interaction.Member.User
 	}
 
-	// KRAAKA_WHOIS from commands/slashcommands.go:handleInteractionUpdate > CheckInteractions:72
+	// KRAAKA_WHOIS from commands/application_commands.go:handleInteractionUpdate > CheckInteractions:72
 	if interaction.Type == discordgo.InteractionApplicationCommand &&
 		(interaction.DataCommand.AppCmdType == discordgo.UserApplicationCommand ||
-			interaction.DataCommand.AppCmdType == discordgo.MessageApplicationCommand) {
+			interaction.DataCommand.AppCmdType == discordgo.MessageApplicationCommand ||
+			interaction.Type == discordgo.InteractionApplicationCommandAutocomplete) {
 
 		arg := &discordgo.ApplicationCommandInteractionDataOption{}
 		interaction.DataCommand.Options = append(interaction.DataCommand.Options, arg)
