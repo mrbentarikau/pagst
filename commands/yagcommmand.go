@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
@@ -17,7 +18,6 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
@@ -127,7 +127,7 @@ type YAGCommand struct {
 
 	Middlewares []dcmd.MiddleWareFunc
 
-	// Run is ran the the command has sucessfully been parsed
+	// Run is ran when the command has sucessfully been parsed
 	// It returns a reply and an error
 	// the reply can have a type of string, *MessageEmbed or error
 	RunFunc dcmd.RunFunc
@@ -188,6 +188,21 @@ var metricsExcecutedCommands = promauto.NewCounterVec(prometheus.CounterOpts{
 }, []string{"name", "trigger_type"})
 
 func (yc *YAGCommand) Run(data *dcmd.Data) (interface{}, error) {
+	if data.TriggerType == dcmd.TriggerTypeSlashCommands && data.SlashCommandTriggerData.Interaction.Type == discordgo.InteractionApplicationCommandAutocomplete {
+		for _, v := range data.SlashCommandTriggerData.Options {
+			if !v.Focused {
+				continue
+			}
+
+			for _, arg := range data.Args {
+				if strings.EqualFold(arg.Def.Name, v.Name) {
+					return arg.Def.AutocompleteFunc(data, arg)
+				}
+			}
+		}
+		return []*discordgo.ApplicationCommandOptionChoice{}, nil // fallback in case something goes wrong so the user doesn't see failed
+	}
+
 	if !yc.RunInDM && data.Source == dcmd.TriggerSourceDM {
 		return nil, nil
 	}

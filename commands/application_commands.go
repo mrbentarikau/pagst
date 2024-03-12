@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/commands/models"
@@ -18,7 +19,6 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
-	"github.com/mediocregopher/radix/v3"
 )
 
 var (
@@ -375,7 +375,7 @@ func updateSlashCommandGuildPermissions(gs *dstate.GuildSet) (updated bool, err 
 func handleInteractionCreate(evt *eventsystem.EventData) {
 	interaction := evt.InteractionCreate()
 
-	if interaction.Type != discordgo.InteractionApplicationCommand {
+	if interaction.Type != discordgo.InteractionApplicationCommand && interaction.Type != discordgo.InteractionApplicationCommandAutocomplete {
 		return
 	}
 
