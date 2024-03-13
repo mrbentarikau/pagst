@@ -91,7 +91,7 @@ type RateLimitError struct {
 
 // Error returns a rate limit error with rate limited endpoint and retry time.
 func (e RateLimitError) Error() string {
-	return "Rate limit exceeded on " + e.URL + ", retry after " + e.RetryAfter.String()
+	return "Rate limit exceeded on " + e.URL + ", retry after " + e.RetryAfterDur().String()
 }
 
 // RequestConfig is an HTTP request configuration.
@@ -490,7 +490,7 @@ func (s *Session) RequestWithoutBucket(method, urlStr, contentType string, b []b
 			s.log(LogInformational, "Rate Limiting %s, retry in %v", urlStr, rl.RetryAfter)
 			s.handleEvent(rateLimitEventType, &RateLimit{TooManyRequests: &rl, URL: urlStr})
 
-			time.Sleep(rl.RetryAfter)
+			time.Sleep(rl.RetryAfterDur())
 			// we can make the above smarter
 			// this method can cause longer delays than required
 

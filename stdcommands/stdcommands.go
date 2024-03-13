@@ -14,6 +14,7 @@ import (
 	"github.com/mrbentarikau/pagst/stdcommands/calc"
 	"github.com/mrbentarikau/pagst/stdcommands/catfact"
 	"github.com/mrbentarikau/pagst/stdcommands/ccreqs"
+	"github.com/mrbentarikau/pagst/stdcommands/cleardm"
 
 	// "github.com/mrbentarikau/pagst/stdcommands/covidstats"
 	"github.com/mrbentarikau/pagst/stdcommands/createinvite"
@@ -142,6 +143,7 @@ func (p *Plugin) AddCommands() {
 		banserver.Command,
 		banserverowner.Command,
 		ccreqs.Command,
+		cleardm.Command,
 		createinvite.Command,
 		currentshard.Command,
 		dcallvoice.Command,
