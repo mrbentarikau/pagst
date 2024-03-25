@@ -1223,14 +1223,14 @@ func shuffle(seq interface{}) (interface{}, error) {
 }
 
 func tmplToInt(from interface{}) int {
-	switch t := reflect.ValueOf(from); t.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	switch t := reflect.ValueOf(from); {
+	case t.CanInt():
 		return int(t.Int())
-	case reflect.Float32, reflect.Float64:
+	case t.CanFloat():
 		return int(t.Float())
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+	case t.CanUint():
 		return int(t.Uint())
-	case reflect.String:
+	case t.Kind() == reflect.String:
 		parsed, _ := strconv.ParseInt(strings.TrimSpace(t.String()), 10, 64)
 		return int(parsed)
 	default:
@@ -1239,14 +1239,14 @@ func tmplToInt(from interface{}) int {
 }
 
 func ToInt64(from interface{}) int64 {
-	switch t := reflect.ValueOf(from); t.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	switch t := reflect.ValueOf(from); {
+	case t.CanInt():
 		return t.Int()
-	case reflect.Float32, reflect.Float64:
+	case t.CanFloat():
 		return int64(t.Float())
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+	case t.CanUint():
 		return int64(t.Uint())
-	case reflect.String:
+	case t.Kind() == reflect.String:
 		parsed, _ := strconv.ParseInt(strings.TrimSpace(t.String()), 10, 64)
 		return parsed
 	default:
@@ -1255,51 +1255,18 @@ func ToInt64(from interface{}) int64 {
 }
 
 func ToInt64Base16(from interface{}) int64 {
-	switch t := from.(type) {
-	case int:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
+	switch t := reflect.ValueOf(from); {
+	case t.CanInt():
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(t.Int(), 10), 16, 64)
 		return parsed
-	case int8:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
+	case t.CanFloat():
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(t.Int(), 10), 16, 64)
 		return parsed
-	case int16:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
+	case t.CanUint():
+		parsed, _ := strconv.ParseInt(strconv.FormatInt(t.Int(), 10), 16, 64)
 		return parsed
-	case int32:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
-		return parsed
-	case int64:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
-		return parsed
-	case float32:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 10), 16, 64)
-		return parsed
-	case float64:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 10), 16, 64)
-		return parsed
-	case uint:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
-		return parsed
-	case uint8:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
-		return parsed
-	case uint16:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
-		return parsed
-	case uint32:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
-		return parsed
-	case uint64:
-		parsed, _ := strconv.ParseInt(ToString(t), 16, 64)
-		return parsed
-	case string:
-		parsed, _ := strconv.ParseInt(t, 16, 64)
-		return parsed
-	case time.Duration:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 10), 16, 64)
-		return parsed
-	case time.Month:
-		parsed, _ := strconv.ParseInt(strconv.FormatInt(int64(t), 10), 16, 64)
+	case t.Kind() == reflect.String:
+		parsed, _ := strconv.ParseInt(t.String(), 16, 64)
 		return parsed
 	default:
 		return 0
@@ -1307,14 +1274,14 @@ func ToInt64Base16(from interface{}) int64 {
 }
 
 func ToFloat64(from interface{}) float64 {
-	switch t := reflect.ValueOf(from); t.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	switch t := reflect.ValueOf(from); {
+	case t.CanInt():
 		return float64(t.Int())
-	case reflect.Float32, reflect.Float64:
+	case t.CanFloat():
 		return t.Float()
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+	case t.CanUint():
 		return float64(t.Uint())
-	case reflect.String:
+	case t.Kind() == reflect.String:
 		parsed, _ := strconv.ParseFloat(strings.TrimSpace(t.String()), 64)
 		return parsed
 	default:
@@ -1323,42 +1290,39 @@ func ToFloat64(from interface{}) float64 {
 }
 
 func ToString(from interface{}) string {
-	switch t := reflect.ValueOf(from); t.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+	switch t := from.(type) {
+	case []byte:
+		return string(t)
+	case []rune:
+		return string(t)
+	case fmt.Stringer:
+		return t.String()
+	}
+
+	switch t := reflect.ValueOf(from); {
+	case t.CanInt():
 		return strconv.FormatInt(t.Int(), 10)
-	case reflect.Float32, reflect.Float64:
+	case t.CanFloat():
 		return strconv.FormatFloat(t.Float(), 'E', -1, 64)
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+	case t.CanUint():
 		return strconv.FormatUint(t.Uint(), 10)
-	case reflect.String:
+	case t.Kind() == reflect.String:
 		return t.String()
 	default:
-		switch t := from.(type) {
-		case []byte:
-			return string(t)
-		case []rune:
-			return string(t)
-		case fmt.Stringer:
-			return t.String()
-		default:
-			return ""
-		}
-
+		return ""
 	}
 }
 
 func ToDuration(from interface{}) time.Duration {
-	switch t := from.(type) {
-	case int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64:
-		return time.Duration(ToInt64(t))
-	case string:
-		parsed, err := common.ParseDuration(t)
+	switch t := reflect.ValueOf(from); {
+	case t.CanInt(), t.CanFloat(), t.CanUint():
+		return time.Duration(ToInt64(from))
+	case t.Kind() == reflect.String:
+		parsed, err := common.ParseDuration(t.String())
 		if parsed < time.Second || err != nil {
 			return 0
 		}
 		return parsed
-	case time.Duration:
-		return t
 	default:
 		return 0
 	}
@@ -1366,12 +1330,15 @@ func ToDuration(from interface{}) time.Duration {
 
 func ToRune(from interface{}) []rune {
 	switch t := from.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
-		return []rune(ToString(t))
 	case fmt.Stringer:
 		return []rune(t.String())
-	case string:
-		return []rune(t)
+	}
+
+	switch t := reflect.ValueOf(from); {
+	case t.CanInt(), t.CanFloat(), t.CanUint():
+		return []rune(ToString(from))
+	case t.Kind() == reflect.String:
+		return []rune(t.String())
 	default:
 		return nil
 	}
@@ -1379,12 +1346,14 @@ func ToRune(from interface{}) []rune {
 
 func ToByte(from interface{}) []byte {
 	switch t := from.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
-		return []byte(ToString(t))
 	case fmt.Stringer:
 		return []byte(t.String())
-	case string:
-		return []byte(t)
+	}
+	switch t := reflect.ValueOf(from); {
+	case t.CanInt(), t.CanFloat(), t.CanUint():
+		return []byte(ToString(from))
+	case t.Kind() == reflect.String:
+		return []byte(t.String())
 	default:
 		return nil
 	}
