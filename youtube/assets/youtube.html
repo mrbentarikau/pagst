@@ -110,7 +110,7 @@
                         <div class="form-group col mb-0">
                             <label for="channel">Discord Channel</label>
                             <select id="channel" class="form-control" name="DiscordChannel" data-requireperms-send>
-                                {{textChannelOptions .Dot.ActiveGuild.Channels nil true "None"}}
+                                {{textChannelOptionsLimited .Dot.ActiveGuild.Channels nil true "None"}}
                             </select>
                         </div>
                         <div class="form-group col mb-0">
@@ -180,7 +180,7 @@
                             <td>
                                 <select form="sub-item-{{$v.ID}}" id="channel" class="form-control" name="DiscordChannel"
                                     data-requireperms-embed>
-                                    {{textChannelOptions $dot.ActiveGuild.Channels $v.ChannelID true "None"}}
+                                    {{textChannelOptionsLimited $dot.ActiveGuild.Channels $v.ChannelID true "None"}}
                                 </select>
                             </td>
                             <td>
