@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"emperror.dev/errors"
+	"github.com/jinzhu/gorm"
 	"github.com/mrbentarikau/pagst/analytics"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
@@ -20,7 +21,6 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/logs"
-	"github.com/jinzhu/gorm"
 )
 
 func MBaseCmd(cmdData *dcmd.Data, targetID int64) (config *Config, targetUser *discordgo.User, err error) {
@@ -744,6 +744,8 @@ var ModerationCommands = []*commands.YAGCommand{
 			{Name: "notbot", Help: "Only remove message made by users"},
 			{Name: "a", Help: "Only remove messages with attachments"},
 			{Name: "m", Help: "Only remove messages without attachments"},
+			{Name: "emb", Help: "Only remove messages with embeds"},
+			{Name: "noemb", Help: "Only remove messages without embeds"},
 			{Name: "to", Help: "Stop at this msg ID", Type: dcmd.BigInt},
 			{Name: "from", Help: "Start at this msg ID", Type: dcmd.BigInt},
 			{Name: "ignoreuser", Help: "Ignore flagged user"},
@@ -881,6 +883,20 @@ var ModerationCommands = []*commands.YAGCommand{
 				filtered = true
 			}
 
+			// Check if we should only delete messages with embeds
+			var embeds bool
+			if parsed.Switches["emb"].Value != nil && parsed.Switches["emb"].Value.(bool) {
+				embeds = true
+				filtered = true
+			}
+
+			// Check if we should only delete messages without embeds
+			var noEmbeds bool
+			if parsed.Switches["noemb"].Value != nil && parsed.Switches["noemb"].Value.(bool) {
+				noEmbeds = true
+				filtered = true
+			}
+
 			limitFetch := num
 			if userFilter != 0 || filtered {
 				limitFetch = num * 50 // Maybe just change to full fetch?
@@ -897,7 +913,7 @@ var ModerationCommands = []*commands.YAGCommand{
 			// Wait a second so the client doesn't glitch out
 			time.Sleep(time.Second)
 
-			numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, triggerID, userFilter, re, invertRegexMatch, toID, fromID, ma, minAge, pe, onlyBots, onlyNotBots, ignoreUser, attachments, messagesOnly, num, limitFetch)
+			numDeleted, err := AdvancedDeleteMessages(parsed.GuildData.GS.ID, parsed.ChannelID, triggerID, userFilter, re, invertRegexMatch, toID, fromID, ma, minAge, pe, onlyBots, onlyNotBots, ignoreUser, attachments, messagesOnly, embeds, noEmbeds, num, limitFetch)
 
 			return dcmd.NewTemporaryResponse(time.Second*5, fmt.Sprintf("Deleted %d message(s)! :')", numDeleted), true), err
 		},
@@ -1379,7 +1395,7 @@ var ModerationCommands = []*commands.YAGCommand{
 	},
 }
 
-func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUser int64, regex string, invertRegexMatch bool, toID, fromID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable, onlyBotsFilterEnable, onlyNotBotsFilterEnable, ignoreUserFilterEnabled, attachmentFilterEnable, messageFilterEnable bool, deleteNum, fetchNum int) (int, error) {
+func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUser int64, regex string, invertRegexMatch bool, toID, fromID int64, maxAge time.Duration, minAge time.Duration, pinFilterEnable, onlyBotsFilterEnable, onlyNotBotsFilterEnable, ignoreUserFilterEnabled, attachmentFilterEnable, messageFilterEnable, embedFilterEnable, noEmbedFilterEnable bool, deleteNum, fetchNum int) (int, error) {
 	var compiledRegex *regexp.Regexp
 	if regex != "" {
 		// Start by compiling the regex
@@ -1487,6 +1503,16 @@ func AdvancedDeleteMessages(guildID, channelID int64, triggerID int64, filterUse
 
 		// If attachments only filter enabled, add only messages without attachments
 		if messageFilterEnable && len(msgs[i].Attachments) != 0 {
+			continue
+		}
+
+		// Check whether to ignore messages without embeds
+		if embedFilterEnable && len(msgs[i].Embeds) == 0 {
+			continue
+		}
+
+		// If attachments only filter enabled, add only messages without embeds
+		if noEmbedFilterEnable && len(msgs[i].Embeds) != 0 {
 			continue
 		}
 
