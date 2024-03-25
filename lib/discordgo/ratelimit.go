@@ -82,19 +82,6 @@ func (r *RateLimiter) GetBucket(key string) *Bucket {
 	return b
 }
 
-// CleanExpiredBucket remove buckets reset before now - expiredDuration
-func (r *RateLimiter) CleanExpiredBucket(expiredDuration time.Duration) {
-	r.Lock()
-	defer r.Unlock()
-
-	now := time.Now()
-	for key, bucket := range r.buckets {
-		if bucket.reset.Add(expiredDuration).Before(now) {
-			delete(r.buckets, key)
-		}
-	}
-}
-
 // GetWaitTime returns the duration you should wait for a Bucket
 func (r *RateLimiter) GetWaitTime(b *Bucket, minRemaining int) time.Duration {
 	// If we ran out of calls and the reset time is still ahead of us

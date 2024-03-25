@@ -299,8 +299,45 @@ const (
 	ChannelTypeGuildPublicThread  ChannelType = 11 // a temporary sub-channel within a GUILD_TEXT channel
 	ChannelTypeGuildPrivateThread ChannelType = 12 // a temporary sub-channel within a GUILD_TEXT channel that is only viewable by those invited and those with the MANAGE_THREADS permission
 	ChannelTypeGuildStageVoice    ChannelType = 13 // a voice channel for hosting events with an audience
+	ChannelTypeGuildDirectory     ChannelType = 14 // a channel in a hub containing the listed servers
 	ChannelTypeGuildForum         ChannelType = 15 // a channel that can only contain threads
+	ChannelTypeGuildMedia         ChannelType = 16 // a channel that can only contain threads, similar to GUILD_FORUM channels
 )
+
+func (ct ChannelType) String() string {
+	switch ct {
+	case ChannelTypeGuildText:
+		return "Text"
+	case ChannelTypeDM:
+		return "DM"
+	case ChannelTypeGuildVoice:
+		return "Voice"
+	case ChannelTypeGroupDM:
+		return "GroupDM"
+	case ChannelTypeGuildCategory:
+		return "Category"
+	case ChannelTypeGuildNews:
+		return "Announcement"
+	case ChannelTypeGuildStore:
+		return "Store"
+	case ChannelTypeGuildNewsThread:
+		return "AnnouncementThread"
+	case ChannelTypeGuildPublicThread:
+		return "PublicThread"
+	case ChannelTypeGuildPrivateThread:
+		return "PrivateThread"
+	case ChannelTypeGuildStageVoice:
+		return "StageVoice"
+	case ChannelTypeGuildDirectory:
+		return "Directory"
+	case ChannelTypeGuildForum:
+		return "Forum"
+	case ChannelTypeGuildMedia:
+		return "Media"
+	}
+
+	return fmt.Sprintf("ChannelType (%d)", ct)
+}
 
 // ChannelFlags represent flags of a channel/thread.
 type ChannelFlags int

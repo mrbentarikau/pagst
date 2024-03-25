@@ -354,7 +354,7 @@ func createRSSEmbed(feed *gofeed.Feed, filteredItems []*gofeed.Item, feedName st
 
 		}
 		bm := bluemonday.StripTagsPolicy()
-		feedDescription := common.CutStringShort(feedItem.Description, 2000)
+		feedDescription := common.CutStringShort(feedItem.Description, 1024)
 
 		if feedName == "No name" || feedName == "" {
 			feedName = feed.Title
@@ -382,9 +382,7 @@ func createRSSEmbed(feed *gofeed.Feed, filteredItems []*gofeed.Item, feedName st
 		}
 
 		if feed.Image != nil {
-			embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: feed.Image.URL,
-			}
+			embed.Author.IconURL = feed.Image.URL
 		}
 
 		embeds = append(embeds, embed)
