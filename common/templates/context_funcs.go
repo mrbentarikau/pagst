@@ -1023,7 +1023,7 @@ func (c *Context) tmplGetMember(target ...interface{}) (*discordgo.Member, error
 		return nil, nil
 	}
 
-	member, _ := bot.GetMember(c.GS.ID, mID)
+	member, _ := bot.GetMember(c.GS.ID, mID, true)
 	if member == nil {
 		return nil, nil
 	}

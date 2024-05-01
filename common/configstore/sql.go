@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/jinzhu/gorm"
+	"github.com/mrbentarikau/pagst/common"
 	"golang.org/x/net/context"
 )
 
@@ -42,8 +42,6 @@ func (p *Postgres) GetGuildConfig(ctx context.Context, guildID int64, conf Guild
 
 		return err
 	}
-
-	return nil
 }
 
 // conf is requried to be a pointer value
