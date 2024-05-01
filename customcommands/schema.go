@@ -79,6 +79,12 @@ ALTER TABLE custom_command_groups ADD COLUMN IF NOT EXISTS threads_enabled BOOLE
 `, `
 ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS normalize_unicode BOOL NOT NULL DEFAULT false;
 `, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS public_id TEXT NOT NULL DEFAULT '';
+`, `
+CREATE INDEX IF NOT EXISTS custom_commands_public_id_idx ON custom_commands(public_id);
+`, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS import_count INT NOT NULL DEFAULT 0;
+`, `
 CREATE TABLE IF NOT EXISTS templates_user_database (
 	id BIGSERIAL PRIMARY KEY,
 
@@ -104,4 +110,11 @@ CREATE INDEX IF NOT EXISTS templates_user_database_expires_idx ON templates_user
 ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS trigger_on_edit BOOLEAN NOT NULL DEFAULT false;
 `, `
 ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS note TEXT;
+`, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS public BOOLEAN NOT NULL DEFAULT false;
+`, `
+ALTER TABLE custom_commands ADD COLUMN IF NOT EXISTS response TEXT NOT NULL DEFAULT '';
 `}
+
+//`, `
+//UPDATE custom_commands set response = array_to_string(responses,'','');

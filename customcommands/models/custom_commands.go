@@ -57,6 +57,9 @@ type CustomCommand struct {
 	ThreadsEnabled            bool              `boil:"threads_enabled" json:"threads_enabled" toml:"threads_enabled" yaml:"threads_enabled"`
 	NormalizeUnicode          bool              `boil:"normalize_unicode" json:"normalize_unicode" toml:"normalize_unicode" yaml:"normalize_unicode"`
 	TriggerOnEdit             bool              `boil:"trigger_on_edit" json:"trigger_on_edit" toml:"trigger_on_edit" yaml:"trigger_on_edit"`
+	PublicID                  string            `boil:"public_id" json:"public_id" toml:"public_id" yaml:"public_id"`
+	ImportCount               int               `boil:"import_count" json:"import_count" toml:"import_count" yaml:"import_count"`
+	Public                    bool              `boil:"public" json:"public" toml:"public" yaml:"public"`
 
 	R *customCommandR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L customCommandL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -95,6 +98,9 @@ var CustomCommandColumns = struct {
 	ThreadsEnabled            string
 	NormalizeUnicode          string
 	TriggerOnEdit             string
+	PublicID                  string
+	ImportCount               string
+	Public                    string
 }{
 	LocalID:                   "local_id",
 	GuildID:                   "guild_id",
@@ -128,6 +134,9 @@ var CustomCommandColumns = struct {
 	ThreadsEnabled:            "threads_enabled",
 	NormalizeUnicode:          "normalize_unicode",
 	TriggerOnEdit:             "trigger_on_edit",
+	PublicID:                  "public_id",
+	ImportCount:               "import_count",
+	Public:                    "public",
 }
 
 var CustomCommandTableColumns = struct {
@@ -163,6 +172,9 @@ var CustomCommandTableColumns = struct {
 	ThreadsEnabled            string
 	NormalizeUnicode          string
 	TriggerOnEdit             string
+	PublicID                  string
+	ImportCount               string
+	Public                    string
 }{
 	LocalID:                   "custom_commands.local_id",
 	GuildID:                   "custom_commands.guild_id",
@@ -196,6 +208,9 @@ var CustomCommandTableColumns = struct {
 	ThreadsEnabled:            "custom_commands.threads_enabled",
 	NormalizeUnicode:          "custom_commands.normalize_unicode",
 	TriggerOnEdit:             "custom_commands.trigger_on_edit",
+	PublicID:                  "custom_commands.public_id",
+	ImportCount:               "custom_commands.import_count",
+	Public:                    "custom_commands.public",
 }
 
 // Generated where
@@ -372,6 +387,9 @@ var CustomCommandWhere = struct {
 	ThreadsEnabled            whereHelperbool
 	NormalizeUnicode          whereHelperbool
 	TriggerOnEdit             whereHelperbool
+	PublicID                  whereHelperstring
+	ImportCount               whereHelperint
+	Public                    whereHelperbool
 }{
 	LocalID:                   whereHelperint64{field: "\"custom_commands\".\"local_id\""},
 	GuildID:                   whereHelperint64{field: "\"custom_commands\".\"guild_id\""},
@@ -405,6 +423,9 @@ var CustomCommandWhere = struct {
 	ThreadsEnabled:            whereHelperbool{field: "\"custom_commands\".\"threads_enabled\""},
 	NormalizeUnicode:          whereHelperbool{field: "\"custom_commands\".\"normalize_unicode\""},
 	TriggerOnEdit:             whereHelperbool{field: "\"custom_commands\".\"trigger_on_edit\""},
+	PublicID:                  whereHelperstring{field: "\"custom_commands\".\"public_id\""},
+	ImportCount:               whereHelperint{field: "\"custom_commands\".\"import_count\""},
+	Public:                    whereHelperbool{field: "\"custom_commands\".\"public\""},
 }
 
 // CustomCommandRels is where relationship names are stored.
@@ -435,9 +456,9 @@ func (r *customCommandR) GetGroup() *CustomCommandGroup {
 type customCommandL struct{}
 
 var (
-	customCommandAllColumns            = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note", "threads_enabled", "normalize_unicode", "trigger_on_edit"}
+	customCommandAllColumns            = []string{"local_id", "guild_id", "group_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "last_run", "next_run", "responses", "channels", "channels_whitelist_mode", "roles", "roles_whitelist_mode", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note", "threads_enabled", "normalize_unicode", "trigger_on_edit", "public_id", "import_count", "public"}
 	customCommandColumnsWithoutDefault = []string{"local_id", "guild_id", "trigger_type", "text_trigger", "text_trigger_case_sensitive", "time_trigger_interval", "time_trigger_excluding_days", "time_trigger_excluding_hours", "responses", "channels_whitelist_mode", "roles_whitelist_mode"}
-	customCommandColumnsWithDefault    = []string{"group_id", "last_run", "next_run", "channels", "roles", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note", "threads_enabled", "normalize_unicode", "trigger_on_edit"}
+	customCommandColumnsWithDefault    = []string{"group_id", "last_run", "next_run", "channels", "roles", "context_channel", "reaction_trigger_mode", "last_error", "last_error_time", "run_count", "show_errors", "disabled", "date_updated", "categories", "categories_whitelist_mode", "regex_trigger", "regex_trigger_case_sensitive", "note", "threads_enabled", "normalize_unicode", "trigger_on_edit", "public_id", "import_count", "public"}
 	customCommandPrimaryKeyColumns     = []string{"guild_id", "local_id"}
 	customCommandGeneratedColumns      = []string{}
 )

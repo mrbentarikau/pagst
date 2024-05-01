@@ -22,6 +22,7 @@ import (
 	"emperror.dev/errors"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
+	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
 	"github.com/mrbentarikau/pagst/commands"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/keylock"
@@ -37,8 +38,7 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/stdcommands/util"
-
-	"github.com/mrbentarikau/pagst/bot/paginatedmessages"
+	"github.com/mrbentarikau/pagst/web"
 
 	"github.com/sirupsen/logrus"
 	"github.com/vmihailenco/msgpack"
@@ -294,7 +294,7 @@ var cmdListCommands = &commands.YAGCommand{
 			raw = true
 		}
 
-		foundCCS, provided := FindCommands(ccs, data)
+		foundCCS, _ := FindCommands(ccs, data)
 		if len(foundCCS) < 1 {
 			var title string
 			maxLength := 25
@@ -304,10 +304,7 @@ var cmdListCommands = &commands.YAGCommand{
 				return "This server has no custom commands, sry.", nil
 			}
 
-			title = "No id or trigger provided...\nHere is a list of all server commands\n (marked as `>` will trigger on edit):\n"
-			if provided {
-				title = "No command by that name or id found...\nHere is a list of them all:\n"
-			}
+			title = "No id or trigger provided,\nor the one provided not found...\n\nHere is a list of all server commands:\n(marked as `>` will trigger on edit\nccIDs in `blue` have public short-links,\n`red` trigger types are for disabled commands)\n"
 
 			if raw {
 				return title + list, nil
@@ -350,11 +347,19 @@ var cmdListCommands = &commands.YAGCommand{
 			}
 		}
 
-		var caseSensitiveTrigger, response, restrictions, link string
+		var caseSensitiveTrigger, ccIDWithLink, ccPublicLink, response, restrictions string
 
 		coreSConf := common.GetCoreServerConfCached(data.GuildData.GS.ID)
 		if coreSConf.AllowAllMembersReadOnly || len(coreSConf.AllowedReadOnlyRoles) > 0 {
-			link = fmt.Sprintf("<https://%s/manage/%d/customcommands/commands/%d/>", common.ConfHost.GetString(), data.GuildData.GS.ID, cc.LocalID)
+			ccIDWithLink = fmt.Sprintf("[#%[1]d](<%[2]s/customcommands/commands/%[1]d/>)", cc.LocalID, web.ManageServerURL(data.GuildData))
+		} else {
+			ccIDWithLink = fmt.Sprintf("#%d", cc.LocalID)
+		}
+
+		if cc.Public {
+			ccPublicLink = fmt.Sprintf("[true](<%s/cc/%s>)", web.BaseURL(), cc.PublicID)
+		} else {
+			ccPublicLink = "`false`"
 		}
 
 		if len(cc.Categories) > 0 || cc.CategoriesWhitelistMode {
@@ -389,8 +394,8 @@ var cmdListCommands = &commands.YAGCommand{
 
 		if ccFile != nil {
 			msg = &discordgo.MessageSend{
-				Content: fmt.Sprintf("#%d - %s%s - Group: `%s`\nTrigger on Edit: `%t` - Command Disabled: `%t`%s",
-					cc.LocalID, CommandTriggerType(cc.TriggerType), caseSensitiveTrigger, groupMap[cc.GroupID.Int64], cc.TriggerOnEdit, cc.Disabled, restrictions),
+				Content: fmt.Sprintf("%s - %s%s - Group: `%s`\nTrigger on Edit: `%t` - Command Disabled: `%t` - Command Public: %s %s",
+					ccIDWithLink, CommandTriggerType(cc.TriggerType), caseSensitiveTrigger, groupMap[cc.GroupID.Int64], cc.TriggerOnEdit, cc.Disabled, ccPublicLink, restrictions),
 				Files: []*discordgo.File{
 					ccFile,
 				},
@@ -409,11 +414,11 @@ var cmdListCommands = &commands.YAGCommand{
 		}
 
 		ccResponsesString := strings.Join(cc.Responses, "```\n```")
-		response = fmt.Sprintf("#%d - %s%s%s - Group: `%s`\nTrigger on Edit: `%t` - Command Disabled: `%t` %s",
-			cc.LocalID, CommandTriggerType(cc.TriggerType), intervalText, caseSensitiveTrigger, groupMap[cc.GroupID.Int64], cc.TriggerOnEdit, cc.Disabled, restrictions)
+		response = fmt.Sprintf("%s - %s%s%s - Group: `%s`\nTrigger on Edit: `%t` - Command Disabled: `%t` - Command Public: %s %s",
+			ccIDWithLink, CommandTriggerType(cc.TriggerType), intervalText, caseSensitiveTrigger, groupMap[cc.GroupID.Int64], cc.TriggerOnEdit, cc.Disabled, ccPublicLink, restrictions)
 		if raw || utf8.RuneCountInString(ccResponsesString) <= 1850 {
 			response = fmt.Sprintf("%s```%s\n%s", response, highlight, ccResponsesString)
-			return response + "\n```" + link, nil
+			return response + "\n```", nil
 
 		}
 
@@ -450,19 +455,26 @@ var cmdListCommands = &commands.YAGCommand{
 }
 
 func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap map[int64]string) *discordgo.MessageEmbed {
-	description := fmt.Sprintf("%s\n```ansi\n%5s|%10s|%27s\n", title, "ccID", "Group", "Trigger")
+	description := fmt.Sprintf("%s\n```ansi\n%6s|%9s|%27s\n", title, "ccID", "Group", "Trigger")
 	description += "--------------------------------------------\n"
 	for k, v := range ccs[i*ml:] {
 		var group, textTrigger, regexTrigger, finalTrigger, hashMark string
 		group = gMap[v.GroupID.Int64]
 		if group == "Ungrouped" {
 			group = "uG"
-		} else if len([]rune(group)) > 9 {
-			group = string([]rune(group)[:9]) + "_"
+		} else if len([]rune(group)) > 8 {
+			group = string([]rune(group)[:8]) + "_"
 		}
 
 		textTrigger = v.TextTrigger
 		regexTrigger = v.RegexTrigger
+		localID := common.CutStringShort(fmt.Sprintf("%5d", v.LocalID), 5)
+
+		if CommandTriggerType(v.TriggerType).EmbedString() == "" {
+			v.TriggerType = 10
+		}
+
+		commandTriggerType := CommandTriggerType(v.TriggerType).EmbedString()
 
 		if common.ContainsEmoji(textTrigger) {
 			textTrigger = common.ReplaceEmojis(textTrigger)
@@ -482,13 +494,18 @@ func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap m
 
 		if v.TriggerType == 0 {
 			finalTrigger = textTrigger
-		} else {
+		} else if v.TriggerType >= 1 && v.TriggerType <= 4 {
 			finalTrigger = regexTrigger
+		} else {
+			finalTrigger = ""
 		}
 
 		if v.Disabled {
-			v.TriggerType = 10
-			finalTrigger = "CC DISABLED"
+			commandTriggerType = fmt.Sprintf("%c[0;%d;%dm%s%[1]c[0m", 0x1b, 0, 31, commandTriggerType)
+		}
+
+		if v.Public {
+			localID = fmt.Sprintf("%c[0;%d;%dm%s%[1]c[0m", 0x1b, 0, 34, localID)
 		}
 
 		hashMark = "#"
@@ -497,7 +514,7 @@ func embedCreator(ccs models.CustomCommandSlice, i, ml int, title string, gMap m
 		}
 
 		if k <= ml-1 {
-			description += fmt.Sprintf("%s%4d|%10s|%-3s:%22s\n", hashMark, v.LocalID, group, CommandTriggerType(v.TriggerType).EmbedString(), finalTrigger)
+			description += fmt.Sprintf("%s%s|%9s|%-3s:%22s\n", hashMark, localID, group, commandTriggerType, finalTrigger)
 		}
 	}
 	description += "\nNumber of custom commands:" + fmt.Sprintf("%d", len(ccs)) + "```"
@@ -728,6 +745,11 @@ func (p *Plugin) OnRemovedPremiumGuild(GuildID int64) error {
 		return errors.WrapIf(err, "Failed disabling trigger on edits on premium removal")
 	}
 
+	_, err = models.CustomCommands(qm.Where("guild_id = ? AND length(regexp_replace(array_to_string(responses, ''), E'\\r', '', 'g')) > ?", GuildID, MaxCCResponsesLength)).UpdateAllG(context.Background(), models.M{"disabled": true})
+	if err != nil {
+		return errors.WrapIf(err, "Failed disabling long customs commands on premium removal")
+	}
+
 	return nil
 }
 
@@ -860,7 +882,7 @@ func HandleMessageUpdate(evt *eventsystem.EventData) {
 	mu := evt.MessageUpdate()
 	cs := evt.CSOrThread()
 
-	if isPremium, _ := premium.IsGuildPremiumCached(mu.GuildID); !isPremium {
+	if isPremium, _ := premium.IsGuildPremium(mu.GuildID); !isPremium {
 		return
 	}
 
@@ -938,7 +960,7 @@ func findMessageTriggerCustomCommands(ctx context.Context, cs *dstate.ChannelSta
 	sortTriggeredCCs(matched)
 
 	limit := CCMessageExecLimitNormal
-	if isPremium, _ := premium.IsGuildPremiumCached(msg.GuildID); isPremium {
+	if isPremium, _ := premium.IsGuildPremium(msg.GuildID); isPremium {
 		limit = CCMessageExecLimitPremium
 	}
 
@@ -996,7 +1018,7 @@ func findReactionTriggerCustomCommands(ctx context.Context, cs *dstate.ChannelSt
 	sortTriggeredCCs(filtered)
 
 	limit := CCMessageExecLimitNormal
-	if isPremium, _ := premium.IsGuildPremiumCached(cs.GuildID); isPremium {
+	if isPremium, _ := premium.IsGuildPremium(cs.GuildID); isPremium {
 		limit = CCMessageExecLimitPremium
 	}
 
@@ -1384,13 +1406,6 @@ func updatePostCommandRan(cmd *models.CustomCommand, runErr error) {
 	if err != nil {
 		logger.WithError(err).WithField("guild", cmd.GuildID).Error("failed running post command executed query")
 	}
-
-	// if runErr != nil {
-	// 	err := pubsub.Publish("custom_commands_clear_cache", cmd.GuildID, nil)
-	// 	if err != nil {
-	// 		logger.WithError(err).Error("failed creating cache eviction pubsub event in updatePostCommandRan")
-	// 	}
-	// }
 }
 
 // CheckMatch returns true if the given cmd matches, as well as the arguments
@@ -1663,7 +1678,7 @@ func CCTriggerLimitFinder(ctx context.Context, ccmdID, guildID, userID int64) (*
 	sortTriggeredCCs(matched)
 
 	limit := CCMessageExecLimitNormal
-	if isPremium, _ := premium.IsGuildPremiumCached(guildID); isPremium {
+	if isPremium, _ := premium.IsGuildPremium(guildID); isPremium {
 		limit = CCMessageExecLimitPremium
 	}
 
