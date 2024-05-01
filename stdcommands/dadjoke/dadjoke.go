@@ -22,6 +22,7 @@ var Command = &commands.YAGCommand{
 	Name:                      "DadJoke",
 	Description:               "Generates a dad joke using the API from icanhazdadjoke.",
 	DefaultEnabled:            true,
+	RunInDM:                   true,
 	ApplicationCommandEnabled: true,
 	RunFunc: func(data *dcmd.Data) (interface{}, error) {
 		var extraHeaders = map[string]string{"Accept": "application/json"}

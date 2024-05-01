@@ -206,6 +206,7 @@ func (p *Plugin) postRSSFeed(subs models.RSSFeedSlice, lastRSSTime, publishedAt 
 		if err != nil {
 			return err
 		}
+
 	}
 
 	return nil
@@ -313,12 +314,12 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 	}
 
 	go analytics.RecordActiveUnit(guildID, p, "posted_rssfeeds_message")
+
 	qm := &mqueue.QueuedElement{
-		GuildID:      guildID,
-		ChannelID:    channelID,
-		Source:       "rss",
-		SourceItemID: "",
-		//MessageStr:       content,
+		GuildID:          guildID,
+		ChannelID:        channelID,
+		Source:           "rss",
+		SourceItemID:     "",
 		MessageEmbeds:    rssEmbed,
 		UseWebhook:       true,
 		WebhookUsername:  webhookUsername,
@@ -334,7 +335,15 @@ func (p *Plugin) sendNewRSSFeedMessage(guildID, channelID, mentionRole int64, fe
 	}
 
 	if qm.MessageStr != "" || qm.MessageEmbeds != nil {
-		mqueue.QueueMessage(qm)
+		if len(rssEmbed) >= 5 {
+			qm.MessageEmbeds = rssEmbed[:5]
+			mqueue.QueueMessage(qm)
+			qm.MessageEmbeds = rssEmbed[5:]
+			mqueue.QueueMessage(qm)
+		} else {
+			mqueue.QueueMessage(qm)
+
+		}
 	}
 
 	feeds.MetricPostedMessages.With(prometheus.Labels{"source": "rssfeeds"}).Inc()

@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/mrbentarikau/pagst/common"
 	"github.com/mediocregopher/radix/v3"
+	"github.com/mrbentarikau/pagst/common"
 )
 
 func (p *Plugin) Status() (string, string) {
@@ -21,7 +21,7 @@ func (p *Plugin) Status() (string, string) {
 func (p *Plugin) OnRemovedPremiumGuild(guildID int64) error {
 	logger.WithField("guild_id", guildID).Infof("Removed Excess Youtube Feeds")
 	feeds := make([]ChannelSubscription, 0)
-	err := common.GORM.Model(&ChannelSubscription{}).Where(`guild_id = ? and enabled = ?`, guildID, sql.NullBool{true, true}).Offset(GuildMaxFeeds).Order(
+	err := common.GORM.Model(&ChannelSubscription{}).Where(`guild_id = ? and enabled = ?`, guildID, sql.NullBool{Bool: true, Valid: true}).Offset(GuildMaxFeeds).Order(
 		"id desc",
 	).Find(&feeds).Error
 	if err != nil {
@@ -30,7 +30,7 @@ func (p *Plugin) OnRemovedPremiumGuild(guildID int64) error {
 	}
 
 	if len(feeds) > 0 {
-		err = common.GORM.Model(&feeds).Update(ChannelSubscription{Enabled: sql.NullBool{false, false}}).Error
+		err = common.GORM.Model(&feeds).Update(ChannelSubscription{Enabled: sql.NullBool{Bool: false, Valid: false}}).Error
 		if err != nil {
 			logger.WithError(err).Errorf("failed getting feed ids for guild_id %d", guildID)
 			return err

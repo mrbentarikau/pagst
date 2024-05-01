@@ -15,12 +15,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jinzhu/gorm"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/jinzhu/gorm"
-	"github.com/mediocregopher/radix/v3"
 	"goji.io"
 	"goji.io/pat"
 )
@@ -256,13 +256,13 @@ func (p *Plugin) HandleEdit(w http.ResponseWriter, r *http.Request) (templateDat
 	sub.ChannelID = discordgo.StrID(data.DiscordChannel)
 	sub.MentionRole = discordgo.StrID(data.MentionRole)
 	if data.DiscordChannel == 0 {
-		sub.Enabled = sql.NullBool{false, false}
+		sub.Enabled = sql.NullBool{Bool: false, Valid: false}
 	} else {
 		sub.Enabled = sql.NullBool{Valid: true, Bool: data.Enabled}
 	}
 
 	count := 0
-	common.GORM.Model(&ChannelSubscription{}).Where("guild_id = ? and enabled = ?", sub.GuildID, sql.NullBool{true, true}).Count(&count)
+	common.GORM.Model(&ChannelSubscription{}).Where("guild_id = ? and enabled = ?", sub.GuildID, sql.NullBool{Bool: true, Valid: true}).Count(&count)
 	if count >= MaxFeedsForContext(ctx) {
 		var currFeed ChannelSubscription
 		err := common.GORM.Model(&ChannelSubscription{}).Where("id = ?", sub.ID).First(&currFeed)
