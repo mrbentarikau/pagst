@@ -37,17 +37,24 @@ type ApplicationCommand struct {
 	Type              ApplicationCommandType `json:"type,omitempty"`
 	Name              string                 `json:"name"`
 	NameLocalizations *map[Locale]string     `json:"name_localizations,omitempty"`
+
 	// NOTE: DefaultPermission will be soon deprecated. Use DefaultMemberPermissions and DMPermission instead.
 	DefaultPermission        *bool  `json:"default_permission,omitempty"`
 	DefaultMemberPermissions *int64 `json:"default_member_permissions,omitempty,string"`
-	DMPermission             *bool  `json:"dm_permission,omitempty"`
 	NSFW                     *bool  `json:"nsfw,omitempty"`
 
 	// NOTE: Chat commands only. Otherwise it mustn't be set.
-
 	Description              string                      `json:"description,omitempty"`
 	DescriptionLocalizations *map[Locale]string          `json:"description_localizations,omitempty"`
 	Options                  []*ApplicationCommandOption `json:"options"`
+
+	// Deprecated: use Contexts instead.
+	DMPermission     *bool                         `json:"dm_permission,omitempty"`
+	Contexts         *[]InteractionContextType     `json:"contexts,omitempty"`
+	IntegrationTypes *[]ApplicationIntegrationType `json:"integration_types,omitempty"`
+
+	//IntegrationTypes []int `json:"integration_types"` // Defines the integration types a command supports https://discord.com/developers/docs/resources/application#application-object-application-integration-types
+	//Contexts         []int `json:"contexts"`          // Defines the interaction contexts supported https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-context-types
 }
 
 // ApplicationCommandOptionType indicates the type of a slash command's option.
@@ -63,6 +70,9 @@ type CreateApplicationCommandRequest struct {
 	DMPermission             bool                        `json:"dm_permission,omitempty"`
 	NSFW                     bool                        `json:"nsfw,omitempty"` // marks a command as age-restricted
 	NameLocalizations        *map[Locale]string          `json:"name_localizations,omitempty"`
+
+	IntegrationTypes []int `json:"integration_types"` // Defines the integration types a command supports https://discord.com/developers/docs/resources/application#application-object-application-integration-types
+	Contexts         []int `json:"contexts"`          // Defines the interaction contexts supported https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-context-types
 }
 
 type EditApplicationCommandRequest struct {
@@ -221,6 +231,18 @@ func (t InteractionType) String() string {
 	return fmt.Sprintf("InteractionType(%d)", t)
 }
 
+// InteractionContextType represents the context in which interaction can be used or was triggered from.
+type InteractionContextType uint
+
+const (
+	// InteractionContextGuild indicates that interaction can be used within guilds.
+	InteractionContextGuild InteractionContextType = 0
+	// InteractionContextBotDM indicates that interaction can be used within DMs with the bot.
+	InteractionContextBotDM InteractionContextType = 1
+	// InteractionContextPrivateChannel indicates that interaction can be used within group DMs and DMs with other users.
+	InteractionContextPrivateChannel InteractionContextType = 2
+)
+
 // Interaction represents data of an interaction.
 type Interaction struct {
 	ID            int64           `json:"id,string"`
@@ -229,6 +251,7 @@ type Interaction struct {
 	Data          InteractionData `json:"data"`
 	GuildID       int64           `json:"guild_id,string"`
 	ChannelID     int64           `json:"channel_id,string"`
+	Channel       *Channel        `json:"channel"`
 
 	// The message on which interaction was used.
 	// NOTE: this field is only filled when a button click triggered the interaction. Otherwise it will be nil.
@@ -259,13 +282,17 @@ type Interaction struct {
 
 	DataCommand *ApplicationCommandInteractionData
 	DataModal   *ModalSubmitInteractionData
+
+	Context                      InteractionContextType                `json:"context"`
+	AuthorizingIntegrationOwners map[ApplicationIntegrationType]string `json:"authorizing_integration_owners"`
 }
 
 type interaction Interaction
 
 type rawInteraction struct {
 	interaction
-	Data json.RawMessage `json:"data"`
+	Data                         json.RawMessage                            `json:"data"`
+	AuthorizingIntegrationOwners map[ApplicationIntegrationType]json.Number `json:"authorizing_integration_owners"`
 }
 
 // UnmarshalJSON is a method for unmarshalling JSON object to Interaction.
@@ -277,6 +304,13 @@ func (i *Interaction) UnmarshalJSON(raw []byte) error {
 	}
 
 	*i = Interaction(tmp.interaction)
+
+	// TODO: remove when https://github.com/discord/discord-api-docs/issues/6730 is fixed.
+	authIntegrationOwners := make(map[ApplicationIntegrationType]string)
+	for k, v := range tmp.AuthorizingIntegrationOwners {
+		authIntegrationOwners[k] = v.String()
+	}
+	i.AuthorizingIntegrationOwners = authIntegrationOwners
 
 	switch tmp.Type {
 	case InteractionApplicationCommand, InteractionApplicationCommandAutocomplete:

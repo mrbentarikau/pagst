@@ -128,30 +128,54 @@ type Session struct {
 	// wsMutex sync.Mutex
 }
 
+// ApplicationIntegrationType dictates where application can be installed and its available interaction contexts.
+type ApplicationIntegrationType uint
+
+const (
+	// ApplicationIntegrationGuildInstall indicates that app is installable to guilds.
+	ApplicationIntegrationGuildInstall ApplicationIntegrationType = 0
+	// ApplicationIntegrationUserInstall indicates that app is installable to users.
+	ApplicationIntegrationUserInstall ApplicationIntegrationType = 1
+)
+
+// ApplicationInstallParams represents application's installation parameters
+// for default in-app oauth2 authorization link.
+type ApplicationInstallParams struct {
+	Scopes      []string `json:"scopes"`
+	Permissions int64    `json:"permissions,string"`
+}
+
+// ApplicationIntegrationTypeConfig represents application's configuration for a particular integration type.
+type ApplicationIntegrationTypeConfig struct {
+	OAuth2InstallParams ApplicationInstallParams `json:"oauth2_install_params"`
+}
+
 // An Application struct stores values for a Discord OAuth2 Application
 type Application struct {
-	ID                  int64     `json:"id,string,omitempty"`
-	Name                string    `json:"name"`
-	Icon                string    `json:"icon,omitempty"`
-	Description         string    `json:"description,omitempty"`
-	RPCOrigins          []string  `json:"rpc_origins,omitempty"`
-	BotPublic           bool      `json:"bot_public,omitempty"`
-	BotRequireCodeGrant bool      `json:"bot_require_code_grant,omitempty"`
-	TermsOfServiceURL   string    `json:"terms_of_service_url"`
-	PrivacyProxyURL     string    `json:"privacy_policy_url"`
-	Owner               *User     `json:"owner"`
+	ID                  int64    `json:"id,string,omitempty"`
+	Name                string   `json:"name"`
+	Icon                string   `json:"icon,omitempty"`
+	Description         string   `json:"description,omitempty"`
+	RPCOrigins          []string `json:"rpc_origins,omitempty"`
+	BotPublic           bool     `json:"bot_public,omitempty"`
+	BotRequireCodeGrant bool     `json:"bot_require_code_grant,omitempty"`
+	TermsOfServiceURL   string   `json:"terms_of_service_url"`
+	PrivacyProxyURL     string   `json:"privacy_policy_url"`
+	Owner               *User    `json:"owner"`
+	Summary             string   `json:"summary"`
+	VerifyKey           string   `json:"verify_key"`
+	Team                *Team    `json:"team"`
+	GuildID             int64    `json:"guild_id,string"`
+	PrimarySKUID        string   `json:"primary_sku_id"`
+	Slug                string   `json:"slug"`
+	CoverImage          string   `json:"cover_image"`
+	Flags               int      `json:"flags,omitempty"`
+
+	// deprecated
 	Secret              string    `json:"secret,omitempty"`
 	RedirectURIs        *[]string `json:"redirect_uris,omitempty"`
 	RPCApplicationState int       `json:"rpc_application_state,omitempty"`
-	Flags               int       `json:"flags,omitempty"`
 	Bot                 *User     `json:"bot"`
-	Summary             string    `json:"summary"`
-	VerifyKey           string    `json:"verify_key"`
-	Team                *Team     `json:"team"`
-	GuildID             int64     `json:"guild_id,string"`
-	PrimarySKUID        string    `json:"primary_sku_id"`
-	Slug                string    `json:"slug"`
-	CoverImage          string    `json:"cover_image"`
 }
 
 // ApplicationRoleConnectionMetadataType represents the type of application role connection metadata.
@@ -1916,6 +1940,10 @@ type AutoModerationActionMetadata struct {
 	// Timeout duration in seconds (maximum of 2419200 - 4 weeks).
 	// NOTE: should be only used with timeout action type.
 	Duration int `json:"duration_seconds,omitempty"`
+
+	// Additional explanation that will be shown to members whenever their message is blocked (maximum of 150 characters).
+	// NOTE: should be only used with block message action type.
+	CustomMessage string `json:"custom_message,omitempty"`
 }
 
 // AutoModerationAction stores data for an auto moderation action.

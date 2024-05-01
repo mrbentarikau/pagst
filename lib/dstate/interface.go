@@ -404,6 +404,7 @@ type MemberFields struct {
 	Permissions                int64
 	TimeoutExpiresAt           *time.Time
 	CommunicationDisabledUntil *time.Time
+	Flags                      discordgo.MemberFlags
 }
 
 type PresenceStatus int32
@@ -453,6 +454,7 @@ func MemberStateFromMember(member *discordgo.Member) *MemberState {
 			Permissions:                member.Permissions,
 			TimeoutExpiresAt:           member.TimeoutExpiresAt,
 			CommunicationDisabledUntil: member.TimeoutExpiresAt,
+			Flags:                      member.Flags,
 		},
 		Presence: nil,
 	}
