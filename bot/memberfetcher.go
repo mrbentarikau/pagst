@@ -11,13 +11,19 @@ var (
 )
 
 // GetMember will either return a member from state or fetch one from the member fetcher and then put it in state
-func GetMember(guildID, userID int64) (*dstate.MemberState, error) {
-	if memberFetcher != nil {
+// variadic options bool is used to get full member data for custom command functions userArg and getMember
+func GetMember(guildID, userID int64, options ...bool) (*dstate.MemberState, error) {
+	var ccExec bool
+	if len(options) > 0 {
+		ccExec = options[0]
+	}
+
+	if memberFetcher != nil && !ccExec {
 		return memberFetcher.GetMember(guildID, userID)
 	}
 
 	ms := State.GetMember(guildID, userID)
-	if ms != nil && ms.Member != nil {
+	if ms != nil && ms.Member != nil && !ccExec {
 		return ms, nil
 	}
 
