@@ -19,6 +19,7 @@ import (
 	yagtmpl "github.com/mrbentarikau/pagst/common/templates"
 
 	"github.com/mrbentarikau/pagst/frontend"
+	"github.com/mrbentarikau/pagst/lib/dcmd"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/web/discordblog"
 	"github.com/natefinch/lumberjack"
@@ -119,6 +120,10 @@ func BaseURL() string {
 	}
 
 	return "http://" + common.ConfHost.GetString()
+}
+
+func ManageServerURL(guild *dcmd.GuildContextData) string {
+	return fmt.Sprintf("%s/manage/%d", BaseURL(), guild.GS.ID)
 }
 
 func Run() {

@@ -34,7 +34,7 @@ func tmplUserArg(tmplCtx *templates.Context) interface{} {
 
 		if num := templates.ToInt64(v); num != 0 {
 			// Assume it's an id
-			member, _ := bot.GetMember(tmplCtx.GS.ID, num)
+			member, _ := bot.GetMember(tmplCtx.GS.ID, num, true)
 			if member != nil {
 				return &member.User, nil
 			}
@@ -57,15 +57,23 @@ func tmplUserArg(tmplCtx *templates.Context) interface{} {
 				}
 
 				id, _ := strconv.ParseInt(trimmed, 10, 64)
-				member, _ := bot.GetMember(tmplCtx.GS.ID, id)
+				member, _ := bot.GetMember(tmplCtx.GS.ID, id, true)
 				if member != nil {
 					// Found member
 					return &member.User, nil
 				}
-
 			}
 
 			// No more cases we can handle
+			return nil, nil
+		}
+
+		if user, ok := v.(*discordgo.User); ok {
+			member, _ := bot.GetMember(tmplCtx.GS.ID, user.ID, true)
+			if member != nil {
+				return &member.User, nil
+			}
+
 			return nil, nil
 		}
 
