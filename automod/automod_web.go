@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/structs"
+	"github.com/gorilla/schema"
 	"github.com/mrbentarikau/pagst/automod/models"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/cplogs"
@@ -20,8 +22,6 @@ import (
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/moderation"
 	"github.com/mrbentarikau/pagst/web"
-	"github.com/fatih/structs"
-	"github.com/gorilla/schema"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"goji.io"
@@ -556,11 +556,11 @@ func (p *Plugin) handlePostAutomodUpdateRule(w http.ResponseWriter, r *http.Requ
 }
 
 func CheckLimits(exec boil.ContextExecutor, rule *models.AutomodRule, tmpl web.TemplateData, parts []*models.AutomodRuleDatum) (newParts []*models.AutomodRuleDatum, ok bool, err error) {
-	// truncate to 20
+	// truncate to 25
 	newParts = parts
 	if len(newParts) > MaxRuleParts {
 		newParts = newParts[:MaxRuleParts]
-		tmpl.AddAlerts(web.WarningAlert("Truncated rule down to 20 triggers/conditions/effects, thats the max per rule."))
+		tmpl.AddAlerts(web.WarningAlert("Truncated rule down to 25 triggers/conditions/effects, that's the max per rule."))
 	}
 
 	// Check number of message triggers and violation triggers

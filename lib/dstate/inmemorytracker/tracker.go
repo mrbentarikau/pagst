@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
+	"github.com/mrbentarikau/pagst/lib/dstate"
 )
 
 type TrackerConfig struct {
@@ -547,7 +547,6 @@ func (shard *ShardTracker) handleMemberUpdate(m *discordgo.Member) {
 
 // assumes state is locked
 func (shard *ShardTracker) innerHandleMemberUpdate(ms *dstate.MemberState, doThreadsCheck bool) {
-
 	wrapped := &WrappedMember{
 		lastUpdated: time.Now(),
 		MemberState: *ms,

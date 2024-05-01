@@ -167,10 +167,16 @@
                     {{end}}
                     {{if eq .TriggerType 1 2 3 4}}
                     <button type="button" title="#{{.LocalID}} - {{or .RegexTrigger .TextTrigger}}" class="btn btn-success" onclick="window.location.href = '/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/';" style="margin: 5px 5px 5px 0px!important">Edit</button>
+                    {{if .Public}}
+                    <button type="button" title="#{{.LocalID}} - {{.TextTrigger}}" class="btn btn-success modal-basic" href = "#cc-share-modal-{{.LocalID}}" style="margin: 5px 5px 5px 0px!important">Share</button>
+                    {{end}}
                     <button type="submit" title="#{{.LocalID}} - {{or .RegexTrigger .TextTrigger}}" class="btn btn-success pagst-duplicate" formaction="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/duplicate" style="margin: 5px 5px 5px 0px!important">Duplicate</button>
                     <button type="submit" title="#{{.LocalID}} - {{or .RegexTrigger .TextTrigger}}" class="btn btn-danger" formaction="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/delete" style="margin: 5px 5px 5px 0px!important">Delete</button>
                     {{else}}
                     <button type="button" title="#{{.LocalID}} - {{.TextTrigger}}" class="btn btn-success" onclick="window.location.href = '/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/';" style="margin: 5px 5px 5px 0px!important">Edit</button>
+                    {{if .Public}}
+                    <button type="button" title="#{{.LocalID}} - {{.TextTrigger}}" class="btn btn-success modal-basic" href = "#cc-share-modal-{{.LocalID}}" style="margin: 5px 5px 5px 0px!important">Share</button>
+                    {{end}}
                     <button type="submit" title="#{{.LocalID}} - {{.TextTrigger}}" class="btn btn-success pagst-duplicate" formaction="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/duplicate" style="margin: 5px 5px 5px 0px!important">Duplicate</button>
                     <button type="submit" title="#{{.LocalID}} - {{.TextTrigger}}" class="btn btn-danger" formaction="/manage/{{$guild}}/customcommands/commands/{{.LocalID}}/delete" style="margin: 5px 5px 5px 0px!important">Delete</button>
                     {{end}}
@@ -208,6 +214,53 @@
             </div>
         </div>
     </div>
+    {{if .Public}}
+    <div id="cc-share-modal-{{.LocalID}}" class="modal-block modal-header-color modal-block-info mfp-hide">
+        <section class="card">
+            <header class="card-header">
+                <h2 class="card-title">Copy Import Link</h2>
+            </header>
+            <div class="card-body">
+                <div class="modal-wrapper">
+                    <div class="modal-text">
+                        <p class="help-block">To share custom command #<code>{{.LocalID}}</code>, and allow users to import it, copy the link below.</p>
+                        <div class="row no-gutters">
+                            <div class="col-md-9">
+                                <input type="text" style="border-radius: 0% !important;" id="public-link" class="form-control" name="Public Link" value="{{call $dot.GetPublicLink .}}" readonly>
+                            </div>
+                            <div class="col-md-3">
+                                <button id="copy-link-button" style="border-radius: 0% !important;" class="btn btn-quaternary"><i class="fas fa-copy p-1"> </i>Copy</button>
+                            </div>
+                        </div>
+                        <script>
+                            document.getElementById("copy-link-button").addEventListener("click", function() {
+                                let copyText = document.getElementById("public-link");
+                                copyText.select();
+                                copyText.setSelectionRange(0, 99999); // For mobile devices
+                                navigator.clipboard.writeText(copyText.value);
+                                copyText.setSelectionRange(0, 0);
+                                this.textContent = "Copied!";
+                                setTimeout(() => {
+                                    this.innerHTML =`<i class="fas fa-copy p-1"> </i>Copy`;
+                                }, 2000);
+                            }, false);
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <footer class="card-footer">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p>Total Imports: <code>{{.ImportCount}}</code></p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <button class="btn btn-info modal-dismiss">Close</button>
+                    </div>
+                </div>
+            </footer>
+        </section>
+    </div>
+    {{end}}
     {{end}}
 </div>
 
@@ -216,6 +269,14 @@
 <link rel="stylesheet" href="/static/vendorr/highlightjs/a11y-dark.css">
 
 <script>
+    $(function () {
+        let search = new URLSearchParams(window.location.search);
+        if (search.has('import_err') && search.get('import_err') == 'true') {
+            alert('Failed to import command, please check the url or the command itself.');
+            window.location.search = '';
+        }
+    })
+
     // Register the custom language
     // its based off markdown with custom stuff in tags
     hljs.registerLanguage("gotmplmd", function (hljs) {

@@ -55,7 +55,7 @@ type CtxChannel struct {
 
 	// The initial RateLimitPerUser to set on newly created threads in a channel.
 	// This field is copied to the thread at creation time and does not live update.
-	DefaultThreadRateLimitPerUser int `json:"default_auto_archive_duration"`
+	DefaultThreadRateLimitPerUser int `json:"default_thread_rate_limit_per_user"`
 }
 
 // CtxThreadStart is almost a 1:1 copy of discordgo.ThreadStart but with some added fields

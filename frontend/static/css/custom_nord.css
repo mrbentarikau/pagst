@@ -494,6 +494,10 @@ html.sidebar-left-collapsed #nav-footer {
           transform: rotateY(20deg);
 }
 
+.tgl:disabled~.tgl-btn, .tgl:disabled~.tgl-desc {
+  opacity: .5;
+}
+
 /* UNSAVED CHANGES POPUP */
 #unsaved-changes-popup {
   position: fixed;

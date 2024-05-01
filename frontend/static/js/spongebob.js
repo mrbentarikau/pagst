@@ -189,6 +189,20 @@ function showAlerts(alertsJson) {
 					sticker: false
 				}
 			});
+		} else if (alert.Style === "warning") {
+			notice = new PNotify({
+				title: alert.Message,
+				text: "Read the docs and contact support if you don't know what went wrong.\n(Click to dismiss)",
+				type: 'warning',
+				addclass: 'stack-bar-top click-2-close',
+				stack: stack_bar_top,
+				width: "100%",
+				hide: false,
+				buttons: {
+					closer: false,
+					sticker: false
+				}
+			});
 		} else {
 			continue;
 		}

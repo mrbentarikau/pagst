@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot/eventsystem"
 	"github.com/mrbentarikau/pagst/bot/joinedguildsupdater"
 	"github.com/mrbentarikau/pagst/bot/models"
@@ -16,7 +17,6 @@ import (
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"

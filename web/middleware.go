@@ -13,14 +13,14 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/gorilla/schema"
+	"github.com/miolini/datacounter"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/cplogs"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/web/discorddata"
-	"github.com/gorilla/schema"
-	"github.com/miolini/datacounter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
@@ -672,7 +672,7 @@ func ControllerPostHandler(mainHandler ControllerHandlerFunc, extraHandler http.
 			if v.Style == AlertDanger {
 				hasErrorAlert = true
 				break
-			} else if v.Style == AlertCCWarning {
+			} else if v.Style == AlertWarning || v.Style == AlertCCWarning {
 				hasWarningAlert = true
 				break
 			} else if v.Style == AlertSuccess {

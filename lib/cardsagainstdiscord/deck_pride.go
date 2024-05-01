@@ -5,11 +5,11 @@ func init() {
 		Name:        "pride",
 		Description: "Pride Pack - 30 cards that completely encapsulate the queer experience",
 		Prompts: []*PromptCard{
-			&PromptCard{Prompt: `Excuse me, straight man, but %s isn't for you, STRAIGHT MAN.`},
-			&PromptCard{Prompt: `GOD HATES %s!`},
-			&PromptCard{Prompt: `If you can't love yourself, how the hell you gonna love %s?`},
-			&PromptCard{Prompt: `We're here! We're %s! Get used to it!`},
-			&PromptCard{Prompt: `YAAAAAAS! You are serving me %s realness!`},
+			{Prompt: `Excuse me, straight man, but %s isn't for you, STRAIGHT MAN.`},
+			{Prompt: `GOD HATES %s!`},
+			{Prompt: `If you can't love yourself, how the hell you gonna love %s?`},
+			{Prompt: `We're here! We're %s! Get used to it!`},
+			{Prompt: `YAAAAAAS! You are serving me %s realness!`},
 		},
 		Responses: []ResponseCard{
 			`30 shirtless bears emerging from the fog.`,

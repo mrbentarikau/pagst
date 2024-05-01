@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/jinzhu/gorm"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/bot"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
@@ -16,8 +18,6 @@ import (
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
 	"github.com/mrbentarikau/pagst/logs"
-	"github.com/jinzhu/gorm"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -98,10 +98,7 @@ func punish(config *Config, p Punishment, guildID int64, channel *dstate.Channel
 		logLink = CreateLogs(guildID, channelID, author)
 	}
 
-	fullReason := reason
-	if author.ID != common.BotUser.ID {
-		fullReason = author.String() + ": " + reason
-	}
+	fullReason := authorToReason(reason, author)
 
 	switch p {
 	case PunishmentKick:
@@ -117,7 +114,8 @@ func punish(config *Config, p Punishment, guildID int64, channel *dstate.Channel
 			return errors.New(fmt.Sprintf("timeout duration should be between %s and %s minutes", MinTimeOutDuration, MaxTimeOutDuration))
 		}
 		expireTime := time.Now().Add(duration)
-		err = common.BotSession.GuildMemberTimeoutWithReason(guildID, user.ID, &expireTime, fullReason)
+		unbanReason := discordgo.WithAuditLogReason(fullReason)
+		err = common.BotSession.GuildMemberTimeout(guildID, user.ID, &expireTime, "", unbanReason)
 	}
 
 	if err != nil {
@@ -480,7 +478,13 @@ func UnbanUser(config *Config, guildID int64, author *discordgo.User, reason str
 	// Set a key in redis that marks that this user has appeared in the modlog already
 	common.RedisPool.Do(radix.FlatCmd(nil, "SETEX", RedisKeyUnbannedUser(guildID, user.ID), 30, 2))
 
-	err = common.BotSession.GuildBanDelete(guildID, user.ID)
+	var unbanReason discordgo.RequestOption
+	if reason != "" {
+		reason = authorToReason(reason, author)
+		unbanReason = discordgo.WithAuditLogReason(reason)
+	}
+
+	err = common.BotSession.GuildBanDelete(guildID, user.ID, unbanReason)
 	if err != nil {
 		notbanned, err := isNotFound(err)
 		return notbanned, err
@@ -493,6 +497,15 @@ func UnbanUser(config *Config, guildID int64, author *discordgo.User, reason str
 		err = CreateModlogEmbed(config, author, action, user, reason, "")
 	}
 	return false, err
+}
+
+// prepends author to punishment reason
+func authorToReason(reason string, author *discordgo.User) (fullReason string) {
+	fullReason = reason
+	if author.ID != common.BotUser.ID {
+		fullReason = author.String() + ": " + reason
+	}
+	return
 }
 
 func TimeoutUser(config *Config, guildID int64, channel *dstate.ChannelState, message *discordgo.Message, author *discordgo.User, reason string, user *discordgo.User, duration time.Duration) error {
@@ -511,7 +524,7 @@ func RemoveTimeout(config *Config, guildID int64, author *discordgo.User, reason
 	}
 	action := MATimeOutRemoved
 
-	err = common.BotSession.GuildMemberTimeoutWithReason(guildID, user.ID, nil, reason)
+	err = common.BotSession.GuildMemberTimeoutWithReason(guildID, user.ID, nil, authorToReason(reason, author))
 	if err != nil {
 		return err
 	}

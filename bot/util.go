@@ -8,12 +8,12 @@ import (
 
 	"emperror.dev/errors"
 
+	"github.com/bwmarrin/snowflake"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/pubsub"
 	"github.com/mrbentarikau/pagst/lib/discordgo"
 	"github.com/mrbentarikau/pagst/lib/dstate"
-	"github.com/bwmarrin/snowflake"
-	"github.com/mediocregopher/radix/v3"
 	"github.com/patrickmn/go-cache"
 )
 

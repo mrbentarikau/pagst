@@ -5,12 +5,12 @@ func init() {
 		Name:        "fantasy",
 		Description: "Fantasy Pack - Dragons, wizards, Orlando Bloom, etc",
 		Prompts: []*PromptCard{
-			&PromptCard{Prompt: `And in the end, the dragon was not evil; he just wanted %s.`},
-			&PromptCard{Prompt: `Critics are raving about HBO's new Game of Thrones spin-off, "%s of %s."`},
-			&PromptCard{Prompt: `Having tired of poetry and music, the immortal elves now fill their days with %s.`},
-			&PromptCard{Prompt: `Legend tells of a princess who has been asleep for a thousand years and can only be awoken by %s.`},
-			&PromptCard{Prompt: `Who blasphemes and bubbles at the center of all infinity, whose name no lips dare speak aloud, and who gnaws hungrily in inconceivable, unlighted chambers beyond time?`},
-			&PromptCard{Prompt: `Your father was a powerful wizard, Harry. Before he died, he left you something very precious: %s.`},
+			{Prompt: `And in the end, the dragon was not evil; he just wanted %s.`},
+			{Prompt: `Critics are raving about HBO's new Game of Thrones spin-off, "%s of %s."`},
+			{Prompt: `Having tired of poetry and music, the immortal elves now fill their days with %s.`},
+			{Prompt: `Legend tells of a princess who has been asleep for a thousand years and can only be awoken by %s.`},
+			{Prompt: `Who blasphemes and bubbles at the center of all infinity, whose name no lips dare speak aloud, and who gnaws hungrily in inconceivable, unlighted chambers beyond time?`},
+			{Prompt: `Your father was a powerful wizard, Harry. Before he died, he left you something very precious: %s.`},
 		},
 		Responses: []ResponseCard{
 			`A CGI dragon.`,

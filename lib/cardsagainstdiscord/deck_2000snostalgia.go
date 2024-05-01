@@ -5,11 +5,11 @@ func init() {
 		Name:        "2000s-nostalgia",
 		Description: "2000s Nostalgia Pack - Butterfly clips, Bootcut jeans, Bush did 9/11, etc",
 		Prompts: []*PromptCard{
-			&PromptCard{Prompt: `%s? That's a no from me, dawg.`},
-			&PromptCard{Prompt: `16 people. 39 days of %s. One Survivor.`},
-			&PromptCard{Prompt: `I couldn't help but wonder. Was "having it all" an unattainable myth? Was the secret to a truly happy life just %s?`},
-			&PromptCard{Prompt: `Oh my god! %s killed Kenny!`},
-			&PromptCard{Prompt: `Oops! I did it again. I played with %s.`},
+			{Prompt: `%s? That's a no from me, dawg.`},
+			{Prompt: `16 people. 39 days of %s. One Survivor.`},
+			{Prompt: `I couldn't help but wonder. Was "having it all" an unattainable myth? Was the secret to a truly happy life just %s?`},
+			{Prompt: `Oh my god! %s killed Kenny!`},
+			{Prompt: `Oops! I did it again. I played with %s.`},
 		},
 		Responses: []ResponseCard{
 			`All these boys in my yard asking for milkshakes.`,

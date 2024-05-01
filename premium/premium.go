@@ -4,13 +4,13 @@ import (
 	"time"
 
 	"emperror.dev/errors"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/mrbentarikau/pagst/common"
 	"github.com/mrbentarikau/pagst/common/config"
 	"github.com/mrbentarikau/pagst/common/featureflags"
 	"github.com/mrbentarikau/pagst/common/scheduledevents2"
 	schEventsModels "github.com/mrbentarikau/pagst/common/scheduledevents2/models"
 	"github.com/mrbentarikau/pagst/common/templates"
-	"github.com/mediocregopher/radix/v3"
 )
 
 const (
@@ -137,11 +137,6 @@ func IsGuildPremium(guildID int64) (bool, error) {
 	}
 
 	return featureflags.GuildHasFlag(guildID, FeatureFlagPremiumPlus)
-}
-
-// This function is deprecated and is exactly the same as calling IsguildPremium
-func IsGuildPremiumCached(guildID int64) (bool, error) {
-	return IsGuildPremium(guildID)
 }
 
 func PremiumProvidedBy(guildID int64) (int64, error) {

@@ -1271,14 +1271,23 @@ func (s *Session) GuildMemberTimeoutWithReason(guildID int64, userID int64, unti
 	return
 }
 
-// GuildMemberTimeout times out a guild member
-//
-//	guildID   : The ID of a Guild.
-//	userID    : The ID of a User.
-//	until     : The timestamp for how long a member should be timed out.
-//	            Set to nil to remove timeout.
+/*
 func (s *Session) GuildMemberTimeout(guildID int64, userID int64, until *time.Time, reason string, options ...RequestOption) (err error) {
 	return s.GuildMemberTimeoutWithReason(guildID, userID, until, reason, options...)
+}
+*/
+
+// GuildMemberTimeout times out a guild member
+// guildID   : The ID of a Guild.
+// userID    : The ID of a User.
+// until     : The timestamp for how long a member should be timed out. Set to nil to remove timeout.
+func (s *Session) GuildMemberTimeout(guildID int64, userID int64, until *time.Time, reason string, options ...RequestOption) (err error) {
+	data := struct {
+		CommunicationDisabledUntil *time.Time `json:"communication_disabled_until"`
+	}{until}
+
+	_, err = s.RequestWithBucketID("PATCH", EndpointGuildMember(guildID, userID), data, nil, EndpointGuildMember(guildID, 0), options...)
+	return
 }
 
 // GuildMemberRoleAdd adds the specified role to a given member

@@ -141,6 +141,8 @@ func (u *User) UnmarshalJSONObject(dec *gojay.Decoder, key string) error {
 		return dec.String(&u.GlobalName)
 	case "avatar":
 		return dec.String(&u.Avatar)
+	case "banner":
+		return dec.String(&u.Banner)
 	case "locale":
 		return dec.String(&u.Locale)
 	case "discriminator":
