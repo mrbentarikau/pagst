@@ -65,7 +65,7 @@ require (
 	github.com/volatiletech/strmangle v0.0.1
 	goji.io v2.0.2+incompatible
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
-	golang.org/x/text v0.14.0
+	golang.org/x/text v0.16.0
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/api v0.114.0
 )
@@ -73,7 +73,7 @@ require (
 require (
 	github.com/n0madic/twitter-scraper v0.0.0-20231104223941-296710769dd8
 	golang.org/x/crypto v0.21.0
-	golang.org/x/image v0.10.0
+	golang.org/x/image v0.18.0
 	golang.org/x/net v0.23.0
 	golang.org/x/oauth2 v0.9.0
 	gopkg.in/yaml.v3 v3.0.1
