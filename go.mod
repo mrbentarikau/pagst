@@ -25,7 +25,7 @@ require (
 	github.com/go-errors/errors v1.0.1
 	github.com/gobwas/ws v1.1.0
 	github.com/google/safebrowsing v0.0.0-20190624211811-bbf0d20d26b3
-	github.com/gorilla/schema v1.1.0
+	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/jarcoal/httpmock v1.0.4
